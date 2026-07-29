@@ -1,8 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const visualSnapshotSuffix = process.platform === 'linux' ? '-linux' : '';
+
 export default defineConfig({
   testDir: './tests/browser',
-  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
+  snapshotPathTemplate: `{testDir}/{testFilePath}-snapshots/{arg}${visualSnapshotSuffix}{ext}`,
   timeout: 30_000,
   expect: {
     timeout: 8_000,

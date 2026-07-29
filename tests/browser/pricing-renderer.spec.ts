@@ -121,7 +121,7 @@ for (const viewport of [
     await expect(page).toHaveScreenshot(`${viewport.name}.png`, {
       fullPage: false,
       animations: 'disabled',
-      maxDiffPixelRatio: 0.03,
+      maxDiffPixelRatio: viewport.name === 'desktop-1200' ? 0.03 : 0.015,
     });
   });
 }
