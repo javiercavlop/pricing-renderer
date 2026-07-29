@@ -49,6 +49,23 @@
               "type": { "text": "string" },
               "attribute": "locale"
             },
+            {
+              "kind": "field",
+              "name": "pricingPath",
+              "type": { "text": "string" },
+              "attribute": "pricing-path"
+            },
+            {
+              "kind": "field",
+              "name": "selectionEnabled",
+              "type": { "text": "boolean" }
+            },
+            { "kind": "field", "name": "ctaEnabled", "type": { "text": "boolean" } },
+            {
+              "kind": "field",
+              "name": "variablesEnabled",
+              "type": { "text": "boolean" }
+            },
             { "kind": "field", "name": "messages", "type": { "text": "MessageCatalog" } },
             {
               "kind": "field",

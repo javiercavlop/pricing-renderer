@@ -48,6 +48,9 @@ export interface RenderState {
   compact: boolean;
   search: string;
   onlyDifferences: boolean;
+  selectionEnabled: boolean;
+  ctaEnabled: boolean;
+  variablesEnabled: boolean;
   expandedGroups: ReadonlySet<string>;
   revealedGroups: ReadonlySet<string>;
   pendingAddOnChange?: PendingAddOnChange;
@@ -60,6 +63,16 @@ function t(
   parameters?: Record<string, string | number>,
 ): string {
   return translate(viewModel.messages, key, parameters);
+}
+
+const interactiveCardContent =
+  'a, button, input, select, textarea, label, summary, details, [contenteditable="true"]';
+
+function selectFromCard(event: MouseEvent, select: () => void): void {
+  if (event.defaultPrevented || event.button !== 0) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest(interactiveCardContent)) return;
+  select();
 }
 
 function renderPrice(
@@ -200,7 +213,7 @@ export function renderBilling(state: RenderState): TemplateResult | typeof nothi
 }
 
 export function renderPlans(state: RenderState): TemplateResult {
-  const { viewModel, selection, actions } = state;
+  const { viewModel, selection, selectionEnabled, ctaEnabled, actions } = state;
   return html`
     <section class="pr-section" aria-labelledby="pr-plans-title" data-pr-part="plans">
       <div class="pr-section__heading">
@@ -212,7 +225,11 @@ export function renderPlans(state: RenderState): TemplateResult {
       ${
         viewModel.plans.length === 0
           ? html`<p class="pr-empty">${t(viewModel, 'pricing.noPlans')}</p>`
-          : html`<div class="pr-plan-grid">
+          : html`<div
+              class="pr-plan-grid"
+              role=${selectionEnabled ? 'radiogroup' : nothing}
+              aria-labelledby=${selectionEnabled ? 'pr-plans-title' : nothing}
+            >
               ${viewModel.plans.map((plan) => {
                 const selected = selection.planId === plan.id;
                 const recommended = viewModel.presentation.recommendedPlanId === plan.id;
@@ -221,32 +238,61 @@ export function renderPlans(state: RenderState): TemplateResult {
                 const actionId = cta?.id ?? `choose-${plan.id}`;
                 return html`
                   <article
-                    class="pr-plan-card ${selected ? 'is-selected' : ''} ${
-                      recommended ? 'is-recommended' : ''
-                    }"
+                    class="pr-plan-card ${selectionEnabled ? 'pr-selectable-card' : ''} ${
+                      selected ? 'is-selected' : ''
+                    } ${recommended ? 'is-recommended' : ''}"
                     data-pr-part="plan-card"
                     data-plan-id=${plan.id}
+                    data-selected=${String(selected)}
+                    @click=${(event: MouseEvent) =>
+                      selectionEnabled
+                        ? selectFromCard(event, () => actions.selectPlan(plan.id))
+                        : undefined}
                   >
                     <div class="pr-plan-card__top">
                       ${
-                        recommended
-                          ? html`<span class="pr-badge"
-                              >${t(viewModel, 'pricing.recommended')}</span
-                            >`
+                        recommended || selectionEnabled
+                          ? html`<div class="pr-plan-card__status">
+                              ${
+                                recommended
+                                  ? html`<span class="pr-badge"
+                                      >${t(viewModel, 'pricing.recommended')}</span
+                                    >`
+                                  : nothing
+                              }
+                              ${
+                                selectionEnabled
+                                  ? html`<label
+                                      class="pr-selection-control pr-plan-card__selector"
+                                      data-pr-part="selection-control"
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="pr-plan"
+                                        value=${plan.id}
+                                        aria-label=${t(viewModel, 'pricing.choosePlan', {
+                                          plan: plan.name,
+                                        })}
+                                        .checked=${selected}
+                                        @change=${() => actions.selectPlan(plan.id)}
+                                      />
+                                      <span
+                                        class="pr-selection-control__icon"
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span class="pr-selection-control__label" aria-hidden="true"
+                                        >${
+                                          selected
+                                            ? t(viewModel, 'pricing.selected')
+                                            : t(viewModel, 'pricing.select')
+                                        }</span
+                                      >
+                                    </label>`
+                                  : nothing
+                              }
+                            </div>`
                           : nothing
                       }
-                      <label class="pr-plan-card__selector">
-                        <input
-                          type="radio"
-                          name="pr-plan"
-                          value=${plan.id}
-                          .checked=${selected}
-                          @change=${() => actions.selectPlan(plan.id)}
-                        />
-                        <span class="pr-sr-only"
-                          >${t(viewModel, 'pricing.choosePlan', { plan: plan.name })}</span
-                        >
-                      </label>
                       <h4>${plan.name}</h4>
                       ${plan.description ? html`<p>${plan.description}</p>` : nothing}
                     </div>
@@ -272,39 +318,41 @@ export function renderPlans(state: RenderState): TemplateResult {
                         : nothing
                     }
                     ${
-                      cta?.href && isSafeLink(cta.href)
-                        ? html`<a
-                            class="pr-button ${
-                              cta.kind === 'secondary'
-                                ? 'pr-button--secondary'
-                                : 'pr-button--primary'
-                            }"
-                            data-pr-part="cta"
-                            href=${cta.href}
-                            target=${cta.target ?? '_self'}
-                            rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
-                            @click=${(event: MouseEvent) => {
-                              if (
-                                !actions.triggerAction(actionId, plan.id, cta.href, cta.metadata)
-                              ) {
-                                event.preventDefault();
-                              }
-                            }}
-                            >${cta.label}</a
-                          >`
-                        : html`<button
-                            class="pr-button ${
-                              cta?.kind === 'secondary'
-                                ? 'pr-button--secondary'
-                                : 'pr-button--primary'
-                            }"
-                            data-pr-part="cta"
-                            type="button"
-                            @click=${() =>
-                              actions.triggerAction(actionId, plan.id, cta?.href, cta?.metadata)}
-                          >
-                            ${cta?.label ?? t(viewModel, 'pricing.choosePlan', { plan: plan.name })}
-                          </button>`
+                      !ctaEnabled
+                        ? nothing
+                        : cta?.href && isSafeLink(cta.href)
+                          ? html`<a
+                              class="pr-button ${
+                                cta.kind === 'secondary'
+                                  ? 'pr-button--secondary'
+                                  : 'pr-button--primary'
+                              }"
+                              data-pr-part="cta"
+                              href=${cta.href}
+                              target=${cta.target ?? '_self'}
+                              rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
+                              @click=${(event: MouseEvent) => {
+                                if (
+                                  !actions.triggerAction(actionId, plan.id, cta.href, cta.metadata)
+                                ) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              >${cta.label}</a
+                            >`
+                          : html`<button
+                              class="pr-button ${
+                                cta?.kind === 'secondary'
+                                  ? 'pr-button--secondary'
+                                  : 'pr-button--primary'
+                              }"
+                              data-pr-part="cta"
+                              type="button"
+                              @click=${() =>
+                                actions.triggerAction(actionId, plan.id, cta?.href, cta?.metadata)}
+                            >
+                              ${cta?.label ?? t(viewModel, 'pricing.choosePlan', { plan: plan.name })}
+                            </button>`
                     }
                   </article>
                 `;
@@ -405,8 +453,8 @@ function controlInput(
 }
 
 export function renderVariables(state: RenderState): TemplateResult | typeof nothing {
-  const { viewModel, actions } = state;
-  if (viewModel.variableControls.length === 0) return nothing;
+  const { viewModel, variablesEnabled, actions } = state;
+  if (!variablesEnabled || viewModel.variableControls.length === 0) return nothing;
   return html`
     <section class="pr-configurator" aria-labelledby="pr-variables-title" data-pr-part="variables">
       <div class="pr-section__heading">
@@ -738,7 +786,7 @@ function renderAddOnEffects(
 }
 
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
-  const { viewModel, selection, actions } = state;
+  const { viewModel, selection, selectionEnabled, actions } = state;
   if (viewModel.addOns.length === 0) return nothing;
   return html`
     <section class="pr-section" aria-labelledby="pr-addons-title" data-pr-part="add-ons">
@@ -760,30 +808,53 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
             const constraints = addOn.subscriptionConstraints;
             return html`
               <article
-                class="pr-addon-card ${selected ? 'is-selected' : ''} ${
-                  available ? '' : 'is-unavailable'
-                }"
+                class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
+                  selected ? 'is-selected' : ''
+                } ${available ? '' : 'is-unavailable'}"
                 data-pr-part="add-on-card"
+                data-add-on-id=${addOn.id}
+                data-selected=${String(selected)}
+                @click=${(event: MouseEvent) =>
+                  selectionEnabled && available
+                    ? selectFromCard(event, () => actions.toggleAddOn(addOn.id, !selected))
+                    : undefined}
               >
                 <div class="pr-addon-card__heading">
                   <div>
                     <h4>${addOn.name}</h4>
                     ${addOn.description ? html`<p>${addOn.description}</p>` : nothing}
                   </div>
-                  <label class="pr-check pr-addon-card__check">
-                    <input
-                      type="checkbox"
-                      .checked=${selected}
-                      ?disabled=${!available}
-                      aria-describedby="pr-addon-help-${addOn.id}"
-                      @change=${(event: Event) =>
-                        actions.toggleAddOn(
-                          addOn.id,
-                          (event.currentTarget as HTMLInputElement).checked,
-                        )}
-                    />
-                    <span class="pr-sr-only">${addOn.name}</span>
-                  </label>
+                  ${
+                    selectionEnabled
+                      ? html`<label
+                          class="pr-selection-control pr-addon-card__check"
+                          data-pr-part="selection-control"
+                        >
+                          <input
+                            type="checkbox"
+                            .checked=${selected}
+                            ?disabled=${!available}
+                            aria-label=${t(
+                              viewModel,
+                              selected ? 'pricing.removeAddOn' : 'pricing.addAddOn',
+                              { addOn: addOn.name },
+                            )}
+                            aria-describedby="pr-addon-help-${addOn.id}"
+                            @change=${(event: Event) =>
+                              actions.toggleAddOn(
+                                addOn.id,
+                                (event.currentTarget as HTMLInputElement).checked,
+                              )}
+                          />
+                          <span class="pr-selection-control__icon" aria-hidden="true"></span>
+                          <span class="pr-selection-control__label" aria-hidden="true"
+                            >${
+                              selected ? t(viewModel, 'pricing.added') : t(viewModel, 'pricing.add')
+                            }</span
+                          >
+                        </label>`
+                      : nothing
+                  }
                 </div>
                 <div class="pr-price pr-price--addon">
                   ${renderPrice(viewModel, viewModel.resolved.addOnPrices[addOn.id], addOn.unit)}
@@ -841,7 +912,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                 </div>
                 ${renderAddOnEffects(viewModel, addOn)}
                 ${
-                  selected && constraints
+                  selectionEnabled && selected && constraints
                     ? html`<div class="pr-stepper" data-pr-part="add-on-quantity">
                         <span>${t(viewModel, 'pricing.addOnQuantity', { addOn: addOn.name })}</span>
                         <div>

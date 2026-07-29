@@ -220,36 +220,140 @@
     min-block-size: 100%;
     padding: var(--pr-space-5);
     transition:
+      background-color var(--pr-motion-fast),
       border-color var(--pr-motion-fast),
       box-shadow var(--pr-motion-fast),
       translate var(--pr-motion-fast);
   }
 
-  pricing-renderer[data-pr-root] .pr-plan-card.is-selected,
-  pricing-renderer[data-pr-root] .pr-plan-card.is-recommended {
+  pricing-renderer[data-pr-root] .pr-selectable-card {
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    pricing-renderer[data-pr-root] .pr-selectable-card:hover:not(.is-unavailable) {
+      border-color: color-mix(in srgb, var(--pr-color-accent) 58%, var(--pr-color-border));
+      box-shadow: var(--pr-shadow-accent);
+      translate: 0 -2px;
+    }
+  }
+
+  pricing-renderer[data-pr-root] .pr-plan-card.is-selected {
     border-color: var(--pr-color-accent);
+    background: color-mix(in srgb, var(--pr-color-accent) 4%, var(--pr-color-surface));
     box-shadow: var(--pr-shadow-accent);
   }
 
-  pricing-renderer[data-pr-root] .pr-plan-card__selector {
-    position: absolute;
-    inset-block-start: var(--pr-space-4);
-    inset-inline-end: var(--pr-space-4);
-    display: grid;
-    place-items: center;
-    min-inline-size: 44px;
+  pricing-renderer[data-pr-root] .pr-plan-card.is-recommended:not(.is-selected) {
+    border-color: var(--pr-color-border-strong);
+  }
+
+  pricing-renderer[data-pr-root] .pr-plan-card__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pr-space-2);
     min-block-size: 44px;
   }
 
-  pricing-renderer[data-pr-root] .pr-plan-card__selector input {
-    inline-size: 20px;
-    block-size: 20px;
-    accent-color: var(--pr-color-accent);
+  pricing-renderer[data-pr-root] .pr-plan-card__selector {
+    margin-inline-start: auto;
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pr-space-2);
+    min-block-size: 44px;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--pr-color-border);
+    border-radius: var(--pr-radius-pill);
+    background: var(--pr-color-surface-raised);
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+    font-weight: 750;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      background-color var(--pr-motion-fast),
+      border-color var(--pr-motion-fast),
+      color var(--pr-motion-fast),
+      box-shadow var(--pr-motion-fast);
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control input {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control input:focus-visible {
+    outline: 0;
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    border: 1.5px solid var(--pr-color-border-strong);
+    border-radius: 50%;
+    background: var(--pr-color-surface);
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control__icon::after {
+    color: var(--pr-color-on-accent);
+    font-size: 0.75rem;
+    font-weight: 900;
+    line-height: 1;
+    content: '✓';
+    opacity: 0;
+    scale: 0.7;
+    transition:
+      opacity var(--pr-motion-fast),
+      scale var(--pr-motion-fast);
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control:has(input:checked) {
+    border-color: var(--pr-color-accent);
+    background: var(--pr-color-accent);
+    color: var(--pr-color-on-accent);
+    box-shadow: 0 5px 18px color-mix(in srgb, var(--pr-color-accent) 24%, transparent);
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control input:checked ~ .pr-selection-control__icon {
+    border-color: var(--pr-color-on-accent);
+    background: transparent;
+  }
+
+  pricing-renderer[data-pr-root]
+    .pr-selection-control
+    input:checked
+    ~ .pr-selection-control__icon::after {
+    opacity: 1;
+    scale: 1;
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control:focus-within {
+    outline: 2px solid var(--pr-color-focus);
+    outline-offset: 3px;
+  }
+
+  pricing-renderer[data-pr-root] .pr-selection-control:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.62;
   }
 
   pricing-renderer[data-pr-root] .pr-plan-card__top h4,
   pricing-renderer[data-pr-root] .pr-addon-card h4 {
-    padding-inline-end: 2.5rem;
     margin: var(--pr-space-3) 0 0;
     font-size: var(--pr-font-size-xl);
     letter-spacing: -0.02em;
@@ -654,20 +758,33 @@
     flex-direction: column;
     gap: var(--pr-space-3);
     padding: var(--pr-space-4);
+    transition:
+      background-color var(--pr-motion-fast),
+      border-color var(--pr-motion-fast),
+      box-shadow var(--pr-motion-fast),
+      translate var(--pr-motion-fast);
   }
 
   pricing-renderer[data-pr-root] .pr-addon-card.is-selected {
     border-color: var(--pr-color-accent);
+    background: color-mix(in srgb, var(--pr-color-accent) 4%, var(--pr-color-surface));
+    box-shadow: var(--pr-shadow-accent);
   }
 
   pricing-renderer[data-pr-root] .pr-addon-card.is-unavailable {
     background: var(--pr-color-surface-subtle);
+    cursor: not-allowed;
   }
 
   pricing-renderer[data-pr-root] .pr-addon-card__heading {
     display: flex;
+    align-items: start;
     justify-content: space-between;
     gap: var(--pr-space-3);
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-card__heading > div {
+    min-inline-size: 0;
   }
 
   pricing-renderer[data-pr-root] .pr-price--addon {
@@ -945,6 +1062,13 @@
     pricing-renderer[data-pr-root] .pr-plan-card.is-selected,
     pricing-renderer[data-pr-root] .pr-addon-card.is-selected {
       outline: 3px solid Highlight;
+    }
+
+    pricing-renderer[data-pr-root] .pr-selection-control:has(input:checked) {
+      border-color: Highlight;
+      background: Highlight;
+      color: HighlightText;
+      forced-color-adjust: none;
     }
 
     pricing-renderer[data-pr-root] .pr-button--primary {

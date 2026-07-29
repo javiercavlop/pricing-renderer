@@ -1,12 +1,20 @@
 'use client';
 
+import { configurePricingRenderer } from 'pricing-renderer';
 import { PricingRenderer } from 'pricing-renderer/react';
+
+configurePricingRenderer({
+  locale: 'en-US',
+  pricingPath: '/pricing',
+  selectionEnabled: true,
+  ctaEnabled: true,
+  variablesEnabled: true,
+});
 
 export function PricingClient({ yaml }: { yaml: string }) {
   return (
     <PricingRenderer
       yaml={yaml}
-      locale="en-US"
       theme="auto"
       onAction={(event) => {
         event.preventDefault();

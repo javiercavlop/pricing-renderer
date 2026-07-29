@@ -2,7 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
+  configurePricingRenderer,
   createPricingViewModel,
+  DEFAULT_PRICING_RENDERER_CONFIG,
+  getPricingRendererConfig,
   getMessages,
   normalizePricing,
   registerMessageCatalog,
@@ -11,6 +14,54 @@ import {
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
 const fixtureUrl = new URL('../fixtures/acme-pricing.yml', import.meta.url);
+
+describe('library initialization configuration', () => {
+  it('defaults to English and the conventional /pricing application path', () => {
+    configurePricingRenderer();
+    expect(getPricingRendererConfig()).toEqual({
+      locale: 'en-US',
+      pricingPath: '/pricing',
+      selectionEnabled: true,
+      ctaEnabled: true,
+      variablesEnabled: true,
+    });
+    expect(DEFAULT_PRICING_RENDERER_CONFIG).toEqual({
+      locale: 'en-US',
+      pricingPath: '/pricing',
+      selectionEnabled: true,
+      ctaEnabled: true,
+      variablesEnabled: true,
+    });
+  });
+
+  it('canonicalizes configurable locale and pricing path values', () => {
+    try {
+      expect(
+        configurePricingRenderer({
+          locale: 'es-es',
+          pricingPath: '/planes/precios/',
+          selectionEnabled: false,
+          ctaEnabled: false,
+          variablesEnabled: false,
+        }),
+      ).toEqual({
+        locale: 'es-ES',
+        pricingPath: '/planes/precios',
+        selectionEnabled: false,
+        ctaEnabled: false,
+        variablesEnabled: false,
+      });
+      expect(() => configurePricingRenderer({ pricingPath: 'pricing' })).toThrow(
+        'absolute application pathname',
+      );
+      expect(() => configurePricingRenderer({ ctaEnabled: 'yes' as unknown as boolean })).toThrow(
+        'ctaEnabled must be a boolean',
+      );
+    } finally {
+      configurePricingRenderer();
+    }
+  });
+});
 
 describe('Pricing2Yaml normalization and resolution', () => {
   it('parses a complete 3.1 pricing without losing expressions or metadata', async () => {

@@ -19,6 +19,80 @@ test('renders the professional commercial layout and emits complete CTA actions'
   await expect(page.locator('#action-output')).toContainText('start-growth');
 });
 
+test('selects plans and add-ons from the full card with a clear visual state', async ({ page }) => {
+  const renderer = page.locator('pricing-renderer');
+  await expect(renderer).toHaveAttribute('pricing-path', '/pricing');
+
+  const growth = page.locator('.pr-plan-card').filter({ hasText: 'Growth' });
+  await growth.getByRole('heading', { name: 'Growth' }).click();
+  await expect(growth.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
+  await expect(growth.locator('.pr-selection-control__label')).toHaveText('Selected');
+  await expect(growth).toHaveAttribute('data-selected', 'true');
+
+  const extraStorage = page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' });
+  await extraStorage.getByRole('heading', { name: 'Extra Storage' }).click();
+  await expect(extraStorage.getByRole('checkbox', { name: 'Remove Extra Storage' })).toBeChecked();
+  await expect(extraStorage.locator('.pr-selection-control__label')).toHaveText('Added');
+  await expect(extraStorage).toHaveAttribute('data-selected', 'true');
+
+  const selectionTarget = await extraStorage.locator('.pr-selection-control').boundingBox();
+  expect(selectionTarget?.height).toBeGreaterThanOrEqual(44);
+
+  await extraStorage.locator('.pr-price').click();
+  await expect(extraStorage.getByRole('checkbox', { name: 'Add Extra Storage' })).not.toBeChecked();
+  await expect(extraStorage.locator('.pr-selection-control__label')).toHaveText('Add');
+});
+
+test('can disable selection, CTAs and variable editing through instance configuration', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as
+      | (HTMLElement & {
+          selection?: Record<string, unknown>;
+          selectionEnabled: boolean;
+          ctaEnabled: boolean;
+          variablesEnabled: boolean;
+        })
+      | null;
+    if (!renderer) throw new Error('Pricing renderer was not found.');
+    renderer.selection = {
+      planId: 'starter',
+      billingPeriod: 'monthly',
+      variables: { seats: 10, prioritySupport: false, region: 'eu' },
+      addOns: {},
+    };
+    renderer.selectionEnabled = false;
+    renderer.ctaEnabled = false;
+    renderer.variablesEnabled = false;
+  });
+
+  const renderer = page.locator('pricing-renderer');
+  await expect(renderer.locator('[data-pr-part="selection-control"]')).toHaveCount(0);
+  await expect(renderer.locator('[data-pr-part="cta"]')).toHaveCount(0);
+  await expect(renderer.locator('[data-pr-part="variables"]')).toHaveCount(0);
+  await expect(renderer.locator('.pr-plan-card').first().locator('.pr-price')).toContainText('€20');
+
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as
+      | (HTMLElement & {
+          selectionEnabled: boolean;
+          ctaEnabled: boolean;
+          variablesEnabled: boolean;
+        })
+      | null;
+    if (!renderer) throw new Error('Pricing renderer was not found.');
+    renderer.selectionEnabled = true;
+    renderer.ctaEnabled = true;
+    renderer.variablesEnabled = true;
+  });
+
+  await expect(renderer.locator('[data-pr-part="selection-control"]').first()).toBeVisible();
+  await expect(renderer.locator('[data-pr-part="cta"]').first()).toBeVisible();
+  await expect(renderer.locator('[data-pr-part="variables"]')).toBeVisible();
+  await expect(renderer.locator('.pr-plan-card').first().locator('.pr-price')).toContainText('€40');
+});
+
 test('recalculates formulas, billing and multi-contract add-ons', async ({ page }) => {
   const seats = page.getByRole('slider', { name: 'Team seats' });
   await seats.fill('10');

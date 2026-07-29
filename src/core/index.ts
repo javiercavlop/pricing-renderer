@@ -1,3 +1,9 @@
+export {
+  configurePricingRenderer,
+  createPricingRendererConfig,
+  DEFAULT_PRICING_RENDERER_CONFIG,
+  getPricingRendererConfig,
+} from './config.js';
 export { collectExpressionDependencies, evaluatePriceExpression } from './expression.js';
 export {
   enUS,
@@ -58,6 +64,7 @@ export type {
   PricingMetadata,
   PricingMode,
   PricingPresentation,
+  PricingRendererConfig,
   PricingResult,
   PricingSelection,
   PricingSyntaxAdapter,

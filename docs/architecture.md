@@ -32,6 +32,12 @@ flowchart LR
 | React        | `pricing-renderer/react`   | Typed React properties and event mapping                 | Checkout or routing   |
 | Styles       | CSS subpaths               | Structural base and optional visual theme                | Global resets         |
 
+The core initialization configuration defaults to `locale: "en-US"` and
+`pricingPath: "/pricing"`. The path is routing metadata for the integrating
+application; the library never mutates a router or assumes a framework.
+Per-instance values override project defaults, which is preferable for
+request-specific SSR configuration.
+
 The normalized model is owned by this package. Pricing4TS-compatible objects are
 accepted structurally, but Pricing4TS types are not exposed in the public
 contract. Unknown `custom` data and the original input remain available through

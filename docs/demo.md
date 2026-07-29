@@ -35,9 +35,10 @@ This example exercises the React 18/19 adapter and typed event callbacks.
 pnpm demo:next
 ```
 
-The page remains a Server Component and passes a serializable YAML string to a
-small `PricingClient` boundary. This demonstrates SSR-safe imports without
-claiming deep light-DOM SSR.
+Open `/pricing`; `/` redirects there to demonstrate the library's configurable
+canonical default path. The page remains a Server Component and passes a
+serializable YAML string to a small `PricingClient` boundary. This demonstrates
+SSR-safe imports without claiming deep light-DOM SSR.
 
 ## Acceptance checklist
 

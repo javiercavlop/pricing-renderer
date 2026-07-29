@@ -4,7 +4,7 @@
   "description": "A framework-friendly, themeable renderer for Pricing2Yaml pricing models.",
   "type": "module",
   "license": "MIT",
-  "author": "Javier Caverolo",
+  "author": "Francisco Javier Cavero",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/javiercavlop/pricing-renderer.git"

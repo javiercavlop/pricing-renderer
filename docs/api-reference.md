@@ -5,6 +5,19 @@ entry point.
 
 ## `pricing-renderer`
 
+### Project configuration
+
+```ts
+configurePricingRenderer(options?: Partial<PricingRendererConfig>): Readonly<PricingRendererConfig>
+createPricingRendererConfig(options?: Partial<PricingRendererConfig>): Readonly<PricingRendererConfig>
+getPricingRendererConfig(): Readonly<PricingRendererConfig>
+```
+
+`DEFAULT_PRICING_RENDERER_CONFIG` contains `locale: "en-US"`,
+`pricingPath: "/pricing"`, and enabled selection, CTAs, and variables. See
+[Project and instance configuration](./configuration.md) for precedence and
+disabled behavior.
+
 ### Parsing-independent functions
 
 ```ts
@@ -151,6 +164,10 @@ Exports `PricingRendererElement` without registering it globally.
 | `defaultSelection`  | —               | `Partial<PricingSelection>`      | schema defaults    |
 | `presentation`      | —               | `PricingPresentation`            | merged defaults    |
 | `locale`            | `locale`        | `string`                         | `"en-US"`          |
+| `pricingPath`       | `pricing-path`  | `string`                         | `"/pricing"`       |
+| `selectionEnabled`  | —               | `boolean`                        | `true`             |
+| `ctaEnabled`        | —               | `boolean`                        | `true`             |
+| `variablesEnabled`  | —               | `boolean`                        | `true`             |
 | `messages`          | —               | `MessageCatalog`                 | registered catalog |
 | `mode`              | `mode`          | `"commercial" \| "catalog"`      | `"commercial"`     |
 | `layout`            | `layout`        | `"auto" \| "compact" \| "table"` | `"auto"`           |

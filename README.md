@@ -105,6 +105,27 @@ a clean registry installation succeeds. See the
 
 ## Web Component
 
+Initialize project-wide defaults before creating renderer instances:
+
+```ts
+import { configurePricingRenderer } from 'pricing-renderer';
+
+configurePricingRenderer({
+  locale: 'en-US',
+  pricingPath: '/pricing',
+  selectionEnabled: true,
+  ctaEnabled: true,
+  variablesEnabled: true,
+});
+```
+
+Every option is optional. The deterministic built-in defaults are English
+(`en-US`), `/pricing`, selectable plans/add-ons, visible CTAs, and editable
+variables. `pricingPath` is the canonical host-application route; the library
+exposes it but does not mutate or install routes in the host router. An
+individual element or React instance can override any value. With
+`variablesEnabled: false`, formulas use the iPricing variable defaults.
+
 Import registration and styles once:
 
 ```ts
@@ -118,15 +139,16 @@ Render a public remote source:
 <pricing-renderer
   src="https://cdn.example.com/pricing.yml"
   locale="en-US"
+  pricing-path="/pricing"
   mode="commercial"
   theme="auto"
 ></pricing-renderer>
 ```
 
-`locale` is initial host configuration. Set it when the renderer is created
-(`locale="es-ES"` or the equivalent property/React prop); the library does not
-inject a language picker into production UI. The showcase picker only
-demonstrates that the configuration can be changed reactively.
+`locale` and `pricingPath` are initial host configuration. Set them globally,
+when the renderer is created, or through the equivalent properties/React props.
+The library does not inject a language picker into production UI. The showcase
+picker only demonstrates that locale configuration can be changed reactively.
 
 Or assign a YAML string or iPricing-compatible object as a JavaScript property:
 
@@ -152,6 +174,7 @@ export function PricingPage({ pricing }: { pricing: Record<string, unknown> }) {
     <PricingRenderer
       pricing={pricing}
       locale="en-US"
+      pricingPath="/pricing"
       theme="auto"
       onSelectionChange={(event) => {
         console.info(event.detail.selection, event.detail.resolved);
@@ -294,6 +317,7 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 
 - [Architecture](./docs/architecture.md)
 - [API reference](./docs/api-reference.md)
+- [Project and instance configuration](./docs/configuration.md)
 - [Demo and release acceptance](./docs/demo.md)
 - [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)

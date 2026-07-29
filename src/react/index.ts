@@ -65,6 +65,10 @@ export interface PricingRendererSharedProps {
   normalizeOptions?: NormalizePricingOptions;
   expressionOptions?: ExpressionOptions;
   locale?: string;
+  pricingPath?: string;
+  selectionEnabled?: boolean;
+  ctaEnabled?: boolean;
+  variablesEnabled?: boolean;
   messages?: MessageCatalog;
   mode?: PricingMode;
   layout?: PricingLayout;

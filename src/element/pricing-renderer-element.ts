@@ -2,6 +2,7 @@ import { LitElement, html, nothing, type PropertyValues, type TemplateResult } f
 import {
   cloneValue,
   createPricingViewModel,
+  getPricingRendererConfig,
   mergeSelection,
   normalizeAddOnQuantity,
   normalizePricing,
@@ -66,6 +67,10 @@ export class PricingRendererElement extends LitElement {
     defaultSelection: { attribute: false },
     presentation: { attribute: false },
     locale: { type: String },
+    pricingPath: { type: String, attribute: 'pricing-path', reflect: true },
+    selectionEnabled: { attribute: false },
+    ctaEnabled: { attribute: false },
+    variablesEnabled: { attribute: false },
     messages: { attribute: false },
     mode: { type: String, reflect: true },
     layout: { type: String, reflect: true },
@@ -85,6 +90,10 @@ export class PricingRendererElement extends LitElement {
   declare defaultSelection?: Partial<PricingSelection>;
   declare presentation?: PricingPresentation;
   declare locale: string;
+  declare pricingPath: string;
+  declare selectionEnabled: boolean;
+  declare ctaEnabled: boolean;
+  declare variablesEnabled: boolean;
   declare messages?: MessageCatalog;
   declare mode: PricingMode;
   declare layout: PricingLayout;
@@ -113,7 +122,12 @@ export class PricingRendererElement extends LitElement {
 
   constructor() {
     super();
-    this.locale = 'en-US';
+    const configuration = getPricingRendererConfig();
+    this.locale = configuration.locale;
+    this.pricingPath = configuration.pricingPath;
+    this.selectionEnabled = configuration.selectionEnabled;
+    this.ctaEnabled = configuration.ctaEnabled;
+    this.variablesEnabled = configuration.variablesEnabled;
     this.mode = 'commercial';
     this.layout = 'auto';
     this.visibility = 'public-only';
@@ -262,7 +276,12 @@ export class PricingRendererElement extends LitElement {
   }
 
   private _effectiveSelection(): PricingSelection | undefined {
-    return this.selection ?? this._internalSelection;
+    const selection = this.selection ?? this._internalSelection;
+    if (!selection || this.variablesEnabled || !this._normalized) return selection;
+    return {
+      ...selection,
+      variables: cloneValue(this._normalized.variables),
+    };
   }
 
   private _viewModelOptions(): ViewModelOptions {
@@ -657,6 +676,9 @@ export class PricingRendererElement extends LitElement {
       compact: this._compact,
       search: this._search,
       onlyDifferences: this._onlyDifferences,
+      selectionEnabled: this.selectionEnabled,
+      ctaEnabled: this.ctaEnabled,
+      variablesEnabled: this.variablesEnabled,
       expandedGroups: this._expandedGroups,
       revealedGroups: this._revealedGroups,
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),

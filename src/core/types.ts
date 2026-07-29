@@ -236,6 +236,14 @@ export type PricingVisibility = 'public-only' | 'all';
 
 export type MessageCatalog = Record<string, string>;
 
+export interface PricingRendererConfig {
+  locale: string;
+  pricingPath: string;
+  selectionEnabled: boolean;
+  ctaEnabled: boolean;
+  variablesEnabled: boolean;
+}
+
 export interface ViewModelOptions {
   locale?: string;
   messages?: MessageCatalog;

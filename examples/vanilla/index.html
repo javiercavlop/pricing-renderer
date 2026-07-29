@@ -75,14 +75,21 @@
               <span>pricing-page.ts</span>
               <span>TypeScript</span>
             </div>
-            <pre><code><span class="code-keyword">import</span> <span class="code-string">'pricing-renderer/define'</span>;
+            <pre><code><span class="code-keyword">import</span> { configurePricingRenderer } <span class="code-keyword">from</span> <span class="code-string">'pricing-renderer'</span>;
 <span class="code-keyword">import</span> <span class="code-string">'pricing-renderer/styles.css'</span>;
 
-<span class="code-keyword">const</span> pricing = document
-  .querySelector(<span class="code-string">'pricing-renderer'</span>);
+configurePricingRenderer({
+  locale: <span class="code-string">'en-US'</span>,
+  pricingPath: <span class="code-string">'/pricing'</span>
+});
 
-pricing.yaml = pricingYaml;
-pricing.theme = <span class="code-string">'auto'</span>;</code></pre>
+<span class="code-keyword">void import</span>(<span class="code-string">'pricing-renderer/define'</span>).then(() => {
+  <span class="code-keyword">const</span> pricing = document
+    .querySelector(<span class="code-string">'pricing-renderer'</span>);
+
+  pricing.yaml = pricingYaml;
+  pricing.theme = <span class="code-string">'auto'</span>;
+});</code></pre>
             <div class="demo-code-card__result">
               <span class="demo-pulse"></span>
               Reactive pricing ready
