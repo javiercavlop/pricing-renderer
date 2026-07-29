@@ -62,6 +62,34 @@ renderer behind a client boundary.
 
 See the full [demo validation guide](./docs/demo.md).
 
+## Installation and package location
+
+> **Not published yet:** the commands and version links below become valid only
+> after the `0.1.0` demo is approved and the release workflow succeeds. Until
+> then, use the workspace demo above.
+
+Once published, install the public package from npm:
+
+```bash
+npm install pricing-renderer@0.1.0
+# or
+pnpm add pricing-renderer@0.1.0
+# or
+yarn add pricing-renderer@0.1.0
+```
+
+The release will be available from:
+
+- npm package: [`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer)
+- GitHub releases:
+  [`javiercavlop/pricing-renderer/releases`](https://github.com/javiercavlop/pricing-renderer/releases)
+- source tag: `v0.1.0` (created only after approval and successful publication)
+
+The tagged release commit will change this section and the npm badge from
+pending to published wording. The links will only be considered verified after
+a clean registry installation succeeds. See the
+[release guide](./docs/releasing.md) for the required order and checks.
+
 ## Package entry points
 
 | Import                        | Purpose                                                         |
@@ -76,9 +104,6 @@ See the full [demo validation guide](./docs/demo.md).
 | `pricing-renderer/styles.css` | Base and theme combined                                         |
 
 ## Web Component
-
-After npm approval/publication, install with `npm install pricing-renderer`.
-During review, use the workspace build shown above.
 
 Import registration and styles once:
 
@@ -270,6 +295,7 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [Architecture](./docs/architecture.md)
 - [API reference](./docs/api-reference.md)
 - [Demo and release acceptance](./docs/demo.md)
+- [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)
 - [Theming](./docs/theming.md)
 - [Internationalization](./docs/i18n.md)

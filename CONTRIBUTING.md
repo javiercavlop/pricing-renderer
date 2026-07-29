@@ -188,6 +188,9 @@ Use:
 Maintainers own versioning, tags, provenance, and npm publication. A green pull
 request or approved source push is not permission to publish. The `0.1.0`
 candidate specifically requires explicit acceptance of the interactive demo.
+Follow [docs/releasing.md](./docs/releasing.md); installation documentation must
+be switched to published wording before creating the immutable release tag, then
+verified against a clean registry installation after publication.
 
 ## Pull request checklist
 
