@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "rootDir": "./src/react",
+    "outDir": "./dist/react",
+    "tsBuildInfoFile": "./.tsbuildinfo/react.tsbuildinfo",
+    "jsx": "react-jsx"
+  },
+  "references": [{ "path": "./tsconfig.core.json" }, { "path": "./tsconfig.element.json" }],
+  "include": ["src/react/**/*.ts", "src/react/**/*.tsx"]
+}

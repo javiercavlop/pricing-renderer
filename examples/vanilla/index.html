@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Pricing Renderer interactive demo" />
+    <title>Pricing Renderer — Vanilla demo</title>
+  </head>
+  <body>
+    <header class="demo-toolbar">
+      <a href="#pricing">Pricing Renderer</a>
+      <div>
+        <label>
+          Language
+          <select id="locale">
+            <option value="en-US">English</option>
+            <option value="es-ES">Español</option>
+          </select>
+        </label>
+        <label>
+          Theme
+          <select id="theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="auto">Auto</option>
+          </select>
+        </label>
+      </div>
+    </header>
+    <main id="pricing">
+      <pricing-renderer></pricing-renderer>
+      <output id="action-output" aria-live="polite"></output>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "README.md",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "dist/element/pricing-renderer-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "PricingRendererElement",
+          "customElement": true,
+          "tagName": "pricing-renderer",
+          "description": "A responsive, themeable renderer for Pricing2Yaml 3.x.",
+          "members": [
+            { "kind": "field", "name": "pricing", "type": { "text": "IPricingLike" } },
+            { "kind": "field", "name": "yaml", "type": { "text": "string" } },
+            { "kind": "field", "name": "src", "type": { "text": "string" }, "attribute": "src" },
+            { "kind": "field", "name": "selection", "type": { "text": "PricingSelection" } },
+            {
+              "kind": "field",
+              "name": "locale",
+              "type": { "text": "string" },
+              "attribute": "locale"
+            },
+            {
+              "kind": "field",
+              "name": "mode",
+              "type": { "text": "\"commercial\" | \"catalog\"" },
+              "attribute": "mode"
+            },
+            {
+              "kind": "field",
+              "name": "layout",
+              "type": { "text": "\"auto\" | \"compact\" | \"table\"" },
+              "attribute": "layout"
+            },
+            {
+              "kind": "field",
+              "name": "visibility",
+              "type": { "text": "\"public-only\" | \"all\"" },
+              "attribute": "visibility"
+            },
+            {
+              "kind": "field",
+              "name": "theme",
+              "type": { "text": "\"light\" | \"dark\" | \"auto\"" },
+              "attribute": "theme"
+            },
+            {
+              "kind": "method",
+              "name": "reload",
+              "return": { "type": { "text": "Promise<void>" } }
+            }
+          ],
+          "events": [
+            { "name": "pricing-ready", "type": { "text": "CustomEvent<PricingReadyDetail>" } },
+            {
+              "name": "pricing-selection-change",
+              "type": { "text": "CustomEvent<PricingSelectionChangeDetail>" }
+            },
+            { "name": "pricing-action", "type": { "text": "CustomEvent<PricingActionDetail>" } },
+            {
+              "name": "pricing-diagnostic",
+              "type": { "text": "CustomEvent<PricingDiagnosticDetail>" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

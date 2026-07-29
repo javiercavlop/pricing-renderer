@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "rootDir": "./src/yaml",
+    "outDir": "./dist/yaml",
+    "tsBuildInfoFile": "./.tsbuildinfo/yaml.tsbuildinfo"
+  },
+  "references": [{ "path": "./tsconfig.core.json" }],
+  "include": ["src/yaml/**/*.ts"]
+}

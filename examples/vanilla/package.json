@@ -1,0 +1,16 @@
+{
+  "name": "pricing-renderer-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "pricing-renderer": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vite": "^6.1.0"
+  }
+}
