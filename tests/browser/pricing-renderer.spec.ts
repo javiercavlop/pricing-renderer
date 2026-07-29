@@ -219,7 +219,13 @@ for (const viewport of [
     await expect(page).toHaveScreenshot(`${viewport.name}.png`, {
       fullPage: false,
       animations: 'disabled',
-      maxDiffPixelRatio: viewport.name === 'desktop-1200' ? 0.03 : 0.015,
+      maxDiffPixelRatio:
+        viewport.name === 'desktop-1200'
+          ? 0.03
+          : // Ubuntu's glyph antialiasing affects about 2% of these text-dense screenshots.
+            viewport.name === 'mobile-320' || viewport.name === 'mobile-375'
+            ? 0.025
+            : 0.015,
     });
   });
 }
