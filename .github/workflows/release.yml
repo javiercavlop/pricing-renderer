@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Check out the immutable release tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_TAG }}
           persist-credentials: false
