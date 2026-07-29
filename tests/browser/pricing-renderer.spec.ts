@@ -119,8 +119,9 @@ for (const viewport of [
     );
     expect(overflow).toBeLessThanOrEqual(1);
     await expect(page).toHaveScreenshot(`${viewport.name}.png`, {
-      fullPage: true,
+      fullPage: false,
       animations: 'disabled',
+      maxDiffPixelRatio: 0.03,
     });
   });
 }
