@@ -82,6 +82,13 @@ Pin the initial release when an exact, reproducible version is required:
 npm install pricing-renderer@0.1.0
 ```
 
+Then import the renderer and its complete default stylesheet:
+
+```ts
+import 'pricing-renderer/define';
+import 'pricing-renderer/styles.css';
+```
+
 Release locations:
 
 - npm package and provenance:
@@ -94,7 +101,8 @@ Release locations:
 Every published GitHub Release triggers the npm CD workflow. Stable releases
 publish under the `latest` dist-tag and GitHub prereleases under `next`; a tag,
 version, documentation, test, accessibility, visual, or package-validation
-failure stops before `npm publish`.
+failure stops before `npm publish`. Publication uses npm Trusted Publishing with
+short-lived GitHub OIDC credentials; the workflow contains no npm access token.
 
 Confirm the installed registry version with:
 
@@ -104,6 +112,30 @@ npm view pricing-renderer version
 
 See the [release guide](./docs/releasing.md) for provenance, validation, and
 Trusted Publishing details.
+
+### Reusable, tokenless CD
+
+The same [release workflow](./.github/workflows/release.yml) handles
+`release.published` automatically and exposes `workflow_call` with a required
+`release_tag` input. A caller in this repository can reuse all release gates:
+
+```yaml
+jobs:
+  publish:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/release.yml
+    with:
+      release_tag: v0.2.0
+```
+
+The workflow queries GitHub before checkout and refuses drafts, missing releases,
+or mismatched tags. It derives `latest` versus `next` from the published Release,
+so callers cannot silently override the npm channel. No secrets are accepted or
+forwarded. npm trust remains intentionally bound to this package, repository,
+workflow filename, and `npm` environment; another package must configure its own
+Trusted Publisher.
 
 ## Package entry points
 

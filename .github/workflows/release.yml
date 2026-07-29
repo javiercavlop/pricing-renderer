@@ -4,11 +4,17 @@ on:
   release:
     types:
       - published
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Existing published GitHub Release tag to deploy
+        required: true
+        type: string
 
 permissions: {}
 
 concurrency:
-  group: npm-publish-${{ github.event.release.tag_name }}
+  group: npm-publish-${{ github.repository }}-${{ inputs.release_tag || github.event.release.tag_name }}
   cancel-in-progress: false
 
 jobs:
@@ -19,13 +25,37 @@ jobs:
       contents: read
       id-token: write
     env:
-      RELEASE_TAG: ${{ github.event.release.tag_name }}
-      NPM_DIST_TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
+      RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
     steps:
+      - name: Verify the published GitHub Release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_json="$(gh release view "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease,tagName)"
+
+          if [ "$(jq -r '.isDraft' <<<"$release_json")" != "false" ]; then
+            echo "::error::The GitHub Release must be published before npm deployment."
+            exit 1
+          fi
+
+          if [ "$(jq -r '.tagName' <<<"$release_json")" != "$RELEASE_TAG" ]; then
+            echo "::error::The published GitHub Release tag does not match $RELEASE_TAG."
+            exit 1
+          fi
+
+          if [ "$(jq -r '.isPrerelease' <<<"$release_json")" = "true" ]; then
+            echo "dist_tag=next" >>"$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >>"$GITHUB_OUTPUT"
+          fi
+
       - name: Check out the immutable release tag
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ env.RELEASE_TAG }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v6
@@ -75,14 +105,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: release-playwright-report-${{ github.event.release.tag_name }}
+          name: release-playwright-report-${{ github.run_id }}
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
 
       - name: Publish stable releases to latest and prereleases to next
-        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
-        env:
-          # Only set this repository/environment secret for the one-time first publication.
-          # Remove it after configuring npm Trusted Publishing for release.yml.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance --tag "${{ steps.release.outputs.dist_tag }}"

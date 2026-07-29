@@ -8,6 +8,7 @@ if (!requestedTag) {
 
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const readme = await readFile('README.md', 'utf8');
+const releaseWorkflow = await readFile('.github/workflows/release.yml', 'utf8');
 const expectedTag = `v${packageJson.version}`;
 
 const failures = [];
@@ -33,6 +34,9 @@ for (const marker of forbiddenReadmeMarkers) {
 }
 
 const requiredReadmeContent = [
+  'actions/workflows/release.yml/badge.svg',
+  'https://img.shields.io/npm/v/pricing-renderer.svg?logo=npm',
+  'npm install pricing-renderer',
   `npm install pricing-renderer@${packageJson.version}`,
   'https://www.npmjs.com/package/pricing-renderer',
   `https://github.com/javiercavlop/pricing-renderer/releases/tag/${expectedTag}`,
@@ -41,6 +45,32 @@ const requiredReadmeContent = [
 for (const content of requiredReadmeContent) {
   if (!readme.includes(content)) {
     failures.push(`README is missing release information: ${content}`);
+  }
+}
+
+const requiredWorkflowContent = [
+  'release:',
+  'workflow_call:',
+  'id-token: write',
+  'gh release view "$RELEASE_TAG"',
+  'npm publish --access public --provenance',
+];
+
+for (const content of requiredWorkflowContent) {
+  if (!releaseWorkflow.includes(content)) {
+    failures.push(`release workflow is missing required OIDC/CD behavior: ${content}`);
+  }
+}
+
+const forbiddenWorkflowPatterns = [
+  [/\bNPM_TOKEN\b/u, 'an npm token'],
+  [/\bNODE_AUTH_TOKEN\b/u, 'a Node authentication token'],
+  [/\bsecrets\./u, 'a GitHub Actions secret'],
+];
+
+for (const [pattern, description] of forbiddenWorkflowPatterns) {
+  if (pattern.test(releaseWorkflow)) {
+    failures.push(`release workflow must not reference ${description}`);
   }
 }
 

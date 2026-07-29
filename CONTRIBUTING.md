@@ -194,11 +194,14 @@ Use:
 
 Maintainers own versioning, tags, provenance, and npm publication. A green pull
 request, approved source push, tag, or draft release is not permission to
-publish. The `0.1.0` candidate specifically requires explicit acceptance of the
-interactive demo. Follow [docs/releasing.md](./docs/releasing.md); installation
-documentation must be switched to published wording before publishing the
-GitHub Release. That release event runs npm CD, and the result must then be
-verified with a clean registry installation.
+publish. Follow [docs/releasing.md](./docs/releasing.md); installation
+documentation must describe the intended version accurately before publishing
+the GitHub Release. That release event runs the tokenless npm CD, and the result
+must then be verified with a clean registry installation. Never add an npm token
+to a workflow or repository secret: publication is authorized by the
+package-specific Trusted Publisher and short-lived GitHub OIDC credentials. The
+release workflow also exposes `workflow_call` for in-repository reuse, but every
+package and repository owns its own npm trust relationship.
 
 ## Pull request checklist
 
