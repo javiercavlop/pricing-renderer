@@ -33,6 +33,12 @@ export interface PricingResult<T> {
   diagnostics: PricingDiagnostic[];
 }
 
+export type ExpressionFunction = (...argumentsList: unknown[]) => unknown;
+
+export interface ExpressionOptions {
+  functions?: Readonly<Record<string, ExpressionFunction>>;
+}
+
 export type RenderMode = 'auto' | 'enabled' | 'disabled';
 
 export type PriceSource =
@@ -138,6 +144,16 @@ export interface NormalizedPricing {
   raw: IPricingLike;
 }
 
+export interface PricingSyntaxAdapter {
+  id: string;
+  supports: (syntaxVersion: string) => boolean;
+  adapt: (pricing: IPricingLike) => IPricingLike;
+}
+
+export interface NormalizePricingOptions {
+  syntaxAdapters?: readonly PricingSyntaxAdapter[];
+}
+
 export interface AddOnSelection {
   selected: boolean;
   quantity: number;
@@ -168,6 +184,10 @@ export interface ResolvedPricing {
   subtotal: number;
   requiresQuote: boolean;
   diagnostics: PricingDiagnostic[];
+}
+
+export interface ResolvePricingOptions {
+  expression?: ExpressionOptions;
 }
 
 export type VariableControlType = 'boolean' | 'number' | 'text' | 'select' | 'slider';
@@ -222,6 +242,7 @@ export interface ViewModelOptions {
   mode?: PricingMode;
   visibility?: PricingVisibility;
   presentation?: PricingPresentation;
+  expression?: ExpressionOptions;
 }
 
 export interface PricingValueCell {

@@ -1,7 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { createPricingViewModel, normalizePricing, resolvePricing } from '../../src/core/index.js';
+import {
+  createPricingViewModel,
+  getMessages,
+  normalizePricing,
+  registerMessageCatalog,
+  resolvePricing,
+} from '../../src/core/index.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
 const fixtureUrl = new URL('../fixtures/acme-pricing.yml', import.meta.url);
@@ -63,6 +69,13 @@ describe('Pricing2Yaml normalization and resolution', () => {
       'Security',
       'Usage',
     ]);
+    const storage = viewModel.comparisonGroups
+      .flatMap((group) => group.rows)
+      .find((row) => row.id === 'storage');
+    expect(storage?.values.find((cell) => cell.planId === 'enterprise')?.value).toBe(
+      Number.POSITIVE_INFINITY,
+    );
+    expect(viewModel.messages['pricing.unlimited']).toBe('Unlimited');
   });
 
   it('warns for compatible 3.x versions and blocks other majors', () => {
@@ -83,6 +96,81 @@ describe('Pricing2Yaml normalization and resolution', () => {
     });
     expect(unsupported.ok).toBe(false);
     expect(unsupported.value).toBeUndefined();
+  });
+
+  it('adapts future syntax versions through an explicit, isolated adapter', () => {
+    const result = normalizePricing(
+      {
+        syntaxVersion: '4.0',
+        saasName: 'Future',
+        offers: { starter: { price: 10 } },
+      },
+      {
+        syntaxAdapters: [
+          {
+            id: 'pricing4-preview',
+            supports: (version) => version === '4.0',
+            adapt: (pricing) => ({
+              ...pricing,
+              syntaxVersion: '3.1',
+              plans: pricing.offers,
+            }),
+          },
+        ],
+      },
+    );
+    expect(result.ok).toBe(true);
+    expect(result.value?.metadata.syntaxVersion).toBe('4.0');
+    expect(result.value?.plans[0]?.id).toBe('starter');
+    expect(result.diagnostics[0]?.code).toBe('PR_VERSION_ADAPTED');
+  });
+
+  it('composes syntax adapters without re-running the same adapter', () => {
+    const result = normalizePricing(
+      {
+        syntaxVersion: '5.0',
+        saasName: 'Future',
+        offers: { starter: { amount: 10 } },
+      },
+      {
+        syntaxAdapters: [
+          {
+            id: 'v5-to-v4',
+            supports: (version) => version === '5.0',
+            adapt: (pricing) => ({ ...pricing, syntaxVersion: '4.0' }),
+          },
+          {
+            id: 'v4-to-v3',
+            supports: (version) => version === '4.0',
+            adapt: (pricing) => ({
+              ...pricing,
+              syntaxVersion: '3.1',
+              plans: {
+                starter: {
+                  price: (pricing.offers as { starter: { amount: number } }).starter.amount,
+                },
+              },
+            }),
+          },
+        ],
+      },
+    );
+    expect(result.ok).toBe(true);
+    expect(result.value?.metadata.syntaxVersion).toBe('5.0');
+    expect(result.value?.plans[0]?.price).toEqual({ kind: 'fixed', amount: 10 });
+    expect(result.diagnostics.map((item) => item.code)).toEqual([
+      'PR_VERSION_ADAPTED',
+      'PR_VERSION_ADAPTED',
+    ]);
+  });
+
+  it('registers additional locales without changing component source data', () => {
+    const unregister = registerMessageCatalog('fr-FR', {
+      'pricing.title': 'Tarifs',
+    });
+    expect(getMessages('fr-CA')['pricing.title']).toBe('Tarifs');
+    unregister();
+    expect(getMessages('fr-CA')['pricing.title']).toBe('Pricing');
   });
 
   it('preserves zero and false plan values instead of replacing them with defaults', () => {

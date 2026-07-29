@@ -1,39 +1,93 @@
 # Pricing Renderer
 
-`pricing-renderer` turns a Pricing2Yaml 3.x document into a professional,
-responsive pricing experience. It ships a DOM-free TypeScript core, a light-DOM
-Web Component, and a typed React adapter.
+[![CI](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-5e51e8.svg)](./LICENSE)
+[![Pricing2Yaml 3.1](https://img.shields.io/badge/Pricing2Yaml-3.1-0c9b6b.svg)](./docs/pricing2yaml-compatibility.md)
+[![npm publication pending review](https://img.shields.io/badge/npm-pending%20demo%20approval-686a7c.svg)](./docs/demo.md)
 
-- Fully tested against Pricing2Yaml 3.1.
-- Best-effort rendering with diagnostics for other 3.x versions.
-- Safe reactive price expressions without `eval` or `Function`.
-- Variables, billing periods, configurable add-ons, dependencies, exclusions,
-  partial totals, and quote-based prices.
-- Container-responsive layout, WCAG 2.2 AA semantics, dark mode, RTL, and
-  reduced motion.
-- Themeable through CSS custom properties and stable `data-pr-part` hooks.
-- English (`en-US`) by default, with an included Spanish (`es-ES`) catalog.
+Turn a Pricing2Yaml document into an elegant, responsive, interactive pricing
+experience. Use the complete light-DOM Web Component, its React 18/19 adapter,
+or the DOM-free TypeScript core to build a product-specific UI.
 
-## Install
+![Pricing Renderer interactive plans](docs/assets/demo-desktop-light.png)
+
+> **Pre-release status:** the repository is public and the `0.1.0` candidate is
+> under visual review. The npm package will not be published until the live demo
+> is explicitly approved.
+
+## Why it exists
+
+- Complete Pricing2Yaml 3.1 normalization and best-effort compatibility for
+  other 3.x revisions.
+- Reactive formulas parsed into a restricted AST—never `eval` or `Function`.
+- Variables, billing periods, plan comparison, partial totals, quote prices,
+  compatible add-ons, dependency/exclusion confirmation, and constrained
+  quantities.
+- Commercial and catalog modes with container-responsive layouts from 320 px.
+- Accessible semantic HTML, keyboard flows, dark mode, forced colors, RTL, zoom,
+  and reduced motion.
+- CSS variables and stable `data-pr-part` hooks that let the renderer belong to
+  the host product.
+- Extensible syntax adapters, locale registry, allow-listed expression
+  functions, and preserved custom data.
+- SSR-safe imports and a client-island React/Next integration.
+
+## Review the live example
+
+Node.js 22+ and pnpm are required for local development:
 
 ```bash
-npm install pricing-renderer
+git clone https://github.com/javiercavlop/pricing-renderer.git
+cd pricing-renderer
+corepack enable
+pnpm install
+pnpm demo
 ```
 
-Node.js 22 or newer is required for Node-side parsing and development tooling.
-The UI targets modern browsers with Custom Elements, container queries, and
-`Intl`.
+The showcase uses the real built package. Change seats, boolean/select
+variables, billing, plans, add-ons, quantities, language, theme, and rendering
+mode while watching resolved state and events.
+
+Additional runnable integrations:
+
+```bash
+pnpm demo:react
+pnpm demo:next
+```
+
+The Next example keeps the page server-rendered and isolates only the interactive
+renderer behind a client boundary.
+
+![Pricing Renderer mobile add-on quantity](docs/assets/demo-mobile-light.png)
+
+See the full [demo validation guide](./docs/demo.md).
+
+## Package entry points
+
+| Import                        | Purpose                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `pricing-renderer`            | Types, normalization, resolution, expressions, i18n, view-model |
+| `pricing-renderer/yaml`       | YAML parsing and bounded remote loading                         |
+| `pricing-renderer/element`    | Web Component class without global registration                 |
+| `pricing-renderer/define`     | Register `<pricing-renderer>`                                   |
+| `pricing-renderer/react`      | Typed React 18/19 adapter                                       |
+| `pricing-renderer/base.css`   | Required structural and accessibility styles                    |
+| `pricing-renderer/theme.css`  | Default professional visual tokens                              |
+| `pricing-renderer/styles.css` | Base and theme combined                                         |
 
 ## Web Component
 
-Import the registration entry and the complete default stylesheet once:
+After npm approval/publication, install with `npm install pricing-renderer`.
+During review, use the workspace build shown above.
+
+Import registration and styles once:
 
 ```ts
 import 'pricing-renderer/define';
 import 'pricing-renderer/styles.css';
 ```
 
-Render a public remote pricing directly from HTML:
+Render a public remote source:
 
 ```html
 <pricing-renderer
@@ -44,21 +98,23 @@ Render a public remote pricing directly from HTML:
 ></pricing-renderer>
 ```
 
-Or assign an iPricing-compatible object or YAML string as a JavaScript
-property:
+`locale` is initial host configuration. Set it when the renderer is created
+(`locale="es-ES"` or the equivalent property/React prop); the library does not
+inject a language picker into production UI. The showcase picker only
+demonstrates that the configuration can be changed reactively.
+
+Or assign a YAML string or iPricing-compatible object as a JavaScript property:
 
 ```ts
 const renderer = document.querySelector('pricing-renderer');
-renderer.pricing = iPricing;
-// renderer.yaml = pricingYaml;
+renderer.yaml = pricingYaml;
+// renderer.pricing = iPricing;
 ```
 
-Only one of `pricing`, `yaml`, or `src` may be present. Conflicts produce a
+Exactly one of `pricing`, `yaml`, or `src` is accepted. Conflicts produce a
 structured diagnostic instead of implicit precedence.
 
-## React
-
-The React adapter supports React 18 and 19 and preserves typed Custom Events:
+## React and Next
 
 ```tsx
 'use client';
@@ -84,46 +140,14 @@ export function PricingPage({ pricing }: { pricing: Record<string, unknown> }) {
 }
 ```
 
-The React entry is safe to import during SSR, but the rendered pricing is a
-client island. Server output should reserve suitable space or show a skeleton;
-deep light-DOM hydration is not part of the v1 contract.
+The React entry is safe to import during SSR and is marked as a client
+component. Full pricing content appears after hydration; deep light-DOM SSR is
+not a v1 contract.
 
-## Private remote sources
+## Variables and multicontractable add-ons
 
-Plain `src` uses an anonymous `GET` with `credentials: "omit"`. Authenticated
-options must be assigned as JavaScript properties so secrets are never
-reflected into HTML:
-
-```ts
-renderer.src = 'https://api.example.com/private/pricing.yml';
-renderer.request = {
-  credentials: 'include',
-  headers: async () => ({
-    Authorization: `Bearer ${await refreshAccessToken()}`,
-  }),
-  timeoutMs: 15_000,
-  maxBytes: 2 * 1024 * 1024,
-};
-```
-
-For OAuth exchanges, signed URLs, server proxies, or custom transports, provide
-a loader:
-
-```ts
-renderer.loadPricing = async ({ url, signal }) => {
-  const response = await authenticatedClient.get(url, { signal });
-  return response.text(); // A compatible object is also accepted.
-};
-```
-
-The built-in loader accepts only HTTP/HTTPS and never fetches automatically
-during SSR.
-
-## Variables and add-ons
-
-Primitive variables referenced by price expressions become controls
-automatically. Arrays and objects remain internal lookup data unless explicitly
-configured. Add presentation metadata under the standard `custom` extension:
+Primitive variables referenced by formulas become controls automatically.
+Presentation metadata can upgrade them to sliders or selects:
 
 ```yaml
 custom:
@@ -146,16 +170,13 @@ custom:
             label: United States
 ```
 
-Component `presentation` props override `custom.pricingRenderer`, which
-overrides schema-derived defaults.
+Add-ons with `subscriptionConstraints` receive a quantity stepper that respects
+`minQuantity`, `maxQuantity`, and `quantityStep`. Dependency and exclusion
+changes are listed in an accessible confirmation dialog before mutation.
+Usage-limit values expressed as `.inf` render as the localized **Unlimited**
+label.
 
-Add-ons with `subscriptionConstraints` receive an accessible quantity stepper.
-Dependencies and exclusions are presented in a confirmation dialog before the
-selection changes.
-
-## CTAs and events
-
-CTAs can be link-based, event-based, or both:
+## CTAs and host-owned checkout
 
 ```ts
 renderer.presentation = {
@@ -165,42 +186,55 @@ renderer.presentation = {
       planId: 'growth',
       label: 'Start free trial',
       href: '/checkout/growth',
+      metadata: { source: 'pricing-page' },
     },
   ],
 };
 
 renderer.addEventListener('pricing-action', (event) => {
-  // Prevent link navigation when the host owns checkout.
   event.preventDefault();
-  console.info(event.detail.selection, event.detail.resolved);
+  openCheckout(event.detail);
 });
 ```
 
-All public events bubble and cross the light-DOM boundary:
+The cancelable event includes the selected plan, billing period, variables,
+add-ons, resolved prices, subtotal, quote state, and metadata. Checkout,
+authentication, and contracting remain host responsibilities.
+
+Public events:
 
 - `pricing-ready`
 - `pricing-selection-change`
-- `pricing-action` (cancelable)
+- `pricing-action`
 - `pricing-diagnostic`
 
-## Styling
+## Private remote sources
 
-Choose one styling level:
+Secrets are property-only and never reflected into markup:
 
 ```ts
-import 'pricing-renderer/styles.css'; // Base + professional theme
-import 'pricing-renderer/base.css'; // Structural styles only
-import 'pricing-renderer/theme.css'; // Theme tokens only
+renderer.src = 'https://api.example.com/private/pricing.yml';
+renderer.request = {
+  credentials: 'include',
+  headers: async () => ({
+    Authorization: `Bearer ${await refreshAccessToken()}`,
+  }),
+  timeoutMs: 15_000,
+  maxBytes: 2 * 1024 * 1024,
+};
 ```
 
-Override tokens at the element boundary:
+Use `loadPricing` for OAuth exchanges, signed URLs, proxies, or SDK clients. The
+built-in loader permits HTTP/HTTPS `GET` only, defaults to
+`credentials: "omit"`, honors cancellation, and never fetches during SSR.
+
+## Theming
 
 ```css
 pricing-renderer {
   --pr-color-accent: #0057ff;
   --pr-radius-lg: 0.75rem;
   --pr-shell-padding: clamp(1rem, 3vw, 2.5rem);
-  --pr-space-section: 4rem;
 }
 
 pricing-renderer [data-pr-part='plan-card'] {
@@ -208,57 +242,60 @@ pricing-renderer [data-pr-part='plan-card'] {
 }
 ```
 
-The `pr-*` classes are internal. CSS variables and `data-pr-part` values are the
-stable theming contract. Because the component uses light DOM, host CSS can
-affect it; keep broad application selectors appropriately scoped.
+Import `styles.css` for the full theme or only `base.css` and supply your own.
+CSS variables and `data-pr-part` values are stable; internal `pr-*` classes are
+not. Read the [theming guide](./docs/theming.md) before applying broad host
+resets to light-DOM content.
 
-## Internationalization
+![Pricing Renderer dark theme](docs/assets/demo-desktop-dark.png)
 
-```ts
-renderer.locale = 'es-ES';
-renderer.messages = {
-  'pricing.choosePlan': 'Seleccionar {plan}',
-};
-```
-
-`en-US` and `es-ES` are exported from the core. Additional languages can merge
-their catalog through `messages`. Formatting uses `Intl.NumberFormat`,
-`Intl.DateTimeFormat`, and locale-aware labels.
-
-## Headless API
+## Headless and extension APIs
 
 ```ts
-import { createPricingViewModel, normalizePricing, resolvePricing } from 'pricing-renderer';
-import { parsePricingYaml, loadPricingFromUrl } from 'pricing-renderer/yaml';
+import {
+  createPricingViewModel,
+  normalizePricing,
+  registerMessageCatalog,
+  resolvePricing,
+} from 'pricing-renderer';
+import { loadPricingFromUrl, parsePricingYaml } from 'pricing-renderer/yaml';
 ```
 
-Author errors are returned as `PricingResult<T>` diagnostics with `code`,
-`severity`, `message`, and optional YAML `path`. Non-3.x major versions are
-blocked; unknown fields in compatible 3.x documents remain available through
-the preserved raw object.
+Extend future/vendor syntax with `PricingSyntaxAdapter`, translations with
+`registerMessageCatalog`, and domain calculations through explicitly
+allow-listed expression functions. See [Extending](./docs/extending.md).
 
-## Security notes
+## Documentation
 
-- Pricing text is escaped; arbitrary HTML is not rendered.
-- Price expressions are parsed into a restricted AST.
-- URL-bearing fields accept only safe HTTP, HTTPS, mail, anchor, or relative
-  links.
-- `private` is a display flag, not a confidentiality boundary. Remove
-  confidential plans and add-ons before sending YAML to a browser.
-- A public npm package exposes its distributed JavaScript even while the source
-  repository is private.
+- [Architecture](./docs/architecture.md)
+- [API reference](./docs/api-reference.md)
+- [Demo and release acceptance](./docs/demo.md)
+- [Extending the library](./docs/extending.md)
+- [Theming](./docs/theming.md)
+- [Internationalization](./docs/i18n.md)
+- [Pricing2Yaml compatibility](./docs/pricing2yaml-compatibility.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Security policy](./SECURITY.md)
+- [Changelog](./CHANGELOG.md)
 
-## Development
+## Quality gates
 
 ```bash
-pnpm install
-pnpm test
+pnpm lint
+pnpm format:check
 pnpm typecheck
+pnpm test
 pnpm build
-pnpm demo
 pnpm test:browser
 pnpm package:check
 ```
 
-The Vanilla and React examples are under `examples/`. Releases use Changesets,
-SemVer, npm provenance, and the MIT license.
+Browser coverage includes Chromium, Firefox, WebKit, Axe, keyboard paths, and
+visual breakpoints. Releases use Changesets, SemVer, npm provenance, and MIT.
+
+## Security
+
+Pricing text is escaped, links use safe schemes, and expressions cannot reach
+globals or prototypes. `private` only controls presentation—remove confidential
+data before delivering YAML to a browser. Report vulnerabilities through the
+process in [SECURITY.md](./SECURITY.md).

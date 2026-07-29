@@ -21,6 +21,29 @@ describe('safe price expression evaluator', () => {
     expect(collectExpressionDependencies('#seats * #price + #seats')).toEqual(['seats', 'price']);
   });
 
+  it('supports array/object literals and explicitly allow-listed extension functions', () => {
+    const options = {
+      functions: {
+        sum: (...values: unknown[]) =>
+          (values[0] as unknown[]).reduce<number>((total, value) => total + Number(value), 0),
+        pick: (record: unknown, key: unknown) => (record as Record<string, unknown>)[String(key)],
+      },
+    };
+    expect(evaluatePriceExpression('sum([#seats, 5])', { seats: 7 }, options)).toEqual({
+      value: 12,
+    });
+    expect(evaluatePriceExpression("pick({eu: 9, us: 12}, 'eu')", {}, options)).toEqual({
+      value: 9,
+    });
+    expect(collectExpressionDependencies('sum([#seats, #storage])')).toEqual(['seats', 'storage']);
+  });
+
+  it('does not expose extension function identifiers unless explicitly configured', () => {
+    expect(evaluatePriceExpression('sum([1, 2])', {}).error).toContain(
+      'Function "sum" is not allowed',
+    );
+  });
+
   it.each([
     'globalThis.process',
     '#value.constructor.constructor("return 1")()',

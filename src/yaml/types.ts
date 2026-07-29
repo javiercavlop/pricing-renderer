@@ -1,4 +1,9 @@
-import type { IPricingLike, NormalizedPricing, PricingResult } from '../core/index.js';
+import type {
+  IPricingLike,
+  NormalizedPricing,
+  NormalizePricingOptions,
+  PricingResult,
+} from '../core/index.js';
 
 export interface PricingRequestOptions {
   headers?: HeadersInit | (() => HeadersInit | Promise<HeadersInit>);
@@ -20,11 +25,13 @@ export type PricingLoader = (context: PricingLoaderContext) => Promise<string | 
 
 export interface ParsePricingYamlOptions {
   maxAliasCount?: number;
+  normalize?: NormalizePricingOptions;
 }
 
 export interface LoadPricingOptions extends PricingRequestOptions {
   loadPricing?: PricingLoader;
   signal?: AbortSignal;
+  normalize?: NormalizePricingOptions;
 }
 
 export type LoadedPricingResult = PricingResult<NormalizedPricing>;

@@ -5,6 +5,7 @@ import type {
   PriceSource,
   PricingDiagnostic,
   PricingSelection,
+  ResolvePricingOptions,
   ResolvedPrice,
   ResolvedPricing,
 } from './types.js';
@@ -40,6 +41,7 @@ function resolvePriceSource(
   variables: Record<string, unknown>,
   billingMultiplier: number,
   quantity: number,
+  options: ResolvePricingOptions,
 ): ResolvedPrice {
   if (price.kind === 'label') {
     return { kind: 'label', label: price.text, quantity };
@@ -53,7 +55,7 @@ function resolvePriceSource(
       quantity,
     };
   }
-  const result = evaluatePriceExpression(price.source, variables);
+  const result = evaluatePriceExpression(price.source, variables, options.expression);
   if (result.value === undefined) {
     return {
       kind: 'error',
@@ -94,6 +96,7 @@ export function normalizeAddOnQuantity(
 export function resolvePricing(
   pricing: NormalizedPricing,
   selectionInput?: Partial<PricingSelection>,
+  options: ResolvePricingOptions = {},
 ): ResolvedPricing {
   const selection = mergeSelection(pricing, selectionInput);
   const billingMultiplier =
@@ -103,7 +106,13 @@ export function resolvePricing(
   const addOnPrices: Record<string, ResolvedPrice> = {};
 
   for (const plan of pricing.plans) {
-    const resolved = resolvePriceSource(plan.price, selection.variables, billingMultiplier, 1);
+    const resolved = resolvePriceSource(
+      plan.price,
+      selection.variables,
+      billingMultiplier,
+      1,
+      options,
+    );
     planPrices[plan.id] = resolved;
     if (resolved.kind === 'error') {
       diagnostics.push({
@@ -122,6 +131,7 @@ export function resolvePricing(
       selection.variables,
       billingMultiplier,
       quantity || 1,
+      options,
     );
     addOnPrices[addOn.id] = resolved;
     if (resolved.kind === 'error') {

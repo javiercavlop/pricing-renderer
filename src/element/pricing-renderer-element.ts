@@ -8,8 +8,10 @@ import {
   setAtPath,
   translate,
   type IPricingLike,
+  type ExpressionOptions,
   type MessageCatalog,
   type NormalizedPricing,
+  type NormalizePricingOptions,
   type PricingDiagnostic,
   type PricingLayout,
   type PricingMode,
@@ -19,6 +21,7 @@ import {
   type PricingViewModel,
   type PricingVisibility,
   type ResolvedPrice,
+  type ViewModelOptions,
 } from '../core/index.js';
 import {
   loadPricingFromUrl,
@@ -57,6 +60,8 @@ export class PricingRendererElement extends LitElement {
     src: { type: String, reflect: true },
     request: { attribute: false },
     loadPricing: { attribute: false },
+    normalizeOptions: { attribute: false },
+    expressionOptions: { attribute: false },
     selection: { attribute: false },
     defaultSelection: { attribute: false },
     presentation: { attribute: false },
@@ -74,6 +79,8 @@ export class PricingRendererElement extends LitElement {
   declare src?: string;
   declare request?: PricingRequestOptions;
   declare loadPricing?: PricingLoader;
+  declare normalizeOptions?: NormalizePricingOptions;
+  declare expressionOptions?: ExpressionOptions;
   declare selection?: PricingSelection;
   declare defaultSelection?: Partial<PricingSelection>;
   declare presentation?: PricingPresentation;
@@ -151,7 +158,8 @@ export class PricingRendererElement extends LitElement {
       changed.has('yaml') ||
       changed.has('src') ||
       changed.has('request') ||
-      changed.has('loadPricing');
+      changed.has('loadPricing') ||
+      changed.has('normalizeOptions');
     if (this._loadedOnce && this._reloadOnPropertyChange && inputChanged) {
       void this.reload();
     }
@@ -195,13 +203,16 @@ export class PricingRendererElement extends LitElement {
 
     let result: PricingResult<NormalizedPricing>;
     if (this.pricing !== undefined) {
-      result = normalizePricing(this.pricing);
+      result = normalizePricing(this.pricing, this.normalizeOptions);
     } else if (this.yaml !== undefined) {
-      result = parsePricingYaml(this.yaml);
+      result = parsePricingYaml(this.yaml, {
+        ...(this.normalizeOptions ? { normalize: this.normalizeOptions } : {}),
+      });
     } else {
       result = await loadPricingFromUrl(this.src!, {
         ...(this.request ?? {}),
         ...(this.loadPricing ? { loadPricing: this.loadPricing } : {}),
+        ...(this.normalizeOptions ? { normalize: this.normalizeOptions } : {}),
         signal: controller.signal,
       });
     }
@@ -219,13 +230,11 @@ export class PricingRendererElement extends LitElement {
       this._lastValidAddOnPrices = {};
       this._internalSelection = mergeSelection(result.value, this.defaultSelection);
       this._expandedGroups = new Set();
-      const viewModel = createPricingViewModel(result.value, this._effectiveSelection(), {
-        locale: this.locale,
-        messages: this.messages,
-        mode: this.mode,
-        visibility: this.visibility,
-        presentation: this.presentation,
-      });
+      const viewModel = createPricingViewModel(
+        result.value,
+        this._effectiveSelection(),
+        this._viewModelOptions(),
+      );
       if (viewModel.comparisonGroups[0]) {
         this._expandedGroups.add(viewModel.comparisonGroups[0].id);
       }
@@ -254,6 +263,17 @@ export class PricingRendererElement extends LitElement {
 
   private _effectiveSelection(): PricingSelection | undefined {
     return this.selection ?? this._internalSelection;
+  }
+
+  private _viewModelOptions(): ViewModelOptions {
+    return {
+      locale: this.locale,
+      mode: this.mode,
+      visibility: this.visibility,
+      ...(this.messages ? { messages: this.messages } : {}),
+      ...(this.presentation ? { presentation: this.presentation } : {}),
+      ...(this.expressionOptions ? { expression: this.expressionOptions } : {}),
+    };
   }
 
   private _stabilizeResolvedPrices(viewModel: PricingViewModel): PricingViewModel {
@@ -290,11 +310,7 @@ export class PricingRendererElement extends LitElement {
     if (!this._normalized) return undefined;
     return this._stabilizeResolvedPrices(
       createPricingViewModel(this._normalized, this._effectiveSelection(), {
-        locale: this.locale,
-        messages: this.messages,
-        mode: this.mode,
-        visibility: this.visibility,
-        presentation: this.presentation,
+        ...this._viewModelOptions(),
       }),
     );
   }
@@ -314,11 +330,7 @@ export class PricingRendererElement extends LitElement {
     const resolved = this._normalized
       ? this._stabilizeResolvedPrices(
           createPricingViewModel(this._normalized, next, {
-            locale: this.locale,
-            messages: this.messages,
-            mode: this.mode,
-            visibility: this.visibility,
-            presentation: this.presentation,
+            ...this._viewModelOptions(),
           }),
         ).resolved
       : undefined;

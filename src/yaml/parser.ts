@@ -70,7 +70,7 @@ export function parsePricingYaml(
       maxAliasCount: options.maxAliasCount ?? 50,
       mapAsMap: false,
     }) as IPricingLike;
-    const normalized = normalizePricing(value);
+    const normalized = normalizePricing(value, options.normalize);
     return {
       ...normalized,
       diagnostics: [...diagnostics, ...normalized.diagnostics],

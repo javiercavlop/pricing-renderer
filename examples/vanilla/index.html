@@ -3,34 +3,276 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Pricing Renderer interactive demo" />
-    <title>Pricing Renderer — Vanilla demo</title>
+    <meta
+      name="description"
+      content="Interactive showcase for the Pricing2Yaml pricing-renderer library"
+    />
+    <title>Pricing Renderer — Interactive showcase</title>
   </head>
   <body>
-    <header class="demo-toolbar">
-      <a href="#pricing">Pricing Renderer</a>
-      <div>
-        <label>
-          Language
-          <select id="locale">
-            <option value="en-US">English</option>
-            <option value="es-ES">Español</option>
-          </select>
-        </label>
-        <label>
-          Theme
-          <select id="theme">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="auto">Auto</option>
-          </select>
-        </label>
-      </div>
+    <a class="demo-skip-link" href="#live-demo">Skip to the interactive demo</a>
+
+    <header class="demo-nav">
+      <a class="demo-brand" href="#" aria-label="Pricing Renderer home">
+        <span class="demo-brand__mark" aria-hidden="true">PR</span>
+        <span>
+          <strong>Pricing Renderer</strong>
+          <small>Pricing2Yaml, beautifully presented</small>
+        </span>
+      </a>
+      <nav aria-label="Showcase navigation">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#integration">Integration</a>
+        <a
+          class="demo-nav__github"
+          href="https://github.com/javiercavlop/pricing-renderer"
+          target="_blank"
+          rel="noreferrer"
+        >
+          View on GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
     </header>
-    <main id="pricing">
-      <pricing-renderer></pricing-renderer>
-      <output id="action-output" aria-live="polite"></output>
+
+    <main>
+      <section class="demo-hero" aria-labelledby="showcase-title">
+        <div class="demo-hero__content">
+          <p class="demo-eyebrow"><span></span> Open-source · framework-friendly</p>
+          <h1 id="showcase-title">
+            Pricing interfaces that feel
+            <em>designed for your product.</em>
+          </h1>
+          <p class="demo-hero__lead">
+            Turn one Pricing2Yaml document into a clear, responsive and interactive pricing
+            experience—without locking your product into a framework or visual identity.
+          </p>
+          <div class="demo-hero__actions">
+            <a class="demo-button demo-button--primary" href="#live-demo">
+              Explore the live pricing
+              <span aria-hidden="true">↓</span>
+            </a>
+            <a
+              class="demo-button demo-button--secondary"
+              href="https://github.com/javiercavlop/pricing-renderer"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Read the source
+            </a>
+          </div>
+          <ul class="demo-hero__proof" aria-label="Library highlights">
+            <li><strong>3</strong><span>integration layers</span></li>
+            <li><strong>3.1</strong><span>Pricing2Yaml support</span></li>
+            <li><strong>AA</strong><span>accessibility target</span></li>
+          </ul>
+        </div>
+
+        <div class="demo-hero__visual" aria-label="Example integration code">
+          <div class="demo-code-card">
+            <div class="demo-code-card__top">
+              <span><i></i><i></i><i></i></span>
+              <span>pricing-page.ts</span>
+              <span>TypeScript</span>
+            </div>
+            <pre><code><span class="code-keyword">import</span> <span class="code-string">'pricing-renderer/define'</span>;
+<span class="code-keyword">import</span> <span class="code-string">'pricing-renderer/styles.css'</span>;
+
+<span class="code-keyword">const</span> pricing = document
+  .querySelector(<span class="code-string">'pricing-renderer'</span>);
+
+pricing.yaml = pricingYaml;
+pricing.theme = <span class="code-string">'auto'</span>;</code></pre>
+            <div class="demo-code-card__result">
+              <span class="demo-pulse"></span>
+              Reactive pricing ready
+              <strong>18 ms</strong>
+            </div>
+          </div>
+          <span class="demo-orbit demo-orbit--one">YAML</span>
+          <span class="demo-orbit demo-orbit--two">React</span>
+          <span class="demo-orbit demo-orbit--three">&lt;pricing-renderer&gt;</span>
+        </div>
+      </section>
+
+      <section id="live-demo" class="demo-section demo-live" aria-labelledby="demo-title">
+        <div class="demo-section__heading">
+          <div>
+            <p class="demo-eyebrow"><span></span> Interactive showcase</p>
+            <h2 id="demo-title">Configure it like a customer would.</h2>
+            <p>
+              Change seats, billing and add-ons. Every amount, constraint and total is resolved from
+              the same YAML source.
+            </p>
+          </div>
+          <span class="demo-status"><i></i> Live fixture</span>
+        </div>
+
+        <div class="demo-workbench">
+          <div class="demo-toolbar" aria-label="Demo controls">
+            <div class="demo-toolbar__title">
+              <span aria-hidden="true">✦</span>
+              <span
+                ><strong>Presentation controls</strong><small>Host-owned configuration</small></span
+              >
+            </div>
+            <div class="demo-toolbar__controls">
+              <label>
+                <span>Language</span>
+                <select id="locale">
+                  <option value="en-US">English</option>
+                  <option value="es-ES">Español</option>
+                </select>
+              </label>
+              <label>
+                <span>Theme</span>
+                <select id="theme">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="auto">System</option>
+                </select>
+              </label>
+              <label>
+                <span>View</span>
+                <select id="mode">
+                  <option value="commercial">Commercial</option>
+                  <option value="catalog">Catalog</option>
+                </select>
+              </label>
+              <button id="reset-demo" type="button">Reset demo</button>
+            </div>
+          </div>
+
+          <div class="demo-browser">
+            <div class="demo-browser__chrome" aria-hidden="true">
+              <span><i></i><i></i><i></i></span>
+              <p>
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M5.75 7V5.5a2.25 2.25 0 0 1 4.5 0V7m-6 0h7.5v5.75h-7.5z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                acme.cloud/pricing
+              </p>
+              <b>•••</b>
+            </div>
+            <pricing-renderer></pricing-renderer>
+          </div>
+
+          <div class="demo-live-state" aria-label="Live renderer state">
+            <div>
+              <span>Renderer</span>
+              <strong id="renderer-status"><i></i> Loading</strong>
+            </div>
+            <div>
+              <span>Selected plan</span>
+              <strong id="selected-plan">Starter</strong>
+            </div>
+            <div>
+              <span>Known subtotal</span>
+              <strong id="known-subtotal">€20</strong>
+            </div>
+            <div>
+              <span>Last event</span>
+              <strong id="last-event">pricing-ready</strong>
+            </div>
+          </div>
+        </div>
+        <output id="action-output" aria-live="polite"></output>
+      </section>
+
+      <section
+        id="capabilities"
+        class="demo-section demo-capabilities"
+        aria-labelledby="capabilities-title"
+      >
+        <div class="demo-section__heading demo-section__heading--centered">
+          <div>
+            <p class="demo-eyebrow"><span></span> Built as infrastructure</p>
+            <h2 id="capabilities-title">One model. Every presentation layer.</h2>
+            <p>
+              Start with the polished component, compose the headless view-model, or integrate
+              through React without changing your pricing source.
+            </p>
+          </div>
+        </div>
+        <div class="demo-capability-grid">
+          <article>
+            <span class="demo-capability__icon" aria-hidden="true">◇</span>
+            <p>01 · Headless</p>
+            <h3>Own the rendering</h3>
+            <p>
+              Parse, normalize and resolve every pricing decision without importing any DOM code.
+            </p>
+            <code>createPricingViewModel()</code>
+          </article>
+          <article class="is-featured">
+            <span class="demo-capability__icon" aria-hidden="true">✦</span>
+            <p>02 · Web platform</p>
+            <h3>Drop in the complete UI</h3>
+            <p>
+              Use one accessible light-DOM element and make it belong to your product through CSS.
+            </p>
+            <code>&lt;pricing-renderer&gt;</code>
+          </article>
+          <article>
+            <span class="demo-capability__icon" aria-hidden="true">⌁</span>
+            <p>03 · React</p>
+            <h3>Keep typed events</h3>
+            <p>
+              React 18/19 props, refs and event callbacks with a client-island boundary for Next.
+            </p>
+            <code>pricing-renderer/react</code>
+          </article>
+        </div>
+      </section>
+
+      <section
+        id="integration"
+        class="demo-section demo-integration"
+        aria-labelledby="integration-title"
+      >
+        <div>
+          <p class="demo-eyebrow"><span></span> Designed to extend</p>
+          <h2 id="integration-title">Your pricing language can grow without rewriting the UI.</h2>
+          <p>
+            Register locales, allow-list domain functions and adapt future syntax versions through
+            explicit contracts. Unknown custom data remains intact for host-owned extensions.
+          </p>
+          <ul>
+            <li><span>✓</span> DOM-free normalized model</li>
+            <li><span>✓</span> Safe expression extensions</li>
+            <li><span>✓</span> Stable CSS parts and tokens</li>
+            <li><span>✓</span> Version adapter boundary</li>
+          </ul>
+        </div>
+        <pre><code><span class="code-keyword">const</span> result = resolvePricing(
+  pricing,
+  selection,
+  {
+    expression: {
+      functions: {
+        volumePrice: (units) =>
+          Number(units) * <span class="code-number">0.8</span>
+      }
+    }
+  }
+);</code></pre>
+      </section>
     </main>
+
+    <footer>
+      <a class="demo-brand" href="#">
+        <span class="demo-brand__mark" aria-hidden="true">PR</span>
+        <span><strong>Pricing Renderer</strong><small>MIT licensed</small></span>
+      </a>
+      <p>Pricing data in. Product-quality pricing out.</p>
+      <a href="https://github.com/javiercavlop/pricing-renderer">GitHub ↗</a>
+    </footer>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -4,7 +4,9 @@ import { createComponent, type EventName } from '@lit/react';
 import * as React from 'react';
 import type {
   IPricingLike,
+  ExpressionOptions,
   MessageCatalog,
+  NormalizePricingOptions,
   PricingLayout,
   PricingMode,
   PricingPresentation,
@@ -60,6 +62,8 @@ export interface PricingRendererSharedProps {
   selection?: PricingSelection;
   defaultSelection?: Partial<PricingSelection>;
   presentation?: PricingPresentation;
+  normalizeOptions?: NormalizePricingOptions;
+  expressionOptions?: ExpressionOptions;
   locale?: string;
   messages?: MessageCatalog;
   mode?: PricingMode;

@@ -136,8 +136,44 @@ export const esES: MessageCatalog = {
   'pricing.configurationUpdated': 'Configuración de precios actualizada.',
 };
 
+const registeredCatalogs = new Map<string, MessageCatalog>([
+  ['en-US', enUS],
+  ['es-ES', esES],
+]);
+
+function canonicalLocale(locale: string): string {
+  try {
+    return Intl.getCanonicalLocales(locale)[0] ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
+export function registerMessageCatalog(locale: string, catalog: MessageCatalog): () => void {
+  const key = canonicalLocale(locale);
+  const previous = registeredCatalogs.get(key);
+  const registered = { ...catalog };
+  registeredCatalogs.set(key, registered);
+  return () => {
+    if (registeredCatalogs.get(key) !== registered) return;
+    if (previous) registeredCatalogs.set(key, previous);
+    else registeredCatalogs.delete(key);
+  };
+}
+
+export function getRegisteredLocales(): string[] {
+  return [...registeredCatalogs.keys()].sort();
+}
+
 export function getMessages(locale = 'en-US', overrides?: MessageCatalog): MessageCatalog {
-  const base = locale.toLowerCase().startsWith('es') ? esES : enUS;
+  const canonical = canonicalLocale(locale);
+  const language = canonical.split('-')[0]?.toLowerCase();
+  const base =
+    registeredCatalogs.get(canonical) ??
+    [...registeredCatalogs].find(
+      ([candidate]) => candidate.split('-')[0]?.toLowerCase() === language,
+    )?.[1] ??
+    enUS;
   return { ...base, ...overrides };
 }
 

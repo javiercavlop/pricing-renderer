@@ -7,6 +7,7 @@ import type {
   NormalizedPlan,
   NormalizedPricing,
   NormalizedUsageLimit,
+  NormalizePricingOptions,
   PriceSource,
   PricingDiagnostic,
   PricingResult,
@@ -362,7 +363,10 @@ function normalizeTags(input: unknown): string[] {
   return Object.keys(asRecord(input));
 }
 
-export function normalizePricing(pricing: IPricingLike): PricingResult<NormalizedPricing> {
+export function normalizePricing(
+  pricing: IPricingLike,
+  options: NormalizePricingOptions = {},
+): PricingResult<NormalizedPricing> {
   const diagnostics: PricingDiagnostic[] = [];
   if (!isRecord(pricing)) {
     return {
@@ -371,6 +375,51 @@ export function normalizePricing(pricing: IPricingLike): PricingResult<Normalize
         diagnostic('PR_INPUT_INVALID', 'error', 'Pricing input must be an object.', '$'),
       ],
     };
+  }
+
+  const sourceVersion =
+    typeof pricing.syntaxVersion === 'number' && Number.isFinite(pricing.syntaxVersion)
+      ? String(pricing.syntaxVersion)
+      : typeof pricing.syntaxVersion === 'string'
+        ? pricing.syntaxVersion.trim()
+        : '';
+  const adapter = options.syntaxAdapters?.find((candidate) => candidate.supports(sourceVersion));
+  if (adapter) {
+    try {
+      const adapted = adapter.adapt(pricing);
+      if (!isRecord(adapted) || adapted === pricing) {
+        throw new Error('A syntax adapter must return a new pricing object.');
+      }
+      const result = normalizePricing(adapted, {
+        syntaxAdapters: options.syntaxAdapters?.filter((candidate) => candidate !== adapter),
+      });
+      const adapterDiagnostic = diagnostic(
+        'PR_VERSION_ADAPTED',
+        'info',
+        `Pricing syntax ${sourceVersion || 'unknown'} was adapted by "${adapter.id}".`,
+        'syntaxVersion',
+      );
+      if (result.value) {
+        result.value.raw = pricing;
+        result.value.metadata.syntaxVersion = sourceVersion || result.value.metadata.syntaxVersion;
+      }
+      return {
+        ...result,
+        diagnostics: [adapterDiagnostic, ...result.diagnostics],
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        diagnostics: [
+          diagnostic(
+            'PR_VERSION_ADAPTER_FAILED',
+            'error',
+            error instanceof Error ? error.message : `Syntax adapter "${adapter.id}" failed.`,
+            'syntaxVersion',
+          ),
+        ],
+      };
+    }
   }
 
   const syntaxVersion = normalizeSyntaxVersion(pricing.syntaxVersion, diagnostics);

@@ -16,13 +16,40 @@
             { "kind": "field", "name": "pricing", "type": { "text": "IPricingLike" } },
             { "kind": "field", "name": "yaml", "type": { "text": "string" } },
             { "kind": "field", "name": "src", "type": { "text": "string" }, "attribute": "src" },
+            {
+              "kind": "field",
+              "name": "request",
+              "type": { "text": "PricingRequestOptions" }
+            },
+            { "kind": "field", "name": "loadPricing", "type": { "text": "PricingLoader" } },
+            {
+              "kind": "field",
+              "name": "normalizeOptions",
+              "type": { "text": "NormalizePricingOptions" }
+            },
+            {
+              "kind": "field",
+              "name": "expressionOptions",
+              "type": { "text": "ExpressionOptions" }
+            },
             { "kind": "field", "name": "selection", "type": { "text": "PricingSelection" } },
+            {
+              "kind": "field",
+              "name": "defaultSelection",
+              "type": { "text": "Partial<PricingSelection>" }
+            },
+            {
+              "kind": "field",
+              "name": "presentation",
+              "type": { "text": "PricingPresentation" }
+            },
             {
               "kind": "field",
               "name": "locale",
               "type": { "text": "string" },
               "attribute": "locale"
             },
+            { "kind": "field", "name": "messages", "type": { "text": "MessageCatalog" } },
             {
               "kind": "field",
               "name": "mode",
@@ -46,6 +73,12 @@
               "name": "theme",
               "type": { "text": "\"light\" | \"dark\" | \"auto\"" },
               "attribute": "theme"
+            },
+            {
+              "kind": "field",
+              "name": "loadingLabel",
+              "type": { "text": "string" },
+              "attribute": "loading-label"
             },
             {
               "kind": "method",

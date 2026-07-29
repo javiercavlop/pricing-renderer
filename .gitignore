@@ -1,6 +1,7 @@
 node_modules/
 .npm-cache/
 dist/
+.next/
 coverage/
 playwright-report/
 test-results/

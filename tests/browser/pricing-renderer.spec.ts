@@ -91,6 +91,15 @@ test('switches locale without changing source data', async ({ page }) => {
   await expect(page.getByText('Periodo de facturación')).toBeVisible();
 });
 
+test('renders infinite usage limits as localized Unlimited labels', async ({ page }) => {
+  await page.getByRole('radio', { name: 'Choose Enterprise' }).check();
+  await page.getByRole('button', { name: 'Usage' }).click();
+  await expect(page.getByText('Unlimited')).toBeVisible();
+
+  await page.locator('#locale').selectOption('es-ES');
+  await expect(page.getByText('Ilimitado')).toBeVisible();
+});
+
 test('has no serious accessibility violations', async ({ page }) => {
   const results = await new AxeBuilder({ page })
     .exclude('#action-output')
@@ -105,9 +114,14 @@ test('has no serious accessibility violations', async ({ page }) => {
 
 for (const viewport of [
   { name: 'mobile-320', width: 320, height: 900 },
+  { name: 'mobile-375', width: 375, height: 900 },
+  { name: 'mobile-599', width: 599, height: 1000 },
   { name: 'tablet-600', width: 600, height: 1000 },
+  { name: 'tablet-839', width: 839, height: 1000 },
   { name: 'table-840', width: 840, height: 1000 },
+  { name: 'desktop-1024', width: 1024, height: 1000 },
   { name: 'desktop-1200', width: 1200, height: 1000 },
+  { name: 'desktop-1440', width: 1440, height: 1000 },
 ]) {
   test(`is responsive at ${viewport.name}`, async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'Visual baselines are generated once in Chromium.');
@@ -118,6 +132,7 @@ for (const viewport of [
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
+    await page.locator('pricing-renderer').scrollIntoViewIfNeeded();
     await expect(page).toHaveScreenshot(`${viewport.name}.png`, {
       fullPage: false,
       animations: 'disabled',

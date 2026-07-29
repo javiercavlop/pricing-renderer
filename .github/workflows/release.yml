@@ -11,6 +11,9 @@ permissions:
 
 jobs:
   publish:
+    # Intentionally fail closed until the maintainer has approved the live demo
+    # and explicitly sets this repository variable to "true".
+    if: vars.NPM_PUBLICATION_APPROVED == 'true'
     runs-on: ubuntu-latest
     environment: npm
     steps:
@@ -24,7 +27,9 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
       - run: pnpm lint
+      - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm package:check
       - run: npm publish --access public --provenance

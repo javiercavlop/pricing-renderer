@@ -1,5 +1,14 @@
 export { collectExpressionDependencies, evaluatePriceExpression } from './expression.js';
-export { enUS, esES, formatCurrency, formatDate, getMessages, translate } from './i18n.js';
+export {
+  enUS,
+  esES,
+  formatCurrency,
+  formatDate,
+  getMessages,
+  getRegisteredLocales,
+  registerMessageCatalog,
+  translate,
+} from './i18n.js';
 export { getPricingRendererCustom, normalizePricing } from './normalize.js';
 export {
   createDefaultSelection,
@@ -29,6 +38,8 @@ export type {
   AddOnSelection,
   DiagnosticSeverity,
   ExpressionEvaluation,
+  ExpressionFunction,
+  ExpressionOptions,
   IPricingLike,
   MessageCatalog,
   NormalizedAddOn,
@@ -37,6 +48,7 @@ export type {
   NormalizedPlan,
   NormalizedPricing,
   NormalizedUsageLimit,
+  NormalizePricingOptions,
   PriceSource,
   PricingComparisonGroup,
   PricingComparisonRow,
@@ -48,12 +60,14 @@ export type {
   PricingPresentation,
   PricingResult,
   PricingSelection,
+  PricingSyntaxAdapter,
   PricingValueCell,
   PricingViewModel,
   PricingVisibility,
   RenderMode,
   ResolvedPrice,
   ResolvedPricing,
+  ResolvePricingOptions,
   SubscriptionConstraints,
   UnknownRecord,
   VariableControl,

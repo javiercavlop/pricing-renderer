@@ -239,7 +239,9 @@ export function createPricingViewModel(
 
   return {
     pricing,
-    resolved: resolvePricing(pricing, selection),
+    resolved: resolvePricing(pricing, selection, {
+      ...(options.expression ? { expression: options.expression } : {}),
+    }),
     plans,
     addOns,
     comparisonGroups: createComparisonGroups(pricing, new Set(plans.map((plan) => plan.id))),

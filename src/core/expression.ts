@@ -1,4 +1,4 @@
-import type { ExpressionEvaluation } from './types.js';
+import type { ExpressionEvaluation, ExpressionOptions } from './types.js';
 import { isRecord } from './utils.js';
 
 type TokenKind =
@@ -13,7 +13,9 @@ interface Token {
 type ExpressionNode =
   | { type: 'literal'; value: unknown }
   | { type: 'variable'; name: string }
-  | { type: 'identifier'; name: 'Math' }
+  | { type: 'identifier'; name: string }
+  | { type: 'array'; elements: ExpressionNode[] }
+  | { type: 'object'; properties: Array<{ key: string; value: ExpressionNode }> }
   | { type: 'unary'; operator: string; argument: ExpressionNode }
   | { type: 'binary'; operator: string; left: ExpressionNode; right: ExpressionNode }
   | {
@@ -201,7 +203,7 @@ class Tokenizer {
     }
 
     const character = this.peek();
-    if ('()[],.?:'.includes(character)) {
+    if ('()[]{},.?:'.includes(character)) {
       this.position += 1;
       this.tokens.push({ kind: 'punctuation', value: character, position: start });
       return;
@@ -299,8 +301,42 @@ class Parser {
       if (token.value === 'true') return { type: 'literal', value: true };
       if (token.value === 'false') return { type: 'literal', value: false };
       if (token.value === 'null') return { type: 'literal', value: null };
-      if (token.value === 'Math') return { type: 'identifier', name: 'Math' };
-      throw new ExpressionSyntaxError(`Identifier "${token.value}" is not allowed`, token.position);
+      return { type: 'identifier', name: token.value };
+    }
+    if (this.match('punctuation', '[')) {
+      this.consume();
+      const elements: ExpressionNode[] = [];
+      if (!this.match('punctuation', ']')) {
+        do {
+          elements.push(this.parseConditional());
+          if (!this.match('punctuation', ',')) break;
+          this.consume();
+        } while (!this.match('punctuation', ']'));
+      }
+      this.expect('punctuation', ']');
+      return { type: 'array', elements };
+    }
+    if (this.match('punctuation', '{')) {
+      this.consume();
+      const properties: Array<{ key: string; value: ExpressionNode }> = [];
+      if (!this.match('punctuation', '}')) {
+        do {
+          const key = this.current();
+          if (key.kind !== 'identifier' && key.kind !== 'string') {
+            throw new ExpressionSyntaxError('Expected an object property name', key.position);
+          }
+          this.consume();
+          if (FORBIDDEN_PROPERTIES.has(key.value)) {
+            throw new ExpressionSyntaxError(`Property "${key.value}" is not allowed`, key.position);
+          }
+          this.expect('punctuation', ':');
+          properties.push({ key: key.value, value: this.parseConditional() });
+          if (!this.match('punctuation', ',')) break;
+          this.consume();
+        } while (!this.match('punctuation', '}'));
+      }
+      this.expect('punctuation', '}');
+      return { type: 'object', properties };
     }
     if (this.match('punctuation', '(')) {
       this.consume();
@@ -359,6 +395,12 @@ function validateComplexity(root: ExpressionNode): void {
       case 'unary':
         visit(node.argument, depth + 1);
         break;
+      case 'array':
+        node.elements.forEach((element) => visit(element, depth + 1));
+        break;
+      case 'object':
+        node.properties.forEach((property) => visit(property.value, depth + 1));
+        break;
       case 'binary':
         visit(node.left, depth + 1);
         visit(node.right, depth + 1);
@@ -412,6 +454,7 @@ function getMemberValue(object: unknown, property: unknown): unknown {
 function evaluateNode(
   node: ExpressionNode,
   variables: Record<string, unknown>,
+  options: ExpressionOptions,
   depth = 0,
 ): unknown {
   if (depth > MAX_DEPTH) {
@@ -426,24 +469,33 @@ function evaluateNode(
       }
       return variables[node.name];
     case 'identifier':
-      return 'Math';
+      throw new Error(`Identifier "${node.name}" can only be used as an allowed function.`);
+    case 'array':
+      return node.elements.map((element) => evaluateNode(element, variables, options, depth + 1));
+    case 'object': {
+      const value = Object.create(null) as Record<string, unknown>;
+      for (const property of node.properties) {
+        value[property.key] = evaluateNode(property.value, variables, options, depth + 1);
+      }
+      return value;
+    }
     case 'unary': {
-      const value = evaluateNode(node.argument, variables, depth + 1);
+      const value = evaluateNode(node.argument, variables, options, depth + 1);
       if (node.operator === '!') return !value;
       if (node.operator === '+') return Number(value);
       return -Number(value);
     }
     case 'binary': {
       if (node.operator === '&&') {
-        const left = evaluateNode(node.left, variables, depth + 1);
-        return left ? evaluateNode(node.right, variables, depth + 1) : left;
+        const left = evaluateNode(node.left, variables, options, depth + 1);
+        return left ? evaluateNode(node.right, variables, options, depth + 1) : left;
       }
       if (node.operator === '||') {
-        const left = evaluateNode(node.left, variables, depth + 1);
-        return left ? left : evaluateNode(node.right, variables, depth + 1);
+        const left = evaluateNode(node.left, variables, options, depth + 1);
+        return left ? left : evaluateNode(node.right, variables, options, depth + 1);
       }
-      const left = evaluateNode(node.left, variables, depth + 1) as never;
-      const right = evaluateNode(node.right, variables, depth + 1) as never;
+      const left = evaluateNode(node.left, variables, options, depth + 1) as never;
+      const right = evaluateNode(node.right, variables, options, depth + 1) as never;
       switch (node.operator) {
         case '+':
           return (left as number) + (right as number);
@@ -475,13 +527,14 @@ function evaluateNode(
     }
     case 'conditional':
       return evaluateNode(
-        evaluateNode(node.test, variables, depth + 1) ? node.consequent : node.alternate,
+        evaluateNode(node.test, variables, options, depth + 1) ? node.consequent : node.alternate,
         variables,
+        options,
         depth + 1,
       );
     case 'member': {
-      const object = evaluateNode(node.object, variables, depth + 1);
-      const property = evaluateNode(node.property, variables, depth + 1);
+      const object = evaluateNode(node.object, variables, options, depth + 1);
+      const property = evaluateNode(node.property, variables, options, depth + 1);
       return getMemberValue(object, property);
     }
     case 'call': {
@@ -489,8 +542,18 @@ function evaluateNode(
         throw new Error('Function call has too many arguments.');
       }
       const argumentsList = node.arguments.map((argument) =>
-        evaluateNode(argument, variables, depth + 1),
+        evaluateNode(argument, variables, options, depth + 1),
       );
+      if (node.callee.type === 'identifier' && node.callee.name !== 'Math') {
+        const extension = options.functions?.[node.callee.name];
+        if (!Object.prototype.hasOwnProperty.call(options.functions ?? {}, node.callee.name)) {
+          throw new Error(`Function "${node.callee.name}" is not allowed.`);
+        }
+        if (typeof extension !== 'function') {
+          throw new Error(`Function "${node.callee.name}" is not callable.`);
+        }
+        return extension(...argumentsList);
+      }
       if (
         node.callee.type === 'member' &&
         node.callee.object.type === 'identifier' &&
@@ -509,7 +572,7 @@ function evaluateNode(
         node.callee.property.type === 'literal' &&
         node.callee.property.value === 'concat'
       ) {
-        const receiver = evaluateNode(node.callee.object, variables, depth + 1);
+        const receiver = evaluateNode(node.callee.object, variables, options, depth + 1);
         if (typeof receiver !== 'string') {
           throw new Error('concat is only allowed on strings.');
         }
@@ -534,6 +597,12 @@ export function collectExpressionDependencies(source: string): string[] {
         break;
       case 'unary':
         visit(node.argument);
+        break;
+      case 'array':
+        node.elements.forEach(visit);
+        break;
+      case 'object':
+        node.properties.forEach((property) => visit(property.value));
         break;
       case 'binary':
         visit(node.left);
@@ -563,9 +632,10 @@ export function collectExpressionDependencies(source: string): string[] {
 export function evaluatePriceExpression(
   source: string,
   variables: Record<string, unknown>,
+  options: ExpressionOptions = {},
 ): ExpressionEvaluation {
   try {
-    const result = evaluateNode(parseExpression(source), variables);
+    const result = evaluateNode(parseExpression(source), variables, options);
     if (typeof result !== 'number' || !Number.isFinite(result) || result < 0) {
       return { error: 'Expression must resolve to a finite, non-negative number.' };
     }

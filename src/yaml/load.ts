@@ -70,8 +70,10 @@ export async function loadPricingFromUrl(
         },
       });
       return typeof loaded === 'string'
-        ? parsePricingYaml(loaded)
-        : normalizePricing(loaded as IPricingLike);
+        ? parsePricingYaml(loaded, {
+            ...(options.normalize ? { normalize: options.normalize } : {}),
+          })
+        : normalizePricing(loaded as IPricingLike, options.normalize);
     }
 
     const fetchImplementation = options.fetch ?? globalThis.fetch;
@@ -98,7 +100,9 @@ export async function loadPricingFromUrl(
     if (body.byteLength > maxBytes) {
       return loadError('PR_SOURCE_TOO_LARGE', 'Pricing source exceeds the configured size limit.');
     }
-    return parsePricingYaml(new TextDecoder().decode(body));
+    return parsePricingYaml(new TextDecoder().decode(body), {
+      ...(options.normalize ? { normalize: options.normalize } : {}),
+    });
   } catch (error) {
     const aborted = controller.signal.aborted;
     return loadError(
