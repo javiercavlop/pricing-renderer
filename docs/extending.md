@@ -107,9 +107,21 @@ Use `custom.pricingRenderer` for portable YAML-owned presentation:
 custom:
   pricingRenderer:
     title: Pricing built for every stage
-    recommendedPlanId: growth
-    highlightedFeatureIds:
-      growth: [auditLog, sso]
+    planBadges:
+      growth:
+        - id: most-popular
+          label: Most popular
+          tone: accent
+          emphasize: true
+    planInheritance: auto
+    planHighlights:
+      growth:
+        mode: hybrid
+        items:
+          - id: auditLog
+            kind: feature
+          - id: storage
+            kind: usage-limit
     variableControls:
       - path: seats
         type: slider
@@ -122,6 +134,27 @@ custom:
 Use component `presentation` for application-owned copy and CTAs. Component
 configuration wins over YAML configuration. Do not place checkout secrets or
 authorization rules in `custom`.
+
+`planHighlights` supports:
+
+- `auto`: derive highlights entirely from meaningful plan values.
+- `manual`: render only valid configured references.
+- `hybrid`: render configured references first, then fill to `maxItems`
+  automatically.
+- Array shorthand: equivalent to a manual `items` list.
+
+Use typed `{ id, kind }` references whenever a feature and usage limit could
+share an ID. `planInheritance: auto` checks the previous visible plan.
+`inheritsFrom: { planId, label }` selects a specific plan and supports a
+localized label containing `{plan}`; `inheritsFrom: false` disables it for one
+card. Inheritance is conservative: the renderer compares the full set and only
+shows the inherited claim plus genuine differences when no capability is
+reduced.
+
+Badges are plain optional data. `tone` is restricted to `accent`, `success`,
+`warning`, or `neutral`; `emphasize: true` also gives the plan card featured
+styling. Put translated badge labels in the appropriate host/YAML presentation
+layer.
 
 ## Build a custom renderer
 

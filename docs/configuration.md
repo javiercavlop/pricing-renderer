@@ -12,6 +12,9 @@ configurePricingRenderer({
   selectionEnabled: true,
   ctaEnabled: true,
   variablesEnabled: true,
+  presentation: {
+    planInheritance: 'auto',
+  },
 });
 ```
 
@@ -28,6 +31,7 @@ partial call.
 | `selectionEnabled` | `true`       | Enables plan/add-on controls and full-card pointer selection |
 | `ctaEnabled`       | `true`       | Renders configured plan CTAs                                 |
 | `variablesEnabled` | `true`       | Renders variable controls and applies interactive values     |
+| `presentation`     | `{}`         | Supplies project-wide highlights, badges, controls, and CTAs |
 
 `pricingPath` must be an absolute application pathname such as `/pricing` or
 `/account/plans`. It cannot contain a scheme, query, or fragment. The library
@@ -47,6 +51,14 @@ renderer.pricingPath = '/precios';
 renderer.selectionEnabled = false;
 renderer.ctaEnabled = false;
 renderer.variablesEnabled = false;
+renderer.presentation = {
+  planHighlights: {
+    enterprise: {
+      mode: 'hybrid',
+      items: [{ id: 'storage', kind: 'usage-limit' }],
+    },
+  },
+};
 ```
 
 ```tsx
@@ -57,6 +69,11 @@ renderer.variablesEnabled = false;
   selectionEnabled={false}
   ctaEnabled={false}
   variablesEnabled={false}
+  presentation={{
+    planBadges: {
+      enterprise: [{ id: 'scale', label: 'Built for scale', tone: 'neutral' }],
+    },
+  }}
 />
 ```
 
@@ -78,6 +95,18 @@ are JavaScript/React properties so `false` remains unambiguous.
 
 These options only govern supplied UI behavior. Headless consumers decide how
 to expose their own interactions.
+
+## Presentation precedence
+
+Presentation can be owned by three layers:
+
+1. Per-instance `presentation` on the Web Component or React adapter.
+2. Project defaults passed to `configurePricingRenderer`.
+3. Portable YAML metadata under `custom.pricingRenderer`.
+
+Plan-keyed `planHighlights` and `planBadges` maps merge by plan, while an entry
+from a higher layer replaces the same plan's entry. This makes shared defaults
+easy to extend for one pricing page without mutating the iPricing.
 
 ## Reading and validating configuration
 

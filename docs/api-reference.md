@@ -52,7 +52,8 @@ Supporting functions:
 | `mergeSelection`           | Safely merge a partial selection                            |
 | `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                |
 | `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence |
-| `getPlanHighlights`        | Select configured/derived card highlights                   |
+| `mergePresentationOptions` | Merge project and instance presentation maps                |
+| `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges  |
 | `getPlanCta`               | Resolve the CTA associated with a plan                      |
 | `getPricingRendererCustom` | Read the renderer-specific `custom` extension               |
 | `getCustomDetails`         | Return preserved custom details                             |
@@ -98,6 +99,20 @@ interface PricingSelection {
   billingPeriod?: string;
   variables: Record<string, unknown>;
   addOns: Record<string, { selected: boolean; quantity: number }>;
+}
+
+interface PricingPlanBadge {
+  id: string;
+  label: string;
+  tone?: 'accent' | 'success' | 'warning' | 'neutral';
+  emphasize?: boolean;
+}
+
+interface PricingPlanHighlightConfiguration {
+  mode?: 'auto' | 'manual' | 'hybrid';
+  items?: Array<string | { id: string; kind?: 'feature' | 'usage-limit' }>;
+  inheritsFrom?: false | 'auto' | { planId: string; label?: string };
+  maxItems?: number;
 }
 
 type PriceSource =

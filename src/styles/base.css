@@ -116,6 +116,24 @@
     font-weight: 700;
   }
 
+  pricing-renderer[data-pr-root] .pr-badge[data-tone='accent'] {
+    border-color: color-mix(in srgb, var(--pr-color-accent) 45%, var(--pr-color-border));
+    background: color-mix(in srgb, var(--pr-color-accent) 11%, var(--pr-color-surface-raised));
+    color: var(--pr-color-link);
+  }
+
+  pricing-renderer[data-pr-root] .pr-badge[data-tone='success'] {
+    border-color: color-mix(in srgb, var(--pr-color-success) 42%, var(--pr-color-border));
+    background: color-mix(in srgb, var(--pr-color-success) 10%, var(--pr-color-surface-raised));
+    color: var(--pr-color-success);
+  }
+
+  pricing-renderer[data-pr-root] .pr-badge[data-tone='warning'] {
+    border-color: color-mix(in srgb, var(--pr-color-warning) 42%, var(--pr-color-border));
+    background: var(--pr-color-warning-surface);
+    color: var(--pr-color-warning);
+  }
+
   pricing-renderer[data-pr-root] .pr-section,
   pricing-renderer[data-pr-root] .pr-configurator,
   pricing-renderer[data-pr-root] .pr-metadata {
@@ -244,7 +262,7 @@
     box-shadow: var(--pr-shadow-accent);
   }
 
-  pricing-renderer[data-pr-root] .pr-plan-card.is-recommended:not(.is-selected) {
+  pricing-renderer[data-pr-root] .pr-plan-card.is-featured:not(.is-selected) {
     border-color: var(--pr-color-border-strong);
   }
 
@@ -259,6 +277,12 @@
 
   pricing-renderer[data-pr-root] .pr-plan-card__selector {
     margin-inline-start: auto;
+  }
+
+  pricing-renderer[data-pr-root] .pr-plan-card__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pr-space-2);
   }
 
   pricing-renderer[data-pr-root] .pr-selection-control {
@@ -398,6 +422,14 @@
     padding: 0;
     margin: 0 0 var(--pr-space-5);
     list-style: none;
+  }
+
+  pricing-renderer[data-pr-root] .pr-plan-inheritance {
+    padding-block-start: var(--pr-space-1);
+    margin: 0 0 var(--pr-space-3);
+    color: var(--pr-color-text);
+    font-size: var(--pr-font-size-sm);
+    font-weight: 750;
   }
 
   pricing-renderer[data-pr-root] .pr-highlight-list li {

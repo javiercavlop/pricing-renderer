@@ -1,39 +1,88 @@
-name: Release
+name: Publish npm package
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - published
 
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
 
 jobs:
   publish:
-    # Intentionally fail closed until the maintainer has approved the live demo
-    # and explicitly sets this repository variable to "true".
-    if: vars.NPM_PUBLICATION_APPROVED == 'true'
     runs-on: ubuntu-latest
     environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      NPM_DIST_TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the immutable release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10.19.0
-      - uses: actions/setup-node@v4
+
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: pnpm
+          node-version: 24
           registry-url: https://registry.npmjs.org
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm package:check
-      - run: pnpm release:check -- "${{ github.ref_name }}"
-      - run: npm publish --access public --provenance
-      - uses: softprops/action-gh-release@v2
+          package-manager-cache: false
+
+      - name: Use an OIDC-compatible npm CLI
+        run: npm install --global npm@11.18.0
+
+      - name: Install exact dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release metadata and documentation
+        run: pnpm release:check -- "$RELEASE_TAG"
+
+      - name: Verify that the npm version is not already published
+        run: pnpm release:registry-check
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Validate the packed library
+        run: pnpm package:check
+
+      - name: Install browser engines
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Run browser, accessibility, and visual tests
+        run: pnpm test:browser
+
+      - name: Upload browser diagnostics after a failure
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
+          name: release-playwright-report-${{ github.event.release.tag_name }}
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Publish stable releases to latest and prereleases to next
+        run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
+        env:
+          # Only set this environment secret for the one-time first publication.
+          # Remove it after configuring npm Trusted Publishing for release.yml.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

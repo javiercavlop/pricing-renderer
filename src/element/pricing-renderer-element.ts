@@ -3,6 +3,7 @@ import {
   cloneValue,
   createPricingViewModel,
   getPricingRendererConfig,
+  mergePresentationOptions,
   mergeSelection,
   normalizeAddOnQuantity,
   normalizePricing,
@@ -102,6 +103,7 @@ export class PricingRendererElement extends LitElement {
   declare loadingLabel?: string;
 
   private _status: LoadStatus = 'idle';
+  private readonly _projectPresentation: PricingPresentation;
   private _normalized?: NormalizedPricing;
   private _diagnostics: PricingDiagnostic[] = [];
   private _internalSelection?: PricingSelection;
@@ -128,6 +130,7 @@ export class PricingRendererElement extends LitElement {
     this.selectionEnabled = configuration.selectionEnabled;
     this.ctaEnabled = configuration.ctaEnabled;
     this.variablesEnabled = configuration.variablesEnabled;
+    this._projectPresentation = configuration.presentation;
     this.mode = 'commercial';
     this.layout = 'auto';
     this.visibility = 'public-only';
@@ -290,7 +293,7 @@ export class PricingRendererElement extends LitElement {
       mode: this.mode,
       visibility: this.visibility,
       ...(this.messages ? { messages: this.messages } : {}),
-      ...(this.presentation ? { presentation: this.presentation } : {}),
+      presentation: mergePresentationOptions(this._projectPresentation, this.presentation),
       ...(this.expressionOptions ? { expression: this.expressionOptions } : {}),
     };
   }

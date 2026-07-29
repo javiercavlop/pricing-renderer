@@ -56,8 +56,9 @@ contract. Unknown `custom` data and the original input remain available through
    `false` values.
 6. Expressions are parsed into a restricted AST. Variables resolve first,
    followed by billing multiplier and add-on quantity.
-7. The view-model filters visibility, merges presentation configuration, builds
-   variable controls, and creates comparison groups.
+7. The view-model filters visibility, merges YAML/project/instance presentation,
+   builds variable controls and comparison groups, and verifies plan inheritance
+   before producing highlight/badge summaries.
 8. The host renderer or the supplied Web Component consumes the same view-model.
 
 Diagnostics are values, not thrown authoring errors. A blocking diagnostic makes

@@ -81,10 +81,10 @@ pricing-renderer [data-pr-part='cta'] {
 
 Stable values:
 
-`hero`, `billing`, `variables`, `plans`, `plan-card`, `price`, `cta`,
-`comparison`, `comparison-toolbar`, `comparison-table`, `comparison-row`,
-`add-ons`, `add-on-card`, `add-on-quantity`, `summary`, `metadata`, and
-`diagnostics`.
+`hero`, `billing`, `variables`, `plans`, `plan-card`, `plan-badge`,
+`plan-inheritance`, `plan-highlight`, `price`, `cta`, `comparison`,
+`comparison-toolbar`, `comparison-table`, `comparison-row`, `add-ons`,
+`add-on-card`, `add-on-quantity`, `summary`, `metadata`, and `diagnostics`.
 
 Internal `pr-*` class names and markup nesting are not public contracts.
 

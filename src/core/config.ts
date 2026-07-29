@@ -6,6 +6,7 @@ export const DEFAULT_PRICING_RENDERER_CONFIG: Readonly<PricingRendererConfig> = 
   selectionEnabled: true,
   ctaEnabled: true,
   variablesEnabled: true,
+  presentation: Object.freeze({}),
 });
 
 let configuredDefaults = DEFAULT_PRICING_RENDERER_CONFIG;
@@ -50,6 +51,14 @@ function normalizeFeatureFlag(
 export function createPricingRendererConfig(
   options: Partial<PricingRendererConfig> = {},
 ): Readonly<PricingRendererConfig> {
+  if (
+    options.presentation !== undefined &&
+    (typeof options.presentation !== 'object' ||
+      options.presentation === null ||
+      Array.isArray(options.presentation))
+  ) {
+    throw new TypeError('Pricing renderer presentation must be an object.');
+  }
   return Object.freeze({
     locale: normalizeLocale(options.locale ?? DEFAULT_PRICING_RENDERER_CONFIG.locale),
     pricingPath: normalizePricingPath(
@@ -70,6 +79,7 @@ export function createPricingRendererConfig(
       DEFAULT_PRICING_RENDERER_CONFIG.variablesEnabled,
       'variablesEnabled',
     ),
+    presentation: Object.freeze({ ...(options.presentation ?? {}) }),
   });
 }
 

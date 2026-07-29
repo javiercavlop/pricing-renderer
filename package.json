@@ -121,6 +121,7 @@
     "demo:next": "pnpm build && pnpm --filter pricing-renderer-next-demo dev",
     "package:check": "pnpm build && publint && attw --pack . --profile esm-only --entrypoints . ./yaml ./element ./define ./react",
     "release:check": "node scripts/check-release-ready.mjs",
+    "release:registry-check": "node scripts/check-npm-version-available.mjs",
     "prepack": "pnpm build",
     "prepublishOnly": "pnpm test && pnpm package:check"
   },

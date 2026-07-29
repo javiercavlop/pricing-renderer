@@ -132,6 +132,13 @@ carousels, and fixed viewport assumptions.
 When exposing a theming hook, prefer an existing token. Add `data-pr-part` only
 when consumers need a stable structural target, then document and test it.
 
+Plan-card presentation must use the generic `planHighlights` and `planBadges`
+contracts. Do not add one-off “recommended plan” IDs or feature-only highlight
+aliases. New highlight semantics belong in the headless summary, must remain
+usable without Lit, and must prove any inheritance claim from the complete
+comparison data. Badge emphasis is explicit data, never inferred from label
+copy or a magic badge ID.
+
 ## Tests and quality gates
 
 Fast local loop:
@@ -186,11 +193,12 @@ Use:
 - major for breaking API, event, diagnostic, CSS token/part, or subpath changes.
 
 Maintainers own versioning, tags, provenance, and npm publication. A green pull
-request or approved source push is not permission to publish. The `0.1.0`
-candidate specifically requires explicit acceptance of the interactive demo.
-Follow [docs/releasing.md](./docs/releasing.md); installation documentation must
-be switched to published wording before creating the immutable release tag, then
-verified against a clean registry installation after publication.
+request, approved source push, tag, or draft release is not permission to
+publish. The `0.1.0` candidate specifically requires explicit acceptance of the
+interactive demo. Follow [docs/releasing.md](./docs/releasing.md); installation
+documentation must be switched to published wording before publishing the
+GitHub Release. That release event runs npm CD, and the result must then be
+verified with a clean registry installation.
 
 ## Pull request checklist
 

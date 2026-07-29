@@ -5,7 +5,7 @@ import {
   formatDate,
   getAtPath,
   getPlanCta,
-  getPlanHighlights,
+  getPlanHighlightSummary,
   humanizeIdentifier,
   isSafeLink,
   translate,
@@ -232,15 +232,15 @@ export function renderPlans(state: RenderState): TemplateResult {
             >
               ${viewModel.plans.map((plan) => {
                 const selected = selection.planId === plan.id;
-                const recommended = viewModel.presentation.recommendedPlanId === plan.id;
                 const cta = getPlanCta(viewModel.presentation, plan.id);
-                const highlights = getPlanHighlights(viewModel, plan.id);
+                const highlightSummary = getPlanHighlightSummary(viewModel, plan.id);
+                const featured = highlightSummary.badges.some((badge) => badge.emphasize);
                 const actionId = cta?.id ?? `choose-${plan.id}`;
                 return html`
                   <article
                     class="pr-plan-card ${selectionEnabled ? 'pr-selectable-card' : ''} ${
                       selected ? 'is-selected' : ''
-                    } ${recommended ? 'is-recommended' : ''}"
+                    } ${featured ? 'is-featured' : ''}"
                     data-pr-part="plan-card"
                     data-plan-id=${plan.id}
                     data-selected=${String(selected)}
@@ -251,15 +251,20 @@ export function renderPlans(state: RenderState): TemplateResult {
                   >
                     <div class="pr-plan-card__top">
                       ${
-                        recommended || selectionEnabled
+                        highlightSummary.badges.length > 0 || selectionEnabled
                           ? html`<div class="pr-plan-card__status">
-                              ${
-                                recommended
-                                  ? html`<span class="pr-badge"
-                                      >${t(viewModel, 'pricing.recommended')}</span
-                                    >`
-                                  : nothing
-                              }
+                              <div class="pr-plan-card__badges">
+                                ${highlightSummary.badges.map(
+                                  (badge) =>
+                                    html`<span
+                                      class="pr-badge"
+                                      data-pr-part="plan-badge"
+                                      data-badge-id=${badge.id}
+                                      data-tone=${badge.tone ?? 'neutral'}
+                                      >${badge.label}</span
+                                    >`,
+                                )}
+                              </div>
                               ${
                                 selectionEnabled
                                   ? html`<label
@@ -300,13 +305,24 @@ export function renderPlans(state: RenderState): TemplateResult {
                       ${renderPrice(viewModel, viewModel.resolved.planPrices[plan.id], plan.unit)}
                     </div>
                     ${
-                      highlights.length
+                      highlightSummary.inheritedFrom
+                        ? html`<p class="pr-plan-inheritance" data-pr-part="plan-inheritance">
+                            ${highlightSummary.inheritedFrom.label}
+                          </p>`
+                        : nothing
+                    }
+                    ${
+                      highlightSummary.rows.length
                         ? html`<ul class="pr-highlight-list">
-                            ${highlights.map((row) => {
+                            ${highlightSummary.rows.map((row) => {
                               const value = row.values.find(
                                 (cell) => cell.planId === plan.id,
                               )?.value;
-                              return html`<li>
+                              return html`<li
+                                data-pr-part="plan-highlight"
+                                data-highlight-id=${row.id}
+                                data-highlight-kind=${row.kind}
+                              >
                                 <span class="pr-highlight-list__icon" aria-hidden="true">✓</span>
                                 <span>${row.name}</span>
                                 <span class="pr-highlight-list__value"

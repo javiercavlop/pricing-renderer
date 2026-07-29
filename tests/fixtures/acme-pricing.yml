@@ -131,17 +131,39 @@ custom:
   pricingRenderer:
     title: Simple pricing that scales with you
     subtitle: Configure seats and add-ons to see an estimate instantly.
-    recommendedPlanId: growth
-    highlightedFeatureIds:
-      starter:
-        - projects
-        - collaboration
+    planInheritance: auto
+    planBadges:
       growth:
-        - projects
-        - auditLog
+        - id: most-popular
+          label: Most popular
+          tone: accent
+          emphasize: true
       enterprise:
-        - auditLog
-        - customRoles
+        - id: scale
+          label: Built for scale
+          tone: neutral
+    planHighlights:
+      starter:
+        mode: manual
+        items:
+          - id: projects
+            kind: feature
+          - id: collaboration
+            kind: feature
+      growth:
+        mode: hybrid
+        items:
+          - id: auditLog
+            kind: feature
+          - id: storage
+            kind: usage-limit
+      enterprise:
+        mode: hybrid
+        items:
+          - id: customRoles
+            kind: feature
+          - id: storage
+            kind: usage-limit
     variableControls:
       - path: seats
         type: slider

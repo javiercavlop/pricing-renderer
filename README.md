@@ -1,6 +1,7 @@
 # Pricing Renderer
 
 [![CI](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml)
+[![npm release CD](https://github.com/javiercavlop/pricing-renderer/actions/workflows/release.yml/badge.svg)](https://github.com/javiercavlop/pricing-renderer/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-5e51e8.svg)](./LICENSE)
 [![Pricing2Yaml 3.1](https://img.shields.io/badge/Pricing2Yaml-3.1-0c9b6b.svg)](./docs/pricing2yaml-compatibility.md)
 [![npm publication pending review](https://img.shields.io/badge/npm-pending%20demo%20approval-686a7c.svg)](./docs/demo.md)
@@ -83,12 +84,18 @@ The release will be available from:
 - npm package: [`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer)
 - GitHub releases:
   [`javiercavlop/pricing-renderer/releases`](https://github.com/javiercavlop/pricing-renderer/releases)
-- source tag: `v0.1.0` (created only after approval and successful publication)
+- source tag: `v0.1.0` (created only after approval; publishing its GitHub Release
+  triggers npm CD)
 
 The tagged release commit will change this section and the npm badge from
 pending to published wording. The links will only be considered verified after
 a clean registry installation succeeds. See the
 [release guide](./docs/releasing.md) for the required order and checks.
+
+Every published GitHub Release triggers the npm CD workflow. Stable releases
+publish under the `latest` dist-tag and GitHub prereleases under `next`; a tag,
+version, documentation, test, accessibility, visual, or package-validation
+failure stops before `npm publish`.
 
 ## Package entry points
 
@@ -116,6 +123,9 @@ configurePricingRenderer({
   selectionEnabled: true,
   ctaEnabled: true,
   variablesEnabled: true,
+  presentation: {
+    planInheritance: 'auto',
+  },
 });
 ```
 
@@ -192,6 +202,51 @@ The React entry is safe to import during SSR and is marked as a client
 component. Full pricing content appears after hydration; deep light-DOM SSR is
 not a v1 contract.
 
+## Plan highlights, inheritance, and badges
+
+Card highlights can reference both features and usage limits without ambiguity.
+The hybrid mode renders configured items first and fills remaining slots from
+the plan data:
+
+```ts
+configurePricingRenderer({
+  presentation: {
+    planInheritance: 'auto',
+    planBadges: {
+      growth: [
+        {
+          id: 'most-popular',
+          label: 'Most popular',
+          tone: 'accent',
+          emphasize: true,
+        },
+      ],
+    },
+    planHighlights: {
+      growth: {
+        mode: 'hybrid',
+        maxItems: 5,
+        items: [
+          { id: 'auditLog', kind: 'feature' },
+          { id: 'storage', kind: 'usage-limit' },
+        ],
+      },
+    },
+  },
+});
+```
+
+The same `PricingPresentation` object can be supplied per component or under
+`custom.pricingRenderer` in YAML. Instance props win over project defaults,
+which win over YAML-owned presentation values.
+
+`planInheritance: "auto"` checks the complete feature/limit set against the
+previous visible plan. “Everything in …, plus” only appears when the current
+plan is demonstrably at least as capable; otherwise the claim is omitted.
+Per-plan `inheritsFrom` can select a specific base plan or disable inheritance.
+Badges are optional, support `accent`, `success`, `warning`, and `neutral`
+tones, and only emphasize a card when `emphasize: true`.
+
 ## Variables and multicontractable add-ons
 
 Primitive variables referenced by formulas become controls automatically.
@@ -200,7 +255,12 @@ Presentation metadata can upgrade them to sliders or selects:
 ```yaml
 custom:
   pricingRenderer:
-    recommendedPlanId: growth
+    planBadges:
+      growth:
+        - id: most-popular
+          label: Most popular
+          tone: accent
+          emphasize: true
     variableControls:
       - path: seats
         type: slider

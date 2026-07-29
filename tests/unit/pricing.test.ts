@@ -7,6 +7,8 @@ import {
   DEFAULT_PRICING_RENDERER_CONFIG,
   getPricingRendererConfig,
   getMessages,
+  getPlanHighlightSummary,
+  mergePresentationOptions,
   normalizePricing,
   registerMessageCatalog,
   resolvePricing,
@@ -24,6 +26,7 @@ describe('library initialization configuration', () => {
       selectionEnabled: true,
       ctaEnabled: true,
       variablesEnabled: true,
+      presentation: {},
     });
     expect(DEFAULT_PRICING_RENDERER_CONFIG).toEqual({
       locale: 'en-US',
@@ -31,6 +34,7 @@ describe('library initialization configuration', () => {
       selectionEnabled: true,
       ctaEnabled: true,
       variablesEnabled: true,
+      presentation: {},
     });
   });
 
@@ -43,6 +47,11 @@ describe('library initialization configuration', () => {
           selectionEnabled: false,
           ctaEnabled: false,
           variablesEnabled: false,
+          presentation: {
+            planBadges: {
+              growth: [{ id: 'popular', label: 'Popular', emphasize: true }],
+            },
+          },
         }),
       ).toEqual({
         locale: 'es-ES',
@@ -50,6 +59,11 @@ describe('library initialization configuration', () => {
         selectionEnabled: false,
         ctaEnabled: false,
         variablesEnabled: false,
+        presentation: {
+          planBadges: {
+            growth: [{ id: 'popular', label: 'Popular', emphasize: true }],
+          },
+        },
       });
       expect(() => configurePricingRenderer({ pricingPath: 'pricing' })).toThrow(
         'absolute application pathname',
@@ -57,9 +71,50 @@ describe('library initialization configuration', () => {
       expect(() => configurePricingRenderer({ ctaEnabled: 'yes' as unknown as boolean })).toThrow(
         'ctaEnabled must be a boolean',
       );
+      expect(() =>
+        configurePricingRenderer({
+          presentation: [] as unknown as NonNullable<
+            Parameters<typeof configurePricingRenderer>[0]
+          >['presentation'],
+        }),
+      ).toThrow('presentation must be an object');
     } finally {
       configurePricingRenderer();
     }
+  });
+
+  it('merges project and instance presentation by plan with instance precedence', () => {
+    expect(
+      mergePresentationOptions(
+        {
+          title: 'Project title',
+          planBadges: {
+            starter: [{ id: 'entry', label: 'Entry' }],
+            growth: [{ id: 'project', label: 'Project default' }],
+          },
+        },
+        {
+          title: 'Instance title',
+          planBadges: {
+            growth: [{ id: 'instance', label: 'Instance override', emphasize: true }],
+          },
+        },
+      ),
+    ).toMatchObject({
+      title: 'Instance title',
+      planBadges: {
+        starter: [{ id: 'entry', label: 'Entry' }],
+        growth: [{ id: 'instance', label: 'Instance override', emphasize: true }],
+      },
+    });
+    expect(
+      mergePresentationOptions(
+        {
+          variableControls: false,
+        },
+        {},
+      ).variableControls,
+    ).toBe(false);
   });
 });
 
@@ -109,7 +164,7 @@ describe('Pricing2Yaml normalization and resolution', () => {
   it('creates configured controls, cards and grouped comparison rows', async () => {
     const pricing = parsePricingYaml(await readFile(fileURLToPath(fixtureUrl), 'utf8')).value!;
     const viewModel = createPricingViewModel(pricing);
-    expect(viewModel.presentation.recommendedPlanId).toBe('growth');
+    expect(viewModel.presentation.planBadges?.growth?.[0]?.emphasize).toBe(true);
     expect(viewModel.variableControls.map((control) => control.path)).toEqual([
       'seats',
       'prioritySupport',
@@ -127,6 +182,64 @@ describe('Pricing2Yaml normalization and resolution', () => {
       Number.POSITIVE_INFINITY,
     );
     expect(viewModel.messages['pricing.unlimited']).toBe('Unlimited');
+
+    const growthHighlights = getPlanHighlightSummary(viewModel, 'growth');
+    expect(growthHighlights.inheritedFrom).toMatchObject({
+      planId: 'starter',
+      label: 'Everything in Starter, plus:',
+    });
+    expect(growthHighlights.rows.map((row) => `${row.kind}:${row.id}`)).toEqual([
+      'feature:auditLog',
+      'usage-limit:storage',
+    ]);
+    expect(growthHighlights.badges).toEqual([
+      { id: 'most-popular', label: 'Most popular', tone: 'accent', emphasize: true },
+    ]);
+
+    const enterpriseHighlights = getPlanHighlightSummary(viewModel, 'enterprise');
+    expect(enterpriseHighlights.inheritedFrom?.planId).toBe('growth');
+    expect(enterpriseHighlights.rows.map((row) => `${row.kind}:${row.id}`)).toEqual([
+      'feature:customRoles',
+      'usage-limit:storage',
+    ]);
+    expect(enterpriseHighlights.badges).toEqual([
+      { id: 'scale', label: 'Built for scale', tone: 'neutral' },
+    ]);
+
+    const hiddenHighlights = getPlanHighlightSummary(
+      createPricingViewModel(pricing, undefined, {
+        presentation: {
+          planHighlights: {
+            growth: { mode: 'auto', maxItems: 0 },
+          },
+        },
+      }),
+      'growth',
+    );
+    expect(hiddenHighlights.rows).toEqual([]);
+  });
+
+  it('never claims plan inheritance when a later plan reduces a capability', () => {
+    const pricing = normalizePricing({
+      syntaxVersion: '3.1',
+      saasName: 'Conservative inheritance',
+      usageLimits: {
+        projects: { defaultValue: 0 },
+      },
+      plans: {
+        base: { price: 10, usageLimits: { projects: { value: 100 } } },
+        lower: { price: 20, usageLimits: { projects: { value: 50 } } },
+      },
+      custom: {
+        pricingRenderer: {
+          planInheritance: 'auto',
+        },
+      },
+    }).value!;
+
+    expect(getPlanHighlightSummary(createPricingViewModel(pricing), 'lower').inheritedFrom).toBe(
+      undefined,
+    );
   });
 
   it('warns for compatible 3.x versions and blocks other majors', () => {

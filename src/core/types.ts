@@ -219,11 +219,46 @@ export interface PricingCta {
   metadata?: UnknownRecord;
 }
 
+export type PricingHighlightKind = 'feature' | 'usage-limit';
+export type PricingHighlightMode = 'auto' | 'manual' | 'hybrid';
+
+export interface PricingHighlightReference {
+  id: string;
+  kind?: PricingHighlightKind;
+}
+
+export interface PricingPlanInheritance {
+  planId: string;
+  label?: string;
+}
+
+export type PricingPlanInheritanceSetting = false | 'auto' | PricingPlanInheritance;
+
+export interface PricingPlanHighlightConfiguration {
+  mode?: PricingHighlightMode;
+  items?: Array<string | PricingHighlightReference>;
+  inheritsFrom?: PricingPlanInheritanceSetting;
+  maxItems?: number;
+}
+
+export type PricingPlanHighlightSetting =
+  PricingPlanHighlightConfiguration | Array<string | PricingHighlightReference>;
+
+export type PricingBadgeTone = 'accent' | 'success' | 'warning' | 'neutral';
+
+export interface PricingPlanBadge {
+  id: string;
+  label: string;
+  tone?: PricingBadgeTone;
+  emphasize?: boolean;
+}
+
 export interface PricingPresentation {
   title?: string;
   subtitle?: string;
-  recommendedPlanId?: string;
-  highlightedFeatureIds?: Record<string, string[]>;
+  planBadges?: Record<string, PricingPlanBadge[]>;
+  planHighlights?: Record<string, PricingPlanHighlightSetting>;
+  planInheritance?: false | 'auto';
   ctas?: PricingCta[];
   variableControls?: 'auto' | false | VariableControl[];
   billingLabels?: Record<string, string>;
@@ -242,6 +277,7 @@ export interface PricingRendererConfig {
   selectionEnabled: boolean;
   ctaEnabled: boolean;
   variablesEnabled: boolean;
+  presentation: PricingPresentation;
 }
 
 export interface ViewModelOptions {
@@ -260,7 +296,7 @@ export interface PricingValueCell {
 
 export interface PricingComparisonRow {
   id: string;
-  kind: 'feature' | 'usage-limit';
+  kind: PricingHighlightKind;
   name: string;
   description?: string;
   category: string;
@@ -268,6 +304,16 @@ export interface PricingComparisonRow {
   docUrl?: string;
   values: PricingValueCell[];
   raw: UnknownRecord;
+}
+
+export interface PricingPlanHighlightSummary {
+  rows: PricingComparisonRow[];
+  badges: PricingPlanBadge[];
+  inheritedFrom?: {
+    planId: string;
+    planName: string;
+    label: string;
+  };
 }
 
 export interface PricingComparisonGroup {

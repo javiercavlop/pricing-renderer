@@ -43,7 +43,12 @@ custom:
   pricingRenderer:
     title: Pricing that grows with your team
     subtitle: This YAML string crosses a Server → Client Component boundary.
-    recommendedPlanId: growth
+    planBadges:
+      growth:
+        - id: most-popular
+          label: Most popular
+          tone: accent
+          emphasize: true
     variableControls:
       - path: seats
         type: slider

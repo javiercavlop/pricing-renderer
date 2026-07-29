@@ -16,6 +16,8 @@ Open the URL printed by Vite. The showcase lets reviewers:
 - switch billing periods;
 - edit a numeric variable, boolean variable, and select variable;
 - choose plans and observe add-on compatibility;
+- inspect typed feature/usage-limit highlights, verified plan inheritance, and
+  optional featured badges;
 - select a multicontractable add-on and change its constrained quantity;
 - trigger dependency/exclusion confirmation;
 - inspect known subtotal and emitted event state;
@@ -57,7 +59,8 @@ Before publishing a release:
    from pending to published wording before creating the version tag.
 
 The npm publication workflow must not run before step 8. A source repository
-push or documentation preview is not publication approval.
+push, tag, draft release, or documentation preview is not publication approval;
+publishing the GitHub Release is.
 
 ## Updating screenshots
 

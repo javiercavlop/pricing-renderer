@@ -12,7 +12,16 @@ test('renders the professional commercial layout and emits complete CTA actions'
   await expect(
     page.getByRole('heading', { name: 'Simple pricing that scales with you' }),
   ).toBeVisible();
-  await expect(page.locator('.pr-plan-card.is-recommended')).toContainText('Growth');
+  const featuredPlan = page.locator('.pr-plan-card.is-featured');
+  await expect(featuredPlan).toContainText('Growth');
+  await expect(featuredPlan.locator('[data-pr-part="plan-badge"]')).toHaveText('Most popular');
+  await expect(featuredPlan.locator('[data-pr-part="plan-inheritance"]')).toHaveText(
+    'Everything in Starter, plus:',
+  );
+  await expect(featuredPlan.locator('[data-highlight-kind="feature"]')).toContainText('Audit Log');
+  await expect(featuredPlan.locator('[data-highlight-kind="usage-limit"]')).toContainText(
+    'Storage',
+  );
   await expect(page.locator('.pr-summary')).toContainText('€20');
 
   await page.getByRole('link', { name: 'Start free trial' }).click();
@@ -23,7 +32,7 @@ test('selects plans and add-ons from the full card with a clear visual state', a
   const renderer = page.locator('pricing-renderer');
   await expect(renderer).toHaveAttribute('pricing-path', '/pricing');
 
-  const growth = page.locator('.pr-plan-card').filter({ hasText: 'Growth' });
+  const growth = page.locator('.pr-plan-card[data-plan-id="growth"]');
   await growth.getByRole('heading', { name: 'Growth' }).click();
   await expect(growth.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
   await expect(growth.locator('.pr-selection-control__label')).toHaveText('Selected');
@@ -168,10 +177,10 @@ test('switches locale without changing source data', async ({ page }) => {
 test('renders infinite usage limits as localized Unlimited labels', async ({ page }) => {
   await page.getByRole('radio', { name: 'Choose Enterprise' }).check();
   await page.getByRole('button', { name: 'Usage' }).click();
-  await expect(page.getByText('Unlimited')).toBeVisible();
+  await expect(page.getByText('Unlimited').first()).toBeVisible();
 
   await page.locator('#locale').selectOption('es-ES');
-  await expect(page.getByText('Ilimitado')).toBeVisible();
+  await expect(page.getByText('Ilimitado').first()).toBeVisible();
 });
 
 test('has no serious accessibility violations', async ({ page }) => {
