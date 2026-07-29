@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/javiercavlop/pricing-renderer/actions/workflows/ci.yml)
 [![npm release CD](https://github.com/javiercavlop/pricing-renderer/actions/workflows/release.yml/badge.svg)](https://github.com/javiercavlop/pricing-renderer/actions/workflows/release.yml)
+[![npm version](https://img.shields.io/npm/v/pricing-renderer.svg?logo=npm)](https://www.npmjs.com/package/pricing-renderer)
 [![License: MIT](https://img.shields.io/badge/license-MIT-5e51e8.svg)](./LICENSE)
 [![Pricing2Yaml 3.1](https://img.shields.io/badge/Pricing2Yaml-3.1-0c9b6b.svg)](./docs/pricing2yaml-compatibility.md)
-[![npm publication pending review](https://img.shields.io/badge/npm-pending%20demo%20approval-686a7c.svg)](./docs/demo.md)
 
 Turn a Pricing2Yaml document into an elegant, responsive, interactive pricing
 experience. Use the complete light-DOM Web Component, its React 18/19 adapter,
@@ -12,9 +12,10 @@ or the DOM-free TypeScript core to build a product-specific UI.
 
 ![Pricing Renderer interactive plans](docs/assets/demo-desktop-light.png)
 
-> **Pre-release status:** the repository is public and the `0.1.0` candidate is
-> under visual review. The npm package will not be published until the live demo
-> is explicitly approved.
+The library is distributed as the public
+[`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer) package.
+Source, issues, release notes, and immutable version tags remain public in
+[`javiercavlop/pricing-renderer`](https://github.com/javiercavlop/pricing-renderer).
 
 ## Why it exists
 
@@ -65,37 +66,44 @@ See the full [demo validation guide](./docs/demo.md).
 
 ## Installation and package location
 
-> **Not published yet:** the commands and version links below become valid only
-> after the `0.1.0` demo is approved and the release workflow succeeds. Until
-> then, use the workspace demo above.
+Install the latest stable release from npm:
 
-Once published, install the public package from npm:
+```bash
+npm install pricing-renderer
+# or
+pnpm add pricing-renderer
+# or
+yarn add pricing-renderer
+```
+
+Pin the initial release when an exact, reproducible version is required:
 
 ```bash
 npm install pricing-renderer@0.1.0
-# or
-pnpm add pricing-renderer@0.1.0
-# or
-yarn add pricing-renderer@0.1.0
 ```
 
-The release will be available from:
+Release locations:
 
-- npm package: [`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer)
-- GitHub releases:
+- npm package and provenance:
+  [`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer)
+- `0.1.0` release notes and source tag:
+  [`v0.1.0`](https://github.com/javiercavlop/pricing-renderer/releases/tag/v0.1.0)
+- all GitHub releases:
   [`javiercavlop/pricing-renderer/releases`](https://github.com/javiercavlop/pricing-renderer/releases)
-- source tag: `v0.1.0` (created only after approval; publishing its GitHub Release
-  triggers npm CD)
-
-The tagged release commit will change this section and the npm badge from
-pending to published wording. The links will only be considered verified after
-a clean registry installation succeeds. See the
-[release guide](./docs/releasing.md) for the required order and checks.
 
 Every published GitHub Release triggers the npm CD workflow. Stable releases
 publish under the `latest` dist-tag and GitHub prereleases under `next`; a tag,
 version, documentation, test, accessibility, visual, or package-validation
 failure stops before `npm publish`.
+
+Confirm the installed registry version with:
+
+```bash
+npm view pricing-renderer version
+```
+
+See the [release guide](./docs/releasing.md) for provenance, validation, and
+Trusted Publishing details.
 
 ## Package entry points
 

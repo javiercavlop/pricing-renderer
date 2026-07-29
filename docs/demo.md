@@ -55,8 +55,9 @@ Before publishing a release:
 5. Confirm there is no document-level horizontal overflow.
 6. Confirm the README screenshots match the current renderer.
 7. Obtain explicit maintainer approval of this example.
-8. Follow the [release guide](./releasing.md), including changing the README
-   from pending to published wording before creating the version tag.
+8. Follow the [release guide](./releasing.md), including verifying that the
+   README names the exact version, installation command, npm package, and
+   canonical GitHub Release URL before creating the version tag.
 
 The npm publication workflow must not run before step 8. A source repository
 push, tag, draft release, or documentation preview is not publication approval;

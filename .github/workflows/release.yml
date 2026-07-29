@@ -83,6 +83,6 @@ jobs:
       - name: Publish stable releases to latest and prereleases to next
         run: npm publish --access public --provenance --tag "$NPM_DIST_TAG"
         env:
-          # Only set this environment secret for the one-time first publication.
+          # Only set this repository/environment secret for the one-time first publication.
           # Remove it after configuring npm Trusted Publishing for release.yml.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

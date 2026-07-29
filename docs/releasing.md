@@ -47,8 +47,10 @@ For `0.1.0` only:
 1. Enable account-level 2FA on npm.
 2. Create a least-privilege granular npm token that can publish the new public
    package, with the shortest practical expiry.
-3. Add it as the `NPM_TOKEN` secret on the GitHub `npm` environment. Do not add
-   it as a repository variable or commit it to any file.
+3. Add it as the `NPM_TOKEN` secret on the GitHub `npm` environment (preferred).
+   A repository secret is acceptable only for this one-time bootstrap and must
+   be removed immediately after Trusted Publishing is configured. Never use a
+   repository variable or commit the token to any file.
 4. Publish the first GitHub Release using the sequence below.
 5. After `pricing-renderer@0.1.0` exists, configure its npm Trusted Publisher
    with these exact values:
@@ -70,7 +72,7 @@ For `0.1.0` only:
      --allow-publish
    ```
 
-6. Remove the `NPM_TOKEN` GitHub environment secret.
+6. Remove the temporary `NPM_TOKEN` GitHub environment or repository secret.
 7. Set npm publishing access to require 2FA and disallow tokens. Future releases
    authenticate with short-lived GitHub OIDC credentials.
 
