@@ -6,7 +6,7 @@
     "build": "next build"
   },
   "dependencies": {
-    "next": "16.2.11",
+    "next": "16.3.4",
     "pricing-renderer": "workspace:*",
     "react": "19.2.0",
     "react-dom": "19.2.0"
