@@ -34,10 +34,10 @@ that could not be checked from the repository is marked **not verified**.
 
 ## Release workflow (`.github/workflows/release.yml`)
 
-1. **Global npm without integrity verification.** `npm install --global
-npm@11.18.0` (line 89) installs a version-pinned CLI with no checksum or
-   signature check, in a job that has `id-token: write`. A compromised package
-   would run in a job that can mint the OIDC token.
+1. **Global npm without integrity verification.**
+   `npm install --global npm@11.18.0` (line 89) installs a version-pinned CLI
+   with no checksum or signature check, in a job that has `id-token: write`. A
+   compromised package would run in a job that can mint the OIDC token.
 2. **Whole pipeline in the publishing job.** Install, lint, tests, package
    checks, browser engine install and browser tests all run in the same job
    that holds `id-token: write` and the `npm` environment. Third-party code
@@ -55,6 +55,25 @@ npm@11.18.0` (line 89) installs a version-pinned CLI with no checksum or
    exploitable today. Passing it through `env` would avoid template injection
    if that step changes.
 
+## CI audit job and Dependabot
+
+The dependency update changed `.github/workflows/ci.yml` and added
+`.github/dependabot.yml`; it also added the risk comments in `release.yml`
+mentioned above.
+
+- **`audit` job in `ci.yml` is non-blocking.** It runs
+  `pnpm audit --audit-level high` with `continue-on-error: true`. The audit is
+  now clean (0 advisories with the `pnpm.overrides`), as reported when the
+  update was made; it was not re-run for this document.
+- **Promoting `audit` to blocking.** The comment in `ci.yml` says to do this
+  once advisories are triaged. With a clean audit that condition could already
+  be met. Owner decision; not applied.
+- **`dependabot.yml` is grouped.** The `npm` ecosystem has security,
+  framework-tooling and development groups; `github-actions` has security and
+  version groups. The `npm` entry lists both `/` and `/examples/*`. In a pnpm
+  workspace with a single lockfile this may open duplicate PRs for the same
+  update. To watch on the first run.
+
 ## Open items
 
 - **Harden `.npmrc`: pending, to be applied by hand.** Current content:
@@ -64,7 +83,9 @@ npm@11.18.0` (line 89) installs a version-pinned CLI with no checksum or
   explaining why (the React peers are optional), then validate with
   `pnpm install --frozen-lockfile`. The file is sensitive and was not edited
   here.
-- Release workflow items 1–4 are still open; workflows were out of scope.
+- Release workflow items 3 and 4 are still open. Items 1 and 2 are documented
+  as accepted risk in comments in `release.yml` (the job-level note and the
+  npm install note); no workflow change was made for them.
 - Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
   copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
   (checked against both upstream `LICENSE` files).

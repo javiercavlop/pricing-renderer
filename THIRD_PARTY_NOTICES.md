@@ -9,9 +9,8 @@ implementations are not bundled into this package.
 - Pricing4TS — Copyright (c) 2024 Alejandro García Fernández — https://github.com/Alex-GF/Pricing4TS
 
 The copyright lines above were checked against the `LICENSE` file at the
-default branch of each repository. Both are MIT.
-
-Both projects are licensed under the MIT License, reproduced below.
+default branch of each repository. Both are licensed under the MIT License,
+reproduced below.
 
 ```text
 MIT License
