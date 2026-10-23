@@ -5,31 +5,20 @@
 - `.github/workflows/ci.yml`: the workflow now runs on `push` to `main` and `develop`, and on `pull_request` targeting `main` and `develop`. The Node 22/24 matrix and the `quality` and `browsers` jobs are unchanged.
 - `.github/workflows/release.yml`: no changes. `id-token: write` and `environment: npm` are kept.
 
-## Action pinning: NOT complete
+## Action pinning: complete
 
-No commit SHA for any action could be verified offline. The repository contains no existing SHA-pinned `uses:` entries, and no network access was available. No SHA was guessed, so every action is still referenced by tag.
+Every `uses:` in `ci.yml` and `release.yml` is pinned to a commit SHA, with the tag kept as a `# v6` comment. The SHAs were given by the owner, who resolved them with `git ls-remote`.
 
-Unpinned actions (all in `ci.yml` and `release.yml`):
-
-| Action                  | Current tag | Files               |
-| ----------------------- | ----------- | ------------------- |
-| actions/checkout        | v6          | ci.yml, release.yml |
-| pnpm/action-setup       | v6          | ci.yml, release.yml |
-| actions/setup-node      | v6          | ci.yml, release.yml |
-| actions/upload-artifact | v6          | ci.yml, release.yml |
-
-Resolve each tag to a commit SHA:
-
-```sh
-gh api repos/actions/checkout/git/ref/tags/v6
-gh api repos/pnpm/action-setup/git/ref/tags/v6
-gh api repos/actions/setup-node/git/ref/tags/v6
-gh api repos/actions/upload-artifact/git/ref/tags/v6
-```
-
-If `object.type` is `tag` (an annotated tag), dereference it with `gh api repos/<owner>/<repo>/git/tags/<object.sha>` and use `object.sha` from that response. Then replace each reference with `uses: <owner>/<repo>@<sha> # v6`.
+| Action                  | Tag | Commit SHA                               | Files               |
+| ----------------------- | --- | ---------------------------------------- | ------------------- |
+| actions/checkout        | v6  | d23441a48e516b6c34aea4fa41551a30e30af803 | ci.yml, release.yml |
+| pnpm/action-setup       | v6  | 0977fd99725f1db4007ccb2928dbb4e90d06cc86 | ci.yml, release.yml |
+| actions/setup-node      | v6  | 249970729cb0ef3589644e2896645e5dc5ba9c38 | ci.yml, release.yml |
+| actions/upload-artifact | v6  | b7c566a772e6b6bfb58ed0dc250532a479d7789f | ci.yml, release.yml |
 
 ## Risk
 
-- Until pinned, a moved or compromised `v6` tag would change what runs in CI and in the npm publish job (which has `id-token: write`).
+- The SHAs were not re-resolved in this task (no network access); they rely on the owner's resolution.
+- Pins do not update themselves. Security fixes in these actions need a manual SHA bump, so consider Dependabot for `github-actions`.
+- The `# v6` comment is not checked against the SHA. A wrong pairing would go unnoticed.
 - CI now also runs on pushes to `develop` and on PRs targeting `develop`. PRs to other branches no longer trigger CI. This is the requested behaviour, but it is a narrowing relative to the previous unfiltered `pull_request`.
