@@ -19,7 +19,7 @@ Contributions are accepted under the repository's MIT license.
 
 Requirements:
 
-- Node.js 22 or newer.
+- Node.js 22.12 or newer. The development tools (Vite, Vitest) require it; the published library still declares `engines.node` `>=22`.
 - Corepack and the pnpm version declared in `package.json`.
 - Browsers installed by Playwright for browser-test work.
 

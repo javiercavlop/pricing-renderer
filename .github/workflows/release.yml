@@ -21,6 +21,15 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: npm
+    # NOTE: this single job holds id-token: write (needed for npm provenance
+    # and OIDC publishing) and also installs dependencies and runs the full
+    # test suite from the release tag. Third-party install scripts and test
+    # code therefore execute in a job that can mint an OIDC token. This is
+    # accepted deliberately so that the exact commit that is tested is the
+    # one that is published, and the job is gated by the protected "npm"
+    # environment and the immutable release tag. Splitting it into an
+    # unprivileged verify job and a minimal publish job would reduce the
+    # exposure but changes the release flow and has not been approved.
     permissions:
       contents: read
       id-token: write
@@ -68,6 +77,14 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      # Risk: the npm CLI is pinned to an exact version but downloaded without
+      # an integrity or signature check beyond what the registry and npm's own
+      # install provide, and it runs before dependencies are installed in the
+      # job that holds id-token: write. A compromised npm@11.18.0 tarball or
+      # registry response could act on the publish. Mitigations to consider
+      # separately: verify the tarball integrity hash or registry signatures
+      # (npm audit signatures), or use a runner image that already ships an
+      # OIDC-capable npm.
       - name: Use an OIDC-compatible npm CLI
         run: npm install --global npm@11.18.0
 

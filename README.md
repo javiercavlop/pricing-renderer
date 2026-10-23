@@ -36,7 +36,7 @@ Source, issues, release notes, and immutable version tags remain public in
 
 ## Review the live example
 
-Node.js 22+ and pnpm are required for local development:
+Node.js 22.12 or newer and pnpm are required for local development (the development tools, Vite and Vitest, require it; the published library still supports `engines.node` `>=22`):
 
 ```bash
 git clone https://github.com/javiercavlop/pricing-renderer.git
