@@ -5,20 +5,18 @@
 This project was informed by the following MIT-licensed projects. Their editor
 implementations are not bundled into this package.
 
-- Sphere — Copyright Alex-GF and contributors — https://github.com/Alex-GF/Sphere
-- Pricing4TS — Copyright Alex-GF and contributors — https://github.com/Alex-GF/Pricing4TS
+- Sphere — Copyright (c) 2024 Alejandro García Fernández — https://github.com/Alex-GF/Sphere
+- Pricing4TS — Copyright (c) 2024 Alejandro García Fernández — https://github.com/Alex-GF/Pricing4TS
 
-The copyright lines above are carried over from the previous version of this
-notice. They were **not verified** against the original `LICENSE` files of
-those repositories. Check them before the next release.
+The copyright lines above were checked against the `LICENSE` file at the
+default branch of each repository. Both are MIT.
 
-Both projects are licensed under the MIT License, reproduced below. The
-copyright holder is the one named in the list above (not verified).
+Both projects are licensed under the MIT License, reproduced below.
 
 ```text
 MIT License
 
-Copyright (c) Alex-GF and contributors
+Copyright (c) 2024 Alejandro García Fernández
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
