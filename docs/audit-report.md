@@ -37,13 +37,16 @@ that could not be checked from the repository is marked **not verified**.
 1. **Global npm without integrity verification.**
    `npm install --global npm@11.18.0` (line 89) installs a version-pinned CLI
    with no checksum or signature check, in a job that has `id-token: write`. A
-   compromised package would run in a job that can mint the OIDC token.
+   compromised package would run in a job that can mint the OIDC token. A
+   risk comment above that step in `release.yml` documents it and lists
+   mitigations to consider separately; it is not marked as accepted.
 2. **Whole pipeline in the publishing job.** Install, lint, tests, package
    checks, browser engine install and browser tests all run in the same job
    that holds `id-token: write` and the `npm` environment. Third-party code
    (dev dependencies, install scripts, browser tooling) runs next to the
    publish credentials. Splitting build/test from publish would reduce the
-   exposure.
+   exposure. A comment at the top of the job in `release.yml` records this as
+   accepted deliberately.
 3. **`prepublishOnly` repeats work.** `package.json` defines `prepublishOnly`
    as `pnpm test && pnpm package:check`, and `package:check` runs
    `pnpm build`. The workflow already ran `pnpm test` and `pnpm package:check`,
@@ -57,14 +60,16 @@ that could not be checked from the repository is marked **not verified**.
 
 ## CI audit job and Dependabot
 
-The dependency update changed `.github/workflows/ci.yml` and added
-`.github/dependabot.yml`; it also added the risk comments in `release.yml`
-mentioned above.
+`.github/dependabot.yml` already existed since the 0.1.0 release. The recent
+dependency update only modified it (grouping), together with
+`.github/workflows/ci.yml` (the `audit` job) and comments in `release.yml`
+(the risk notes referenced in items 1 and 2 above).
 
 - **`audit` job in `ci.yml` is non-blocking.** It runs
   `pnpm audit --audit-level high` with `continue-on-error: true`. The audit is
-  now clean (0 advisories with the `pnpm.overrides`), as reported when the
-  update was made; it was not re-run for this document.
+  now clean (0 advisories with the `pnpm.overrides`), **not verified**: this
+  result comes from the CI of the dependency update PR, not from a run made
+  for this document.
 - **Promoting `audit` to blocking.** The comment in `ci.yml` says to do this
   once advisories are triaged. With a clean audit that condition could already
   be met. Owner decision; not applied.
@@ -83,9 +88,12 @@ mentioned above.
   explaining why (the React peers are optional), then validate with
   `pnpm install --frozen-lockfile`. The file is sensitive and was not edited
   here.
-- Release workflow items 3 and 4 are still open. Items 1 and 2 are documented
-  as accepted risk in comments in `release.yml` (the job-level note and the
-  npm install note); no workflow change was made for them.
+- Release workflow items 1, 3 and 4 are still open. Item 1 (global npm
+  without integrity verification) is only documented as a risk in a comment
+  in `release.yml`, which lists "Mitigations to consider separately"; it is
+  not accepted. Item 2 is the only one documented as accepted deliberately
+  (job-level note in `release.yml`). No workflow change was made for any of
+  them.
 - Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
   copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
   (checked against both upstream `LICENSE` files).
