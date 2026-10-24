@@ -72,7 +72,9 @@ Status: not verified: demo not run. Related browser test:
 Reload, then in the browser console run:
 
 ```js
-document.querySelector('pricing-renderer').addEventListener('pricing-selection-change', e => console.log(e.detail))
+document
+  .querySelector('pricing-renderer')
+  .addEventListener('pricing-selection-change', (e) => console.log(e.detail));
 ```
 
 1. Choose Growth (one log line, expected), tick Extra Storage (one line).
