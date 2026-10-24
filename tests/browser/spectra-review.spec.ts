@@ -3,6 +3,8 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+// All DOM metrics describe the collapsed default state: 30 rows per group, first group expanded.
+
 type Viewport = { width: number; height: number };
 type Metrics = Record<string, unknown>;
 
@@ -160,18 +162,19 @@ async function collectMetrics(viewport: Viewport) {
   const firstCta = renderer.querySelector('[data-pr-part="cta"]');
   const summary = renderer.querySelector('.pr-summary');
 
+  // Fully inside the viewport: sized (not display:none) and neither above nor below the fold.
+  const fullyInViewport = (element: Element | null) => {
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= viewportHeight;
+  };
   const firstScreen = () => {
     const rects = planCards.map((card) => card.getBoundingClientRect());
-    const summaryRect = summary?.getBoundingClientRect();
     return {
       planCardsVisible: rects.filter((rect) => rect.top < viewportHeight && rect.bottom > 0).length,
-      firstPriceVisible: firstPrice
-        ? firstPrice.getBoundingClientRect().bottom <= viewportHeight
-        : false,
-      firstCtaVisible: firstCta ? firstCta.getBoundingClientRect().bottom <= viewportHeight : false,
-      summaryVisible: summaryRect
-        ? summaryRect.height > 0 && summaryRect.top < viewportHeight && summaryRect.bottom > 0
-        : false,
+      firstPriceVisible: fullyInViewport(firstPrice),
+      firstCtaVisible: fullyInViewport(firstCta),
+      summaryVisible: fullyInViewport(summary),
     };
   };
   const firstViewportPageTop = firstScreen();
@@ -211,6 +214,8 @@ async function collectMetrics(viewport: Viewport) {
   let awkwardBreaks = 0;
   const awkwardExamples: string[] = [];
   let inspectedWords = 0;
+  let cappedAtWordLimit = false;
+  const wordLimit = 6000;
   const separators = new RegExp('[-/\\u00ad\\u2010-\\u2014]');
   const walker = document.createTreeWalker(renderer, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -219,8 +224,11 @@ async function collectMetrics(viewport: Viewport) {
     if (!parent || !value.trim() || !isRendered(parent)) continue;
     if (parent.closest('script, style, .pr-sr-only')) continue;
     for (const match of value.matchAll(/\S{4,}/g)) {
-      if (inspectedWords >= 6000) break;
       if (separators.test(match[0])) continue;
+      if (inspectedWords >= wordLimit) {
+        cappedAtWordLimit = true;
+        break;
+      }
       inspectedWords += 1;
       const wordRange = document.createRange();
       wordRange.setStart(node, match.index ?? 0);
@@ -241,6 +249,8 @@ async function collectMetrics(viewport: Viewport) {
   await nextFrame();
   const firstViewport = firstScreen();
   const rendererBox = renderer.getBoundingClientRect();
+  // The scroll is clamped on short pages, so the renderer may not reach the top of the viewport.
+  const rendererTopAfterScroll = round(rendererBox.top);
   const firstCtaBottom = firstCta ? firstCta.getBoundingClientRect().bottom : null;
   const firstRowBottoms: number[] = [];
   for (const card of planCards) {
@@ -306,6 +316,7 @@ async function collectMetrics(viewport: Viewport) {
     },
     comparisonLayout,
     rendererTop,
+    rendererTopAfterScroll,
     firstViewport,
     firstViewportPageTop,
     planGridBottomOffset,
@@ -314,7 +325,12 @@ async function collectMetrics(viewport: Viewport) {
     stickyHeaderEffective,
     stickyFirstColumnEffective,
     truncatedTexts: { count: truncatedCount, examples: truncated },
-    awkwardBreaks: { count: awkwardBreaks, examples: awkwardExamples },
+    awkwardBreaks: {
+      count: awkwardBreaks,
+      examples: awkwardExamples,
+      inspectedWords,
+      cappedAtWordLimit,
+    },
   };
 }
 
@@ -334,7 +350,7 @@ async function contrast(page: Page): Promise<Metrics> {
 }
 
 function summaryLine(metrics: Metrics): string {
-  type Counted = { count?: number };
+  type Counted = { count?: number; cappedAtWordLimit?: boolean };
   const m = metrics as {
     fixture?: string;
     theme?: string;
@@ -372,6 +388,7 @@ function summaryLine(metrics: Metrics): string {
     `trunc=${count(m.truncatedTexts?.count)}`,
     `breaks=${count(m.awkwardBreaks?.count)}`,
     `contrast=${count(m.contrastViolations)}`,
+    ...(m.awkwardBreaks?.cappedAtWordLimit ? ['capped=1'] : []),
   ].join(' ');
 }
 
@@ -389,10 +406,9 @@ async function measure(
   testInfo: TestInfo,
   name: string,
   base: Metrics,
+  metrics: Metrics,
   withContrast: boolean,
-  viewport: Viewport,
 ): Promise<void> {
-  const metrics = await page.evaluate(collectMetrics, viewport);
   const extra = withContrast ? await contrast(page) : {};
   await report(testInfo, name, { ...base, ...metrics, ...extra });
 }
@@ -409,11 +425,14 @@ async function snap(page: Page, testInfo: TestInfo, name: string, clip?: Viewpor
 async function expectRendered(
   page: Page,
   state: string,
-  metrics: { rendererHeight?: unknown; planCardCount?: unknown },
+  metrics: { rendererHeight?: unknown; planCardCount?: unknown; comparisonRows?: unknown },
   saas: string,
 ): Promise<void> {
   expect(state).toBe('ready');
   if (saas === 'okta') expect(metrics.planCardCount).toBe(0);
+  else expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
+  const rows = metrics.comparisonRows as { rendered?: number } | undefined;
+  expect(Number(rows?.rendered)).toBeGreaterThan(0);
   await expect(page.locator('pricing-renderer .pr-skeleton')).toHaveCount(0);
   expect(Number(metrics.rendererHeight)).toBeGreaterThan(0);
 }
@@ -473,8 +492,8 @@ test.describe('spectra captures', () => {
             testInfo,
             name,
             { fixture: saas, theme: variant.theme, locale: variant.locale },
+            metrics,
             true,
-            viewport,
           );
           await expectRendered(page, state, metrics, saas);
         }
@@ -486,12 +505,15 @@ test.describe('spectra captures', () => {
   for (const saas of yearlySaas.filter((id) => extremes.includes(id))) {
     test(`${saas} yearly 1440`, async ({ page }, testInfo) => {
       test.setTimeout(60_000);
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
       const viewport = viewports[0];
       await openRenderer(page, viewport);
       const state = await applyPricing(page, readFixture(saas), 'en', 'light');
       const yearly = page.locator('pricing-renderer input[name="pr-billing"]').last();
       await expect(yearly).toHaveCount(1);
       await yearly.evaluate((input: HTMLInputElement) => input.click());
+      await expect(yearly).toBeChecked();
       await page.evaluate(async () => {
         const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
           updateComplete: Promise<unknown>;
@@ -502,6 +524,7 @@ test.describe('spectra captures', () => {
       });
       expect(state).toBe('ready');
       await snap(page, testInfo, `${saas}-1440-light-en-yearly`);
+      expect(errors).toEqual([]);
     });
   }
 });

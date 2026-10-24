@@ -255,20 +255,40 @@ describe('SPECTRA layout metrics', () => {
     }
   });
 
-  it('measures the 37 fixtures with consistent sums', () => {
+  it('counts the rows of the parsed pricing that are not disabled', () => {
     expect(metrics).toHaveLength(37);
     for (const item of metrics) {
-      expect(item.rows).toBe(item.featureRows + item.usageLimitRows);
-      expect(item.rows).toBe(item.groupRows.reduce((sum, group) => sum + group.rows, 0));
-      expect(item.groups).toBe(item.groupRows.length);
-      expect(item.rowsAfterDifferencesOnly).toBe(item.rows - item.identicalInAllPlans);
-      expect(item.addOnOnlyRows).toBeLessThanOrEqual(item.rows);
-      expect(item.unitPluralExamples.length).toBeLessThanOrEqual(5);
-      expect(item.unitPluralCandidates).toBeGreaterThanOrEqual(item.unitPluralExamples.length);
-      for (const value of [item.plans, item.addOns, item.rows, item.identicalInAllPlans]) {
-        expect(Number.isInteger(value) && value >= 0).toBe(true);
-      }
+      const parsed = parsePricingYaml(readFileSync(join(repoRoot, item.fixture), 'utf8'));
+      const pricing = parsed.value!;
+      const rendered = (entries: Array<{ render: string }>): number =>
+        entries.filter((entry) => entry.render !== 'disabled').length;
+      expect(item.rows, item.fixture).toBe(
+        rendered(pricing.features) + rendered(pricing.usageLimits),
+      );
     }
+  });
+
+  it('reproduces the headline figures of the report', () => {
+    const sum = (values: number[]): number => values.reduce((total, value) => total + value, 0);
+    const withoutOkta = metrics.filter((item) => !item.fixture.includes('/okta/'));
+    expect(sum(withoutOkta.map((item) => item.addOnOnlyRows))).toBe(166);
+    expect(sum(metrics.map((item) => item.addOnOnlyRows))).toBe(307);
+    expect(sum(metrics.map((item) => item.unitPluralCandidates))).toBe(255);
+    const summary = summarize(metrics);
+    expect(summary.orphanOn3Columns).toBe(17);
+    expect(summary.orphanOn4Columns).toBe(5);
+    expect(summary.orphanOn3Or4Columns).toBe(22);
+  });
+
+  // When the output variable is set, the file is regenerated first and the comparison is moot.
+  it.skipIf(Boolean(process.env.SPECTRA_METRICS_OUT))('equals the committed metrics.json', () => {
+    const committed = JSON.parse(
+      readFileSync(join(repoRoot, 'docs/agent-work/visual-review-spectra/metrics.json'), 'utf8'),
+    ) as unknown;
+    const computed = JSON.parse(
+      JSON.stringify({ summary: summarize(metrics), pricings: metrics }),
+    ) as unknown;
+    expect(committed).toEqual(computed);
   });
 
   it('reproduces the owner totals for the nine largest pricings', () => {

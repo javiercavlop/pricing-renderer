@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-const root = join(__dirname, '..', 'fixtures', 'spectra');
+const root = fileURLToPath(new URL('../fixtures/spectra/', import.meta.url));
 
 interface Counts {
   plans: number;
@@ -108,7 +109,7 @@ describe.each(fixtures)('SPECTRA fixture %s', (file) => {
     expect(codes.includes('PR_PLANS_EMPTY')).toBe(emptyPlans);
   });
 
-  it('matches the counts of the README table', () => {
+  it('matches the expected counts', () => {
     const pricing = result.value;
     expect(pricing).toBeDefined();
     expect({
@@ -118,4 +119,11 @@ describe.each(fixtures)('SPECTRA fixture %s', (file) => {
       addOns: pricing?.addOns.length,
     }).toEqual(expected[file]);
   });
+
+  if (file === 'trello/2024.yml') {
+    it('loads the hand-edited unlimited power-ups limit as Infinity', () => {
+      const limit = result.value?.usageLimits.find((item) => item.id === 'powerUpsLimit');
+      expect(limit?.defaultValue).toBe(Infinity);
+    });
+  }
 });
