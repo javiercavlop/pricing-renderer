@@ -231,19 +231,122 @@ reload(): Promise<void>
 
 Reloads the current source and aborts an obsolete remote request.
 
+```ts
+applySelection(selection: Partial<PricingSelection>): ApplySelectionResult
+```
+
+Loads a known selection, such as the customer's current subscription, into an
+uncontrolled element. The call is synchronous. It merges the input over the
+schema defaults (as `mergeSelection` does, so omitted or `undefined` fields take
+the default, not the current selection), validates it against the loaded
+pricing, applies `reconcileSelection`, replaces the internal selection and
+re-renders.
+
+- An unknown plan or billing period is replaced by the one of the selection in
+  effect, unknown add-on ids are dropped, and the quantities of selected add-ons
+  are normalized silently.
+- It emits no `pricing-selection-change`, opens no confirmation dialog, and
+  discards an open pending-change dialog as Cancel does.
+- The input is not mutated and the element keeps no reference to it.
+- It never throws for an expected state. Before the pricing is ready (first
+  load, reload in flight, failed first load) it returns `applied: false` with
+  the error `PR_SELECTION_NOT_READY`. In controlled mode (the `selection`
+  property is set) it returns `applied: false` with the error
+  `PR_SELECTION_CONTROLLED` and the current state. A refused call stores
+  nothing and is not queued.
+- A selection applied from a `pricing-ready` listener stays for that load. A
+  later successful load restarts from `defaultSelection`.
+
+```ts
+type ApplySelectionResult =
+  | {
+      applied: true;
+      selection: PricingSelection;
+      resolved: ResolvedPricing;
+      removedAddOnIds: string[];
+      diagnostics: PricingDiagnostic[];
+    }
+  | {
+      applied: false;
+      selection: PricingSelection | undefined;
+      resolved: ResolvedPricing | undefined;
+      removedAddOnIds: [];
+      diagnostics: PricingDiagnostic[];
+    };
+```
+
+`ApplySelectionResult` is exported from `pricing-renderer/element` and
+re-exported from `pricing-renderer/react`. Narrow on `applied`: when it is
+`true`, `selection` and `resolved` are always defined. When it is `false`,
+`selection` and `resolved` are the current state in controlled mode and
+`undefined` when the element is not ready.
+
+```ts
+const result = renderer.applySelection({
+  planId: 'growth',
+  addOns: { extraStorage: { selected: true, quantity: 2 } },
+});
+if (result.applied) {
+  console.info(result.resolved.subtotal);
+}
+```
+
+#### Selection diagnostics
+
+| Code                                  | Severity  | Path                      | Raised when                                      |
+| ------------------------------------- | --------- | ------------------------- | ------------------------------------------------ |
+| `PR_SELECTION_UNKNOWN_PLAN`           | `warning` | `selection.planId`        | `planId` is not a plan id (case-sensitive)       |
+| `PR_SELECTION_UNKNOWN_BILLING_PERIOD` | `warning` | `selection.billingPeriod` | `billingPeriod` is not a billing period id       |
+| `PR_SELECTION_UNKNOWN_ADDON`          | `warning` | `selection.addOns.<id>`   | an `addOns` key is not an add-on id (dropped)    |
+| `PR_SELECTION_ADDON_REMOVED`          | `info`    | `selection.addOns.<id>`   | reconciliation deselected the add-on             |
+| `PR_SELECTION_NOT_READY`              | `error`   | —                         | the call was made while the element is not ready |
+| `PR_SELECTION_CONTROLLED`             | `error`   | —                         | the call was made in controlled mode             |
+
+The warnings come first, in the order plan, billing period, add-ons (in the key
+order of `input.addOns`), followed by one `PR_SELECTION_ADDON_REMOVED` per
+removed add-on, with `details.addOnId`. Diagnostics are returned in the result,
+dispatched in one `pricing-diagnostic` event when the list is not empty, and not
+added to the diagnostics the element renders. `variables` are merged as
+`mergeSelection` does and are not validated.
+
+### Getters
+
+```ts
+readonly resolvedState: PricingSelectionChangeDetail | undefined
+```
+
+A detached snapshot `{ selection, resolved }` of the selection in effect (the
+reconciled controlled `selection`, else the internal selection, with `variables`
+replaced by the pricing defaults while `variablesEnabled` is `false`) and the
+resolved pricing with the subtotal the element renders. It is `undefined` while
+the element is not ready. Each read returns new objects that share no reference
+with the element. It resolves the pricing on every read: read it on events, not
+in a render loop.
+
 ### Events
 
 All events bubble and are composed.
 
 | Event                      | Detail                                                         | Cancelable |
 | -------------------------- | -------------------------------------------------------------- | ---------- |
-| `pricing-ready`            | `{ pricing, diagnostics }`                                     | No         |
+| `pricing-ready`            | `{ pricing, diagnostics, selection, resolved }`                | No         |
 | `pricing-selection-change` | `{ selection, resolved }`                                      | No         |
 | `pricing-action`           | `{ actionId, planId?, href?, selection, resolved, metadata? }` | Yes        |
 | `pricing-diagnostic`       | `{ diagnostics }`                                              | No         |
 
 Cancel `pricing-action` to keep navigation, checkout, or authentication under
 host control.
+
+`pricing-ready` carries `selection` and `resolved` as required fields, equal to
+`resolvedState` read in the listener. Code that builds a `PricingReadyDetail` by
+hand must add both. The element sets its ready state and selection before it
+dispatches the event, so `applySelection` called from a `pricing-ready` listener
+works.
+
+`pricing-diagnostic` fires with the diagnostics of a load and also after an
+`applySelection` call that returns diagnostics, including the error refusals
+`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`. Hosts that treat any
+error in `pricing-diagnostic` as a load failure must check the diagnostic code.
 
 `detail.selection` of `pricing-selection-change` and `pricing-action` is always
 a reconciled selection (see `reconcileSelection`). The controlled `selection`
@@ -289,6 +392,24 @@ and mutually exclusive input props:
 
 React callbacks are `onReady`, `onSelectionChange`, `onAction`, and
 `onDiagnostic`. The module contains `"use client"` and supports React 18/19.
+
+A ref to `PricingRenderer` is the element, so it gives `applySelection` and
+`resolvedState` without wrapper code:
+
+```tsx
+const ref = useRef<PricingRendererElement>(null);
+
+<PricingRenderer
+  ref={ref}
+  yaml={source}
+  onReady={() => {
+    const result = ref.current?.applySelection({ planId: 'growth' });
+    if (result && !result.applied) console.warn(result.diagnostics);
+  }}
+/>;
+```
+
+`ApplySelectionResult` is re-exported from this entry point.
 
 ## CSS entry points
 
