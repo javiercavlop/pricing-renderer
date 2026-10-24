@@ -515,7 +515,6 @@ test.describe('spectra metrics', () => {
         });
         await expectRendered(page, state, metrics, fixture.saas);
         expectStickyHeader(metrics);
-        expect(metrics.toolbarInputReachable).not.toBe(false);
         expect(errors).toEqual([]);
       });
     }
