@@ -1,3 +1,4 @@
+import { buildBreakdown } from './breakdown.js';
 import { evaluatePriceExpression } from './expression.js';
 import type {
   AddOnSelection,
@@ -148,8 +149,8 @@ export function resolvePricing(
   const selection = mergeSelection(pricing, selectionInput);
   // [impl->req~resolve-totals-exclude-removed~1]
   const reconciled = reconcileSelection(pricing, selection).selection;
-  const billingMultiplier =
-    pricing.billing.find((period) => period.id === selection.billingPeriod)?.multiplier ?? 1;
+  const billingPeriod = pricing.billing.find((period) => period.id === selection.billingPeriod);
+  const billingMultiplier = billingPeriod?.multiplier ?? 1;
   const diagnostics: PricingDiagnostic[] = [];
   const planPrices: Record<string, ResolvedPrice> = {};
   const addOnPrices: Record<string, ResolvedPrice> = {};
@@ -205,31 +206,24 @@ export function resolvePricing(
     }
   }
 
-  const selectedPlanPrice = selection.planId ? planPrices[selection.planId] : undefined;
-  let subtotal = selectedPlanPrice?.kind === 'amount' ? selectedPlanPrice.amount : 0;
-  let requiresQuote =
-    selectedPlanPrice === undefined ||
-    selectedPlanPrice.kind === 'label' ||
-    selectedPlanPrice.kind === 'error';
-
-  for (const [addOnId, state] of Object.entries(reconciled.addOns)) {
-    if (!state.selected) continue;
-    const resolved = addOnPrices[addOnId];
-    if (resolved?.kind === 'amount') {
-      const quantity = normalizeAddOnQuantity(pricing, addOnId, state);
-      subtotal += resolved.baseAmount * resolved.billingMultiplier * quantity;
-    } else {
-      requiresQuote = true;
-    }
-  }
+  const breakdown = buildBreakdown({
+    pricing,
+    selection,
+    reconciled,
+    planPrices,
+    addOnPrices,
+    billingPeriod,
+    addOnQuantity: (addOnId) => normalizeAddOnQuantity(pricing, addOnId, selection.addOns[addOnId]),
+  });
 
   // [impl->req~resolve-selection-unreconciled~1]
   return {
     selection,
     planPrices,
     addOnPrices,
-    subtotal,
-    requiresQuote,
+    subtotal: breakdown.subtotal,
+    requiresQuote: breakdown.requiresQuote,
     diagnostics,
+    breakdown,
   };
 }

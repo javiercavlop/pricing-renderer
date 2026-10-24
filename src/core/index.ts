@@ -57,6 +57,8 @@ export type {
   NormalizedPricing,
   NormalizedUsageLimit,
   NormalizePricingOptions,
+  PriceBreakdown,
+  PriceBreakdownLine,
   PriceSource,
   PricingComparisonGroup,
   PricingComparisonRow,

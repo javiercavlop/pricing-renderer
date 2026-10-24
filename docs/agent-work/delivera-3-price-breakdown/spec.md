@@ -364,8 +364,9 @@ Needs: impl, utest
   `{ kind: 'addOn', id: 'prioritySuccess', name: 'Priority Success', quantity: 1, billingMultiplier: 1, requiresQuote: true }`
 - **AND** the `extraStorage` line has `amount` 5, `breakdown.subtotal` is 5 and
   `breakdown.requiresQuote` is `true`
-- **AND** `resolved.diagnostics` still has two `PR_EXPRESSION_RESOLUTION_FAILED` entries, with
-  paths `plans.growth.price` and `addOns.prioritySuccess.price`
+- **AND** `resolved.diagnostics` still has four `PR_EXPRESSION_RESOLUTION_FAILED` entries, one per
+  price that fails, with paths `plans.starter.price`, `plans.growth.price`,
+  `plans.enterprise.price` and `addOns.prioritySuccess.price`
 
 ### Requirement: Summation order
 
