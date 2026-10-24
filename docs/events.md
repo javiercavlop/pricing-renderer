@@ -7,7 +7,7 @@
 
 | Event                      | Emitted when                                         | Cancelable | `detail`                                                       |
 | -------------------------- | ---------------------------------------------------- | ---------- | -------------------------------------------------------------- |
-| `pricing-ready`            | Every load that completes produced a pricing value   | No         | `{ pricing, diagnostics, selection, resolved }`                |
+| `pricing-ready`            | A load that completes with a pricing value           | No         | `{ pricing, diagnostics, selection, resolved }`                |
 | `pricing-selection-change` | The user changed plan, billing, variables or add-ons | No         | `{ selection, resolved }`                                      |
 | `pricing-action`           | The user clicked a plan CTA                          | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
 | `pricing-diagnostic`       | A load or applySelection returned diagnostics        | No         | `{ diagnostics }`                                              |
@@ -167,9 +167,9 @@ interface PricingDiagnostic {
 It is emitted in three cases:
 
 - **Load.** After each load (`pricing`, `yaml` or `src`, with or without
-  `loadPricing`) that returns diagnostics: source problems, YAML parse problems, validation of the
-  pricing (version, prices, billing, add-ons). A successful load can carry
-  warnings, so `pricing-ready` and `pricing-diagnostic` can both be emitted for
+  `loadPricing`) that returns diagnostics: source problems, YAML parse
+  problems, validation of the pricing (version, prices, billing, add-ons). A
+  successful load can carry warnings, so `pricing-ready` and `pricing-diagnostic` can both be emitted for
   one load.
 - **Missing source.** `reload()` with no source, or with more than one of
   `pricing`, `yaml` and `src`.
