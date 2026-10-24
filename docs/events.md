@@ -16,7 +16,7 @@ Details that the table leaves out:
 
 - `pricing-ready` is emitted for a load of `pricing`, `yaml` or `src` (with or
   without `loadPricing`), on the first load and on every later load that
-  completes. A load superseded by a newer one emits nothing. It fires before the
+  completes with a pricing value. A load superseded by a newer one emits nothing. It fires before the
   `pricing-diagnostic` event of the same load.
 - `pricing-selection-change` follows a change by the user: plan, billing period,
   variable, add-on or add-on quantity, including a confirmed dialog. It is not
@@ -97,7 +97,8 @@ interface PricingActionDetail {
 ### Cancel the default navigation
 
 The event is `cancelable`. A CTA with a safe `href` (`http:`, `https:`,
-`mailto:`, a path starting with `/`, `./` or `../`, or a `#` fragment) renders
+`mailto:`, a value starting with `/` (this includes `//host` URLs), `./` or `../`, or a
+`#` fragment) renders
 as a link. When a listener calls `event.preventDefault()`, the element cancels
 the click, so the browser does not follow the link. A CTA without an `href`, or
 with one that is not safe (such as `checkout/growth` or `?plan=x`), renders as a
@@ -166,7 +167,7 @@ interface PricingDiagnostic {
 
 It is emitted in three cases:
 
-- **Load.** After each load (`pricing`, `yaml` or `src`, with or without
+- **Load.** After each load (`pricing`, `yaml`, or `src` with or without
   `loadPricing`) that returns diagnostics: source problems, YAML parse
   problems, validation of the pricing (version, prices, billing, add-ons). A
   successful load can carry warnings, so `pricing-ready` and `pricing-diagnostic` can both be emitted for

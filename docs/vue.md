@@ -203,10 +203,10 @@ for the contract mapping, the billing period, diagnostics and reloads.
   `pricing-ready`, `pricing-selection-change`, `pricing-action` and
   `pricing-diagnostic`.
 - **`pricing-ready` does not fire for a listener added later.** The event fires
-  once per load. If you attach the listener after the first load, read
+  at most once per load. If you attach the listener after the first load, read
   `renderer.value?.resolvedState` for the current state.
 - **Checkout opens twice.** Call `event.preventDefault()` in `@pricing-action`,
-  or the element also follows `href`.
+  or the browser also follows the CTA link.
 - **Nothing is rendered on the server.** The element needs the browser. In a
   server-rendered app such as Nuxt (general guidance, not tested here), set
   `isCustomElement` in the Nuxt config (`vue.compilerOptions.isCustomElement` in
