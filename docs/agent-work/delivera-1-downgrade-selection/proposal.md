@@ -80,11 +80,12 @@ escalated again before it is made.
 
 ## Risks
 
-- Open question: should `pricing-action` details carry the reconciled selection when a host passes
-  an invalid controlled `selection`? Recommendation: yes. `detail.resolved.subtotal` already
-  excludes the unavailable add-ons, so `detail.selection` must match it; sending the raw selection
-  would reproduce the downstream rejection this change fixes. The prop itself stays untouched and no
-  `pricing-selection-change` is emitted. Until `spec.md` states the answer, this stays open.
+- Decided: when a host passes an invalid controlled `selection`, both `pricing-selection-change`
+  and `pricing-action` details carry the reconciled selection
+  (`req~events-reconciled-selection~1` in `spec.md`). `detail.resolved.subtotal` already excludes
+  the unavailable add-ons, so `detail.selection` must match it; sending the raw selection would
+  reproduce the downstream rejection this change fixes. The controlled prop itself is never
+  assigned.
 - `resolvePricing` sets `requiresQuote` when a selected add-on id is unknown to the pricing (no
   resolved price). That behaviour is unchanged here; `reconcileSelection` only removes known add-ons
   that are unavailable.
