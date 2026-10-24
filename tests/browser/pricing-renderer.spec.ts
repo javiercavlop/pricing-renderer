@@ -465,6 +465,707 @@ test('[utest->req~controlled-selection-untouched~1] never rewrites a controlled 
   expect(events[0]?.selection.addOns.extraStorage?.selected).toBe(false);
 });
 
+type LoadDiagnostic = {
+  code: string;
+  severity: string;
+  path?: string;
+  details?: Record<string, unknown>;
+};
+type LoadDetail = {
+  selection: {
+    planId?: string;
+    billingPeriod?: string;
+    variables: Record<string, unknown>;
+    addOns: Record<string, { selected: boolean; quantity: number }>;
+  };
+  resolved: { subtotal: number };
+};
+type LoadApiResult = Partial<LoadDetail> & {
+  applied: boolean;
+  removedAddOnIds: string[];
+  diagnostics: LoadDiagnostic[];
+};
+type LoadApiElement = HTMLElement & {
+  yaml?: string;
+  src?: string;
+  pricing?: unknown;
+  loadPricing?: unknown;
+  selection?: unknown;
+  defaultSelection?: unknown;
+  variablesEnabled: boolean;
+  updateComplete: Promise<unknown>;
+  reload(): Promise<void>;
+  applySelection(input: unknown): LoadApiResult;
+  readonly resolvedState?: LoadDetail;
+};
+type LoadApiWindow = typeof window & {
+  pendingLoads?: Record<string, (() => void)[]>;
+  recorded?: Record<string, unknown[]>;
+  hostValue?: unknown;
+  listenerResult?: LoadApiResult;
+};
+
+const contractC = {
+  planId: 'growth',
+  addOns: {
+    extraStorage: { selected: true, quantity: 2 },
+    prioritySuccess: { selected: true, quantity: 1 },
+  },
+};
+const downgradeInput = {
+  planId: 'starter',
+  addOns: { extraStorage: { selected: true, quantity: 2 } },
+};
+const defaultVariables = {
+  seats: 5,
+  prioritySupport: false,
+  region: 'eu',
+  priceByRegion: { 'eu-price': 8, 'us-price': 10 },
+};
+
+const applySelection = (page: Page, input: unknown) =>
+  page.evaluate(
+    (value) => (document.querySelector('pricing-renderer') as LoadApiElement).applySelection(value),
+    input,
+  );
+const readResolvedState = (page: Page, selector = 'pricing-renderer') =>
+  page.evaluate((css) => (document.querySelector(css) as LoadApiElement).resolvedState, selector);
+const nextUpdate = (page: Page) =>
+  page.evaluate(
+    () => (document.querySelector('pricing-renderer') as LoadApiElement).updateComplete,
+  );
+const recorded = (page: Page, key: string) =>
+  page.evaluate((name) => (window as LoadApiWindow).recorded?.[name] ?? [], key);
+
+async function record(page: Page, selector: string, eventName: string, key: string) {
+  await page.evaluate(
+    ([css, type, name]) => {
+      const target = window as LoadApiWindow;
+      target.recorded ??= {};
+      target.recorded[name!] = [];
+      document.querySelector(css!)!.addEventListener(type!, (event) => {
+        target.recorded![name!]!.push((event as CustomEvent).detail ?? true);
+      });
+    },
+    [selector, eventName, key],
+  );
+}
+
+async function setControlled(page: Page, planId: string, quantity: number, enabled = true) {
+  await page.evaluate(
+    ([plan, packs, variables, selected]) => {
+      const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+      renderer.selection = {
+        planId: plan,
+        billingPeriod: 'monthly',
+        variables,
+        addOns: { extraStorage: { selected, quantity: packs } },
+      };
+    },
+    [planId, quantity, defaultVariables, enabled] as const,
+  );
+}
+
+// Adds a second renderer whose first load stays pending until resolvePendingLoads.
+async function addPendingRenderer(page: Page, id: string) {
+  await page.evaluate((elementId) => {
+    const target = window as LoadApiWindow;
+    const source = (document.querySelector('pricing-renderer') as LoadApiElement).yaml;
+    const renderer = document.createElement('pricing-renderer') as LoadApiElement;
+    renderer.id = elementId;
+    renderer.src = 'https://example.com/pricing.yml';
+    target.pendingLoads ??= {};
+    const pending: (() => void)[] = [];
+    target.pendingLoads[elementId] = pending;
+    renderer.loadPricing = () =>
+      new Promise<string | undefined>((resolve) => pending.push(() => resolve(source)));
+    document.body.append(renderer);
+  }, id);
+  await page.waitForFunction(
+    (elementId) => ((window as LoadApiWindow).pendingLoads?.[elementId]?.length ?? 0) >= 1,
+    id,
+  );
+}
+
+async function resolvePendingLoads(page: Page, id: string) {
+  await page.evaluate((elementId) => {
+    for (const resolve of (window as LoadApiWindow).pendingLoads![elementId]!.splice(0)) resolve();
+  }, id);
+  await page.waitForFunction(
+    (elementId) =>
+      (document.getElementById(elementId) as LoadApiElement).resolvedState !== undefined,
+    id,
+  );
+}
+
+// Reload in flight with an earlier pricing: set a new pending loadPricing and call reload().
+async function startPendingReload(page: Page, id: string) {
+  await page.evaluate(async (elementId) => {
+    const target = window as LoadApiWindow;
+    const renderer = document.getElementById(elementId) as LoadApiElement;
+    const source = (document.querySelector('pricing-renderer') as LoadApiElement).yaml;
+    const pending: (() => void)[] = [];
+    target.pendingLoads![elementId] = pending;
+    renderer.loadPricing = () =>
+      new Promise<string | undefined>((resolve) => pending.push(() => resolve(source)));
+    void renderer.reload();
+    await renderer.updateComplete;
+  }, id);
+  await page.waitForFunction(
+    (elementId) => ((window as LoadApiWindow).pendingLoads?.[elementId]?.length ?? 0) >= 2,
+    id,
+  );
+}
+
+const applyOn = (page: Page, id: string, input: unknown) =>
+  page.evaluate(
+    ([elementId, value]) =>
+      (document.getElementById(elementId as string) as LoadApiElement).applySelection(value),
+    [id, input] as const,
+  );
+
+async function addFailedRenderer(page: Page, id: string) {
+  await page.evaluate(async (elementId) => {
+    const renderer = document.createElement('pricing-renderer') as LoadApiElement;
+    renderer.id = elementId;
+    document.body.append(renderer);
+    await renderer.updateComplete;
+  }, id);
+}
+
+const growthRadio = (page: Page) => page.getByRole('radio', { name: 'Choose Growth' });
+const addOnCheckbox = (page: Page, name: string) =>
+  page.locator('.pr-addon-card').filter({ hasText: name }).getByRole('checkbox');
+
+test('[utest->req~apply-selection-replaces~1] load API: applies the Delivera contract', async ({
+  page,
+}) => {
+  await applySelection(page, contractC);
+  await nextUpdate(page);
+  await expect(growthRadio(page)).toBeChecked();
+  await expect(addOnCheckbox(page, 'Extra Storage')).toBeChecked();
+  await expect(addOnCheckbox(page, 'Priority Success')).toBeChecked();
+  await expect(page.locator('.pr-summary')).toContainText('€80');
+});
+
+test('[utest->req~apply-selection-replaces~1] load API: replaces the selection instead of merging', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await applySelection(page, { planId: 'enterprise' });
+  await nextUpdate(page);
+  await expect(page.getByRole('radio', { name: 'Choose Enterprise' })).toBeChecked();
+  await expect(addOnCheckbox(page, 'Extra Storage')).not.toBeChecked();
+  await expect(page.locator('.pr-summary')).toContainText('€40');
+});
+
+test('[utest->req~apply-selection-result~1] load API: returns the applied result', async ({
+  page,
+}) => {
+  const outcome = await page.evaluate((input) => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    const result = renderer.applySelection(input);
+    return { result, state: renderer.resolvedState };
+  }, contractC);
+  expect(outcome.result.applied).toBe(true);
+  expect(outcome.result.resolved?.subtotal).toBe(80);
+  expect(outcome.result.removedAddOnIds).toEqual([]);
+  expect(outcome.result.diagnostics).toEqual([]);
+  expect(outcome.result.selection).toEqual(outcome.state?.selection);
+  expect(outcome.result.resolved).toEqual(outcome.state?.resolved);
+});
+
+test('[utest->req~apply-selection-result~1] load API: reports the removed add-on', async ({
+  page,
+}) => {
+  const result = await applySelection(page, downgradeInput);
+  expect(result.applied).toBe(true);
+  expect(result.removedAddOnIds).toEqual(['extraStorage']);
+  expect(result.resolved?.subtotal).toBe(20);
+  expect(result.diagnostics).toHaveLength(1);
+  expect(result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_ADDON_REMOVED',
+    severity: 'info',
+    path: 'selection.addOns.extraStorage',
+  });
+});
+
+test('[utest->req~apply-selection-uses-selection-in-effect~1] load API: falls back to the selection in effect', async ({
+  page,
+}) => {
+  await growthRadio(page).check();
+  await page.getByRole('radio', { name: /Yearly/ }).check();
+  const result = await applySelection(page, { planId: 'legacy', billingPeriod: 'quarterly' });
+  expect(result.selection?.planId).toBe('growth');
+  expect(result.selection?.billingPeriod).toBe('yearly');
+  expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+    'PR_SELECTION_UNKNOWN_PLAN',
+    'PR_SELECTION_UNKNOWN_BILLING_PERIOD',
+  ]);
+});
+
+test('[utest->req~apply-selection-silent~1] load API: emits no pricing-selection-change', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await applySelection(page, contractC);
+  await applySelection(page, downgradeInput);
+  await nextUpdate(page);
+  expect(await selectionEvents(page)).toHaveLength(0);
+});
+
+test('[utest->req~apply-selection-no-dialog~1] load API: removes add-ons without a dialog', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await applySelection(page, {
+    planId: 'starter',
+    addOns: { extraStorage: { selected: true, quantity: 1 } },
+  });
+  await nextUpdate(page);
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Choose Starter' })).toBeChecked();
+  await expect(addOnCheckbox(page, 'Extra Storage')).not.toBeChecked();
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+});
+
+test('[utest->req~apply-selection-discards-pending~1] load API: discards a pending change and restores focus', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await collectEvents(page);
+  const starter = page.getByRole('radio', { name: 'Choose Starter' });
+  await starter.focus();
+  await starter.click();
+  await expect(planDialog(page)).toBeVisible();
+  await expect(planDialog(page)).toContainText('Will remove: extraStorage');
+  await applySelection(page, { planId: 'enterprise' });
+  await nextUpdate(page);
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Choose Enterprise' })).toBeChecked();
+  expect(await selectionEvents(page)).toHaveLength(0);
+  await expect(starter).toBeFocused();
+});
+
+test('[utest->req~apply-selection-input-unmutated~1] load API: leaves the input untouched', async ({
+  page,
+}) => {
+  const input = {
+    planId: 'growth',
+    addOns: {
+      ghost: { selected: true, quantity: 1 },
+      extraStorage: { selected: true, quantity: 25 },
+    },
+  };
+  const after = await page.evaluate((value) => {
+    const copy = structuredClone(value);
+    (document.querySelector('pricing-renderer') as LoadApiElement).applySelection(value);
+    return { value, copy };
+  }, input);
+  expect(after.value).toEqual(after.copy);
+  expect(after.value).toEqual(input);
+});
+
+test('[utest->req~apply-selection-input-detached~1] load API: keeps no reference to the input', async ({
+  page,
+}) => {
+  await page.evaluate((value) => {
+    const input = structuredClone(value);
+    (document.querySelector('pricing-renderer') as LoadApiElement).applySelection(input);
+    input.planId = 'starter';
+    input.addOns.extraStorage.quantity = 7;
+  }, contractC);
+  await nextUpdate(page);
+  const state = await readResolvedState(page);
+  expect(state?.selection.planId).toBe('growth');
+  expect(state?.selection.addOns.extraStorage?.quantity).toBe(2);
+  expect(state?.resolved.subtotal).toBe(80);
+});
+
+test('[utest->req~apply-selection-not-ready~1] load API: refuses while the first load is in flight', async ({
+  page,
+}) => {
+  await addPendingRenderer(page, 'late');
+  const result = await applyOn(page, 'late', contractC);
+  expect(result.applied).toBe(false);
+  expect(result.selection).toBeUndefined();
+  expect(result.resolved).toBeUndefined();
+  expect(result.removedAddOnIds).toEqual([]);
+  expect(result.diagnostics).toHaveLength(1);
+  expect(result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_NOT_READY',
+    severity: 'error',
+  });
+  await resolvePendingLoads(page, 'late');
+  const state = await readResolvedState(page, '#late');
+  expect(state?.selection.planId).toBe('starter');
+  expect(state?.resolved.subtotal).toBe(20);
+});
+
+test('[utest->req~apply-selection-not-ready~1] load API: refuses while a reload is in flight', async ({
+  page,
+}) => {
+  await addPendingRenderer(page, 'late');
+  await resolvePendingLoads(page, 'late');
+  await startPendingReload(page, 'late');
+  const result = await applyOn(page, 'late', contractC);
+  expect(result.applied).toBe(false);
+  expect(result.selection).toBeUndefined();
+  expect(result.resolved).toBeUndefined();
+  expect(result.diagnostics).toHaveLength(1);
+  expect(result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_NOT_READY',
+    severity: 'error',
+  });
+  await resolvePendingLoads(page, 'late');
+  const state = await readResolvedState(page, '#late');
+  expect(state?.selection.planId).toBe('starter');
+  expect(state?.resolved.subtotal).toBe(20);
+});
+
+test('[utest->req~apply-selection-not-ready~1] load API: refuses after a failed first load', async ({
+  page,
+}) => {
+  await addFailedRenderer(page, 'failed');
+  const result = await applyOn(page, 'failed', contractC);
+  expect(result.applied).toBe(false);
+  expect(result.diagnostics).toHaveLength(1);
+  expect(result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_NOT_READY',
+    severity: 'error',
+  });
+});
+
+test('[utest->req~apply-selection-not-ready~1] load API: applies after a failed reload that keeps the pricing', async ({
+  page,
+}) => {
+  await record(page, 'pricing-renderer', 'pricing-diagnostic', 'conflict');
+  await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    renderer.pricing = {};
+    await renderer.updateComplete;
+  });
+  const conflicts = (await recorded(page, 'conflict')) as { diagnostics: LoadDiagnostic[] }[];
+  expect(conflicts).toHaveLength(1);
+  expect(conflicts[0]?.diagnostics[0]?.code).toBe('PR_SOURCE_CONFLICT');
+  const result = await applySelection(page, contractC);
+  expect(result.applied).toBe(true);
+  expect(result.resolved?.subtotal).toBe(80);
+});
+
+test('[utest->req~apply-selection-controlled~1] load API: refuses in controlled mode', async ({
+  page,
+}) => {
+  await setControlled(page, 'growth', 1);
+  const outcome = await page.evaluate((input) => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    return { result: renderer.applySelection(input), state: renderer.resolvedState };
+  }, contractC);
+  expect(outcome.result.applied).toBe(false);
+  expect(outcome.result.selection?.planId).toBe('growth');
+  expect(outcome.result.resolved?.subtotal).toBe(50);
+  expect(outcome.result.removedAddOnIds).toEqual([]);
+  expect(outcome.result.diagnostics).toHaveLength(1);
+  expect(outcome.result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_CONTROLLED',
+    severity: 'error',
+  });
+  expect(outcome.result.selection).toEqual(outcome.state?.selection);
+  expect(outcome.result.resolved).toEqual(outcome.state?.resolved);
+});
+
+test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a controlled refusal stores nothing', async ({
+  page,
+}) => {
+  await setControlled(page, 'growth', 1);
+  const before = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    (window as LoadApiWindow).hostValue = renderer.selection;
+    return JSON.stringify(renderer.selection);
+  });
+  await applySelection(page, contractC);
+  const kept = await page.evaluate((json) => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    return (
+      renderer.selection === (window as LoadApiWindow).hostValue &&
+      JSON.stringify(renderer.selection) === json
+    );
+  }, before);
+  expect(kept).toBe(true);
+  await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    renderer.selection = undefined;
+    await renderer.updateComplete;
+  });
+  const state = await readResolvedState(page);
+  expect(state?.selection.planId).toBe('starter');
+  expect(state?.selection.addOns).toEqual({});
+  expect(state?.resolved.subtotal).toBe(20);
+});
+
+test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a not-ready refusal stores nothing', async ({
+  page,
+}) => {
+  await addPendingRenderer(page, 'late');
+  await applyOn(page, 'late', contractC);
+  await resolvePendingLoads(page, 'late');
+  const state = await readResolvedState(page, '#late');
+  expect(state?.selection.planId).toBe('starter');
+  expect(state?.selection.addOns).toEqual({});
+});
+
+test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches one pricing-diagnostic event', async ({
+  page,
+}) => {
+  await record(page, 'pricing-renderer', 'pricing-diagnostic', 'main');
+  const result = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    const result = renderer.applySelection({ planId: 'legacy' });
+    return { result, count: (window as LoadApiWindow).recorded!.main!.length };
+  });
+  expect(result.count).toBe(1);
+  expect(result.result.diagnostics).toHaveLength(1);
+  expect(result.result.diagnostics[0]).toMatchObject({
+    code: 'PR_SELECTION_UNKNOWN_PLAN',
+    severity: 'warning',
+  });
+  expect(await recorded(page, 'main')).toEqual([{ diagnostics: result.result.diagnostics }]);
+});
+
+test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches the refusal diagnostics', async ({
+  page,
+}) => {
+  await setControlled(page, 'growth', 1);
+  await record(page, 'pricing-renderer', 'pricing-diagnostic', 'controlled');
+  const controlled = await applySelection(page, contractC);
+  expect(controlled.diagnostics[0]?.code).toBe('PR_SELECTION_CONTROLLED');
+  expect(await recorded(page, 'controlled')).toEqual([{ diagnostics: controlled.diagnostics }]);
+
+  await addPendingRenderer(page, 'late');
+  await record(page, '#late', 'pricing-diagnostic', 'late');
+  const notReady = await applyOn(page, 'late', contractC);
+  expect(notReady.diagnostics[0]?.code).toBe('PR_SELECTION_NOT_READY');
+  expect(await recorded(page, 'late')).toEqual([{ diagnostics: notReady.diagnostics }]);
+});
+
+test('[utest->req~apply-selection-no-empty-diagnostic~1] load API: dispatches no event for an empty list', async ({
+  page,
+}) => {
+  await record(page, 'pricing-renderer', 'pricing-diagnostic', 'main');
+  const result = await applySelection(page, contractC);
+  expect(result.diagnostics).toEqual([]);
+  await nextUpdate(page);
+  expect(await recorded(page, 'main')).toHaveLength(0);
+});
+
+test('[utest->req~apply-selection-diagnostics-not-rendered~1] load API: keeps the diagnostics out of the rendered list', async ({
+  page,
+}) => {
+  const items = page.locator('[data-pr-part="diagnostics"] li');
+  const before = await items.count();
+  const result = await applySelection(page, {
+    planId: 'legacy',
+    addOns: { ghost: { selected: true, quantity: 1 } },
+  });
+  expect(result.diagnostics.length).toBeGreaterThan(0);
+  await nextUpdate(page);
+  await expect(items).toHaveCount(before);
+  await expect(page.locator('pricing-renderer')).not.toContainText('PR_SELECTION_');
+});
+
+async function reloadAndWaitForReady(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    const ready = new Promise((resolve) =>
+      renderer.addEventListener('pricing-ready', resolve, { once: true }),
+    );
+    void renderer.reload();
+    await ready;
+  });
+}
+
+test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts from the default selection', async ({
+  page,
+}) => {
+  await applySelection(page, contractC);
+  await reloadAndWaitForReady(page);
+  const state = await readResolvedState(page);
+  expect(state?.selection.planId).toBe('starter');
+  expect(state?.selection.addOns).toEqual({});
+  expect(state?.resolved.subtotal).toBe(20);
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+});
+
+test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts from defaultSelection', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    (document.querySelector('pricing-renderer') as LoadApiElement).defaultSelection = {
+      planId: 'growth',
+    };
+  });
+  await applySelection(page, contractC);
+  await reloadAndWaitForReady(page);
+  const state = await readResolvedState(page);
+  expect(state?.selection.planId).toBe('growth');
+  expect(state?.selection.addOns).toEqual({});
+  expect(state?.resolved.subtotal).toBe(45);
+});
+
+test('[utest->req~apply-selection-in-ready-listener~1] load API: keeps a selection applied from a pricing-ready listener', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await page.evaluate((input) => {
+    const target = window as LoadApiWindow;
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    renderer.addEventListener(
+      'pricing-ready',
+      () => {
+        target.listenerResult = renderer.applySelection(input);
+      },
+      { once: true },
+    );
+    void renderer.reload();
+  }, contractC);
+  await page.waitForFunction(() => (window as LoadApiWindow).listenerResult !== undefined);
+  const listenerResult = await page.evaluate(() => (window as LoadApiWindow).listenerResult);
+  expect(listenerResult?.applied).toBe(true);
+  await expect(growthRadio(page)).toBeChecked();
+  await expect(page.locator('.pr-summary')).toContainText('€80');
+  expect((await readResolvedState(page))?.resolved.subtotal).toBe(80);
+  expect(await selectionEvents(page)).toHaveLength(0);
+});
+
+test('[utest->req~resolved-state-not-ready~1] load API: has no resolvedState before the element is ready', async ({
+  page,
+}) => {
+  await addPendingRenderer(page, 'first');
+  expect(await readResolvedState(page, '#first')).toBeUndefined();
+  await addPendingRenderer(page, 'again');
+  await resolvePendingLoads(page, 'again');
+  await startPendingReload(page, 'again');
+  expect(await readResolvedState(page, '#again')).toBeUndefined();
+  await addFailedRenderer(page, 'failed');
+  expect(await readResolvedState(page, '#failed')).toBeUndefined();
+});
+
+test('[utest->req~resolved-state-snapshot~1] load API: reads the initial state', async ({
+  page,
+}) => {
+  const state = await readResolvedState(page);
+  expect(state?.selection).toEqual({
+    planId: 'starter',
+    billingPeriod: 'monthly',
+    variables: defaultVariables,
+    addOns: {},
+  });
+  expect(state?.resolved.subtotal).toBe(20);
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+});
+
+test('[utest->req~resolved-state-snapshot~1] load API: reads the state after user changes', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  const state = await readResolvedState(page);
+  expect(state?.selection.planId).toBe('growth');
+  expect(state?.selection.addOns.extraStorage).toEqual({ selected: true, quantity: 1 });
+  expect(state?.resolved.subtotal).toBe(50);
+  await expect(page.locator('.pr-summary')).toContainText('€50');
+});
+
+test('[utest->req~resolved-state-snapshot~1] load API: ignores variables while they are disabled', async ({
+  page,
+}) => {
+  const applied = await applySelection(page, { planId: 'starter', variables: { seats: 12 } });
+  expect(applied.resolved?.subtotal).toBe(48);
+  await page.evaluate(() => {
+    (document.querySelector('pricing-renderer') as LoadApiElement).variablesEnabled = false;
+  });
+  const state = await readResolvedState(page);
+  expect(state?.selection.variables.seats).toBe(5);
+  expect(state?.resolved.subtotal).toBe(20);
+});
+
+test('[utest->req~resolved-state-detached~1] load API: returns detached snapshots', async ({
+  page,
+}) => {
+  const outcome = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    const a = renderer.resolvedState!;
+    const b = renderer.resolvedState!;
+    const distinct = {
+      state: a !== b,
+      selection: a.selection !== b.selection,
+      addOns: a.selection.addOns !== b.selection.addOns,
+      resolved: a.resolved !== b.resolved,
+    };
+    a.selection.planId = 'enterprise';
+    a.resolved.subtotal = 0;
+    return { distinct, third: renderer.resolvedState };
+  });
+  expect(outcome.distinct).toEqual({ state: true, selection: true, addOns: true, resolved: true });
+  expect(outcome.third?.selection.planId).toBe('starter');
+  expect(outcome.third?.resolved.subtotal).toBe(20);
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+});
+
+test('[utest->req~resolved-state-controlled~1] load API: reconciles the controlled selection', async ({
+  page,
+}) => {
+  await setControlled(page, 'starter', 2);
+  const outcome = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    return { state: renderer.resolvedState, host: renderer.selection as LoadDetail['selection'] };
+  });
+  expect(outcome.state?.selection.addOns.extraStorage).toEqual({ selected: false, quantity: 2 });
+  expect(outcome.state?.resolved.subtotal).toBe(20);
+  expect(outcome.host.addOns.extraStorage).toEqual({ selected: true, quantity: 2 });
+});
+
+test('[utest->req~resolved-state-read-only~1] load API: defines resolvedState as a getter only', async ({
+  page,
+}) => {
+  const descriptor = await page.evaluate(() => {
+    const element = customElements.get('pricing-renderer')!;
+    const found = Object.getOwnPropertyDescriptor(element.prototype, 'resolvedState');
+    return { get: typeof found?.get, set: typeof found?.set };
+  });
+  expect(descriptor).toEqual({ get: 'function', set: 'undefined' });
+});
+
+test('[utest->req~ready-detail-selection~1] load API: pricing-ready carries the selection', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const target = window as LoadApiWindow;
+    const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
+    target.recorded = { ready: [] };
+    renderer.addEventListener('pricing-ready', (event) => {
+      target.recorded!.ready!.push({
+        detail: (event as CustomEvent<LoadDetail>).detail,
+        state: renderer.resolvedState,
+      });
+    });
+  });
+  await reloadAndWaitForReady(page);
+  type Entry = { detail: LoadDetail; state: LoadDetail };
+  const [first] = (await recorded(page, 'ready')) as Entry[];
+  expect(first?.detail.selection).toEqual(first?.state.selection);
+  expect(first?.detail.resolved).toEqual(first?.state.resolved);
+  expect(first?.detail.selection.planId).toBe('starter');
+  expect(first?.detail.resolved.subtotal).toBe(20);
+
+  await page.evaluate((input) => {
+    (document.querySelector('pricing-renderer') as LoadApiElement).defaultSelection = input;
+  }, downgradeInput);
+  await reloadAndWaitForReady(page);
+  const second = ((await recorded(page, 'ready')) as Entry[])[1];
+  expect(second?.detail.selection.addOns.extraStorage).toEqual({ selected: false, quantity: 2 });
+  expect(second?.detail.resolved.subtotal).toBe(20);
+});
+
 test('switches locale without changing source data', async ({ page }) => {
   await page.locator('#locale').selectOption('es-ES');
   await expect(page.getByRole('heading', { name: 'Comparar planes' })).toBeVisible();
