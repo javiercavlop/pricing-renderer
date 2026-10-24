@@ -93,6 +93,10 @@ are JavaScript/React properties so `false` remains unambiguous.
   from controlled or internal interactive selection are ignored until the
   option is enabled again.
 
+- The "How is this calculated?" button next to the estimated total only reads
+  the resolved pricing, so it is shown whatever the three flags. Hide it with
+  CSS (see the API reference).
+
 These options only govern supplied UI behavior. Headless consumers decide how
 to expose their own interactions.
 
@@ -119,6 +123,12 @@ The element owns the selection unless the host sets the `selection` property.
   `applied: false` and the error `PR_SELECTION_CONTROLLED`. Set `selection` to
   `undefined` to return to uncontrolled mode, which starts from the internal
   selection.
+
+- Quantities are shown and stepped as normalized quantities. A quantity above
+  the maximum or off the step grid (from `selection` or `defaultSelection`) is
+  shown in the stepper, billed and listed in the breakdown as its normalized
+  value; the stored selection keeps the value the host passed. The decrease and
+  increase buttons start from the normalized quantity.
 
 Uncontrolled, with a preloaded selection:
 

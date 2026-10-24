@@ -49,6 +49,15 @@ selection of the merged input, so add-ons that are unavailable for the selected
 plan, and their dependents, are not summed. `resolved.selection` stays the
 merged input, unreconciled.
 
+`subtotal` is summed in a fixed order: the plan amount first, then the amounts
+of the selected add-ons in the declaration order of `pricing.addOns`, whatever
+the key order of `selection.addOns`. This is also the order of
+`resolved.breakdown`, so `breakdown.subtotal` is the same number as `subtotal`
+and adding the line amounts in line order gives exactly that number. Integer
+amounts and selections with at most one priced add-on give the same values as
+before. With two or more decimal add-on amounts the result can differ from
+earlier versions in the last binary digit.
+
 ```ts
 reconcileSelection(
   pricing: NormalizedPricing,
@@ -157,6 +166,106 @@ interface PricingResult<T> {
 }
 ```
 
+`ResolvedPricing` has the required field `breakdown: PriceBreakdown`, a
+JSON-safe description of the lines that make up `subtotal` and
+`requiresQuote`. `PriceBreakdown` and `PriceBreakdownLine` are exported from
+`pricing-renderer`. Code that builds a `ResolvedPricing` by hand, such as test
+doubles, must add the field.
+
+```ts
+interface PriceBreakdownLine {
+  kind: 'plan' | 'addOn';
+  id: string;
+  name: string;
+  quantity: number;
+  unitAmount?: number;
+  billingMultiplier: number;
+  amount?: number;
+  requiresQuote: boolean;
+  label?: string;
+}
+
+interface PriceBreakdown {
+  currency: string;
+  billingPeriod?: NormalizedBillingPeriod;
+  plan?: PriceBreakdownLine;
+  addOns: PriceBreakdownLine[];
+  subtotal: number;
+  requiresQuote: boolean;
+}
+```
+
+- `currency` is `pricing.metadata.currency`. `billingPeriod` is a copy of the
+  `pricing.billing` entry of the selection's billing period; it is absent when
+  that id is unknown, and then every `billingMultiplier` is 1.
+- `plan` is the line of the selected plan; it is absent when `planId` is
+  `undefined` or not a plan id (then `requiresQuote` is `true`).
+- `addOns` has one line per add-on that is selected after
+  `reconcileSelection`, in the declaration order of `pricing.addOns`.
+  Unselected entries, removed add-ons and unknown ids get no line.
+- `quantity` is 1 for the plan and `normalizeAddOnQuantity` for an add-on, the
+  quantity that is billed.
+- A priced line has `unitAmount` (before the billing multiplier) and
+  `amount = unitAmount * billingMultiplier * quantity`, evaluated left to
+  right and equal to `planPrices[id].amount` or `addOnPrices[id].amount`.
+- A label price (such as "Contact sales") has `requiresQuote: true` and the
+  `label` text, without `unitAmount` and `amount`. A price expression that
+  cannot be resolved has `requiresQuote: true` and none of the three, so hosts
+  can tell a quote by label from a failed expression.
+- Optional keys are absent, never `undefined`. A breakdown survives
+  `JSON.parse(JSON.stringify(breakdown))` unchanged and shares no object with
+  the pricing or the selection.
+
+Example for acme with selection `CY` (Growth, 2 `extraStorage`, 1
+`prioritySuccess`, billed yearly):
+
+```json
+{
+  "currency": "EUR",
+  "billingPeriod": { "id": "yearly", "label": "Yearly", "multiplier": 0.8 },
+  "plan": {
+    "kind": "plan",
+    "id": "growth",
+    "name": "Growth",
+    "quantity": 1,
+    "unitAmount": 45,
+    "billingMultiplier": 0.8,
+    "amount": 36,
+    "requiresQuote": false
+  },
+  "addOns": [
+    {
+      "kind": "addOn",
+      "id": "extraStorage",
+      "name": "Extra Storage",
+      "quantity": 2,
+      "unitAmount": 5,
+      "billingMultiplier": 0.8,
+      "amount": 8,
+      "requiresQuote": false
+    },
+    {
+      "kind": "addOn",
+      "id": "prioritySuccess",
+      "name": "Priority Success",
+      "quantity": 1,
+      "unitAmount": 25,
+      "billingMultiplier": 0.8,
+      "amount": 20,
+      "requiresQuote": false
+    }
+  ],
+  "subtotal": 64,
+  "requiresQuote": false
+}
+```
+
+The breakdown reaches every `ResolvedPricing` the element provides (`resolvedState`,
+the `applySelection` result and the details of `pricing-ready`,
+`pricing-selection-change` and `pricing-action`) with no change to those types.
+To compare two selections, resolve both and diff the two breakdowns by line
+`id`; a dedicated comparison function is not part of the API.
+
 See the generated declarations for the complete normalized model and view-model
 shape.
 
@@ -222,6 +331,40 @@ Exports `PricingRendererElement` without registering it globally.
 
 Exactly one of `pricing`, `yaml`, or `src` is required. Sensitive request
 configuration is property-only.
+
+### Price breakdown disclosure
+
+Next to the estimated total, the summary shows a small icon button with the
+accessible name "How is this calculated?" (`pricing.breakdownToggle`). It toggles
+an inline panel (not a modal) that lists the plan and each add-on as
+`unit price × quantity × billing multiplier = amount`, a quote line with its
+label or "Requires quote", the billing period (only when the pricing has more
+than one), the currency and the total. The button is read-only: it is shown
+whatever `selectionEnabled`, `ctaEnabled` and `variablesEnabled`.
+
+- The button has `aria-expanded` and `aria-controls`; the panel id is unique per
+  element. Enter, Space and click toggle it and keep focus on the button.
+- Escape closes the panel and returns focus to the button when focus is on the
+  button or inside the panel; elsewhere (and in the plan-change dialog) it does
+  nothing to the panel.
+- The panel stays open when the selection changes and closes when a new pricing
+  loads.
+- The `aria-live="polite"` attribute of the summary is on an inner region that
+  holds the label, the total and the quote note, so opening the panel is not
+  announced. Hosts that select `[data-pr-part='summary'][aria-live]` must update
+  the selector, for example to `[data-pr-part='summary'] [aria-live]`.
+
+Stable part hooks: `breakdown-toggle` (the button), `breakdown` (the panel) and
+`breakdown-line` (one row per line, with `data-line-kind` and `data-line-id`).
+To hide the button:
+
+```css
+pricing-renderer [data-pr-part='breakdown-toggle'] {
+  display: none;
+}
+```
+
+There is no new property, attribute or event.
 
 ### Methods
 
