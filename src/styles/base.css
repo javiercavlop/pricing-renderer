@@ -897,26 +897,153 @@
     z-index: 4;
     inset-block-end: max(0px, env(safe-area-inset-bottom));
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-2) var(--pr-space-4);
+    padding: var(--pr-space-4);
+    /* [impl->req~summary-breakdown-closed-layout~1] room for the breakdown toggle, which is
+       positioned and so never changes the block size */
+    padding-inline-end: calc(var(--pr-space-4) + 24px + var(--pr-space-2));
+    background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
+    backdrop-filter: blur(16px);
+  }
+
+  pricing-renderer[data-pr-root] .pr-summary__live {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--pr-space-2) var(--pr-space-4);
-    padding: var(--pr-space-4);
-    background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
-    backdrop-filter: blur(16px);
   }
 
   pricing-renderer[data-pr-root] .pr-summary :where(p, strong, span) {
     margin: 0;
   }
 
-  pricing-renderer[data-pr-root] .pr-summary strong {
+  pricing-renderer[data-pr-root] .pr-summary__live strong {
     font-size: var(--pr-font-size-xl);
   }
 
-  pricing-renderer[data-pr-root] .pr-summary span {
+  pricing-renderer[data-pr-root] .pr-summary__live > span {
     grid-column: 1 / -1;
     color: var(--pr-color-warning);
     font-size: var(--pr-font-size-sm);
+  }
+
+  /* [impl->req~summary-breakdown-target-size~1] 24px visual box; the ::after layer extends the
+     pointer target to 44px without layout effect. An absolute layer is placed against the 22px
+     padding box (24px minus the 1px border on each side), so inset -11px gives 22 + 2 * 11 = 44px
+     centered on the toggle.
+     [impl->req~summary-breakdown-icon-contrast~1] the icon uses --pr-color-muted, 5.9:1 on the
+     light and 7.5:1 on the dark surface.
+     [impl->req~summary-breakdown-reduced-motion~1] the only transition is shortened by the
+     prefers-reduced-motion rule below. */
+  pricing-renderer[data-pr-root] .pr-breakdown-toggle {
+    position: absolute;
+    inset-block-start: calc(var(--pr-space-4) + 4px);
+    inset-inline-end: var(--pr-space-4);
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    padding: 0;
+    border: 1px solid currentcolor;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--pr-color-muted);
+    cursor: pointer;
+    transition: background-color var(--pr-motion-fast);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown-toggle::before {
+    content: 'i';
+    font-size: var(--pr-font-size-sm);
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown-toggle::after {
+    position: absolute;
+    inset: -11px;
+    content: '';
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown-toggle[aria-expanded='true'] {
+    background: var(--pr-color-surface-subtle);
+    color: var(--pr-color-text);
+  }
+
+  @media (hover: hover) {
+    pricing-renderer[data-pr-root] .pr-breakdown-toggle:hover {
+      background: var(--pr-color-surface-subtle);
+    }
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown {
+    display: grid;
+    gap: var(--pr-space-3);
+    padding-block-start: var(--pr-space-3);
+    border-block-start: 1px solid var(--pr-color-border);
+    font-size: var(--pr-font-size-sm);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__title {
+    font-weight: 750;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__lines {
+    display: grid;
+    gap: var(--pr-space-2);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__line {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--pr-space-1) var(--pr-space-3);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__name {
+    font-weight: 650;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__detail {
+    color: var(--pr-color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__totals {
+    display: grid;
+    gap: var(--pr-space-1);
+    padding-block-start: var(--pr-space-3);
+    margin: 0;
+    border-block-start: 1px solid var(--pr-color-border);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__totals > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--pr-space-3);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__totals dt {
+    color: var(--pr-color-muted);
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__totals dd {
+    margin: 0;
+    font-weight: 650;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__total :where(dt, dd) {
+    color: var(--pr-color-text);
+    font-weight: 750;
+  }
+
+  pricing-renderer[data-pr-root] .pr-breakdown__quote {
+    color: var(--pr-color-warning);
   }
 
   pricing-renderer[data-pr-root] .pr-metadata dl {
@@ -1057,7 +1184,14 @@
     pricing-renderer[data-pr-root] .pr-summary {
       inset-block-start: var(--pr-space-4);
       inset-block-end: auto;
+    }
+
+    pricing-renderer[data-pr-root] .pr-summary__live {
       grid-template-columns: 1fr;
+    }
+
+    pricing-renderer[data-pr-root] .pr-breakdown-toggle {
+      inset-block-start: var(--pr-space-4);
     }
   }
 

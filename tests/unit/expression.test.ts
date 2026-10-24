@@ -74,6 +74,54 @@ describe('safe price expression evaluator', () => {
     });
   });
 
+  // [utest->req~expression-equality-no-coercion~1]
+  it.each([
+    ["1 == '1'", 0],
+    ['0 == false', 0],
+    ["'' == 0", 0],
+    ['true == 1', 0],
+    ['null == #obj.absent', 0],
+    ["'1' != 1", 1],
+    ['null != #obj.absent', 1],
+    ["'1' == '1'", 1],
+  ])('does not coerce literal operands for %s', (condition, expected) => {
+    expect(evaluatePriceExpression(`${condition} ? 1 : 0.0`, { obj: {} })).toEqual({
+      value: expected,
+    });
+  });
+
+  // [utest->req~expression-equality-no-coercion~1]
+  it.each([
+    ['#one == #oneText', 0],
+    ['#oneText == #one', 0],
+    ['#one === #oneText', 0],
+    ['#one != #oneText', 1],
+    ['#one !== #oneText', 1],
+    ['#zero == #off', 0],
+    ['#zero === #off', 0],
+    ['#zero != #off', 1],
+    ['#empty == #zero', 0],
+    ['#nothing == #undef', 0],
+    ['#nothing === #undef', 0],
+    ['#nothing != #undef', 1],
+    ['#oneText == #oneText', 1],
+    ['#on == #on', 1],
+  ])('does not coerce between types for %s', (condition, expected) => {
+    const variables = {
+      one: 1,
+      oneText: '1',
+      zero: 0,
+      off: false,
+      on: true,
+      empty: '',
+      nothing: null,
+      undef: undefined,
+    };
+    expect(evaluatePriceExpression(`${condition} ? 1 : 0.0`, variables)).toEqual({
+      value: expected,
+    });
+  });
+
   it('rejects missing variables, infinity and negative results', () => {
     expect(evaluatePriceExpression('#missing', {}).error).toContain('not defined');
     expect(evaluatePriceExpression('1 / 0', {}).error).toContain('finite');

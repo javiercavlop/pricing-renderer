@@ -15,6 +15,7 @@ import {
   type MessageCatalog,
   type NormalizedPricing,
   type NormalizePricingOptions,
+  type PriceBreakdownLine,
   type PricingDiagnostic,
   type PricingLayout,
   type PricingMode,
@@ -57,6 +58,10 @@ import {
 } from './renderers.js';
 
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+const breakdownToggleSelector = '[data-pr-part="breakdown-toggle"]';
+const breakdownPanelSelector = '[data-pr-part="breakdown"]';
+let breakdownPanelCount = 0;
 
 export class PricingRendererElement extends LitElement {
   static properties = {
@@ -124,6 +129,9 @@ export class PricingRendererElement extends LitElement {
   private _loadedOnce = false;
   private _reloadOnPropertyChange = false;
   private _previousFocus?: HTMLElement;
+  private _breakdownOpen = false;
+  // [impl->req~summary-breakdown-unique-ids~1] the element renders in light DOM, so ids are global
+  private readonly _breakdownId = `pr-breakdown-${++breakdownPanelCount}`;
 
   constructor() {
     super();
@@ -354,6 +362,8 @@ export class PricingRendererElement extends LitElement {
       this._expandedGroups = new Set();
       this._pendingAddOnChange = undefined;
       this._previousFocus = undefined;
+      // [impl->req~summary-breakdown-closes-on-load~1]
+      this._breakdownOpen = false;
       const viewModel = createPricingViewModel(
         result.value,
         this._effectiveSelection(),
@@ -408,39 +418,56 @@ export class PricingRendererElement extends LitElement {
     };
   }
 
+  // [impl->req~breakdown-element-stabilized~1] [impl->req~breakdown-in-element~1]
+  // A line whose price is replaced by the last valid price takes that price's own factors, and
+  // the subtotal is the line amount fold of the stabilized breakdown, so both stay in sync.
   private _stabilizeResolvedPrices(viewModel: PricingViewModel): PricingViewModel {
-    for (const [id, price] of Object.entries(viewModel.resolved.planPrices)) {
+    const { resolved } = viewModel;
+    const keptLine = (line: PriceBreakdownLine, kept: ResolvedPrice): PriceBreakdownLine => {
+      if (kept.kind !== 'amount') return line;
+      // a line of a failed expression has no label, so none is carried over
+      return {
+        ...line,
+        quantity: kept.quantity,
+        unitAmount: kept.baseAmount,
+        billingMultiplier: kept.billingMultiplier,
+        amount: kept.amount,
+        requiresQuote: false,
+      };
+    };
+    const keptPlanIds = new Set<string>();
+    const keptAddOnIds = new Set<string>();
+    for (const [id, price] of Object.entries(resolved.planPrices)) {
       if (price.kind === 'amount') {
         this._lastValidPlanPrices[id] = price;
       } else if (price.kind === 'error' && this._lastValidPlanPrices[id]) {
-        viewModel.resolved.planPrices[id] = this._lastValidPlanPrices[id]!;
+        resolved.planPrices[id] = this._lastValidPlanPrices[id]!;
+        keptPlanIds.add(id);
       }
     }
-    for (const [id, price] of Object.entries(viewModel.resolved.addOnPrices)) {
+    for (const [id, price] of Object.entries(resolved.addOnPrices)) {
       if (price.kind === 'amount') {
         this._lastValidAddOnPrices[id] = price;
       } else if (price.kind === 'error' && this._lastValidAddOnPrices[id]) {
-        viewModel.resolved.addOnPrices[id] = this._lastValidAddOnPrices[id]!;
+        resolved.addOnPrices[id] = this._lastValidAddOnPrices[id]!;
+        keptAddOnIds.add(id);
       }
     }
 
-    const planPrice = viewModel.resolved.selection.planId
-      ? viewModel.resolved.planPrices[viewModel.resolved.selection.planId]
-      : undefined;
-    let subtotal = planPrice?.kind === 'amount' ? planPrice.amount : 0;
-    // [impl->req~element-subtotal-excludes-removed~1]
-    const removed = new Set(
-      this._normalized
-        ? reconcileSelection(this._normalized, viewModel.resolved.selection).removedAddOnIds
-        : [],
-    );
-    for (const [id, state] of Object.entries(viewModel.resolved.selection.addOns)) {
-      const addOnPrice = viewModel.resolved.addOnPrices[id];
-      if (state.selected && !removed.has(id) && addOnPrice?.kind === 'amount') {
-        subtotal += addOnPrice.amount;
-      }
+    // [impl->req~element-subtotal-excludes-removed~1] the breakdown has no line of a removed add-on
+    const { breakdown } = resolved;
+    if (breakdown.plan && keptPlanIds.has(breakdown.plan.id)) {
+      breakdown.plan = keptLine(breakdown.plan, resolved.planPrices[breakdown.plan.id]!);
     }
-    viewModel.resolved.subtotal = subtotal;
+    breakdown.addOns = breakdown.addOns.map((line) =>
+      keptAddOnIds.has(line.id) ? keptLine(line, resolved.addOnPrices[line.id]!) : line,
+    );
+    let subtotal = breakdown.plan?.amount ?? 0;
+    for (const line of breakdown.addOns) {
+      if (line.amount !== undefined) subtotal += line.amount;
+    }
+    breakdown.subtotal = subtotal;
+    resolved.subtotal = subtotal;
     return viewModel;
   }
 
@@ -723,8 +750,31 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   };
 
+  // [impl->req~summary-breakdown-stays-open~1] no selection change resets the open state
+  private _toggleBreakdown = (): void => {
+    this._breakdownOpen = !this._breakdownOpen;
+    this.requestUpdate();
+  };
+
+  // [impl->req~summary-breakdown-escape~1] [impl->req~summary-breakdown-escape-scope~1]
+  // Escape closes the panel only from the toggle or from inside the panel; the dialog, which makes
+  // the rest inert, keeps its own Escape handling and leaves the panel as it is.
+  private _closeBreakdownOnEscape(event: KeyboardEvent): void {
+    if (!this._breakdownOpen || event.key !== 'Escape') return;
+    const target = event.target instanceof Element ? event.target : undefined;
+    const origin = target?.closest(`${breakdownToggleSelector}, ${breakdownPanelSelector}`);
+    if (!origin || !this.contains(origin)) return;
+    event.preventDefault();
+    this._breakdownOpen = false;
+    this.querySelector<HTMLElement>(breakdownToggleSelector)?.focus();
+    this.requestUpdate();
+  }
+
   private _handleDialogKeyboard = (event: KeyboardEvent): void => {
-    if (!this._pendingAddOnChange) return;
+    if (!this._pendingAddOnChange) {
+      this._closeBreakdownOnEscape(event);
+      return;
+    }
     if (event.key === 'Escape') {
       // [impl->req~plan-change-cancel~1]
       event.preventDefault();
@@ -770,6 +820,7 @@ export class PricingRendererElement extends LitElement {
     revealGroup: this._revealGroup,
     confirmAddOnChange: this._confirmAddOnChange,
     cancelAddOnChange: this._cancelAddOnChange,
+    toggleBreakdown: this._toggleBreakdown,
   };
 
   protected render(): TemplateResult {
@@ -840,6 +891,8 @@ export class PricingRendererElement extends LitElement {
       expandedGroups: this._expandedGroups,
       revealedGroups: this._revealedGroups,
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),
+      breakdownOpen: this._breakdownOpen,
+      breakdownId: this._breakdownId,
       actions: this._actions,
     };
     const warnings = this._diagnostics.filter((item) => item.severity !== 'info');

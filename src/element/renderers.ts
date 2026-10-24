@@ -9,9 +9,11 @@ import {
   getPlanHighlightSummary,
   humanizeIdentifier,
   isSafeLink,
+  normalizeAddOnQuantity,
   translate,
   unwrapValue,
   type NormalizedAddOn,
+  type PriceBreakdownLine,
   type PricingComparisonGroup,
   type PricingComparisonRow,
   type PricingSelection,
@@ -42,6 +44,7 @@ export interface RenderActions {
   revealGroup(groupId: string): void;
   confirmAddOnChange(): void;
   cancelAddOnChange(): void;
+  toggleBreakdown(): void;
 }
 
 export interface RenderState {
@@ -56,6 +59,8 @@ export interface RenderState {
   expandedGroups: ReadonlySet<string>;
   revealedGroups: ReadonlySet<string>;
   pendingAddOnChange?: PendingAddOnChange;
+  breakdownOpen: boolean;
+  breakdownId: string;
   actions: RenderActions;
 }
 
@@ -819,10 +824,13 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
         <div class="pr-addon-grid">
           ${viewModel.addOns.map((addOn) => {
             const selected = selection.addOns[addOn.id]?.selected ?? false;
-            const quantity =
-              selection.addOns[addOn.id]?.quantity ??
-              addOn.subscriptionConstraints?.minQuantity ??
-              1;
+            const addOnSelection = selection.addOns[addOn.id];
+            const quantity = addOnSelection
+              ? normalizeAddOnQuantity(viewModel.pricing, addOn.id, {
+                  ...addOnSelection,
+                  selected: true,
+                })
+              : (addOn.subscriptionConstraints?.minQuantity ?? 1);
             const available = addOnAvailability(addOn, selection.planId);
             const constraints = addOn.subscriptionConstraints;
             return html`
@@ -986,24 +994,127 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
   `;
 }
 
+// The formula of a priced line, or the label or the quote note of a line that needs a quote.
+function breakdownDetail(viewModel: PricingViewModel, line: PriceBreakdownLine): string {
+  const { currency } = viewModel.resolved.breakdown;
+  if (line.requiresQuote || line.unitAmount === undefined || line.amount === undefined) {
+    return line.label ?? t(viewModel, 'pricing.requiresQuote');
+  }
+  const numbers = new Intl.NumberFormat(viewModel.locale);
+  return t(viewModel, 'pricing.breakdownFormula', {
+    unitPrice: formatCurrency(line.unitAmount, currency, viewModel.locale),
+    quantity: numbers.format(line.quantity),
+    multiplier: numbers.format(line.billingMultiplier),
+    amount: formatCurrency(line.amount, currency, viewModel.locale),
+  });
+}
+
+function renderBreakdownLine(
+  viewModel: PricingViewModel,
+  line: PriceBreakdownLine,
+): TemplateResult {
+  return html`<li
+    class="pr-breakdown__line"
+    data-pr-part="breakdown-line"
+    data-line-kind=${line.kind}
+    data-line-id=${line.id}
+  >
+    <div class="pr-breakdown__name">${line.name}</div>
+    <div class="pr-breakdown__detail">${breakdownDetail(viewModel, line)}</div>
+  </li>`;
+}
+
+// [impl->req~summary-breakdown-lines~1] [impl->req~summary-breakdown-totals~1]
+// [impl->req~summary-breakdown-axe~1] [impl->req~summary-breakdown-stays-open~1]
+// The panel is rendered from the element's open state whatever the selection, as a labelled group
+// of a list and a definition list. The closed panel is a template without bindings in its content, so it has no child nodes.
+function renderBreakdownPanel(state: RenderState): TemplateResult {
+  const { viewModel, breakdownOpen, breakdownId } = state;
+  if (!breakdownOpen) {
+    return html`<div id=${breakdownId} data-pr-part="breakdown" hidden></div>`;
+  }
+  const { breakdown } = viewModel.resolved;
+  const lines = [...(breakdown.plan ? [breakdown.plan] : []), ...breakdown.addOns];
+  const period = viewModel.pricing.billing.length > 1 ? breakdown.billingPeriod : undefined;
+  const periodLabel = period
+    ? (viewModel.presentation.billingLabels?.[period.id] ?? period.label)
+    : undefined;
+  return html`
+    <div
+      class="pr-breakdown"
+      id=${breakdownId}
+      data-pr-part="breakdown"
+      role="group"
+      aria-labelledby="${breakdownId}-title"
+    >
+      <p class="pr-breakdown__title" id="${breakdownId}-title">
+        ${t(viewModel, 'pricing.breakdownTitle')}
+      </p>
+      <ul class="pr-breakdown__lines">
+        ${lines.map((line) => renderBreakdownLine(viewModel, line))}
+      </ul>
+      <dl class="pr-breakdown__totals">
+        ${
+          periodLabel !== undefined
+            ? html`<div>
+                <dt>${t(viewModel, 'pricing.billing')}</dt>
+                <dd>${periodLabel}</dd>
+              </div>`
+            : nothing
+        }
+        <div>
+          <dt>${t(viewModel, 'pricing.currency')}</dt>
+          <dd>${breakdown.currency}</dd>
+        </div>
+        <div class="pr-breakdown__total">
+          <dt>
+            ${breakdown.requiresQuote ? t(viewModel, 'pricing.subtotal') : t(viewModel, 'pricing.total')}
+          </dt>
+          <dd>${formatCurrency(breakdown.subtotal, breakdown.currency, viewModel.locale)}</dd>
+        </div>
+      </dl>
+      ${
+        breakdown.requiresQuote
+          ? html`<p class="pr-breakdown__quote">${t(viewModel, 'pricing.requiresQuote')}</p>`
+          : nothing
+      }
+    </div>
+  `;
+}
+
+// [impl->req~summary-live-region~1] [impl->req~summary-breakdown-not-live~1]
+// [impl->req~summary-breakdown-toggle~1] [impl->req~summary-breakdown-activate~1]
+// [impl->req~summary-breakdown-unique-ids~1]
 export function renderSummary(state: RenderState): TemplateResult {
-  const { viewModel } = state;
+  const { viewModel, breakdownOpen, breakdownId, actions } = state;
   const subtotal = formatCurrency(
     viewModel.resolved.subtotal,
     viewModel.pricing.metadata.currency,
     viewModel.locale,
   );
   return html`
-    <aside class="pr-summary" data-pr-part="summary" aria-live="polite">
-      <p>
-        ${viewModel.resolved.requiresQuote ? t(viewModel, 'pricing.subtotal') : t(viewModel, 'pricing.total')}
-      </p>
-      <strong>${subtotal}</strong>
-      ${
-        viewModel.resolved.requiresQuote
-          ? html`<span>${t(viewModel, 'pricing.requiresQuote')}</span>`
-          : nothing
-      }
+    <aside class="pr-summary" data-pr-part="summary">
+      <div class="pr-summary__live" aria-live="polite">
+        <p>
+          ${viewModel.resolved.requiresQuote ? t(viewModel, 'pricing.subtotal') : t(viewModel, 'pricing.total')}
+        </p>
+        <strong>${subtotal}</strong>
+        ${
+          viewModel.resolved.requiresQuote
+            ? html`<span>${t(viewModel, 'pricing.requiresQuote')}</span>`
+            : nothing
+        }
+      </div>
+      <button
+        class="pr-breakdown-toggle"
+        data-pr-part="breakdown-toggle"
+        type="button"
+        aria-label=${t(viewModel, 'pricing.breakdownToggle')}
+        aria-expanded=${String(breakdownOpen)}
+        aria-controls=${breakdownId}
+        @click=${actions.toggleBreakdown}
+      ></button>
+      ${renderBreakdownPanel(state)}
     </aside>
   `;
 }

@@ -177,6 +177,27 @@ export type ResolvedPrice =
   | { kind: 'label'; label: string; quantity: number }
   | { kind: 'error'; message: string; quantity: number };
 
+export interface PriceBreakdownLine {
+  kind: 'plan' | 'addOn';
+  id: string;
+  name: string;
+  quantity: number;
+  unitAmount?: number;
+  billingMultiplier: number;
+  amount?: number;
+  requiresQuote: boolean;
+  label?: string;
+}
+
+export interface PriceBreakdown {
+  currency: string;
+  billingPeriod?: NormalizedBillingPeriod;
+  plan?: PriceBreakdownLine;
+  addOns: PriceBreakdownLine[];
+  subtotal: number;
+  requiresQuote: boolean;
+}
+
 export interface ResolvedPricing {
   selection: PricingSelection;
   planPrices: Record<string, ResolvedPrice>;
@@ -184,6 +205,7 @@ export interface ResolvedPricing {
   subtotal: number;
   requiresQuote: boolean;
   diagnostics: PricingDiagnostic[];
+  breakdown: PriceBreakdown;
 }
 
 export interface ResolvePricingOptions {
