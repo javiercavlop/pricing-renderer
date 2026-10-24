@@ -74,6 +74,23 @@ describe('safe price expression evaluator', () => {
     });
   });
 
+  // [utest->req~expression-equality-no-coercion~1]
+  it.each([
+    ["1 == '1'", 0],
+    ['0 == false', 0],
+    ["'' == 0", 0],
+    ['true == 1', 0],
+    ['null == #obj.absent', 0],
+    ["'1' != 1", 1],
+    ['null != #obj.absent', 1],
+    ["'1' == '1'", 1],
+  ])('does not coerce literal operands for %s', (condition, expected) => {
+    expect(evaluatePriceExpression(`${condition} ? 1 : 0.0`, { obj: {} })).toEqual({
+      value: expected,
+    });
+  });
+
+  // [utest->req~expression-equality-no-coercion~1]
   it.each([
     ['#one == #oneText', 0],
     ['#oneText == #one', 0],

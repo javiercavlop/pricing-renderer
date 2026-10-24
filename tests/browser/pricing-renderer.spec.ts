@@ -1166,7 +1166,7 @@ test('[utest->req~ready-detail-selection~1] load API: pricing-ready carries the 
   expect(second?.detail.resolved.subtotal).toBe(20);
 });
 
-test('quantity stepper input max is the largest grid value, not the raw maximum', async ({
+test('[utest->req~stepper-max-on-grid~1] quantity stepper: input max is the largest grid value, not the raw maximum', async ({
   page,
 }) => {
   // min 1, step 5, max 8: valid quantities are 1 and 6
@@ -1190,24 +1190,36 @@ test('quantity stepper input max is the largest grid value, not the raw maximum'
       '      quantityStep: 5',
       '      maxQuantity: 8',
     ].join('\n');
-    renderer.selection = {
+    renderer.defaultSelection = {
       planId: 'base',
-      billingPeriod: 'monthly',
-      variables: {},
       addOns: { seats: { selected: true, quantity: 1 } },
     };
     document.body.append(renderer);
     await renderer.updateComplete;
   });
-  await expect(
-    page.locator('#grid-renderer [data-pr-part="add-on-quantity"] input'),
-  ).toHaveAttribute('max', '6');
+  const grid = page.locator('#grid-renderer');
+  const quantity = grid.getByRole('spinbutton', { name: 'Quantity for Seats' });
+  await expect(quantity).toHaveAttribute('max', '6');
+  await expect(quantity).toHaveAttribute('min', '1');
+  await expect(quantity).toHaveAttribute('step', '5');
 });
 
-test('quantity stepper shows the normalized quantity of a controlled selection', async ({
+const extraStorageQuantity = (page: Page) =>
+  page.getByRole('spinbutton', { name: 'Quantity for Extra Storage' });
+
+test('[utest->req~stepper-max-on-grid~1] quantity stepper: the acme storage packs have max 10', async ({
   page,
 }) => {
-  await collectEvents(page);
+  await selectGrowthWithExtraStorage(page);
+  await expect(extraStorageQuantity(page)).toHaveAttribute('max', '10');
+});
+
+type StoredSelectionElement = HTMLElement & {
+  selection: { addOns: Record<string, { quantity: number }> };
+};
+
+// The controlled selection of the scenarios: 25 packs of Extra Storage with a maximum of 10.
+async function setControlledQuantity25(page: Page): Promise<void> {
   await page.evaluate(
     ([variables]) => {
       (document.querySelector('pricing-renderer') as PlanChangeElement).selection = {
@@ -1219,11 +1231,69 @@ test('quantity stepper shows the normalized quantity of a controlled selection',
     },
     [defaultVariables] as const,
   );
-  const stepper = page.locator('[data-pr-part="add-on-quantity"]');
-  await expect(stepper.locator('input')).toHaveValue('10');
-  await stepper.locator('button').first().click();
-  const events = await selectionEvents(page);
-  expect(events.at(-1)?.selection.addOns.extraStorage?.quantity).toBe(9);
+}
+
+// The uncontrolled scenarios: the host sets a default selection above the maximum and reloads.
+async function reloadWithDefaultQuantity25(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    (document.querySelector('pricing-renderer') as LoadApiElement).defaultSelection = {
+      planId: 'growth',
+      addOns: { extraStorage: { selected: true, quantity: 25 } },
+    };
+  });
+  await reloadAndWaitForReady(page);
+  await nextUpdate(page);
+}
+
+test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the normalized quantity of a controlled selection', async ({
+  page,
+}) => {
+  await setControlledQuantity25(page);
+  await nextUpdate(page);
+  await expect(extraStorageQuantity(page)).toHaveValue('10');
+  const card = page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' });
+  await expect(card.locator('.pr-price')).toContainText('€50');
+  await expect(page.locator('.pr-summary')).toContainText('€95');
+  const stored = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as StoredSelectionElement;
+    return renderer.selection.addOns.extraStorage?.quantity;
+  });
+  expect(stored).toBe(25);
+});
+
+test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the normalized quantity of a default selection', async ({
+  page,
+}) => {
+  await reloadWithDefaultQuantity25(page);
+  await expect(extraStorageQuantity(page)).toHaveValue('10');
+});
+
+test('[utest->req~stepper-steps-from-normalized~1] quantity stepper: buttons start from the normalized quantity of a controlled selection', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await setControlledQuantity25(page);
+  await nextUpdate(page);
+  await expect(extraStorageQuantity(page)).toHaveValue('10');
+
+  // the host does not echo the changes, so the shown quantity stays 10
+  await page.getByRole('button', { name: 'Decrease Extra Storage' }).click();
+  await expect.poll(async () => (await selectionEvents(page)).length).toBe(1);
+  await page.getByRole('button', { name: 'Increase Extra Storage' }).click();
+  await expect.poll(async () => (await selectionEvents(page)).length).toBe(2);
+  const [first, second] = await selectionEvents(page);
+  expect(first?.selection.addOns.extraStorage?.quantity).toBe(9);
+  expect(second?.selection.addOns.extraStorage?.quantity).toBe(10);
+});
+
+test('[utest->req~stepper-steps-from-normalized~1] quantity stepper: the decrease button steps down from the normalized quantity of a default selection', async ({
+  page,
+}) => {
+  await reloadWithDefaultQuantity25(page);
+  await expect(extraStorageQuantity(page)).toHaveValue('10');
+  await page.getByRole('button', { name: 'Decrease Extra Storage' }).click();
+  await expect(extraStorageQuantity(page)).toHaveValue('9');
+  await expect(page.locator('.pr-summary')).toContainText('€90');
 });
 
 test('switches locale without changing source data', async ({ page }) => {
@@ -1909,23 +1979,30 @@ test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violation
   await applySelection(page, contractE);
   await nextUpdate(page);
   await openPanel(page);
-  const serious = async (scope?: string) => {
+  const scan = async (scope?: string) => {
     const builder = new AxeBuilder({ page })
       .exclude('#action-output')
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']);
     const results = await (scope ? builder.include(scope) : builder).analyze();
-    return results.violations.filter((violation) =>
-      ['serious', 'critical'].includes(violation.impact ?? ''),
-    );
+    return {
+      serious: results.violations.filter((violation) =>
+        ['serious', 'critical'].includes(violation.impact ?? ''),
+      ),
+      unresolvedContrast: results.incomplete.filter((item) => item.id === 'color-contrast'),
+    };
   };
-  expect(await serious()).toEqual([]);
+  expect((await scan()).serious).toEqual([]);
   await setTheme(page, 'dark');
   await expectPanel(page, true);
   // The dark step scans the summary only: the demo page keeps its light background while the
   // component switches to the dark tokens, so the rest of the page (which this change does not
   // touch) is not measured against a real dark surface. The summary paints its own surface
   // (--pr-color-surface at 95%, dark in this theme), so the contrast here is the real one.
-  expect(await serious(`${DEMO} [data-pr-part="summary"]`)).toEqual([]);
+  const dark = await scan(`${DEMO} [data-pr-part="summary"]`);
+  expect(dark.serious).toEqual([]);
+  // axe reports "incomplete" when it cannot decide a contrast (for example over a translucent
+  // background); a violation would be hidden there, so no color-contrast item may remain.
+  expect(dark.unresolvedContrast).toEqual([]);
 });
 
 for (const theme of ['light', 'dark']) {
@@ -1934,34 +2011,50 @@ for (const theme of ['light', 'dark']) {
   }) => {
     await setTheme(page, theme);
     await expect(toggleOf(page)).toBeVisible();
-    // Poll: the toggle color may still be transitioning right after the theme switch.
-    await expect
-      .poll(() =>
-        page.evaluate((css) => {
-          const rgb = (value: string) => {
-            const probe = document.createElement('span');
-            probe.style.color = value.trim();
-            document.body.append(probe);
-            const computed = getComputedStyle(probe).color;
-            probe.remove();
-            return (computed.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
-          };
-          const luminance = (channels: number[]) => {
-            const [r = 0, g = 0, b = 0] = channels.map((channel) => {
-              const value = channel / 255;
-              return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-            });
-            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-          };
-          const host = document.querySelector(css)!;
-          const toggle = host.querySelector('[data-pr-part="breakdown-toggle"]')!;
-          const surfaceValue = getComputedStyle(host).getPropertyValue('--pr-color-surface');
-          const icon = luminance(rgb(getComputedStyle(toggle).color));
-          const surface = luminance(rgb(surfaceValue));
-          return (Math.max(icon, surface) + 0.05) / (Math.min(icon, surface) + 0.05);
-        }, DEMO),
-      )
-      .toBeGreaterThanOrEqual(3);
+    const measure = () =>
+      page.evaluate((css) => {
+        const rgb = (value: string) => {
+          const probe = document.createElement('span');
+          probe.style.color = value.trim();
+          document.body.append(probe);
+          const computed = getComputedStyle(probe).color;
+          probe.remove();
+          return (computed.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+        };
+        const luminance = (channels: number[]) => {
+          const [r = 0, g = 0, b = 0] = channels.map((channel) => {
+            const value = channel / 255;
+            return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const host = document.querySelector(css)!;
+        const toggle = host.querySelector('[data-pr-part="breakdown-toggle"]')!;
+        const style = getComputedStyle(toggle);
+        const surfaceValue = getComputedStyle(host).getPropertyValue('--pr-color-surface');
+        const icon = luminance(rgb(style.color));
+        const surface = luminance(rgb(surfaceValue));
+        return {
+          ratio: (Math.max(icon, surface) + 0.05) / (Math.min(icon, surface) + 0.05),
+          color: style.color,
+          border: style.borderTopColor,
+        };
+      }, DEMO);
+
+    const ratio = async () => (await measure()).ratio;
+    const borderMatchesColor = async () => {
+      const measured = await measure();
+      return measured.border === measured.color;
+    };
+
+    // The icon is drawn with the 1px border (currentcolor) and the glyph, in both states.
+    for (const expanded of [false, true]) {
+      if (expanded) await openPanel(page);
+      await expect(toggleOf(page)).toHaveAttribute('aria-expanded', String(expanded));
+      // Poll: the toggle color may still be transitioning right after the theme switch or click.
+      await expect.poll(ratio).toBeGreaterThanOrEqual(3);
+      await expect.poll(borderMatchesColor).toBe(true);
+    }
   });
 }
 

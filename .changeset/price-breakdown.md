@@ -15,7 +15,9 @@ hand, such as test doubles, must add it; this is accepted in 0.1.x. It reaches `
 `subtotal` is now summed in a documented order: the plan first, then the add-ons in the
 declaration order of `pricing.addOns` (before: the key order of `selection.addOns`). Integer
 amounts and selections with at most one priced add-on are unchanged; with two or more decimal
-add-on amounts the last binary digit can differ from earlier versions.
+add-on amounts the last binary digit can differ from earlier versions. An add-on with
+`minQuantity: 0` selected at quantity 0 has a breakdown line with quantity 0 and amount 0, so it
+adds 0 to the subtotal, while `addOnPrices` still prices it at quantity 1.
 
 The summary shows a small "How is this calculated?" (i) button next to the total. It toggles an
 inline panel (not a modal) with the formula of each line, the billing period, the currency and the

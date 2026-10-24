@@ -198,6 +198,17 @@ describe('spec arithmetic (independent of the implementation)', () => {
     expect(15.99 * 0.83 + 40 * 0.83 * 3 + 100 * 0.83 * 1).toBeCloseTo(195.8717, 9);
     expect(15.99 + 5.49 + 6.59 + 2.49).toBeCloseTo(30.56, 9);
   });
+
+  it('shows that the sum of the four Zoom amounts depends on the order', () => {
+    // the declaration-order fold of ZM and the fold with the last two add-ons swapped differ
+    // in the last binary digit; the fold in the reverse key order of ZM gives the same double
+    // as the declaration order, so ZM alone cannot tell the two orders apart
+    const declaration = 15.99 + 5.49 + 6.59 + 2.49;
+    const swapped = 15.99 + 5.49 + 2.49 + 6.59;
+    expect(declaration).toBe(30.560000000000002);
+    expect(swapped).toBe(30.56);
+    expect(15.99 + 2.49 + 6.59 + 5.49).toBe(declaration);
+  });
 });
 
 describe('breakdown field', () => {
@@ -433,6 +444,32 @@ describe('breakdown add-on line quantity', () => {
     const overage = addOnLine(breakdownOf(slack, selectionS1()), 'premiumWorkflowOverageCost');
     expect(overage.quantity).toBe(1000);
   });
+
+  // [utest->req~breakdown-addon-quantity~1]
+  it('bills an add-on with minimum 0 selected at 0 as quantity 0 and amount 0', () => {
+    const pricing = normalizePricing({
+      syntaxVersion: '3.1',
+      saasName: 'Zero',
+      version: '1',
+      createdAt: '2026-01-01',
+      currency: 'EUR',
+      plans: { base: { price: 10 } },
+      addOns: {
+        seats: { price: 2, subscriptionConstraints: { minQuantity: 0, quantityStep: 1 } },
+      },
+    }).value!;
+    const resolved = resolvePricing(pricing, {
+      planId: 'base',
+      addOns: { seats: { selected: true, quantity: 0 } },
+    });
+    const line = addOnLine(resolved.breakdown, 'seats');
+    expect(line.quantity).toBe(0);
+    expect(line.amount).toBe(0);
+    expect(resolved.breakdown.subtotal).toBe(resolved.breakdown.plan!.amount);
+    expect(resolved.subtotal).toBe(10);
+    // addOnPrices keeps pricing a quantity of 0 as 1
+    expect(resolved.addOnPrices.seats).toMatchObject({ kind: 'amount', quantity: 1, amount: 2 });
+  });
 });
 
 describe('breakdown priced line', () => {
@@ -615,6 +652,30 @@ describe('breakdown summation order', () => {
     const folded = resolved.breakdown.plan!.amount! + l0!.amount! + l1!.amount! + l2!.amount!;
     expect(resolved.subtotal).toBe(folded);
     expect(resolved.subtotal).toBeCloseTo(30.56, 9);
+  });
+
+  // [utest->req~breakdown-subtotal-order~1]
+  it('differs from the sum in another order of the same lines (Zoom)', () => {
+    const resolved = resolvePricing(zoom, selectionZM());
+    const [l0, l1, l2] = resolved.breakdown.addOns;
+    const swapped = resolved.breakdown.plan!.amount! + l0!.amount! + l2!.amount! + l1!.amount!;
+    expect(resolved.subtotal).not.toBe(swapped);
+    expect(resolved.subtotal).toBeCloseTo(swapped, 9);
+  });
+
+  // [utest->req~breakdown-subtotal-order~1]
+  it('sums in declaration order, not in the key order of the selection (Zoom)', () => {
+    // in the key order scheduler, whiteboard, clips the key-order sum is 30.56
+    const resolved = resolvePricing(zoom, {
+      planId: 'PRO',
+      addOns: {
+        zoomScheduler: { selected: true, quantity: 1 },
+        zoomWhiteboard: { selected: true, quantity: 1 },
+        zoomClipsPlus: { selected: true, quantity: 1 },
+      },
+    });
+    expect(resolved.subtotal).toBe(30.560000000000002);
+    expect(resolved.breakdown.subtotal).toBe(30.560000000000002);
   });
 
   // [utest->req~breakdown-subtotal-order~1]

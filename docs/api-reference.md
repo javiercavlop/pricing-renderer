@@ -207,7 +207,10 @@ interface PriceBreakdown {
   quantity that is billed.
 - A priced line has `unitAmount` (before the billing multiplier) and
   `amount = unitAmount * billingMultiplier * quantity`, evaluated left to
-  right and equal to `planPrices[id].amount` or `addOnPrices[id].amount`.
+  right and equal to `planPrices[id].amount`, or to `addOnPrices[id].amount`
+  when the billed quantity is not 0. An add-on with `minQuantity: 0` selected at
+  quantity 0 has a line with `quantity` 0 and `amount` 0, so it adds 0 to the
+  subtotal, while `addOnPrices[id]` still prices it at quantity 1.
 - A label price (such as "Contact sales") has `requiresQuote: true` and the
   `label` text, without `unitAmount` and `amount`. A price expression that
   cannot be resolved has `requiresQuote: true` and none of the three, so hosts
@@ -361,6 +364,16 @@ To hide the button:
 ```css
 pricing-renderer [data-pr-part='breakdown-toggle'] {
   display: none;
+}
+```
+
+The summary (`[data-pr-part='summary']`) reserves end padding for the button
+(`--pr-space-4` plus 24px plus `--pr-space-2`). When you hide the button, give
+that space back:
+
+```css
+pricing-renderer [data-pr-part='summary'] {
+  padding-inline-end: var(--pr-space-4);
 }
 ```
 
