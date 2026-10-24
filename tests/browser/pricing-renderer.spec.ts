@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -166,6 +166,248 @@ test('confirms guided add-on dependencies instead of mutating silently', async (
   await expect(
     page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' }).getByRole('checkbox'),
   ).toBeChecked();
+});
+
+type CapturedDetail = {
+  selection: {
+    planId?: string;
+    billingPeriod?: string;
+    addOns: Record<string, { selected: boolean; quantity: number }>;
+  };
+  resolved: { subtotal: number };
+};
+type PlanChangeWindow = typeof window & {
+  selectionEvents?: CapturedDetail[];
+  actionEvents?: CapturedDetail[];
+};
+type PlanChangeElement = HTMLElement & {
+  selection?: unknown;
+  defaultSelection?: unknown;
+  reload(): Promise<void>;
+  _pendingAddOnChange?: unknown;
+  _internalSelection?: { addOns: Record<string, { selected: boolean; quantity: number }> };
+};
+
+async function collectEvents(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const target = window as PlanChangeWindow;
+    target.selectionEvents = [];
+    target.actionEvents = [];
+    const renderer = document.querySelector('pricing-renderer')!;
+    renderer.addEventListener('pricing-selection-change', (event) => {
+      target.selectionEvents!.push((event as CustomEvent<CapturedDetail>).detail);
+    });
+    renderer.addEventListener('pricing-action', (event) => {
+      target.actionEvents!.push((event as CustomEvent<CapturedDetail>).detail);
+    });
+  });
+}
+
+const selectionEvents = (page: Page) =>
+  page.evaluate(() => (window as PlanChangeWindow).selectionEvents ?? []);
+const actionEvents = (page: Page) =>
+  page.evaluate(() => (window as PlanChangeWindow).actionEvents ?? []);
+const pendingChange = (page: Page) =>
+  page.evaluate(
+    () => (document.querySelector('pricing-renderer') as PlanChangeElement)._pendingAddOnChange,
+  );
+
+function planDialog(page: Page) {
+  return page.getByRole('dialog', { name: 'Review configuration changes' });
+}
+
+async function selectGrowthWithExtraStorage(page: Page): Promise<void> {
+  await page.getByRole('radio', { name: 'Choose Growth' }).check();
+  await page
+    .locator('.pr-addon-card')
+    .filter({ hasText: 'Extra Storage' })
+    .getByRole('checkbox')
+    .check();
+  await expect(page.locator('.pr-summary')).toContainText('€50');
+}
+
+async function setControlledSelection(page: Page, planId: string): Promise<void> {
+  await page.evaluate((plan) => {
+    const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
+    renderer.selection = {
+      planId: plan,
+      billingPeriod: 'monthly',
+      variables: { seats: 5, prioritySupport: false, region: 'eu' },
+      addOns: { extraStorage: { selected: true, quantity: 1 } },
+    };
+  }, planId);
+}
+
+test('[utest->req~plan-change-immediate~1] applies a plan change without removals at once', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await page.getByRole('radio', { name: 'Choose Growth' }).check();
+  await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  const events = await selectionEvents(page);
+  expect(events).toHaveLength(1);
+  expect(events[0]?.selection.planId).toBe('growth');
+});
+
+test('[utest->req~plan-change-confirmation~1] asks before removing add-ons on a plan change', async ({
+  page,
+}) => {
+  await page.getByRole('radio', { name: 'Choose Growth' }).check();
+  const priority = page
+    .locator('.pr-addon-card')
+    .filter({ hasText: 'Priority Success' })
+    .getByRole('checkbox');
+  await priority.check();
+  await planDialog(page).getByRole('button', { name: 'Apply changes' }).click();
+  await expect(priority).toBeChecked();
+  await collectEvents(page);
+
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  const dialog = planDialog(page);
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('Will remove: extraStorage, prioritySuccess');
+  expect(await selectionEvents(page)).toHaveLength(0);
+});
+
+test('[utest->req~pending-plan-change-shape~1] holds a plan-change PendingAddOnChange', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await expect(planDialog(page)).toBeVisible();
+  expect(await pendingChange(page)).toEqual({
+    addOnId: '',
+    select: false,
+    addIds: [],
+    removeIds: ['extraStorage'],
+    planId: 'starter',
+  });
+});
+
+test('[utest->req~plan-change-apply~1] commits the plan and the removals in one event', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await collectEvents(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await planDialog(page).getByRole('button', { name: 'Apply changes' }).click();
+  await expect(planDialog(page)).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Choose Starter' })).toBeChecked();
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+  const events = await selectionEvents(page);
+  expect(events).toHaveLength(1);
+  expect(events[0]?.selection.planId).toBe('starter');
+  expect(events[0]?.selection.addOns.extraStorage?.selected).toBe(false);
+  expect(events[0]?.resolved.subtotal).toBe(20);
+});
+
+test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', async ({ page }) => {
+  await selectGrowthWithExtraStorage(page);
+  await collectEvents(page);
+  const starter = page.getByRole('radio', { name: 'Choose Starter' });
+  await starter.click();
+  await expect(planDialog(page)).toBeVisible();
+  await planDialog(page).getByRole('button', { name: 'Cancel' }).click();
+  await expect(planDialog(page)).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
+  await expect(starter).not.toBeChecked();
+  await expect(
+    page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' }).getByRole('checkbox'),
+  ).toBeChecked();
+  expect(await selectionEvents(page)).toHaveLength(0);
+  await expect(starter).toBeFocused();
+});
+
+test('[utest->req~plan-change-cancel~1] keeps the previous plan on Escape', async ({ page }) => {
+  await selectGrowthWithExtraStorage(page);
+  await collectEvents(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await expect(planDialog(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(planDialog(page)).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Choose Starter' })).not.toBeChecked();
+  expect(await selectionEvents(page)).toHaveLength(0);
+});
+
+test('[utest->req~events-reconciled-selection~1] emits only reconciled selections from an invalid controlled selection', async ({
+  page,
+}) => {
+  await setControlledSelection(page, 'starter');
+  await collectEvents(page);
+  await page.getByRole('radio', { name: /Yearly/ }).click();
+  await page
+    .locator('.pr-plan-card[data-plan-id="starter"]')
+    .locator('[data-pr-part="cta"]')
+    .click();
+  const changes = await selectionEvents(page);
+  const actions = await actionEvents(page);
+  expect(changes).toHaveLength(1);
+  expect(actions).toHaveLength(1);
+  expect(changes[0]?.selection.addOns.extraStorage?.selected).toBe(false);
+  expect(actions[0]?.selection.addOns.extraStorage?.selected).toBe(false);
+});
+
+test('[utest->req~element-subtotal-excludes-removed~1] renders the Starter price for an invalid controlled selection', async ({
+  page,
+}) => {
+  await setControlledSelection(page, 'starter');
+  const summary = page.locator('.pr-summary');
+  await expect(summary).toContainText('€20');
+  await expect(summary).not.toContainText('€25');
+});
+
+test('[utest->req~default-selection-reconciled~1] reconciles defaultSelection silently on load', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
+    renderer.defaultSelection = {
+      planId: 'starter',
+      addOns: { extraStorage: { selected: true, quantity: 2 } },
+    };
+    await renderer.reload();
+  });
+  await expect(page.locator('pricing-renderer .pr-plan-card')).toHaveCount(3);
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  expect(await selectionEvents(page)).toHaveLength(0);
+  const internal = await page.evaluate(
+    () =>
+      (document.querySelector('pricing-renderer') as PlanChangeElement)._internalSelection?.addOns
+        .extraStorage,
+  );
+  expect(internal).toEqual({ selected: false, quantity: 2 });
+});
+
+test('[utest->req~controlled-selection-untouched~1] never rewrites a controlled selection', async ({
+  page,
+}) => {
+  await setControlledSelection(page, 'growth');
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
+    const target = window as typeof window & { hostSelection?: unknown; hostJson?: string };
+    target.hostSelection = renderer.selection;
+    target.hostJson = JSON.stringify(renderer.selection);
+  });
+  await collectEvents(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await planDialog(page).getByRole('button', { name: 'Apply changes' }).click();
+  await expect(planDialog(page)).toHaveCount(0);
+  const untouched = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
+    const target = window as typeof window & { hostSelection?: unknown; hostJson?: string };
+    return (
+      renderer.selection === target.hostSelection &&
+      JSON.stringify(renderer.selection) === target.hostJson
+    );
+  });
+  expect(untouched).toBe(true);
+  const events = await selectionEvents(page);
+  expect(events).toHaveLength(1);
+  expect(events[0]?.selection.planId).toBe('starter');
+  expect(events[0]?.selection.addOns.extraStorage?.selected).toBe(false);
 });
 
 test('switches locale without changing source data', async ({ page }) => {
