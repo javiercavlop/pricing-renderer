@@ -39,4 +39,5 @@ export interface PendingAddOnChange {
   select: boolean;
   addIds: string[];
   removeIds: string[];
+  planId?: string;
 }

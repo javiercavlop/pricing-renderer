@@ -1,0 +1,1 @@
+Formatting fix integrated; pushing, then CI. Then set_review_package (g13 fail: guide unverified) and lead_ready with panel d606a940dbec4677 + ffee8a46c5794017 (reviewed head ffb5c15; later heads are docs-only: review guide). Follow-ups listed in the previous checkpoint.

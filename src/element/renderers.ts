@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { live } from 'lit/directives/live.js';
 import {
   deepEqual,
   formatCurrency,
@@ -266,6 +267,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                                 )}
                               </div>
                               ${
+                                // [impl->req~plan-change-cancel~1] live() resets the radio on cancel
                                 selectionEnabled
                                   ? html`<label
                                       class="pr-selection-control pr-plan-card__selector"
@@ -278,7 +280,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                                         aria-label=${t(viewModel, 'pricing.choosePlan', {
                                           plan: plan.name,
                                         })}
-                                        .checked=${selected}
+                                        .checked=${live(selected)}
                                         @change=${() => actions.selectPlan(plan.id)}
                                       />
                                       <span
