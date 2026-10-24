@@ -1,3 +1,1 @@
-Phase 1 only (measure and report, default look unchanged).
-Tasks: A load test (spectra-load.test.ts, first); B layout metrics test + metrics.json; C Playwright spec spectra-review.spec.ts (captures + height metrics, chromium only, no toHaveScreenshot, no baselines); D report.md (after A,B integrate; heights from CI added in a later pass).
-Then PR into develop, CI, panel reviewer + test-reviewer on final head, set_review_package, lead_ready.
+Phase 1 of the SPECTRA visual review: tests (load, layout metrics), chromium-only Playwright capture/metrics spec without snapshots, metrics.json/md, prioritized report with CI-measured numbers. Phase 2 (one change per improvement, CRPs for default look/API) waits for the owner's review of report.md.
