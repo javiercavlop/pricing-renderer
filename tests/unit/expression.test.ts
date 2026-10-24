@@ -56,6 +56,24 @@ describe('safe price expression evaluator', () => {
     expect(evaluatePriceExpression(source, { value: {} }).error).toBeTruthy();
   });
 
+  it.each([
+    ['#negZero === #zero', 1],
+    ['#zero === #negZero', 1],
+    ['#negZero == #zero', 1],
+    ['#zero == #negZero', 1],
+    ['#negZero !== #zero', 0],
+    ['#negZero != #zero', 0],
+    ['#nan === #nan', 0],
+    ['#nan == #nan', 0],
+    ['#nan !== #nan', 1],
+    ['#nan != #nan', 1],
+  ])('uses strict equality semantics for %s', (condition, expected) => {
+    const variables = { zero: 0, negZero: -0, nan: Number.NaN };
+    expect(evaluatePriceExpression(`${condition} ? 1 : 0.0`, variables)).toEqual({
+      value: expected,
+    });
+  });
+
   it('rejects missing variables, infinity and negative results', () => {
     expect(evaluatePriceExpression('#missing', {}).error).toContain('not defined');
     expect(evaluatePriceExpression('1 / 0', {}).error).toContain('finite');
