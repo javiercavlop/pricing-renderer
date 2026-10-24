@@ -1,0 +1,421 @@
+saasName: Shopify
+syntaxVersion: '3.1'
+version: '2022-11-20'
+url: https://web.archive.org/web/20221120170105/https://www.shopify.com/pricing
+createdAt: '2022-11-20'
+currency: USD
+billing:
+  monthly: 1
+  annual: 1
+variables: {}
+tags:
+  - Features
+  - Shopify Shipping
+  - Shopify Payments
+  - Point of Sale
+  - International commerce
+features:
+  onlineStore:
+    description: Start an online store with Shopify’s robust ecommerce platform
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  products:
+    description: Add unlimited products to your store
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  staffAccounts:
+    description: >-
+      Add staff to help in the management of your store, such as adding products
+      and managing orders
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  24/7Support:
+    description: Get 24/7 phone, email, and live chat support
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Features
+  salesChannels:
+    description: >-
+      Promote and sell your products on multiple sales channels, including
+      social media and online marketplaces
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  inventoryLocations:
+    description: >-
+      Track inventory, fulfill orders, and sell products across multiple
+      locations, including retail stores, warehouses, pop-ups, and more.
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  manualOrderCreation:
+    description: Create new orders and enter payment details right from your Shopify admin
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  discountCodes:
+    description: >-
+      Offer your customers a fixed value, percentage, or shipping discount on
+      products or collections
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  freeSslCertificate:
+    description: >-
+      Shopify provides free SSL certificates to encrypt your online store's
+      content and publish it securely
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  abandonedCartRecovery:
+    description: >-
+      Automatically send emails to customers who leave your store without
+      completing the checkout process
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  giftCards:
+    description: >-
+      Expand your current customer base and attract new customers by offering
+      gift cards
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  reports:
+    description: >-
+      Access a wide variety of reports to help track and analyze your store’s
+      performance
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  thirdPartyCalculatedShippingRates:
+    description: >-
+      Show calculated rates with your own account or third-party apps at
+      checkout
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Features
+  customerSegmentation:
+    description: Filter and group customers into hundreds of segments
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Features
+  marketingAutomation:
+    description: >-
+      Build custom automations so you can engage customers at every stage of
+      their journey
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Features
+  contacts:
+    description: Add unlimited contacts to your Shopify account
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Features
+  eCommerceAutomations:
+    description: >-
+      Automate manual tasks, build workflows, and grow your business with the
+      first built-in ecommerce automation platform
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Features
+  shippingDiscount:
+    description: Competitive shipping rates from DHL Express, UPS, or USPS
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Shopify Shipping
+  shippingLabels:
+    description: >-
+      Buy shipping labels individually or in bulk through Shopify Payments.
+      Print shipping labels using a standard printer
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Shopify Shipping
+  uspsPriorityMailCubicPricing:
+    description: >-
+      Get discounted rates for packages that weigh less than 20 pounds and
+      measure less than 0.5 cubic feet in volume
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Shopify Shipping
+  uspsParcelSelectCubicPricing:
+    description: >-
+      Get discounted rates for packages that weigh less than 20 pounds and
+      measure less than 1 cubic feet in volume
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Shopify Shipping
+  includedShippingInsurance:
+    description: >-
+      Merchants get up to $200 coverage with each eligible Shopify Shipping
+      label (Shopify Payments required)
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Shopify Shipping
+  fraudAnalysis:
+    description: >-
+      When you use Shopify Payments, you automatically get a built-in fraud
+      analysis feature. This feature flags orders that are potentially
+      fraudulent and brings them to your attention
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Shopify Payments
+  onlineCreditCardRates:
+    description: You can accept Visa, Mastercard, Discover the minute you launch your shop
+    valueType: TEXT
+    defaultValue: 2.9% + 30¢
+    type: DOMAIN
+    tag: Shopify Payments
+  onlineInternational/AmexCreditCardRates:
+    valueType: TEXT
+    defaultValue: 3.9% + 30¢
+    type: DOMAIN
+    tag: Shopify Payments
+  inPersonCredit/DebitCardRates:
+    valueType: TEXT
+    defaultValue: 2.7% + 0¢
+    type: DOMAIN
+    tag: Shopify Payments
+  thirdPartyTransactionFeeNotUsingShopifyPayments:
+    description: >-
+      Third-party transaction fees are charges that apply for each transaction
+      if you use a third-party payment provider to take customer payments
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Shopify Payments
+  shopifyPosLite:
+    description: >-
+      Shopify POS Lite gives businesses of any size the ability to sell
+      in-person at retail stores, pop-ups, markets, and more
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Point of Sale
+  shopifyPosPro:
+    description: >-
+      Shopify POS Pro enhances the functionality of POS Lite by adding faster
+      workflows, more control over staff permissions, and in-depth inventory
+      reporting tools
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Point of Sale
+  internationalMarketManagement:
+    description: >-
+      Define geographic market areas to ensure you are providing a localized
+      buying experience for customers in different regions
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+    tag: International commerce
+  marketDomains:
+    description: >-
+      Assign custom web addresses for each market that are optimized for search
+      results and automatically redirect customers to the right domain based on
+      their market
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+    tag: International commerce
+  marketSubfolders:
+    description: >-
+      Assign custom web addresses for each market that are optimized for search
+      results and automatically redirect customers to the right domain based on
+      their market
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+    tag: International commerce
+  languageTranslation:
+    description: >-
+      Translate your store into multiple languages to provide a familiar
+      shopping experience for customers in different markets
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: International commerce
+  currencyConversion:
+    description: >-
+      Automatically convert prices into your customer’s local currency to drive
+      conversion in each market (requires Shopify Payments)
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: International commerce
+  localPaymentMethods:
+    description: >-
+      Set local payment methods to appear for customers who check out in
+      specific markets (requires Shopify Payments)
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: International commerce
+  productPricingByMarket:
+    description: >-
+      Take greater control of your international pricing strategy by setting
+      specific prices for products or product variants in each market
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: International commerce
+  duties:
+    description: >-
+      Estimate and collect duties and import taxes at checkout to give customers
+      total cost clarity
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: International commerce
+  importTaxes:
+    description: >-
+      Estimate and collect duties and import taxes at checkout to give customers
+      total cost clarity
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: International commerce
+usageLimits:
+  staffAccountsLimit:
+    valueType: NUMERIC
+    defaultValue: 2
+    unit: account
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - staffAccounts
+  inventoryLocationsLimit:
+    valueType: NUMERIC
+    defaultValue: 4
+    unit: location
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - inventoryLocations
+  reportType:
+    valueType: TEXT
+    defaultValue: Basic
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - reports
+  shippingDiscountRate:
+    valueType: NUMERIC
+    defaultValue: 0.77
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - shippingDiscount
+  thirdPartyTransactionFeeNotUsingShopifyPaymentsRate:
+    description: Additional fees using all payment providers other than Shopify Payments
+    valueType: NUMERIC
+    defaultValue: 0.02
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - thirdPartyTransactionFeeNotUsingShopifyPayments
+plans:
+  BASIC:
+    description: All the basics for starting a new business
+    price: 29
+    unit: user/month
+    features: null
+    usageLimits: null
+  SHOPIFY:
+    description: Everything you need for a growing business
+    price: 79
+    unit: user/month
+    features:
+      eCommerceAutomations:
+        value: true
+      uspsPriorityMailCubicPricing:
+        value: true
+      uspsParcelSelectCubicPricing:
+        value: true
+      includedShippingInsurance:
+        value: true
+      onlineCreditCardRates:
+        value: 2.6% + 30¢
+      onlineInternational/AmexCreditCardRates:
+        value: 3.6% + 30¢
+      inPersonCredit/DebitCardRates:
+        value: 2.5% + 0¢
+    usageLimits:
+      staffAccountsLimit:
+        value: 5
+      shippingDiscountRate:
+        value: 0.88
+      reportType:
+        value: Standard
+      thirdPartyTransactionFeeNotUsingShopifyPaymentsRate:
+        value: 0.01
+      inventoryLocationsLimit:
+        value: 5
+  ADVANCED:
+    description: Advanced features for scaling your business
+    price: 299
+    unit: user/month
+    features:
+      thirdPartyCalculatedShippingRates:
+        value: true
+      eCommerceAutomations:
+        value: true
+      uspsPriorityMailCubicPricing:
+        value: true
+      uspsParcelSelectCubicPricing:
+        value: true
+      includedShippingInsurance:
+        value: true
+      onlineCreditCardRates:
+        value: 2.4% + 30¢
+      onlineInternational/AmexCreditCardRates:
+        value: 3.4% + 30¢
+      inPersonCredit/DebitCardRates:
+        value: 2.4% + 0¢
+      duties:
+        value: true
+      importTaxes:
+        value: true
+    usageLimits:
+      staffAccountsLimit:
+        value: 15
+      inventoryLocationsLimit:
+        value: 8
+      reportType:
+        value: Advanced
+      shippingDiscountRate:
+        value: 0.88
+      thirdPartyTransactionFeeNotUsingShopifyPaymentsRate:
+        value: 0.005
+addOns:
+  SHOPIFY_POS_PRO:
+    description: >-
+      Choose locations to upgrade to POS Pro for faster workflows, staff
+      permissions, and advanced inventory tools
+    price: 89
+    features:
+      shopifyPosPro:
+        value: true

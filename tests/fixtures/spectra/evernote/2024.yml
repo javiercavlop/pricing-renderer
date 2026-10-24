@@ -1,0 +1,347 @@
+saasName: Evernote
+syntaxVersion: '3.1'
+version: '2024-07-07'
+url: https://web.archive.org/web/20240707040421/https://evernote.com/compare-plans
+createdAt: '2024-07-07'
+currency: USD
+variables: {}
+features:
+  notes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  notebooks:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  syncAcrossDevices:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  appForIOS:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  appForAndroid:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  appForWindows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  appForMac:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  appForWeb:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  tasks:
+    description: Add dates, set reminders, assign tasks to others
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  evernoteCalendar:
+    description: Access and create events
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  externalCalendars:
+    description: Connect your Google or Microsoft Office calendars
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://workspace.google.com/pricing
+      - >-
+        https://www.microsoft.com/en-us/microsoft-365/microsoft-outlook-email-and-calendar-software
+  attachFilesToNotes:
+    description: >-
+      Attach photos, PDFs, spreadsheets, Google Docs, and other files to your
+      notes
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  advancedSearch:
+    description: >-
+      Find anything in your account with Boolean, geographic, and filtered
+      searches
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  advancedOrganization:
+    description: Add tags and reminders to notes
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  offlineNotes:
+    description: Access notes from anywhere
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  easySharing:
+    description: >-
+      Email content into Evernote, email notes to collaborators, export notes
+      and notebooks as PDFs
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  aiPoweredSearch:
+    description: Use natural language to search your notes
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+  aiEdit:
+    description: Use AI to write, summarize, tidy, and translate your notes
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+  googleIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://workspace.google.com/pricing
+  microsoftIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - >-
+        https://www.microsoft.com/en-us/microsoft-365/microsoft-outlook-email-and-calendar-software
+  slackIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://slack.com/pricing
+  twoStepVerification:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+  applyInNoteEncryption:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  helpAndLearningCenter:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+  communityForum:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+  supportTickets:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  spaces:
+    description: Add an extra layer of organization with Spaces
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  maintainBusinessDataOwnership:
+    description: Control all the information in your account
+    valueType: BOOLEAN
+    defaultValue: false
+    type: GUARANTEE
+  centralizedAccountAdministration:
+    description: Access information on billing, users, and permissions
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  centralizedUserManagement:
+    description: Access information on billing, users, and permissions
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  userActivityLogs:
+    description: Get complete oversight of your team's usage history
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  singleSignOn:
+    description: Use existing credentials for a faster log in experience
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+usageLimits:
+  notesLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 50
+    unit: notes
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - notes
+  notebooksLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: notebooks
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - notebooks
+  maximumNoteSize:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 25
+    unit: MB/note
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - notes
+  globalMonthlyUploadLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 60
+    unit: MB
+    type: RENEWABLE
+  monthlyUploadLimitByUser:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: MB
+    type: RENEWABLE
+  syncAccrossDevicesLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 2
+    unit: devices
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - syncAcrossDevices
+  externalCalendarsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: calendars
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - externalCalendars
+plans:
+  FREE:
+    description: Capture ideas and find them quickly
+    price: 0
+    unit: /month
+    features: null
+    usageLimits: null
+  PERSONAL:
+    description: Keep home and family on track
+    price: 12.99
+    unit: /month
+    features:
+      supportTickets:
+        value: true
+    usageLimits:
+      notesLimit:
+        value: 150000
+      notebooksLimit:
+        value: 2000
+      maximumNoteSize:
+        value: 200
+      globalMonthlyUploadLimit:
+        value: 10240
+      syncAccrossDevicesLimit:
+        value: 1000000000
+  PROFESIONAL:
+    description: Tackle any project, at work or at home
+    price: 16.99
+    unit: /month
+    features:
+      aiPoweredSearch:
+        value: true
+      aiEdit:
+        value: true
+      slackIntegration:
+        value: true
+      applyInNoteEncryption:
+        value: true
+      supportTickets:
+        value: true
+    usageLimits:
+      notesLimit:
+        value: 150000
+      notebooksLimit:
+        value: 2000
+      maximumNoteSize:
+        value: 200
+      globalMonthlyUploadLimit:
+        value: 20480
+      syncAccrossDevicesLimit:
+        value: 1000000000
+      externalCalendarsLimit:
+        value: 5
+  TEAMS:
+    description: Collaborate and share among your team
+    price: 24.99
+    unit: user/month
+    features:
+      aiPoweredSearch:
+        value: true
+      aiEdit:
+        value: true
+      slackIntegration:
+        value: true
+      applyInNoteEncryption:
+        value: true
+      supportTickets:
+        value: true
+      spaces:
+        value: true
+      maintainBusinessDataOwnership:
+        value: true
+      centralizedAccountAdministration:
+        value: true
+      centralizedUserManagement:
+        value: true
+      userActivityLogs:
+        value: true
+      singleSignOn:
+        value: true
+    usageLimits:
+      notesLimit:
+        value: 500000
+      notebooksLimit:
+        value: 10000
+      maximumNoteSize:
+        value: 200
+      globalMonthlyUploadLimit:
+        value: 20480
+      monthlyUploadLimitByUser:
+        value: 2048
+      syncAccrossDevicesLimit:
+        value: 1000000000
+      externalCalendarsLimit:
+        value: 5
+addOns: null
