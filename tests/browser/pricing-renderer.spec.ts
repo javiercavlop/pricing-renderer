@@ -174,7 +174,10 @@ type CapturedDetail = {
     billingPeriod?: string;
     addOns: Record<string, { selected: boolean; quantity: number }>;
   };
-  resolved: { subtotal: number };
+  resolved: {
+    subtotal: number;
+    selection: { addOns: Record<string, { selected: boolean; quantity: number }> };
+  };
 };
 type PlanChangeWindow = typeof window & {
   selectionEvents?: CapturedDetail[];
@@ -244,6 +247,11 @@ test('[utest->req~plan-change-immediate~1] applies a plan change without removal
   await collectEvents(page);
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
   await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
+  await page.evaluate(
+    () =>
+      (document.querySelector('pricing-renderer') as { updateComplete: Promise<unknown> })
+        .updateComplete,
+  );
   await expect(page.locator('.pr-dialog')).toHaveCount(0);
   const events = await selectionEvents(page);
   expect(events).toHaveLength(1);
@@ -306,6 +314,7 @@ test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', asyn
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
   const starter = page.getByRole('radio', { name: 'Choose Starter' });
+  await starter.focus();
   await starter.click();
   await expect(planDialog(page)).toBeVisible();
   await planDialog(page).getByRole('button', { name: 'Cancel' }).click();
@@ -322,10 +331,13 @@ test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', asyn
 test('[utest->req~plan-change-cancel~1] keeps the previous plan on Escape', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
-  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  const starter = page.getByRole('radio', { name: 'Choose Starter' });
+  await starter.focus();
+  await starter.click();
   await expect(planDialog(page)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(planDialog(page)).toHaveCount(0);
+  await expect(starter).toBeFocused();
   await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
   await expect(page.getByRole('radio', { name: 'Choose Starter' })).not.toBeChecked();
   expect(await selectionEvents(page)).toHaveLength(0);
@@ -347,6 +359,49 @@ test('[utest->req~events-reconciled-selection~1] emits only reconciled selection
   expect(actions).toHaveLength(1);
   expect(changes[0]?.selection.addOns.extraStorage?.selected).toBe(false);
   expect(actions[0]?.selection.addOns.extraStorage?.selected).toBe(false);
+  expect(actions[0]?.resolved.selection.addOns.extraStorage?.selected).toBe(false);
+  expect(changes[0]?.selection.billingPeriod).toBe('yearly');
+  const summary = await page.locator('.pr-summary').innerText();
+  expect(summary).toContain(`€${actions[0]?.resolved.subtotal}`);
+  expect(actions[0]?.resolved.selection).toEqual(actions[0]?.selection);
+});
+
+test('[utest->req~events-reconciled-selection~1] emits a reconciled action when selection is disabled', async ({
+  page,
+}) => {
+  await setControlledSelection(page, 'starter');
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      selectionEnabled: boolean;
+    };
+    renderer.selectionEnabled = false;
+  });
+  await expect(page.locator('pricing-renderer [data-pr-part="selection-control"]')).toHaveCount(0);
+  await collectEvents(page);
+  await page
+    .locator('.pr-plan-card[data-plan-id="starter"]')
+    .locator('[data-pr-part="cta"]')
+    .click();
+  const actions = await actionEvents(page);
+  expect(actions).toHaveLength(1);
+  expect(actions[0]?.selection.addOns.extraStorage?.selected).toBe(false);
+  expect(actions[0]?.resolved.selection).toEqual(actions[0]?.selection);
+  expect(actions[0]?.resolved.subtotal).toBe(20);
+  await expect(page.locator('.pr-summary')).toContainText('€20');
+});
+
+test('[utest->req~plan-change-cancel~1] drops a pending plan change on reload', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await expect(planDialog(page)).toBeVisible();
+  await page.evaluate(() =>
+    (document.querySelector('pricing-renderer') as PlanChangeElement).reload(),
+  );
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  expect(await pendingChange(page)).toBeUndefined();
+  await expect(page.getByRole('radio', { name: 'Choose Starter' })).toBeChecked();
 });
 
 test('[utest->req~element-subtotal-excludes-removed~1] renders the Starter price for an invalid controlled selection', async ({

@@ -252,6 +252,8 @@ export class PricingRendererElement extends LitElement {
         mergeSelection(result.value, this.defaultSelection),
       ).selection;
       this._expandedGroups = new Set();
+      this._pendingAddOnChange = undefined;
+      this._previousFocus = undefined;
       const viewModel = createPricingViewModel(
         result.value,
         this._effectiveSelection(),
@@ -555,6 +557,7 @@ export class PricingRendererElement extends LitElement {
     }
   };
 
+  // [impl->req~plan-change-cancel~1]
   private _cancelAddOnChange = (): void => {
     this._pendingAddOnChange = undefined;
     this.requestUpdate();
@@ -572,15 +575,18 @@ export class PricingRendererElement extends LitElement {
     href?: string,
     metadata?: Record<string, unknown>,
   ): boolean => {
-    const viewModel = this._viewModel();
-    if (!viewModel) return false;
+    const current = this._viewModel();
+    if (!current || !this._normalized) return false;
+    // [impl->req~events-reconciled-selection~1]
+    const reconciled = reconcileSelection(this._normalized, current.resolved.selection).selection;
+    const viewModel = this._stabilizeResolvedPrices(
+      createPricingViewModel(this._normalized, reconciled, { ...this._viewModelOptions() }),
+    );
     const detail: PricingActionDetail = {
       actionId,
       ...(planId ? { planId } : {}),
       ...(href ? { href } : {}),
-      selection: this._normalized
-        ? reconcileSelection(this._normalized, viewModel.resolved.selection).selection
-        : viewModel.resolved.selection,
+      selection: reconciled,
       resolved: viewModel.resolved,
       ...(metadata ? { metadata } : {}),
     };
@@ -617,6 +623,7 @@ export class PricingRendererElement extends LitElement {
   private _handleDialogKeyboard = (event: KeyboardEvent): void => {
     if (!this._pendingAddOnChange) return;
     if (event.key === 'Escape') {
+      // [impl->req~plan-change-cancel~1]
       event.preventDefault();
       this._cancelAddOnChange();
       return;

@@ -20,7 +20,7 @@ async function loadFixture(): Promise<NormalizedPricing> {
   return result.value!;
 }
 
-// The function does not exist yet: assert its presence first so the tests fail by assertion.
+// Reads the function from the public core entry point and asserts it is exported.
 function reconcile(): ReconcileFn {
   const candidate = (core as Record<string, unknown>).reconcileSelection;
   expect(typeof candidate).toBe('function');
@@ -161,6 +161,34 @@ describe('reconcileSelection', () => {
     }
   });
 
+  it('[utest->req~reconcile-unrestricted-addons~1] keeps an unrestricted add-on next to a removed one', async () => {
+    const reconcileSelection = reconcile();
+    const base = await loadFixture();
+    const pricing = withAddOns(base, [syntheticAddOn(base, 'onboarding', {})]);
+    const result = reconcileSelection(
+      pricing,
+      selectionOf(pricing, 'starter', { extraStorage: on(2), onboarding: on(3) }),
+    );
+    expect(result.selection.addOns.onboarding).toEqual({ selected: true, quantity: 3 });
+    expect(result.removedAddOnIds).toEqual(['extraStorage']);
+  });
+
+  it('[utest->req~reconcile-unrestricted-addons~1] keeps an unrestricted add-on whose dependency is not removed', async () => {
+    const reconcileSelection = reconcile();
+    const base = await loadFixture();
+    const pricing = withAddOns(base, [
+      syntheticAddOn(base, 'onboarding', {}),
+      syntheticAddOn(base, 'backupPlus', { dependsOn: ['onboarding'] }),
+    ]);
+    const result = reconcileSelection(
+      pricing,
+      selectionOf(pricing, 'starter', { extraStorage: on(), onboarding: on(), backupPlus: on(2) }),
+    );
+    expect(result.selection.addOns.backupPlus).toEqual({ selected: true, quantity: 2 });
+    expect(result.selection.addOns.onboarding).toEqual({ selected: true, quantity: 1 });
+    expect(result.removedAddOnIds).toEqual(['extraStorage']);
+  });
+
   it('[utest->req~reconcile-valid-unchanged~1] returns a valid selection deeply equal to its input', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
@@ -202,6 +230,11 @@ describe('reconcileSelection', () => {
         const twice = reconcileSelection(pricing, once.selection);
         expect(twice.selection).toEqual(once.selection);
         expect(twice.removedAddOnIds).toEqual([]);
+        // [utest->req~reconcile-unrestricted-addons~1]
+        for (const id of ids) {
+          if (once.removedAddOnIds.includes(id)) continue;
+          expect(once.selection.addOns[id]).toEqual(input.addOns[id]);
+        }
         for (const addOn of pricing.addOns) {
           if (!once.selection.addOns[addOn.id]?.selected) continue;
           const available =
@@ -262,7 +295,7 @@ describe('resolvePricing with unavailable add-ons', () => {
     expect(resolved.subtotal).toBe(45);
   });
 
-  // Expected to pass already on today's code: resolvePricing never rewrites the selection.
+  // resolvePricing returns the merged input selection and never reconciles it.
   it('[utest->req~resolve-selection-unreconciled~1] keeps the invalid add-on in resolved.selection', async () => {
     const pricing = await loadFixture();
     const resolved = core.resolvePricing(pricing, {
