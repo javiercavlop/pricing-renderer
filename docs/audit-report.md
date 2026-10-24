@@ -27,11 +27,10 @@ against the current `release.yml` and still hold.
   for `brace-expansion@1` and `@5`, `js-yaml@3` and `@4`, `nanoid@3` and
   `source-map-js`, mirrored in the lockfile. Whether newer releases exist is
   **not verified**.
-- **`yaml` 2.9.0 vs 2.9.1.** 2.9.0 is verified (lockfile and installed
-  `package.json`). The existence of 2.9.1 was confirmed only by an external
+- **`yaml` 2.9.0 vs 2.9.1.** 2.9.0 is verified (lockfile). The existence of 2.9.1 was confirmed only by an external
   query and is **not verified** from the repository.
 - **React versions differ.** Verified: `examples/next/package.json` pins
-  `react` and `react-dom` to exactly 19.2.0. The root install resolves 19.2.8,
+  `react` and `react-dom` to exactly 19.2.0. The lockfile resolves 19.2.8,
   and `examples/react` declares `^19.1.1`.
 - **`playwright` and `@playwright/test` both declared.** Verified: both are
   `^1.55.0` in the root `package.json` and the lockfile resolves both to
@@ -41,9 +40,10 @@ against the current `release.yml` and still hold.
   project's own `typescript` is 5.9.3. It is a pre-release compiler used only
   by a dev tool.
 - **Local pnpm differs from the declared one.** Verified: `packageManager` is
-  `pnpm@10.19.0` (and `release.yml` uses 10.19.0), while the local
-  `pnpm install --frozen-lockfile` run on the current tree reported pnpm
-  v9.15.9. Local results may differ from CI.
+  `pnpm@10.19.0`, and `release.yml` and `ci.yml` use 10.19.0. An earlier
+  local `pnpm install --frozen-lockfile` run reportedly showed pnpm v9.15.9;
+  that observation is **not verified** for this document, since no command was
+  run here. If accurate, local results may differ from CI.
 
 ### What the dependency update changed
 
@@ -88,8 +88,8 @@ The current state is:
 ## Release workflow (`.github/workflows/release.yml`)
 
 1. **Global npm without integrity verification.** `npm install --global
-npm@11.18.0` (line 89) installs a version-pinned CLI with no checksum or
-   signature check, in a job that has `id-token: write`. A compromised package
+npm@11.18.0` (line 89) installs a version-pinned CLI with no integrity or
+   signature check beyond what the registry and npm's own install provide, in a job that has `id-token: write`. A compromised package
    would run in a job that can mint the OIDC token.
 2. **Whole pipeline in the publishing job.** Install, lint, tests, package
    checks, browser engine install and browser tests all run in the same job
