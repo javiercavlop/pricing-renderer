@@ -429,10 +429,18 @@ async function expectRendered(
   saas: string,
 ): Promise<void> {
   expect(state).toBe('ready');
-  if (saas === 'okta') expect(metrics.planCardCount).toBe(0);
-  else expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
   const rows = metrics.comparisonRows as { rendered?: number } | undefined;
-  expect(Number(rows?.rendered)).toBeGreaterThan(0);
+  if (saas === 'okta') {
+    // A pricing without plans has nothing to compare: no rows, only the status text.
+    expect(metrics.planCardCount).toBe(0);
+    expect(Number(rows?.rendered)).toBe(0);
+    await expect(page.locator('pricing-renderer .pr-empty')).toContainText(
+      'There are no plans to compare.',
+    );
+  } else {
+    expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
+    expect(Number(rows?.rendered)).toBeGreaterThan(0);
+  }
   await expect(page.locator('pricing-renderer .pr-skeleton')).toHaveCount(0);
   expect(Number(metrics.rendererHeight)).toBeGreaterThan(0);
 }
