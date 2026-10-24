@@ -67,12 +67,22 @@ lockfile for the full set.
 
 ## Test data (not distributed)
 
-`tests/fixtures/spectra/` holds 37 iPricings from SPECTRA (Francisco Javier
-Cavero, José Antonio Parejo, Juan C. Alonso and Antonio Ruiz-Cortés, version
-1.2.0, Zenodo, 2025, <https://doi.org/10.5281/zenodo.17237164>), taken from the
-copy in <https://github.com/isa-group/pricing-intelligence-labpack> and
-licensed under
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). They were upgraded
-from Pricing2Yaml 2.1 to 3.1 and one Trello value was corrected; the fixture
-README lists the changes. The tests use them; the published package does not
-contain them.
+`tests/fixtures/spectra/` holds 37 iPricings from two sources:
+
+- SaaS Pricing Evaluation Corpus for Temporal Representation & Analysis
+  (SPECTRA) — Francisco Javier Cavero, José Antonio Parejo, Juan C. Alonso and
+  Antonio Ruiz-Cortés, 2025, Zenodo — version 1.2.0,
+  <https://doi.org/10.5281/zenodo.17237164> — licensed under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). 30 files.
+- pricing-intelligence-labpack (isa-group), extended copy of SPECTRA — commit
+  `49e90f5a3d4dde91d15614e5c8269085888b6f0b` of
+  <https://github.com/isa-group/pricing-intelligence-labpack> — licensed under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) according to the
+  `LICENSE.txt` at the root of the repository. 7 files: CircleCI, Okta,
+  Shopify, Trello, Webflow, ZenHub and Zoom.
+
+Modifications: the files were upgraded from Pricing2Yaml 2.1 to 3.1 with
+pricing4ts 0.12.1 and one Trello value was corrected; the fixture README lists
+the changes.
+
+The tests use these files; the published package does not contain them.

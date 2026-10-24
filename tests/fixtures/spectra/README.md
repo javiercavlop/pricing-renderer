@@ -15,12 +15,16 @@ documents listed in `files`).
   <https://github.com/isa-group/pricing-intelligence-labpack> at commit
   `49e90f5a3d4dde91d15614e5c8269085888b6f0b`. That copy extends SPECTRA 1.2.0
   with seven more SaaS and the 2025 snapshots.
-- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+  for SPECTRA 1.2.0. The labpack copy at commit `49e90f5` is also under CC BY
+  4.0, according to the `LICENSE.txt` at the root of that repository, which
+  covers the seven extended SaaS.
 - Changes: the sources use Pricing2Yaml 2.1. Each file was upgraded to 3.1
   with `retrievePricingFromPath` of pricing4ts 0.12.1, the same upgrade SPHERE
   applies to the pricings it stores. One value was corrected before the
   upgrade (see Trello below); nothing else was edited. `SHA256SUMS` lists the
-  digests of the files here.
+  digests of the files here; check them with
+  `cd tests/fixtures/spectra && sha256sum -c SHA256SUMS`.
 
 ## Selection
 
