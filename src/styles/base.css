@@ -48,11 +48,14 @@
     isolation: isolate;
     inline-size: 100%;
     min-inline-size: 0;
-    overflow-wrap: anywhere;
+    /* Break a word only when it does not fit on a line of its own: short words are never split,
+       and the min-content width of a text keeps its longest word. */
+    overflow-wrap: break-word;
   }
 
   pricing-renderer[data-pr-root] .pr-content {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-section);
     padding: var(--pr-shell-padding);
   }
@@ -418,6 +421,7 @@
 
   pricing-renderer[data-pr-root] .pr-highlight-list {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-3);
     padding: 0;
     margin: 0 0 var(--pr-space-5);
@@ -432,11 +436,19 @@
     font-weight: 750;
   }
 
+  /* Name and value share a line when both fit; otherwise the value moves to the next line. The
+     name never gets narrower than its longest word (or the whole row), so short words are not
+     split, and a string longer than the row still wraps. */
   pricing-renderer[data-pr-root] .pr-highlight-list li {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     align-items: start;
-    gap: var(--pr-space-2);
+    gap: var(--pr-space-1) var(--pr-space-2);
+  }
+
+  pricing-renderer[data-pr-root] .pr-highlight-list li > :not([class]) {
+    flex: 1 1 0;
+    max-inline-size: 100%;
   }
 
   pricing-renderer[data-pr-root] .pr-highlight-list__icon {
@@ -445,6 +457,8 @@
   }
 
   pricing-renderer[data-pr-root] .pr-highlight-list__value {
+    min-inline-size: 0;
+    margin-inline-start: auto;
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-sm);
   }
@@ -637,6 +651,7 @@
 
   pricing-renderer[data-pr-root] .pr-compact-comparison {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-3);
   }
 
@@ -658,6 +673,7 @@
 
   pricing-renderer[data-pr-root] .pr-feature-card {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-4);
     padding: var(--pr-space-4);
     margin-block-end: var(--pr-space-3);
@@ -675,14 +691,17 @@
 
   pricing-renderer[data-pr-root] .pr-feature-card dl {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-2);
     margin: 0;
   }
 
+  /* Plan name and value share a line when both fit, else the value moves to the next line: the
+     name keeps its longest word (at most the whole row) and is never split inside a short word. */
   pricing-renderer[data-pr-root] .pr-feature-card dl div {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--pr-space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pr-space-1) var(--pr-space-3);
     padding-block: var(--pr-space-2);
     border-block-start: 1px solid var(--pr-color-border);
   }
@@ -691,7 +710,14 @@
     margin: 0;
   }
 
+  pricing-renderer[data-pr-root] .pr-feature-card dd {
+    min-inline-size: 0;
+    margin-inline-start: auto;
+  }
+
   pricing-renderer[data-pr-root] .pr-feature-card dt {
+    flex: 1 1 0;
+    max-inline-size: 100%;
     color: var(--pr-color-muted);
   }
 
@@ -869,13 +895,22 @@
 
   pricing-renderer[data-pr-root] .pr-addon-effects dl div {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: var(--pr-space-3);
   }
 
   pricing-renderer[data-pr-root] .pr-addon-effects :where(dt, dd) {
+    min-inline-size: 0;
     margin: 0;
     font-size: var(--pr-font-size-sm);
+  }
+
+  /* Flex items holding names or values may shrink below a long unbroken string, which wraps. */
+  pricing-renderer[data-pr-root] .pr-price > *,
+  pricing-renderer[data-pr-root] .pr-breakdown__line > *,
+  pricing-renderer[data-pr-root] .pr-breakdown__totals :where(dt, dd) {
+    min-inline-size: 0;
   }
 
   pricing-renderer[data-pr-root] .pr-stepper {
@@ -1040,6 +1075,7 @@
 
   pricing-renderer[data-pr-root] .pr-breakdown__totals > div {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: var(--pr-space-3);
   }
@@ -1161,14 +1197,17 @@
   }
 
   @container pricing-renderer (min-width: 600px) {
-    pricing-renderer[data-pr-root] .pr-plan-grid {
-      grid-template-columns: repeat(2, minmax(0, 320px));
-      justify-content: center;
-    }
-
+    pricing-renderer[data-pr-root] .pr-plan-grid,
     pricing-renderer[data-pr-root] .pr-addon-grid,
     pricing-renderer[data-pr-root] .pr-variable-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* One or two plans (no third child) keep the centered cards of at most 320px they had before:
+       this selector is more specific than the plan count rules, which use :where(). */
+    pricing-renderer[data-pr-root] .pr-plan-grid:not(:has(> :nth-child(3))) {
+      grid-template-columns: repeat(2, minmax(0, 320px));
+      justify-content: center;
     }
 
     pricing-renderer[data-pr-root] .pr-feature-card {
@@ -1188,8 +1227,46 @@
   }
 
   @container pricing-renderer (min-width: 840px) {
+    /* Plan columns by plan count (table in docs/agent-work/spectra-item8-grid/spec.md). The
+       generic rule sets the band maximum; the :where() rules after it keep the same specificity
+       and set the counts that need fewer columns, so the later rule wins. A grid whose N-th child
+       is its last child has exactly N plans. The generic rule of a wider band comes later in the
+       file and overrides the count rules of the narrower ones. */
     pricing-renderer[data-pr-root] .pr-plan-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(4):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(10):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(16):last-child)) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    pricing-renderer[data-pr-root] .pr-plan-grid:not(:has(> :nth-child(3))) {
       grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
+    }
+
+    /* Tighter plan cards and less space above the plans bring the first CTA into the first
+       screen; the space after the plans stays var(--pr-space-section). */
+    pricing-renderer[data-pr-root] .pr-plan-card {
+      padding: var(--pr-space-4);
+    }
+
+    pricing-renderer[data-pr-root] .pr-plan-card .pr-price {
+      padding-block: var(--pr-space-3);
+    }
+
+    pricing-renderer[data-pr-root] .pr-highlight-list {
+      gap: var(--pr-space-2);
+      margin-block-end: var(--pr-space-4);
+    }
+
+    pricing-renderer[data-pr-root] .pr-content {
+      gap: clamp(2rem, 3cqi, 2.5rem);
+    }
+
+    pricing-renderer[data-pr-root] .pr-content > [data-pr-part='plans'] ~ * {
+      margin-block-start: calc(var(--pr-space-section) - clamp(2rem, 3cqi, 2.5rem));
     }
 
     pricing-renderer[data-pr-root] .pr-addon-layout {
@@ -1231,11 +1308,20 @@
     }
   }
 
-  @container pricing-renderer (min-width: 1200px) {
+  @container pricing-renderer (min-width: 1040px) {
     pricing-renderer[data-pr-root] .pr-plan-grid {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(3):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(5):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(6):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(9):last-child)) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @container pricing-renderer (min-width: 1200px) {
     pricing-renderer[data-pr-root] .pr-addon-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1246,6 +1332,21 @@
 
     pricing-renderer[data-pr-root] .pr-dialog {
       width: min(960px, 100%);
+    }
+  }
+
+  /* At most 4 columns from 1280px too: 5 columns would make the cards about 243px wide at 1440,
+     taller than today, and push the first CTA below the first screen. */
+  @container pricing-renderer (min-width: 1280px) {
+    pricing-renderer[data-pr-root] .pr-plan-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(3):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(5):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(6):last-child)),
+    pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(9):last-child)) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
