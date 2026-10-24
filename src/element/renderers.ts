@@ -22,6 +22,7 @@ import {
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
+import { formatUnit } from '../core/units.js';
 import type { PendingAddOnChange } from './events.js';
 
 export interface RenderActions {
@@ -134,7 +135,8 @@ function renderValue(viewModel: PricingViewModel, value: unknown, unit?: string)
   }
   if (typeof value === 'number') {
     const formatted = new Intl.NumberFormat(viewModel.locale).format(value);
-    return html`<span class="pr-value">${formatted}${unit ? ` ${unit}` : ''}</span>`;
+    const label = unit ? ` ${formatUnit(unit, value, viewModel.locale)}` : '';
+    return html`<span class="pr-value">${formatted}${label}</span>`;
   }
   if (Array.isArray(value)) {
     return html`<span class="pr-value">${value.map(String).join(', ')}</span>`;
