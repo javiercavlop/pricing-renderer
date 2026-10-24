@@ -38,7 +38,7 @@ test('selects plans and add-ons from the full card with a clear visual state', a
   await expect(growth.locator('.pr-selection-control__label')).toHaveText('Selected');
   await expect(growth).toHaveAttribute('data-selected', 'true');
 
-  const extraStorage = page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' });
+  const extraStorage = addOnCard(page, 'Extra Storage');
   await extraStorage.getByRole('heading', { name: 'Extra Storage' }).click();
   await expect(extraStorage.getByRole('checkbox', { name: 'Remove Extra Storage' })).toBeChecked();
   await expect(extraStorage.locator('.pr-selection-control__label')).toHaveText('Added');
@@ -111,7 +111,7 @@ test('recalculates formulas, billing and multi-contract add-ons', async ({ page 
   await page.getByRole('radio', { name: /Yearly/ }).check();
   await expect(page.locator('.pr-plan-card').nth(1).locator('.pr-price')).toContainText('€72');
 
-  const extraStorage = page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' });
+  const extraStorage = addOnCard(page, 'Extra Storage');
   await extraStorage.getByRole('checkbox').check();
   await extraStorage.getByRole('button', { name: /Increase Extra Storage/ }).click();
   await expect(extraStorage.getByRole('spinbutton')).toHaveValue('2');
@@ -157,15 +157,13 @@ test('keeps the last valid price when a variable makes an expression fail', asyn
 
 test('confirms guided add-on dependencies instead of mutating silently', async ({ page }) => {
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
-  const priority = page.locator('.pr-addon-card').filter({ hasText: 'Priority Success' });
+  const priority = addOnCard(page, 'Priority Success');
   await priority.getByRole('checkbox').check();
 
   const dialog = page.getByRole('dialog', { name: 'Review configuration changes' });
-  await expect(dialog).toContainText('extraStorage');
+  await expect(dialog).toContainText('Will add: Extra Storage');
   await dialog.getByRole('button', { name: 'Apply changes' }).click();
-  await expect(
-    page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' }).getByRole('checkbox'),
-  ).toBeChecked();
+  await expect(addOnCheckbox(page, 'Extra Storage')).toBeChecked();
 });
 
 type CapturedDetail = {
@@ -221,11 +219,7 @@ function planDialog(page: Page) {
 
 async function selectGrowthWithExtraStorage(page: Page): Promise<void> {
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
-  await page
-    .locator('.pr-addon-card')
-    .filter({ hasText: 'Extra Storage' })
-    .getByRole('checkbox')
-    .check();
+  await addOnCheckbox(page, 'Extra Storage').check();
   await expect(page.locator('.pr-summary')).toContainText('€50');
 }
 
@@ -262,10 +256,7 @@ test('[utest->req~plan-change-confirmation~1] asks before removing add-ons on a 
   page,
 }) => {
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
-  const priority = page
-    .locator('.pr-addon-card')
-    .filter({ hasText: 'Priority Success' })
-    .getByRole('checkbox');
+  const priority = addOnCheckbox(page, 'Priority Success');
   await priority.check();
   await planDialog(page).getByRole('button', { name: 'Apply changes' }).click();
   await expect(priority).toBeChecked();
@@ -274,7 +265,7 @@ test('[utest->req~plan-change-confirmation~1] asks before removing add-ons on a 
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
   const dialog = planDialog(page);
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('Will remove: extraStorage, prioritySuccess');
+  await expect(dialog).toContainText('Will remove: Extra Storage, Priority Success');
   expect(await selectionEvents(page)).toHaveLength(0);
 });
 
@@ -321,9 +312,7 @@ test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', asyn
   await expect(planDialog(page)).toHaveCount(0);
   await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
   await expect(starter).not.toBeChecked();
-  await expect(
-    page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' }).getByRole('checkbox'),
-  ).toBeChecked();
+  await expect(addOnCheckbox(page, 'Extra Storage')).toBeChecked();
   expect(await selectionEvents(page)).toHaveLength(0);
   await expect(starter).toBeFocused();
 });
@@ -634,8 +623,12 @@ async function addFailedRenderer(page: Page, id: string) {
 }
 
 const growthRadio = (page: Page) => page.getByRole('radio', { name: 'Choose Growth' });
-const addOnCheckbox = (page: Page, name: string) =>
-  page.locator('.pr-addon-card').filter({ hasText: name }).getByRole('checkbox');
+const addOnCheckbox = (page: Page, name: string) => addOnCard(page, name).getByRole('checkbox');
+
+// Matches the card owning the add-on's checkbox, not cards that merely mention its name.
+function addOnCard(page: Page, name: string) {
+  return page.locator(`.pr-addon-card:has(input[type="checkbox"][aria-label$=" ${name}"])`);
+}
 
 test('[utest->req~apply-selection-replaces~1] load API: applies the Delivera contract', async ({
   page,
@@ -738,7 +731,7 @@ test('[utest->req~apply-selection-discards-pending~1] load API: discards a pendi
   await starter.focus();
   await starter.click();
   await expect(planDialog(page)).toBeVisible();
-  await expect(planDialog(page)).toContainText('Will remove: extraStorage');
+  await expect(planDialog(page)).toContainText('Will remove: Extra Storage');
   await applySelection(page, { planId: 'enterprise' });
   await nextUpdate(page);
   await expect(page.locator('.pr-dialog')).toHaveCount(0);
@@ -1251,7 +1244,7 @@ test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the nor
   await setControlledQuantity25(page);
   await nextUpdate(page);
   await expect(extraStorageQuantity(page)).toHaveValue('10');
-  const card = page.locator('.pr-addon-card').filter({ hasText: 'Extra Storage' });
+  const card = addOnCard(page, 'Extra Storage');
   await expect(card.locator('.pr-price')).toContainText('€50');
   await expect(page.locator('.pr-summary')).toContainText('€95');
   const stored = await page.evaluate(() => {
@@ -1819,7 +1812,7 @@ test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape canc
   await selectGrowthWithExtraStorage(page);
   await openPanel(page);
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
-  await expect(planDialog(page)).toContainText('Will remove: extraStorage');
+  await expect(planDialog(page)).toContainText('Will remove: Extra Storage');
   await page.keyboard.press('Escape');
   await expect(page.locator('.pr-dialog')).toHaveCount(0);
   await expect(growthRadio(page)).toBeChecked();
