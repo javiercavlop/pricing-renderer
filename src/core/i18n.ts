@@ -74,6 +74,7 @@ export const enUS: MessageCatalog = {
   'pricing.trackable': 'Trackable',
   'pricing.renewable': 'Renewable',
   'pricing.noPlans': 'No plans are available.',
+  'pricing.noComparison': 'There are no plans to compare.',
   'pricing.configurationUpdated': 'Pricing configuration updated.',
 };
 
@@ -151,6 +152,7 @@ export const esES: MessageCatalog = {
   'pricing.trackable': 'Medible',
   'pricing.renewable': 'Renovable',
   'pricing.noPlans': 'No hay planes disponibles.',
+  'pricing.noComparison': 'No hay planes que comparar.',
   'pricing.configurationUpdated': 'Configuración de precios actualizada.',
 };
 

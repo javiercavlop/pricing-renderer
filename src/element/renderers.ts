@@ -774,11 +774,15 @@ export function renderComparison(state: RenderState): TemplateResult | typeof no
           <h3 id="pr-comparison-title">${t(viewModel, 'pricing.comparison')}</h3>
         </div>
       </div>
-      ${renderComparisonToolbar(state, totalRows)}
       ${
-        state.compact
-          ? renderCompactComparison(state, groups)
-          : renderTableComparison(state, groups)
+        viewModel.plans.length === 0
+          ? html`<p class="pr-empty">${t(viewModel, 'pricing.noComparison')}</p>`
+          : html`${renderComparisonToolbar(state, totalRows)}
+            ${
+              state.compact
+                ? renderCompactComparison(state, groups)
+                : renderTableComparison(state, groups)
+            }`
       }
     </section>
   `;
