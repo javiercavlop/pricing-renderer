@@ -434,9 +434,9 @@ async function expectRendered(
     // A pricing without plans has nothing to compare: no rows, only the status text.
     expect(metrics.planCardCount).toBe(0);
     expect(Number(rows?.rendered)).toBe(0);
-    await expect(page.locator('pricing-renderer .pr-empty')).toContainText(
-      'There are no plans to compare.',
-    );
+    await expect(
+      page.locator('pricing-renderer .pr-empty', { hasText: 'There are no plans to compare.' }),
+    ).toHaveCount(1);
   } else {
     expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
     expect(Number(rows?.rendered)).toBeGreaterThan(0);
