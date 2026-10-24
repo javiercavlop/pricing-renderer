@@ -1,19 +1,25 @@
 // Keeps the names used in the documentation (event names, diagnostic codes,
 // event detail fields) in sync with the code. The source files are the single
 // source of truth: names are derived from src/ by regex, then the docs are
-// checked in both directions (complete, and nothing invented).
+// checked in both directions (complete per row, and nothing invented).
 //
 // Regexes used:
 // - dispatched events:   new CustomEvent<...>('name'  or  new CustomEvent('name'
-// - diagnostic codes:    'PR_[A-Z_]+' as a quoted string literal in src/
+// - diagnostic codes:    'PR_[A-Z_]+' as a quoted string literal in src/; it must
+//                        equal every PR_[A-Z_]+ token in src/ (any quote style)
+//                        and stay >= 30 so the set cannot shrink silently
 // - code tokens in docs: PR_[A-Z_]+ anywhere in the text
 // - listener contexts in docs (only these are checked for event names):
-//     addEventListener('pricing-...')   Vue  @pricing-...   handler onPricingXxx
+//     addEventListener('pricing-...')   Vue  @pricing-...
 //     rows of the events table:  | `pricing-...` |
-//   Other tokens (the <pricing-renderer> tag, pricing-renderer-react-demo,
-//   CSS parts, package names) are never inspected.
+//   Each context must match at least once, so a changed row form fails
+//   instead of passing vacuously. Other tokens (the <pricing-renderer> tag,
+//   pricing-renderer-react-demo, CSS parts, package names) are never inspected.
+// - completeness: docs/events.md has a `| \`name\` ...|` row per event (padding allowed) and a
+//   <td><code>PR_XXX</code></td> cell per code; docs/vue.md has @name per
+//   event; the README events list has - `name` per event.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -53,6 +59,9 @@ const eventNames = new Set(
 const diagnosticCodes = new Set(
   [...sourceText(sourceFiles).matchAll(/'(PR_[A-Z_]+)'/g)].map((m) => m[1]!),
 );
+// every PR_XXX token in any quote style (or none): a code built in a template
+// string or double quotes must show up here and fail the equality check
+const anyCodeTokens = new Set(sourceText(sourceFiles).match(/PR_[A-Z_]+/g) ?? []);
 
 const actionDetailKeys = (): string[] => {
   const body = /export interface PricingActionDetail \{([^}]*)\}/.exec(
@@ -64,18 +73,13 @@ const actionDetailKeys = (): string[] => {
 const docPath = (rel: string): string => join(root, rel);
 const docText = (rel: string): string => (existsSync(docPath(rel)) ? read(rel) : '');
 
-const kebab = (name: string): string =>
-  name
-    .replace(/^on/, '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .toLowerCase();
-
 describe('documentation stays in sync with the code', () => {
   it('derives the real events and diagnostic codes from the source', () => {
     expect([...eventNames].sort()).toEqual(
       ['pricing-action', 'pricing-diagnostic', 'pricing-ready', 'pricing-selection-change'].sort(),
     );
-    expect(diagnosticCodes.size).toBeGreaterThan(0);
+    expect(diagnosticCodes.size).toBeGreaterThanOrEqual(30);
+    expect([...anyCodeTokens].sort()).toEqual([...diagnosticCodes].sort());
     expect(actionDetailKeys()).toEqual(
       expect.arrayContaining(['actionId', 'planId', 'href', 'selection', 'resolved', 'metadata']),
     );
@@ -86,14 +90,19 @@ describe('documentation stays in sync with the code', () => {
       expect(existsSync(docPath('docs/events.md'))).toBe(true);
     });
 
-    it('mentions every event name', () => {
+    it('has a table row for every event name', () => {
       const text = docText('docs/events.md');
-      for (const name of eventNames) expect(text, name).toContain(name);
+      // prettier pads table cells, so allow whitespace before the closing pipe
+      for (const name of eventNames) {
+        expect(text, name).toMatch(new RegExp(`^\\|\\s*\`${name}\`\\s*\\|`, 'm'));
+      }
     });
 
-    it('mentions every diagnostic code found in the source', () => {
+    it('has a table cell for every diagnostic code found in the source', () => {
       const text = docText('docs/events.md');
-      for (const code of diagnosticCodes) expect(text, code).toContain(code);
+      for (const code of diagnosticCodes) {
+        expect(text, code).toContain(`<td><code>${code}</code></td>`);
+      }
     });
 
     it('explains cancelation and the detail payload', () => {
@@ -117,6 +126,18 @@ describe('documentation stays in sync with the code', () => {
         expect(text, word).toContain(word);
       }
     });
+
+    it('listens to every event name with a Vue listener', () => {
+      const text = docText('docs/vue.md');
+      for (const name of eventNames) expect(text, name).toContain(`@${name}`);
+    });
+  });
+
+  describe('README.md', () => {
+    it('lists every event name in the public events list', () => {
+      const text = docText('README.md');
+      for (const name of eventNames) expect(text, name).toContain(`- \`${name}\``);
+    });
   });
 
   describe('no invented names', () => {
@@ -134,8 +155,16 @@ describe('documentation stays in sync with the code', () => {
       ['docs/events.md', docText('docs/events.md')],
       ['docs/vue.md', docText('docs/vue.md')],
       ['README.md', docText('README.md')],
-      ...vueExamples.map((file): [string, string] => [file, readFileSync(file, 'utf8')]),
+      ...vueExamples.map((file): [string, string] => [
+        relative(root, file),
+        readFileSync(file, 'utf8'),
+      ]),
     ];
+
+    it('scans the documents that must exist', () => {
+      expect(existsSync(docPath('docs/events.md'))).toBe(true);
+      expect(existsSync(docPath('docs/vue.md'))).toBe(true);
+    });
 
     it('only uses diagnostic codes that exist in the source', () => {
       for (const [name, text] of docs) {
@@ -147,29 +176,44 @@ describe('documentation stays in sync with the code', () => {
 
     it('only uses real event names in listeners and the events table', () => {
       const patterns = [
-        /addEventListener\(\s*['"`]([^'"`]+)['"`]/g,
-        /@(pricing-[a-z-]+)/g,
-        /^\|\s*`(pricing-[a-z-]+)`\s*\|/gm,
+        {
+          label: 'addEventListener',
+          regex: /addEventListener\(\s*['"`]([^'"`]+)['"`]/g,
+          onlyPricingPrefixed: true,
+        },
+        { label: 'vue listener', regex: /@(pricing-[a-z-]+)/g, onlyPricingPrefixed: false },
+        {
+          label: 'events table',
+          regex: /^\|\s*`(pricing-[a-z-]+)`\s*\|/gm,
+          onlyPricingPrefixed: false,
+        },
       ];
       // the element tag shares the prefix and can head a table row
       const notEvents = new Set(['pricing-renderer']);
+      const checkedIn = (label: string, file: string): number => {
+        const text = docs.find(([name]) => name === file)?.[1] ?? '';
+        return [...text.matchAll(patterns.find((p) => p.label === label)!.regex)].length;
+      };
       for (const [name, text] of docs) {
-        for (const pattern of patterns) {
-          for (const m of text.matchAll(pattern)) {
+        for (const { regex, onlyPricingPrefixed } of patterns) {
+          for (const m of text.matchAll(regex)) {
             const used = m[1]!;
             if (notEvents.has(used)) continue;
             // addEventListener on other targets (click, ...) is not our concern
-            if (pattern.source.startsWith('addEventListener') && !used.startsWith('pricing-')) {
-              continue;
-            }
+            if (onlyPricingPrefixed && !used.startsWith('pricing-')) continue;
             expect(eventNames.has(used), `${name}: ${used}`).toBe(true);
           }
         }
-        for (const m of text.matchAll(/\bon(Pricing[A-Za-z]+)\b/g)) {
-          const used = kebab(m[1]!);
-          expect(eventNames.has(used), `${name}: ${m[0]}`).toBe(true);
-        }
       }
+      // a pattern that stops matching must not pass vacuously
+      expect(
+        checkedIn('events table', 'docs/events.md') + checkedIn('events table', 'README.md'),
+        'events table rows',
+      ).toBeGreaterThan(0);
+      expect(
+        checkedIn('vue listener', 'docs/vue.md'),
+        'vue listeners in docs/vue.md',
+      ).toBeGreaterThan(0);
     });
   });
 });
