@@ -273,16 +273,36 @@ async function collectMetrics(viewport: Viewport) {
   let stickyHeaderEffective: boolean | null = null;
   let stickyFirstColumnEffective: boolean | null = null;
   if (table && headerCell) {
-    const tableBox = table.getBoundingClientRect();
-    const middle = tableBox.top + window.scrollY + tableBox.height / 2;
-    jump(Math.max(0, Math.round(middle - viewportHeight / 2)));
-    await nextFrame();
-    const tableTop = table.getBoundingClientRect().top;
-    if (tableTop < 0) {
-      const offset = parseFloat(getComputedStyle(headerCell).top) || 0;
-      stickyHeaderEffective = Math.abs(headerCell.getBoundingClientRect().top - offset) <= 2;
-    }
     const scroller = table.closest('.pr-table-scroll');
+    // The table scrolls vertically inside its box (max-block-size), so the header pins to the box:
+    // scroll the box to its middle, bring it into view and compare the header with the box top.
+    if (scroller && scroller.scrollHeight > scroller.clientHeight + 1) {
+      const scrollerTop = scroller.getBoundingClientRect().top + window.scrollY;
+      // A summary docked and sticky at the top of the page covers the top of the viewport, so the
+      // box is brought in below it.
+      const dockedSummary = renderer.querySelector('.pr-flow > .pr-summary');
+      const clearance =
+        dockedSummary && getComputedStyle(dockedSummary).position === 'sticky'
+          ? dockedSummary.getBoundingClientRect().height +
+            (parseFloat(getComputedStyle(dockedSummary).top) || 0)
+          : 0;
+      jump(Math.max(0, Math.round(scrollerTop - clearance - 20)));
+      scroller.scrollTop = (scroller.scrollHeight - scroller.clientHeight) / 2;
+      await nextFrame();
+      if (scroller.scrollTop > 2) {
+        const box = scroller.getBoundingClientRect();
+        const offset = parseFloat(getComputedStyle(headerCell).top) || 0;
+        const expectedTop = box.top + scroller.clientTop + offset;
+        const headerBox = headerCell.getBoundingClientRect();
+        const topmost = document.elementFromPoint(
+          headerBox.left + headerBox.width / 2,
+          headerBox.top + headerBox.height / 2,
+        );
+        stickyHeaderEffective =
+          Math.abs(headerBox.top - expectedTop) <= 2 && !!topmost && headerCell.contains(topmost);
+      }
+      scroller.scrollTop = 0;
+    }
     if (scroller && firstCell && scroller.scrollWidth > scroller.clientWidth + 1) {
       scroller.scrollLeft = 200;
       await nextFrame();
@@ -456,11 +476,26 @@ test.describe('spectra metrics', () => {
           ...metrics,
         });
         await expectRendered(page, state, metrics, fixture.saas);
+        expectStickyHeader(metrics);
         expect(errors).toEqual([]);
       });
     }
   }
 });
+
+// [utest->req~sticky-table-scroll~1] A table layout never reports a header that scrolled away
+// (2 px tolerance in collectMetrics); a table with 20 or more rows is taller than 80% of any
+// tested viewport, so its box scrolls and the check must run and pass. Card layouts are exempt.
+function expectStickyHeader(metrics: {
+  comparisonLayout?: unknown;
+  comparisonRows?: unknown;
+  stickyHeaderEffective?: unknown;
+}): void {
+  if (metrics.comparisonLayout !== 'table') return;
+  expect(metrics.stickyHeaderEffective).not.toBe(false);
+  const rows = metrics.comparisonRows as { rendered?: number } | undefined;
+  if (Number(rows?.rendered) >= 20) expect(metrics.stickyHeaderEffective).toBe(true);
+}
 
 test.describe('spectra captures', () => {
   for (const saas of extremes) {
