@@ -244,32 +244,6 @@ async function collectMetrics(viewport: Viewport) {
 
   const rendererHeight = renderer.getBoundingClientRect().height;
 
-  // The toolbar search input must be the topmost element at its centre, also under a docked summary.
-  const toolbarInput = renderer.querySelector('.pr-comparison-toolbar input');
-  let toolbarInputReachable: boolean | null = null;
-  if (toolbarInput) {
-    const toolbar = renderer.querySelector('.pr-comparison-toolbar') as HTMLElement;
-    const toolbarRect = toolbar.getBoundingClientRect();
-    const toolbarPageTop = toolbarRect.top + window.scrollY;
-    const stickyOffset = parseFloat(getComputedStyle(toolbar).insetBlockStart) || 0;
-    const container = toolbar.parentElement!.getBoundingClientRect();
-    // How far the page can scroll past the toolbar's natural position while its container still holds it.
-    const holdRoom = container.bottom + window.scrollY - toolbarPageTop - toolbarRect.height;
-    // Scroll to the middle of that range, always beyond the sticky offset so the bar is really stuck.
-    const shift = Math.max(stickyOffset + 1, Math.min(holdRoom, holdRoom / 2));
-    jump(Math.max(0, Math.round(toolbarPageTop + shift)));
-    await nextFrame();
-    const box = toolbarInput.getBoundingClientRect();
-    const centerX = box.left + box.width / 2;
-    const centerY = box.top + box.height / 2;
-    const centerInViewport =
-      centerX >= 0 && centerX <= window.innerWidth && centerY >= 0 && centerY <= viewportHeight;
-    const hit = centerInViewport ? document.elementFromPoint(centerX, centerY) : null;
-    toolbarInputReachable = centerInViewport && !!hit && toolbarInput.contains(hit);
-    jump(0);
-    await nextFrame();
-  }
-
   // Scroll the renderer to the top of the viewport: the demo page has its own chrome above it.
   jump(rendererTop);
   await nextFrame();
@@ -304,15 +278,7 @@ async function collectMetrics(viewport: Viewport) {
     // scroll the box to its middle, bring it into view and compare the header with the box top.
     if (scroller && scroller.scrollHeight > scroller.clientHeight + 1) {
       const scrollerTop = scroller.getBoundingClientRect().top + window.scrollY;
-      // A summary docked and sticky at the top of the page covers the top of the viewport, so the
-      // box is brought in below it.
-      const dockedSummary = renderer.querySelector('.pr-flow > .pr-summary');
-      const clearance =
-        dockedSummary && getComputedStyle(dockedSummary).position === 'sticky'
-          ? dockedSummary.getBoundingClientRect().height +
-            (parseFloat(getComputedStyle(dockedSummary).top) || 0)
-          : 0;
-      jump(Math.max(0, Math.round(scrollerTop - clearance - 20)));
+      jump(Math.max(0, Math.round(scrollerTop - 20)));
       scroller.scrollTop = (scroller.scrollHeight - scroller.clientHeight) / 2;
       await nextFrame();
       if (scroller.scrollTop > 2) {
@@ -370,7 +336,6 @@ async function collectMetrics(viewport: Viewport) {
     stickyFirstColumn: isPinned(positionOf(firstCell)),
     stickyHeaderEffective,
     stickyFirstColumnEffective,
-    toolbarInputReachable,
     truncatedTexts: { count: truncatedCount, examples: truncated },
     awkwardBreaks: {
       count: awkwardBreaks,
@@ -557,60 +522,28 @@ async function openWithoutAddOns(page: Page, viewport: Viewport, layout: string)
 
 test.describe('summary position and compactness', () => {
   // [utest->req~sticky-summary-compact~1]
-  test('docks one compact sticky line at 1440 and keeps the toolbar below it', async ({ page }) => {
+  test('docks one compact non-sticky line before the comparison at 1440', async ({ page }) => {
     await openWithoutAddOns(page, viewports[0], 'auto');
     const docked = await page.evaluate(() => {
       const renderer = document.querySelector('pricing-renderer') as HTMLElement;
       const summary = renderer.querySelector('.pr-flow > .pr-summary');
       if (!summary) return null;
-      const style = getComputedStyle(summary);
       const live = summary.querySelector('.pr-summary__live') as HTMLElement;
       const label = live.children[0].getBoundingClientRect();
       const total = live.children[live.children.length - 1].getBoundingClientRect();
-      const space = getComputedStyle(renderer).getPropertyValue('--pr-space-4').trim();
-      const probe = document.createElement('div');
-      probe.style.inlineSize = space;
-      renderer.appendChild(probe);
-      const space4 = probe.getBoundingClientRect().width;
-      probe.remove();
-      const toolbar = renderer.querySelector('.pr-comparison-toolbar');
+      const comparison = renderer.querySelector('.pr-comparison-toolbar, .pr-table-scroll');
       return {
-        position: style.position,
-        top: parseFloat(style.top),
-        space4,
+        position: getComputedStyle(summary).position,
+        beforeComparison: comparison
+          ? !!(summary.compareDocumentPosition(comparison) & Node.DOCUMENT_POSITION_FOLLOWING)
+          : true,
         sameLine: Math.abs(label.top + label.height / 2 - (total.top + total.height / 2)) < 8,
-        toolbarTop: toolbar ? parseFloat(getComputedStyle(toolbar).top) : null,
-        summaryBottom: summary.getBoundingClientRect().bottom,
       };
     });
     expect(docked).not.toBeNull();
-    expect(docked!.position).toBe('sticky');
-    expect(docked!.top).toBeCloseTo(docked!.space4, 0);
+    expect(docked!.position).not.toBe('sticky');
+    expect(docked!.beforeComparison).toBe(true);
     expect(docked!.sameLine).toBe(true);
-    // The toolbar sticks below the summary, never under it.
-    if (docked!.toolbarTop !== null) {
-      expect(docked!.toolbarTop).toBeGreaterThanOrEqual(docked!.summaryBottom - 1);
-    }
-  });
-
-  // [utest->req~sticky-summary-compact~1]
-  test('keeps the sticky toolbar search input reachable under the docked summary', async ({
-    page,
-  }) => {
-    await openWithoutAddOns(page, viewports[0], 'auto');
-    const reachable = await page.evaluate(async () => {
-      const renderer = document.querySelector('pricing-renderer') as HTMLElement;
-      const input = renderer.querySelector('.pr-comparison-toolbar input');
-      if (!input) return null;
-      const toolbar = renderer.querySelector('.pr-comparison-toolbar') as HTMLElement;
-      const top = toolbar.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: top + 400, behavior: 'instant' });
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      const box = input.getBoundingClientRect();
-      const topmost = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-      return !!topmost && input.contains(topmost);
-    });
-    if (reachable !== null) expect(reachable).toBe(true);
   });
 
   for (const [label, viewport, layout] of [

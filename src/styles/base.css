@@ -589,7 +589,7 @@
   pricing-renderer[data-pr-root] .pr-comparison-toolbar {
     position: sticky;
     z-index: 3;
-    inset-block-start: var(--pr-docked-summary-offset, 0px);
+    inset-block-start: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1207,20 +1207,15 @@
     }
 
     /* [impl->req~sticky-summary-compact~1] The summary docked after the plans is one compact
-       line (label and total side by side) that sticks to the top. */
+       line (label and total side by side). It is not sticky, so it never covers the toolbar. */
     pricing-renderer[data-pr-root] .pr-flow > .pr-summary {
+      position: relative;
+      inset-block-start: auto;
       padding-block: var(--pr-space-3);
     }
 
-    /* The comparison toolbar sticks right below the docked summary (top space + one line of the
-       summary + a gap), so the summary never covers it or a focused control inside it. */
-    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) {
-      --pr-docked-summary-offset: calc(var(--pr-space-4) + 4.5rem + var(--pr-space-2));
-    }
-
-    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) .pr-comparison-toolbar,
-    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) .pr-table-scroll {
-      scroll-margin-block-start: calc(var(--pr-docked-summary-offset) + 4rem);
+    pricing-renderer[data-pr-root] .pr-flow > .pr-summary:empty {
+      display: none;
     }
 
     pricing-renderer[data-pr-root] .pr-flow > .pr-summary .pr-summary__live {
