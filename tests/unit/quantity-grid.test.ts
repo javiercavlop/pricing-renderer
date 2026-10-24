@@ -62,6 +62,12 @@ describe('add-on quantity grid', () => {
     );
   });
 
+  it('never returns a value above the maximum because of floating-point error', () => {
+    // 0.1 + 2 * 0.1 is 0.30000000000000004, so the uncapped grid value would exceed 0.3
+    const constraints = { minQuantity: 0.1, quantityStep: 0.1, maxQuantity: 0.3 };
+    expect(maxQuantityOnGrid(constraints)).toBe(0.3);
+  });
+
   it('does not warn when the maximum is an exact multiple of the step', () => {
     const resolved = subtotalFor({ minQuantity: 1, quantityStep: 5, maxQuantity: 11 }, 1);
     expect(resolved.diagnostics.filter((d) => d.code === 'PR_ADDON_CONSTRAINTS_INVALID')).toEqual(

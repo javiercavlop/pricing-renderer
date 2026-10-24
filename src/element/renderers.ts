@@ -9,6 +9,7 @@ import {
   getPlanHighlightSummary,
   humanizeIdentifier,
   isSafeLink,
+  normalizeAddOnQuantity,
   translate,
   unwrapValue,
   type NormalizedAddOn,
@@ -819,10 +820,13 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
         <div class="pr-addon-grid">
           ${viewModel.addOns.map((addOn) => {
             const selected = selection.addOns[addOn.id]?.selected ?? false;
-            const quantity =
-              selection.addOns[addOn.id]?.quantity ??
-              addOn.subscriptionConstraints?.minQuantity ??
-              1;
+            const addOnSelection = selection.addOns[addOn.id];
+            const quantity = addOnSelection
+              ? normalizeAddOnQuantity(viewModel.pricing, addOn.id, {
+                  ...addOnSelection,
+                  selected: true,
+                })
+              : (addOn.subscriptionConstraints?.minQuantity ?? 1);
             const available = addOnAvailability(addOn, selection.planId);
             const constraints = addOn.subscriptionConstraints;
             return html`

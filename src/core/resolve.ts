@@ -79,7 +79,7 @@ export function maxQuantityOnGrid(constraints: SubscriptionConstraints): number 
   const { minQuantity, quantityStep, maxQuantity } = constraints;
   // the epsilon absorbs floating-point error with decimal steps (0.3 / 0.1 = 2.9999999999999996)
   const steps = Math.floor((maxQuantity - minQuantity) / quantityStep + 1e-9);
-  return minQuantity + steps * quantityStep;
+  return Math.min(maxQuantity, minQuantity + steps * quantityStep);
 }
 
 export function normalizeAddOnQuantity(

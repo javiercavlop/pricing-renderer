@@ -1166,6 +1166,66 @@ test('[utest->req~ready-detail-selection~1] load API: pricing-ready carries the 
   expect(second?.detail.resolved.subtotal).toBe(20);
 });
 
+test('quantity stepper input max is the largest grid value, not the raw maximum', async ({
+  page,
+}) => {
+  // min 1, step 5, max 8: valid quantities are 1 and 6
+  await page.evaluate(async () => {
+    const renderer = document.createElement('pricing-renderer') as LoadApiElement;
+    renderer.id = 'grid-renderer';
+    renderer.yaml = [
+      "syntaxVersion: '3.1'",
+      'saasName: Grid',
+      "version: '1'",
+      'createdAt: 2026-01-01',
+      'currency: EUR',
+      'plans:',
+      '  base:',
+      '    price: 10',
+      'addOns:',
+      '  seats:',
+      '    price: 2',
+      '    subscriptionConstraints:',
+      '      minQuantity: 1',
+      '      quantityStep: 5',
+      '      maxQuantity: 8',
+    ].join('\n');
+    renderer.selection = {
+      planId: 'base',
+      billingPeriod: 'monthly',
+      variables: {},
+      addOns: { seats: { selected: true, quantity: 1 } },
+    };
+    document.body.append(renderer);
+    await renderer.updateComplete;
+  });
+  await expect(
+    page.locator('#grid-renderer [data-pr-part="add-on-quantity"] input'),
+  ).toHaveAttribute('max', '6');
+});
+
+test('quantity stepper shows the normalized quantity of a controlled selection', async ({
+  page,
+}) => {
+  await collectEvents(page);
+  await page.evaluate(
+    ([variables]) => {
+      (document.querySelector('pricing-renderer') as PlanChangeElement).selection = {
+        planId: 'growth',
+        billingPeriod: 'monthly',
+        variables,
+        addOns: { extraStorage: { selected: true, quantity: 25 } },
+      };
+    },
+    [defaultVariables] as const,
+  );
+  const stepper = page.locator('[data-pr-part="add-on-quantity"]');
+  await expect(stepper.locator('input')).toHaveValue('10');
+  await stepper.locator('button').first().click();
+  const events = await selectionEvents(page);
+  expect(events.at(-1)?.selection.addOns.extraStorage?.quantity).toBe(9);
+});
+
 test('switches locale without changing source data', async ({ page }) => {
   await page.locator('#locale').selectOption('es-ES');
   await expect(page.getByRole('heading', { name: 'Comparar planes' })).toBeVisible();
