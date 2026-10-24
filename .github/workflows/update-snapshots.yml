@@ -1,0 +1,28 @@
+name: update-snapshots-temp
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/spectra-grid-and-text]
+    paths: ['.github/workflows/update-snapshots.yml']
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with: { version: 10.19.0 }
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test tests/browser/pricing-renderer.spec.ts --project=chromium --grep "is responsive at" --update-snapshots=changed --retries=0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with: { name: regenerated-baselines, path: tests/browser/pricing-renderer.spec.ts-snapshots/ }
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/browser/pricing-renderer.spec.ts-snapshots/*-linux.png
+          git diff --cached --stat
+          git diff --cached --quiet || { git commit -m "test: update plan grid visual baselines"; git push; }
