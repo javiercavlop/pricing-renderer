@@ -19,7 +19,7 @@ references are to the current head.
 - CI numbers (section 6, 29 of 37 pricings at least): at 1440 the renderer is 2.4 to 8.8 screens
   tall (median 4.85), at 375 3.95 to 44.6 (webflow). Only zenhub and quip are under 3 screens at
   1440, and none is at 375. The header is never effectively sticky. The CTA is below the first
-  screen for many pricings at 1440 and for almost all at 1024. Plan cards are always 320 px wide,
+  screen for many pricings at 1440 and for almost all at 1024. Plan cards are about 320 px wide (320 at 1440 and 1024, 321 at 375),
   so grids end in orphans (3+1, 2+1, Webflow 2x7+1). "Unlimited" is split across lines in 5 cases.
   Truncation, page overflow and contrast: 0 problems.
 - Page height does not track row count: ClickUp (174 rows) is 4.54 screens, because each group is
@@ -84,7 +84,7 @@ All thresholds are proposals for the owner. "Spec metric" is a field of `collect
 | Plan header and first column stay in view                     | `stickyHeader`, `stickyFirstColumn` (computed `position`), `stickyHeaderEffective`, `stickyFirstColumnEffective` (scroll-based) | `stickyHeaderEffective` true: after scrolling the middle of the table into view, the header cell top is within 2px of its pinned offset | Computed position true, header effective 0 in every table layout. First column effective 1 where the table overflows horizontally                             | Header fail; column pass     |
 | 15 plans without narrow cards or page scroll                  | `planCardWidths.min`, `horizontalOverflow`, `rendererOverflowX`                                                                 | Card width at least 220px (the CSS minimum), `horizontalOverflow` false                                                                 | Card width 320 px (321 at 375), never fluid; no page overflow                                                                                                 | Pass                         |
 | Balanced grid                                                 | `planCardsPerRow` (no last row with one card when more than one row) and orphan counts in `metrics.json` (22 pricings)          | 0 pricings with a lone last card                                                                                                        | 1440: 4 plans 3+1 (5 pricings seen: slack, trello, trustmary, zapier, clickup; see 6.2); 1024: every 3-plan pricing 2+1, 5 plans 2+2+1, Webflow 2x7+1         | Fail                         |
-| Long texts without ugly breaks or truncation                  | `awkwardBreaks.count`, `truncatedTexts.count`                                                                                   | 0 truncated texts; awkward breaks at most the current CI baseline, then 0                                                               | Truncated 0 everywhere. Awkward breaks: "Unlimited" in 5 pricings, "PROFESSIONAL" in GitHub, 1-2 more per extreme in `es`                                     | Truncated pass; breaks not 0 |
+| Long texts without ugly breaks or truncation                  | `awkwardBreaks.count`, `truncatedTexts.count`                                                                                   | 0 truncated texts; awkward breaks at most the current CI baseline, then 0                                                               | Truncated 0 everywhere. Awkward breaks: "Unlimited" in 5 pricings, "PROFESSIONAL" in GitHub, 1-2 more on okta, github and dropbox in `es`                     | Truncated pass; breaks not 0 |
 | Contrast AA                                                   | `contrastViolations` (axe `color-contrast`, extremes only, light and dark)                                                      | 0                                                                                                                                       | 0 violations on the 8 extremes, light, dark and `es`                                                                                                          | Pass                         |
 | Selection targets stay at least 44px                          | Existing unit and browser tests of `.pr-selection-control` (`min-block-size: 44px`, `base.css:295`)                             | No change; any new control also at least 44px                                                                                           | Not measured by this spec                                                                                                                                     | Not measured                 |
 
@@ -158,10 +158,10 @@ Proposal:
   `summary-position` if the owner wants control.
 - Default on. The look of the table changes (it becomes a scroll box), hence CRP.
 
-Acceptance: a scroll-based browser check: scroll the page (or the container) by two screens and
-assert the header cell's `getBoundingClientRect().top` is within 1px of its pinned position, at 1440
-and 375 (375 uses the card layout, where the plan names are in each `dl`; the check applies to the
-table layout only). Test type: layout metric test.
+Acceptance: a scroll-based browser check: `stickyHeaderEffective` true (2 px tolerance, the
+middle of the table scrolled into view) on every table layout, as the spec measures. The card layout
+at 375 keeps the plan names in each `dl`, so the check applies to the table layout only. Test type:
+layout metric test.
 
 ### 4.2 Differences-only, search and show more already exist (item 2)
 
@@ -209,7 +209,7 @@ Proposal:
 
 - New attribute `only-differences` (boolean) as the initial state, and an auto default: on when the
   pricing has more than 100 rows and at least 2 plans. Public API addition; default look changes
-  for 9 pricings, hence CRP.
+  for 7 pricings (8 are strictly over 100 rows and Okta has no plans), hence CRP.
 - Counter: `{shown} of {total}` with a new i18n key `pricing.rowsShownOf` (es: "{shown} de {total}
   elementos"), counting rendered rows only.
 - Toolbar threshold as a property `toolbar-threshold`, default unchanged (40).
@@ -233,13 +233,13 @@ Proposal, item 3a (no new API, no CRP):
 - Pluralize with `Intl.PluralRules(locale)`, in a helper `formatUnit(unit, count, locale)` in
   `src/core/` next to `formatCurrency`.
 - English: if the unit is a single ASCII word and the plural category is `other`, append `s`
-  (`execution` to `executions`, `box` to `boxes`, ends in `s`/`x`/`z`/`ch`/`sh` take `es`, consonant
-  - `y` becomes `ies`). Spanish: vowel adds `s`, consonant adds `es`, final `z` becomes `ces`.
+  (`execution` to `executions`, `box` to `boxes`, ends in `s`/`x`/`z`/`ch`/`sh` take `es`, consonant plus `y` becomes `ies`). Spanish: vowel adds `s`, consonant adds `es`, final `z` becomes `ces`.
 - Fallback: any unit with more than one word, with a slash, with digits or in uppercase is left
   as written, as is a unit that already ends in `s`. A value of exactly 1 uses the singular.
-  Proposal, item 3b (public API, CRP): allow an override through the pricing: a map
-  `presentation.unitLabels` (`{ unit: { one, other } }` per locale) so exotic units can be fixed
-  without code. This is a public API addition, so it needs the owner's approval; 3a works without it.
+
+Proposal, item 3b (public API, CRP): allow an override through the pricing: a map
+`presentation.unitLabels` (`{ unit: { one, other } }` per locale) so exotic units can be fixed
+without code. This is a public API addition, so it needs the owner's approval; 3a works without it.
 
 Acceptance (3a): unit tests on a table of units (`unit`, `execution`, `GB`, `user/month`, `credit`) for
 en and es; a SPECTRA test that no rendered cell matches `/\b1 \w+s\b/` and that the 255 candidate
@@ -304,7 +304,7 @@ Problem:
   names), availability, dependency, excludes, constraints and a `details` of effects
   (`renderers.ts:849-940`), so cards in one row have different heights. `addOnCardHeights` in the
   spec reports min and max.
-- 14 to 18 add-ons (Okta 18, Zoom 16, Salesforce 14, GitHub 14, Postman 12, UserGuiding 11) are an
+- 11 to 18 add-ons (Okta 18, Zoom 16, Salesforce 14, GitHub 14, Postman 12, UserGuiding 11) are an
   unfiltered wall of cards.
 - The total sits in the right column of `.pr-addon-layout` at 840px+ and is sticky there
   (`base.css:1179-1190`), so with many add-ons it stays visible, but it is lost among the cards on
@@ -328,7 +328,7 @@ Test type: layout metric test.
 
 Problem: the plan grid is `repeat(auto-fit, minmax(220px, 320px))` from 840px up
 (`base.css:1174-1177`, `:1198-1201`) and `repeat(2, minmax(0, 320px))` from 600px
-(`base.css:1147-1150`). With 5 plans the last row has one card; 22 pricings have an orphan on a 3 or
+(`base.css:1147-1150`). With 5 plans the last row has one card at 1024 (2+2+1; 3+2 at 1440); 22 pricings have an orphan on a 3 or
 4 column grid (`metrics.md`). With 15 plans (Webflow) the number of columns follows the width and
 the plan cards each carry price, highlights and a CTA, so the first viewport shows only a part.
 
