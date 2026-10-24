@@ -1,9 +1,13 @@
 # CI hardening report
 
+> **Historical report.** This describes an earlier task and the state of the
+> repository at that time. Later changes superseded some of it: see the
+> "Later changes" section at the end and `docs/audit-report.md`.
+
 ## Changes
 
 - `.github/workflows/ci.yml`: the workflow now runs on `push` to `main` and `develop`, and on `pull_request` targeting `main` and `develop`. The Node 22/24 matrix and the `quality` and `browsers` jobs are unchanged.
-- `.github/workflows/release.yml`: no changes. `id-token: write` and `environment: npm` are kept.
+- `.github/workflows/release.yml`: no changes in that task (see "Later changes"). `id-token: write` and `environment: npm` are kept.
 
 ## Action pinning: complete
 
@@ -19,6 +23,14 @@ Every `uses:` in `ci.yml` and `release.yml` is pinned to a commit SHA, with the 
 ## Risk
 
 - The SHAs were not re-resolved in this task (no network access); they rely on the owner's resolution.
-- Pins do not update themselves. Security fixes in these actions need a manual SHA bump, so consider Dependabot for `github-actions`.
+- Pins do not update themselves. Security fixes in these actions need a manual SHA bump, so consider Dependabot for `github-actions`. (Since then, `.github/dependabot.yml` configures weekly `github-actions` updates, grouped as `actions-security` and `actions`.)
 - The `# v6` comment is not checked against the SHA. A wrong pairing would go unnoticed.
 - CI now also runs on pushes to `develop` and on PRs targeting `develop`. PRs to other branches no longer trigger CI. This is the requested behaviour, but it is a narrowing relative to the previous unfiltered `pull_request`.
+
+## Later changes
+
+Verified against the files on `develop` after this task:
+
+- `ci.yml` has an advisory `audit` job (`continue-on-error: true`, Node 22) that runs `pnpm audit --audit-level high`, and top-level `permissions: contents: read`.
+- `.github/dependabot.yml` configures npm and `github-actions` updates.
+- `release.yml` now has top-level `permissions: {}` and comments documenting the risks of the global npm install and of the single publishing job. The global npm install remains an open item in `docs/audit-report.md`.
