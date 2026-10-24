@@ -22,6 +22,7 @@ import {
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
+import { formatUnit } from '../core/units.js';
 import type { PendingAddOnChange } from './events.js';
 
 export interface RenderActions {
@@ -70,6 +71,12 @@ function t(
   parameters?: Record<string, string | number>,
 ): string {
   return translate(viewModel.messages, key, parameters);
+}
+
+function addOnNames(viewModel: PricingViewModel, ids: readonly string[]): string {
+  return ids
+    .map((id) => viewModel.addOns.find((addOn) => addOn.id === id)?.name ?? humanizeIdentifier(id))
+    .join(', ');
 }
 
 const interactiveCardContent =
@@ -128,7 +135,8 @@ function renderValue(viewModel: PricingViewModel, value: unknown, unit?: string)
   }
   if (typeof value === 'number') {
     const formatted = new Intl.NumberFormat(viewModel.locale).format(value);
-    return html`<span class="pr-value">${formatted}${unit ? ` ${unit}` : ''}</span>`;
+    const label = unit ? ` ${formatUnit(unit, value, viewModel.locale)}` : '';
+    return html`<span class="pr-value">${formatted}${label}</span>`;
   }
   if (Array.isArray(value)) {
     return html`<span class="pr-value">${value.map(String).join(', ')}</span>`;
@@ -911,7 +919,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                     addOn.dependsOn.length
                       ? html`<p>
                           ${t(viewModel, 'pricing.dependsOn', {
-                            items: addOn.dependsOn.join(', '),
+                            items: addOnNames(viewModel, addOn.dependsOn),
                           })}
                         </p>`
                       : nothing
@@ -920,7 +928,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                     addOn.excludes.length
                       ? html`<p>
                           ${t(viewModel, 'pricing.excludes', {
-                            items: addOn.excludes.join(', '),
+                            items: addOnNames(viewModel, addOn.excludes),
                           })}
                         </p>`
                       : nothing
@@ -1180,13 +1188,17 @@ export function renderPendingDialog(state: RenderState): TemplateResult | typeof
         <p id="pr-dialog-description">${t(viewModel, 'pricing.confirmChangesDescription')}</p>
         ${
           pending.addIds.length
-            ? html`<p>${t(viewModel, 'pricing.willAdd', { items: pending.addIds.join(', ') })}</p>`
+            ? html`<p>
+                ${t(viewModel, 'pricing.willAdd', { items: addOnNames(viewModel, pending.addIds) })}
+              </p>`
             : nothing
         }
         ${
           pending.removeIds.length
             ? html`<p>
-                ${t(viewModel, 'pricing.willRemove', { items: pending.removeIds.join(', ') })}
+                ${t(viewModel, 'pricing.willRemove', {
+                  items: addOnNames(viewModel, pending.removeIds),
+                })}
               </p>`
             : nothing
         }
