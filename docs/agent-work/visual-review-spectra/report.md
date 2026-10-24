@@ -29,8 +29,8 @@ references are to the current head.
   show more, measured expanded in phase 2); (3) fix the plan grid (fixed 320 px tracks, orphans,
   CTA below the first screen); (4) fix the "Unlimited" split; (5) fix raw texts (plural units,
   names for dependencies, "Add-on" marker, Okta without plans).
-- Eleven proposals in section 4; six need an owner decision (CRP) because they change the default
-  look or the public API.
+- Twelve proposals in section 4 (item 3 is split into 3a and 3b); seven need an owner decision (CRP)
+  because they change the default look or the public API.
 
 ## 2. Evidence
 
@@ -77,20 +77,20 @@ Sums of its columns; check them against `metrics.json` before quoting them elsew
 All thresholds are proposals for the owner. "Spec metric" is a field of `collectMetrics` in
 `tests/browser/spectra-review.spec.ts`.
 
-| Target                                                        | How it is measured                                                                                                              | Proposed threshold                                                                 | Measured in CI (section 6)                                                                                                                                    | Status                       |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| First viewport shows plans, price and CTA (1440x900, 375x812) | `firstViewport.planCardsVisible`, `firstPriceVisible`, `firstCtaVisible`                                                        | At least 1 plan card, price and CTA true in all 37 pricings, except Okta (0 plans) | Cards and price true. CTA false for 8 pricings at 1440 (shopify, tableau, trello, trustmary, userguiding, webflow, wrike, zoom); at 375 false for 7 (see 6.3) | Fail (plans, price pass)     |
-| Default page is short with 140 features                       | `rendererHeightInViewports` (renderer height / viewport height)                                                                 | At most 3 for any pricing at 1440 and at 375, with default options                 | 1440: 2.4 to 8.82, median 4.85, 2 of 29 at most 3. 375: 3.95 to 44.63, 0 of 29 at most 3                                                                      | Fail                         |
-| Plan header and first column stay in view                     | `stickyHeader`, `stickyFirstColumn` (computed `position`), `stickyHeaderEffective`, `stickyFirstColumnEffective` (scroll-based) | Header cell top stays within 1px of the viewport top after scrolling 2 screens     | Computed position true, header effective 0 in every table layout. First column effective 1 where the table overflows horizontally                             | Header fail; column pass     |
-| 15 plans without narrow cards or page scroll                  | `planCardWidths.min`, `horizontalOverflow`, `rendererOverflowX`                                                                 | Card width at least 220px (the CSS minimum), `horizontalOverflow` false            | Card width 320 px (321 at 375), never fluid; no page overflow                                                                                                 | Pass                         |
-| Balanced grid                                                 | `planCardsPerRow` (no last row with one card when more than one row) and orphan counts in `metrics.json` (22 pricings)          | 0 pricings with a lone last card                                                   | 1440: 4 plans 3+1 (5 pricings); 1024: every 3-plan pricing 2+1, 5 plans 2+2+1, Webflow 2x7+1                                                                  | Fail                         |
-| Long texts without ugly breaks or truncation                  | `awkwardBreaks.count`, `truncatedTexts.count`                                                                                   | 0 truncated texts; awkward breaks at most the current CI baseline, then 0          | Truncated 0 everywhere. Awkward breaks: "Unlimited" in 5 pricings, "PROFESSIONAL" in GitHub, 1-2 more per extreme in `es`                                     | Truncated pass; breaks not 0 |
-| Contrast AA                                                   | `contrastViolations` (axe `color-contrast`, extremes only, light and dark)                                                      | 0                                                                                  | 0 violations on the 8 extremes, light, dark and `es`                                                                                                          | Pass                         |
-| Selection targets stay at least 44px                          | Existing unit and browser tests of `.pr-selection-control` (`min-block-size: 44px`, `base.css:295`)                             | No change; any new control also at least 44px                                      | Not measured by this spec                                                                                                                                     | Not measured                 |
+| Target                                                        | How it is measured                                                                                                              | Proposed threshold                                                                                                                      | Measured in CI (section 6)                                                                                                                                    | Status                       |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| First viewport shows plans, price and CTA (1440x900, 375x812) | `firstViewport.planCardsVisible`, `firstPriceVisible`, `firstCtaVisible`                                                        | At least 1 plan card, price and CTA true in all 37 pricings, except Okta (0 plans)                                                      | Cards and price true. CTA false for 8 pricings at 1440 (shopify, tableau, trello, trustmary, userguiding, webflow, wrike, zoom); at 375 false for 7 (see 6.3) | Fail (plans, price pass)     |
+| Default page is short with 140 features                       | `rendererHeightInViewports` (renderer height / viewport height)                                                                 | At most 3 for any pricing at 1440 and at 375, with default options                                                                      | 1440: 2.4 to 8.82, median 4.85, 2 of 29 at most 3. 375: 3.95 to 44.63, 0 of 29 at most 3                                                                      | Fail                         |
+| Plan header and first column stay in view                     | `stickyHeader`, `stickyFirstColumn` (computed `position`), `stickyHeaderEffective`, `stickyFirstColumnEffective` (scroll-based) | `stickyHeaderEffective` true: after scrolling the middle of the table into view, the header cell top is within 2px of its pinned offset | Computed position true, header effective 0 in every table layout. First column effective 1 where the table overflows horizontally                             | Header fail; column pass     |
+| 15 plans without narrow cards or page scroll                  | `planCardWidths.min`, `horizontalOverflow`, `rendererOverflowX`                                                                 | Card width at least 220px (the CSS minimum), `horizontalOverflow` false                                                                 | Card width 320 px (321 at 375), never fluid; no page overflow                                                                                                 | Pass                         |
+| Balanced grid                                                 | `planCardsPerRow` (no last row with one card when more than one row) and orphan counts in `metrics.json` (22 pricings)          | 0 pricings with a lone last card                                                                                                        | 1440: 4 plans 3+1 (5 pricings seen: slack, trello, trustmary, zapier, clickup; see 6.2); 1024: every 3-plan pricing 2+1, 5 plans 2+2+1, Webflow 2x7+1         | Fail                         |
+| Long texts without ugly breaks or truncation                  | `awkwardBreaks.count`, `truncatedTexts.count`                                                                                   | 0 truncated texts; awkward breaks at most the current CI baseline, then 0                                                               | Truncated 0 everywhere. Awkward breaks: "Unlimited" in 5 pricings, "PROFESSIONAL" in GitHub, 1-2 more per extreme in `es`                                     | Truncated pass; breaks not 0 |
+| Contrast AA                                                   | `contrastViolations` (axe `color-contrast`, extremes only, light and dark)                                                      | 0                                                                                                                                       | 0 violations on the 8 extremes, light, dark and `es`                                                                                                          | Pass                         |
+| Selection targets stay at least 44px                          | Existing unit and browser tests of `.pr-selection-control` (`min-block-size: 44px`, `base.css:295`)                             | No change; any new control also at least 44px                                                                                           | Not measured by this spec                                                                                                                                     | Not measured                 |
 
 The "at most 3 screens" threshold looks too strict for the collapsed state: the best pricing
 (zenhub) is 2.4 at 1440 and 3.95 at 375, and a 15-plan pricing cannot meet it with fixed cards. The
-owner should decide whether the target stays or becomes "at most 5 at 1440" (16 of 29 measured
+owner should decide whether the target stays or becomes "at most 5 at 1440" (15 of 29 measured
 pass). The CTA target is also strict at 1024, where it holds for 2 pricings measured. Contrast is
 already met, so it stays as a regression guard and not as an improvement.
 
@@ -105,26 +105,27 @@ a lot or the public API, so they need the owner's approval first.
 The first column is the item id (used in the headings below); the row order is the ranking, revised
 with the CI numbers.
 
-| #   | Improvement                                                    | Impact                                                      | Effort | Risk   | CRP |
-| --- | -------------------------------------------------------------- | ----------------------------------------------------------- | ------ | ------ | --- |
-| 1   | Sticky plan header that really sticks, total near the plans    | High (all table layouts; effective check 0 everywhere)      | ~150   | Medium | Yes |
-| 2   | Shorter collapsed page; refine differences-only, search, more  | High (4 to 9 screens at 1440 for 27 of 29; 14 to 45 at 375) | ~200   | Medium | Yes |
-| 8   | Plan grid: fixed 320 px tracks, orphans, CTA in the first view | High (CTA hidden at 1440 for 8, at 1024 for most; orphans)  | ~80    | Medium | Yes |
-| 10  | Long text handling, including the "Unlimited" split            | Medium (5 pricings split, a real defect)                    | ~80    | Low    | No  |
-| 3   | Plural units                                                   | Medium (255 rows)                                           | ~120   | Low    | No  |
-| 4   | Names instead of ids for dependencies and the dialog           | Medium (every add-on pricing)                               | ~60    | Low    | No  |
-| 5   | Okta without plans                                             | Medium (1 pricing; 5.03 / 6.86 / 10.59 screens, no plans)   | ~80    | Low    | Yes |
-| 6   | "Add-on" marker instead of the em dash                         | Medium (166 rows)                                           | ~100   | Low    | Yes |
-| 7   | Add-on grid: equal heights, fewer details, filter for 14+      | Medium (8 with 8+ add-ons)                                  | ~250   | Medium | Yes |
-| 11  | Empty or filler descriptions                                   | Medium (1839 rows)                                          | ~40    | Low    | No  |
-| 9   | Group by tags                                                  | Low (most have 1 or 2 groups)                               | ~100   | Low    | No  |
+| #   | Improvement                                                    | Impact                                                                               | Effort | Risk   | CRP |
+| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------ | ------ | --- |
+| 1   | Sticky plan header that really sticks, total near the plans    | High (all table layouts; effective check 0 everywhere)                               | ~150   | Medium | Yes |
+| 2   | Shorter collapsed page; refine differences-only, search, more  | High (4 to 9 screens at 1440 for 27 of 29; 3.95 to 44.63 at 375 (22 of 29 above 14)) | ~200   | Medium | Yes |
+| 8   | Plan grid: fixed 320 px tracks, orphans, CTA in the first view | High (CTA hidden at 1440 for 8, at 1024 for most; orphans)                           | ~80    | Medium | Yes |
+| 10  | Long text handling, including the "Unlimited" split            | Medium (5 pricings split, a real defect)                                             | ~80    | Low    | No  |
+| 3a  | Plural units with built-in es/en rules and fallback            | Medium (255 rows)                                                                    | ~100   | Low    | No  |
+| 3b  | `presentation.unitLabels` override for exotic units            | Low (exotic units only; public API)                                                  | ~40    | Low    | Yes |
+| 4   | Names instead of ids for dependencies and the dialog           | Medium (every add-on pricing)                                                        | ~60    | Low    | No  |
+| 5   | Okta without plans                                             | Medium (1 pricing; 5.03 / 6.86 / 10.59 screens, no plans)                            | ~80    | Low    | Yes |
+| 6   | "Add-on" marker instead of the em dash                         | Medium (166 rows)                                                                    | ~100   | Low    | Yes |
+| 7   | Add-on grid: equal heights, fewer details, filter for 14+      | Medium (8 with 8+ add-ons)                                                           | ~250   | Medium | Yes |
+| 11  | Empty or filler descriptions                                   | Medium (1839 rows)                                                                   | ~40    | Low    | No  |
+| 9   | Group by tags                                                  | Low (most have 1 or 2 groups)                                                        | ~100   | Low    | No  |
 
 What the numbers changed: page length is driven by the collapsed-table behaviour (30 rows per
 group, first group only) and by the fixed 320 px cards, not by row count (ClickUp 4.54 screens,
 Webflow 8.82). Grid balancing (item 8) moved up because its CTA and orphan effects are measured at
 1024 and 1440. Long text moved up because the "Unlimited" split is observed. Contrast is not on the
-list: it is already 0 and stays as a regression guard. The CRP column counts items 1, 2, 5, 6, 7
-and 8.
+list: it is already 0 and stays as a regression guard. The CRP column counts items 1, 2, 3b, 5, 6,
+7 and 8 (seven).
 
 ### 4.1 Sticky plan header and the total (item 1)
 
@@ -220,14 +221,14 @@ Acceptance: `rendererHeightInViewports` at most 3 for ClickUp, Zoom, Okta (with 
 and Webflow at default options; unit test that the counter equals the number of rendered
 `comparison-row` elements. Test type: layout metric test plus a unit test.
 
-### 4.3 Plural units (item 3)
+### 4.3 Plural units (items 3a and 3b)
 
 Problem: `renderValue` appends the unit verbatim: `${formatted}${unit ? ` ${unit}` : ''}`
 (`renderers.ts:129-132`). A limit of 3 with unit `unit` reads "3 unit"; 15 with unit `execution`
 reads "15 execution". 255 rows are candidates (`metrics.md`, Unit column; units are
 in `metrics.json`, up to five examples per pricing).
 
-Proposal:
+Proposal, item 3a (no new API, no CRP):
 
 - Pluralize with `Intl.PluralRules(locale)`, in a helper `formatUnit(unit, count, locale)` in
   `src/core/` next to `formatCurrency`.
@@ -236,13 +237,14 @@ Proposal:
   - `y` becomes `ies`). Spanish: vowel adds `s`, consonant adds `es`, final `z` becomes `ces`.
 - Fallback: any unit with more than one word, with a slash, with digits or in uppercase is left
   as written, as is a unit that already ends in `s`. A value of exactly 1 uses the singular.
-- Allow an override through the pricing: a map `presentation.unitLabels` (`{ unit: { one, other } }`
-  per locale) so exotic units can be fixed without code. This is a public API addition, but the
-  default behaviour change is only text, so no CRP is needed beyond a changelog note.
+  Proposal, item 3b (public API, CRP): allow an override through the pricing: a map
+  `presentation.unitLabels` (`{ unit: { one, other } }` per locale) so exotic units can be fixed
+  without code. This is a public API addition, so it needs the owner's approval; 3a works without it.
 
-Acceptance: unit tests on a table of units (`unit`, `execution`, `GB`, `user/month`, `credit`) for
+Acceptance (3a): unit tests on a table of units (`unit`, `execution`, `GB`, `user/month`, `credit`) for
 en and es; a SPECTRA test that no rendered cell matches `/\b1 \w+s\b/` and that the 255 candidate
-rows render without throwing. Test type: unit tests.
+rows render without throwing. Acceptance (3b): a unit test that an `unitLabels` entry wins over the
+built-in rules. Test type: unit tests.
 
 ### 4.4 Names instead of ids (item 4)
 
@@ -419,7 +421,7 @@ rendered. Test type: unit.
 | ---- | -------------------------------------------------------------------------------- | -------------------- | --- |
 | 1    | Expanded-state height check (spec); the scroll-based sticky check already exists | none                 | No  |
 | 2    | Names instead of ids (4.4)                                                       | none                 | No  |
-| 3    | Plural units (4.3)                                                               | none                 | No  |
+| 3    | Plural units, built-in rules only (3a, 4.3)                                      | none                 | No  |
 | 4    | Filler descriptions (4.11)                                                       | none                 | No  |
 | 5    | Long text, "Unlimited" first (4.10)                                              | section 6.5 baseline | No  |
 | 6    | Sticky header and total (4.1)                                                    | step 1               | Yes |
@@ -428,8 +430,9 @@ rendered. Test type: unit.
 | 9    | Okta without plans (4.5)                                                         | step 7               | Yes |
 | 10   | Grid balancing (4.8)                                                             | section 6.2 baseline | Yes |
 | 11   | Add-on cards and filter (4.7)                                                    | step 7 (pattern)     | Yes |
+| 12   | `presentation.unitLabels` override (3b, 4.3)                                     | step 3               | Yes |
 
-Steps 1 to 5 are safe to start without a CRP. Steps 6 to 11 each need the owner's decision first;
+Steps 1 to 5 are safe to start without a CRP. Steps 6 to 12 each need the owner's decision first;
 send one CRP per step with the proposed default.
 
 ## 6. Measured in CI
@@ -497,7 +500,7 @@ and must be measured in phase 2. The tallest pages (Webflow with 15 plans, Slack
 GitHub) are not the biggest tables. The likely drivers are the number of plan cards at a fixed 320
 px width and the add-on section; this was not isolated by the available data.
 
-Plan cards (all pricings): every card is 320 px wide at 1440 and 1024 and 321 px at 375, min =
+Plan cards (all measured pricings): every card is 320 px wide at 1440 and 1024 and 321 px at 375, min =
 max, so the track is fixed and never fluid. Cards per grid row:
 
 | Plans | 1440                      | 1024           | 375      |
@@ -509,13 +512,15 @@ max, so the track is fixed and never fluid. Cards per grid row:
 | 6     | 3+3                       | 2+2+2          | 1 column |
 | 15    | 3+3+3+3+3                 | 2x7+1 (8 rows) | 15 rows  |
 
-The 4-plan pricings that are 3+1 at 1440 are slack, trello, trustmary, zapier and clickup. Orphans:
-every 3-plan pricing at 1024 (2+1), every 4-plan pricing at 1440 (3+1), and Webflow at 1024 (ends
-with a single card).
+The 4-plan pricings seen as 3+1 at 1440 in the log are slack, trello, trustmary, zapier and clickup.
+Other 4-plan pricings are inferred to be 3+1 from the same fixed 320 px track; they were not seen
+in the log. Orphans: every measured 3-plan pricing at 1024 (2+1), the 4-plan pricings at 1440 (3+1,
+seen or inferred as above), and Webflow at 1024 (ends with a single card).
 
 ### 6.3 First screen (pricing at the top of the viewport)
 
-Field `fv` = plan cards fully visible / first price visible / first CTA visible.
+Field `fv` = plan cards at least partly visible (`rect.top < viewportHeight && rect.bottom > 0`) /
+first price visible / first CTA visible (the price and CTA flags use `bottom <= viewportHeight`).
 
 - 1440: most pricings show 3 plan cards and a price. CTA visible: salesforce, slack, zapier, github,
   dropbox, figma, clickup. CTA not visible: shopify, tableau, trello, trustmary, userguiding,
@@ -552,7 +557,7 @@ viewport), so tall cards fail. The target of section 3 does not hold.
   `span.pr-value` in mailchimp, microsoft365Business, salesforce, zoom and figma (375);
   "PROFESSIONAL" in a `dt` (github). The `es` locale adds 1 or 2 more on okta, github and dropbox.
   They come from narrow value cells and cards. The "Unlimited" split is a real defect.
-- Page-level horizontal overflow (document height vs inner width): never. Renderer-internal
+- Page-level horizontal overflow (document scroll width vs inner width): never. Renderer-internal
   `overflow-x` elements exist (scroll containers such as `div.pr-table-scroll`, and plan grid
   buttons at 375).
 - Contrast (axe `color-contrast` on okta, zoom, clickup, webflow, salesforce, github, dropbox,
@@ -584,3 +589,6 @@ Height is `rendererHeightInViewports`; first screen `firstViewport.planCardsVisi
 - The figures in 2.3 are sums of the `metrics.md` table; `metrics.json` holds the same data per
   pricing but was only checked for the summary block, the group list of ClickUp and the totals.
 - Effort figures are estimates and thresholds are proposals for the owner.
+- Running this spec on every pull request costs CI time (137 tests plus full-page JPEGs, retries 2).
+  Once the phase 1 numbers are collected, make it opt-in; a change to the CI workflow is outside
+  this pull request.
