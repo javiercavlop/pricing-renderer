@@ -57,6 +57,10 @@ pnpm demo:react
 pnpm demo:next
 ```
 
+A Vue 3 + Vite example is in [`examples/vue`](./examples/vue); run it with
+`pnpm build && pnpm --filter pricing-renderer-vue-demo dev`. See the
+[examples index](./examples/README.md).
+
 The Next example keeps the page server-rendered and isolates only the interactive
 renderer behind a client boundary.
 
@@ -242,6 +246,11 @@ The React entry is safe to import during SSR and is marked as a client
 component. Full pricing content appears after hydration; deep light-DOM SSR is
 not a v1 contract.
 
+## Vue 3
+
+The element works in Vue 3 with `isCustomElement` and the `.prop` modifier for
+object properties. See the [Vue 3 and Vite guide](./docs/vue.md).
+
 ## Plan highlights, inheritance, and badges
 
 Card highlights can reference both features and usage limits without ambiguity.
@@ -356,6 +365,9 @@ Public events:
 - `pricing-action`
 - `pricing-diagnostic`
 
+See the [events reference](./docs/events.md) for each payload and the
+diagnostic codes.
+
 ## Private remote sources
 
 Secrets are property-only and never reflected into markup:
@@ -413,11 +425,17 @@ Extend future/vendor syntax with `PricingSyntaxAdapter`, translations with
 `registerMessageCatalog`, and domain calculations through explicitly
 allow-listed expression functions. See [Extending](./docs/extending.md).
 
+## Used by
+
+- [Delivera](https://github.com/isa-group/Delivera) uses Pricing Renderer to show its pricing plans.
+
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
 - [API reference](./docs/api-reference.md)
 - [Project and instance configuration](./docs/configuration.md)
+- [Events and diagnostics](./docs/events.md)
+- [Vue 3 and Vite](./docs/vue.md)
 - [Demo and release acceptance](./docs/demo.md)
 - [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)
