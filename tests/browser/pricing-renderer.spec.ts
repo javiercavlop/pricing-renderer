@@ -1287,3 +1287,704 @@ for (const viewport of [
     });
   });
 }
+
+// Price breakdown (delivera-3-price-breakdown): element state, events and the disclosure panel.
+type BreakdownLine = {
+  kind: 'plan' | 'addOn';
+  id: string;
+  name: string;
+  quantity: number;
+  unitAmount?: number;
+  billingMultiplier: number;
+  amount?: number;
+  requiresQuote: boolean;
+  label?: string;
+};
+type Breakdown = {
+  currency: string;
+  billingPeriod?: { id: string; label: string; multiplier: number };
+  plan?: BreakdownLine;
+  addOns: BreakdownLine[];
+  subtotal: number;
+  requiresQuote: boolean;
+};
+type BreakdownResolved = { subtotal: number; requiresQuote: boolean; breakdown: Breakdown };
+type BreakdownState = { resolved: BreakdownResolved };
+type ThemedElement = LoadApiElement & { theme: string };
+type FlagsElement = LoadApiElement & { selectionEnabled: boolean; ctaEnabled: boolean };
+type ExpectedRow = { kind: 'plan' | 'addOn'; id: string; texts: string[] };
+
+// The showcase renderer; renderers added by a test are appended to the body, outside <main>.
+const DEMO = 'main pricing-renderer';
+
+const contractCY = { ...contractC, billingPeriod: 'yearly' };
+const contractE = {
+  planId: 'enterprise',
+  addOns: {
+    extraStorage: { selected: true, quantity: 3 },
+    compliance: { selected: true, quantity: 1 },
+  },
+};
+const breakdownCY: Breakdown = {
+  currency: 'EUR',
+  billingPeriod: { id: 'yearly', label: 'Yearly', multiplier: 0.8 },
+  plan: {
+    kind: 'plan',
+    id: 'growth',
+    name: 'Growth',
+    quantity: 1,
+    unitAmount: 45,
+    billingMultiplier: 0.8,
+    amount: 36,
+    requiresQuote: false,
+  },
+  addOns: [
+    {
+      kind: 'addOn',
+      id: 'extraStorage',
+      name: 'Extra Storage',
+      quantity: 2,
+      unitAmount: 5,
+      billingMultiplier: 0.8,
+      amount: 8,
+      requiresQuote: false,
+    },
+    {
+      kind: 'addOn',
+      id: 'prioritySuccess',
+      name: 'Priority Success',
+      quantity: 1,
+      unitAmount: 25,
+      billingMultiplier: 0.8,
+      amount: 20,
+      requiresQuote: false,
+    },
+  ],
+  subtotal: 64,
+  requiresQuote: false,
+};
+const rowsCY: ExpectedRow[] = [
+  { kind: 'plan', id: 'growth', texts: ['Growth', '€45 × 1 × 0.8 = €36'] },
+  { kind: 'addOn', id: 'extraStorage', texts: ['Extra Storage', '€5 × 2 × 0.8 = €8'] },
+  { kind: 'addOn', id: 'prioritySuccess', texts: ['Priority Success', '€25 × 1 × 0.8 = €20'] },
+];
+
+// Pricing P: one plan, no add-ons, no billing block. Pricing Q: the plan price never resolves.
+const plainYaml = [
+  "syntaxVersion: '3.1'",
+  'saasName: Plain',
+  "version: '1'",
+  'createdAt: 2026-01-01',
+  'currency: EUR',
+  'plans:',
+  '  base:',
+  '    price: 10',
+].join('\n');
+const quoteYaml = [
+  "syntaxVersion: '3.1'",
+  'saasName: Quote',
+  "version: '1'",
+  'createdAt: 2026-01-01',
+  'currency: EUR',
+  'variables:',
+  '  rate: n/a',
+  'plans:',
+  '  base:',
+  "    price: '#rate * 2'",
+].join('\n');
+
+const summaryOf = (page: Page, host = DEMO) => page.locator(`${host} .pr-summary`);
+const toggleOf = (page: Page, host = DEMO) =>
+  summaryOf(page, host).locator('[data-pr-part="breakdown-toggle"]');
+const panelOf = (page: Page, host = DEMO) => page.locator(`${host} [data-pr-part="breakdown"]`);
+const rowsOf = (page: Page, host = DEMO) =>
+  panelOf(page, host).locator('[data-pr-part="breakdown-line"]');
+const liveOf = (page: Page, host = DEMO) => summaryOf(page, host).locator('[aria-live="polite"]');
+const readBreakdownState = async (page: Page, selector = DEMO) =>
+  (await readResolvedState(page, selector)) as unknown as BreakdownState;
+
+async function addYamlRenderer(page: Page, id: string, yaml: string) {
+  await page.evaluate(
+    async ([elementId, source]) => {
+      const renderer = document.createElement('pricing-renderer') as LoadApiElement;
+      renderer.id = elementId;
+      renderer.yaml = source;
+      renderer.defaultSelection = { planId: 'base' };
+      const ready = new Promise((resolve) =>
+        renderer.addEventListener('pricing-ready', resolve, { once: true }),
+      );
+      document.body.append(renderer);
+      await ready;
+      await renderer.updateComplete;
+    },
+    [id, yaml] as const,
+  );
+}
+
+async function expectPanel(page: Page, open: boolean, host = DEMO) {
+  await expect(toggleOf(page, host)).toHaveAttribute('aria-expanded', String(open));
+  if (open) {
+    await expect(panelOf(page, host)).not.toHaveAttribute('hidden');
+    return;
+  }
+  await expect(panelOf(page, host)).toHaveAttribute('hidden');
+  await expect.poll(() => panelOf(page, host).evaluate((panel) => panel.childNodes.length)).toBe(0);
+}
+
+// The text of the panel without its rows: the currency, billing period and total part.
+const panelTotals = (page: Page, host = DEMO) =>
+  panelOf(page, host).evaluate((panel) => {
+    const copy = panel.cloneNode(true) as HTMLElement;
+    for (const row of copy.querySelectorAll('[data-pr-part="breakdown-line"]')) row.remove();
+    return copy.textContent ?? '';
+  });
+
+async function openPanel(page: Page, host = DEMO) {
+  await toggleOf(page, host).click();
+  await expectPanel(page, true, host);
+}
+
+const rowKeys = (page: Page, host: string) =>
+  rowsOf(page, host).evaluateAll((rows) =>
+    rows.map((row) => [row.getAttribute('data-line-kind'), row.getAttribute('data-line-id')]),
+  );
+
+async function expectRows(page: Page, expected: ExpectedRow[], host = DEMO) {
+  await expect.poll(() => rowKeys(page, host)).toEqual(expected.map((row) => [row.kind, row.id]));
+  for (const [index, row] of expected.entries()) {
+    for (const text of row.texts) await expect(rowsOf(page, host).nth(index)).toContainText(text);
+  }
+}
+
+// The panel id of a renderer: how many elements of the document have it and whether the one found
+// is inside that renderer.
+const panelIdentity = (page: Page, css: string) =>
+  page.evaluate((selector) => {
+    const host = document.querySelector(selector);
+    const button = host?.querySelector('[data-pr-part="breakdown-toggle"]');
+    const id = button?.getAttribute('aria-controls') ?? '';
+    const found = id ? document.querySelectorAll(`#${CSS.escape(id)}`) : [];
+    return { id, count: found.length, inHost: found[0]?.closest('pricing-renderer') === host };
+  }, css);
+
+// Switches the theme and waits for the color transitions it starts to finish.
+const setTheme = (page: Page, theme: string) =>
+  page.evaluate(async (value) => {
+    const renderer = document.querySelector('pricing-renderer') as ThemedElement;
+    renderer.theme = value;
+    await renderer.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await Promise.allSettled(document.getAnimations().map((animation) => animation.finished));
+  }, theme);
+
+test('[utest->req~breakdown-in-element~1] price breakdown: resolvedState and applySelection carry it', async ({
+  page,
+}) => {
+  const result = (await applySelection(page, contractCY)) as unknown as BreakdownState;
+  await nextUpdate(page);
+  const state = await readBreakdownState(page);
+  expect(result.resolved.breakdown).toStrictEqual(breakdownCY);
+  expect(state.resolved.breakdown).toStrictEqual(breakdownCY);
+  expect(state.resolved.breakdown.subtotal).toBe(state.resolved.subtotal);
+  expect(state.resolved.breakdown.requiresQuote).toBe(state.resolved.requiresQuote);
+  await expect(summaryOf(page)).toContainText('€64');
+});
+
+test('[utest->req~breakdown-in-element~1] price breakdown: events carry it', async ({ page }) => {
+  await record(page, DEMO, 'pricing-ready', 'ready');
+  await record(page, DEMO, 'pricing-selection-change', 'change');
+  await record(page, DEMO, 'pricing-action', 'action');
+  await reloadAndWaitForReady(page);
+  await growthRadio(page).check();
+  await page.getByRole('link', { name: 'Start free trial' }).click();
+  await expect.poll(async () => (await recorded(page, 'action')).length).toBe(1);
+
+  type Detail = { resolved: BreakdownResolved };
+  const [ready] = (await recorded(page, 'ready')) as Detail[];
+  expect(ready?.resolved.breakdown.plan?.id).toBe('starter');
+  expect(ready?.resolved.breakdown.subtotal).toBe(20);
+  const changes = (await recorded(page, 'change')) as Detail[];
+  const actions = (await recorded(page, 'action')) as Detail[];
+  for (const detail of [changes.at(-1), actions.at(-1)]) {
+    expect(detail?.resolved.breakdown.plan?.id).toBe('growth');
+    expect(detail?.resolved.breakdown.subtotal).toBe(45);
+    expect(detail?.resolved.subtotal).toBe(45);
+  }
+});
+
+test('[utest->req~breakdown-element-stabilized~1] price breakdown: keeps the last valid price of a failing expression', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer');
+    renderer?.addEventListener('pricing-selection-change', (event) => {
+      (window as typeof window & { latestSelection?: unknown }).latestSelection = (
+        event as CustomEvent
+      ).detail.selection;
+    });
+  });
+  const seatsInput = page.getByRole('spinbutton', { name: 'Team seats' });
+  await seatsInput.fill('6');
+  await seatsInput.press('Tab');
+  await expect(summaryOf(page)).toContainText('€24');
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as
+      (HTMLElement & { selection?: Record<string, unknown> }) | null;
+    const selection = (window as typeof window & { latestSelection?: Record<string, unknown> })
+      .latestSelection;
+    if (!renderer || !selection) throw new Error('Pricing selection was not captured.');
+    renderer.selection = {
+      ...selection,
+      variables: {
+        ...(selection.variables as Record<string, unknown>),
+        seats: 'not-a-number',
+      },
+    };
+  });
+  await expect(summaryOf(page)).toContainText('Requires quote');
+  await expect(summaryOf(page)).toContainText('€24');
+
+  const { resolved } = await readBreakdownState(page);
+  expect(resolved.breakdown.plan).toStrictEqual({
+    kind: 'plan',
+    id: 'starter',
+    name: 'Starter',
+    quantity: 1,
+    unitAmount: 24,
+    billingMultiplier: 1,
+    amount: 24,
+    requiresQuote: false,
+  });
+  expect(resolved.breakdown.subtotal).toBe(24);
+  expect(resolved.subtotal).toBe(24);
+  expect(resolved.breakdown.requiresQuote).toBe(true);
+  expect(resolved.requiresQuote).toBe(true);
+});
+
+test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle starts closed with an English name', async ({
+  page,
+}) => {
+  const toggle = summaryOf(page).getByRole('button', {
+    name: 'How is this calculated?',
+    exact: true,
+  });
+  await expect(toggle).toHaveCount(1);
+  await expect(toggle).toHaveAttribute('data-pr-part', 'breakdown-toggle');
+  await expect(toggle).toHaveAttribute('type', 'button');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  const panel = await page.evaluate((css) => {
+    const button = document.querySelector(`${css} [data-pr-part="breakdown-toggle"]`);
+    const id = button?.getAttribute('aria-controls') ?? '';
+    const found = id ? document.getElementById(id) : null;
+    return {
+      id,
+      part: found?.getAttribute('data-pr-part'),
+      hidden: found?.hasAttribute('hidden'),
+      nodes: found?.childNodes.length,
+    };
+  }, DEMO);
+  expect(panel.id).not.toBe('');
+  expect(panel).toMatchObject({ part: 'breakdown', hidden: true, nodes: 0 });
+});
+
+test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle has a Spanish name', async ({
+  page,
+}) => {
+  await page.locator('#locale').selectOption('es-ES');
+  await expect(toggleOf(page)).toHaveCount(1);
+  await expect(toggleOf(page)).toHaveAccessibleName('¿Cómo se calcula?');
+});
+
+test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle stays when the flags are off', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as FlagsElement;
+    renderer.selectionEnabled = false;
+    renderer.ctaEnabled = false;
+    renderer.variablesEnabled = false;
+  });
+  await nextUpdate(page);
+  await expect(page.locator('[data-pr-part="selection-control"]')).toHaveCount(0);
+  await expect(toggleOf(page)).toBeVisible();
+});
+
+test('[utest->req~summary-breakdown-toggle~1] price breakdown: a pricing without add-ons has one toggle', async ({
+  page,
+}) => {
+  await addYamlRenderer(page, 'plain', plainYaml);
+  await expect(summaryOf(page, '#plain')).toContainText('€10');
+  await expect(toggleOf(page, '#plain')).toHaveCount(1);
+});
+
+test('[utest->req~summary-breakdown-unique-ids~1] price breakdown: two renderers have distinct panel ids', async ({
+  page,
+}) => {
+  await addYamlRenderer(page, 'plain', plainYaml);
+  const demo = await panelIdentity(page, DEMO);
+  const plain = await panelIdentity(page, '#plain');
+  expect(demo.id).toBeTruthy();
+  expect(plain.id).toBeTruthy();
+  expect(demo.id).not.toBe(plain.id);
+  expect(demo).toMatchObject({ count: 1, inHost: true });
+  expect(plain).toMatchObject({ count: 1, inHost: true });
+});
+
+test('[utest->req~summary-breakdown-activate~1] price breakdown: a click opens and closes the panel', async ({
+  page,
+}) => {
+  const toggle = toggleOf(page);
+  await toggle.click();
+  await expectPanel(page, true);
+  await expect(page.locator(DEMO).getByRole('group', { name: 'Price breakdown' })).toBeVisible();
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await expectPanel(page, false);
+});
+
+test('[utest->req~summary-breakdown-activate~1] price breakdown: Enter and Space toggle the panel', async ({
+  page,
+}) => {
+  const toggle = toggleOf(page);
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expectPanel(page, true);
+  await expect(toggle).toBeFocused();
+  await page.keyboard.press('Space');
+  await expectPanel(page, false);
+  await expect(toggle).toBeFocused();
+});
+
+test('[utest->req~summary-breakdown-lines~1] price breakdown: rows of a contract billed yearly', async ({
+  page,
+}) => {
+  await applySelection(page, contractCY);
+  await nextUpdate(page);
+  await openPanel(page);
+  await expectRows(page, rowsCY);
+});
+
+test('[utest->req~summary-breakdown-lines~1] price breakdown: rows of Enterprise with compliance', async ({
+  page,
+}) => {
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  await openPanel(page);
+  await expectRows(page, [
+    { kind: 'plan', id: 'enterprise', texts: ['Enterprise', '€40 × 1 × 1 = €40'] },
+    { kind: 'addOn', id: 'extraStorage', texts: ['Extra Storage', '€5 × 3 × 1 = €15'] },
+    { kind: 'addOn', id: 'compliance', texts: ['Compliance', 'Contact sales'] },
+  ]);
+});
+
+test('[utest->req~summary-breakdown-lines~1] price breakdown: a plan that never resolves requires a quote', async ({
+  page,
+}) => {
+  await addYamlRenderer(page, 'quote', quoteYaml);
+  await openPanel(page, '#quote');
+  const row: ExpectedRow = { kind: 'plan', id: 'base', texts: ['Base', 'Requires quote'] };
+  await expectRows(page, [row], '#quote');
+});
+
+test('[utest->req~summary-breakdown-totals~1] price breakdown: totals of a contract billed yearly', async ({
+  page,
+}) => {
+  await applySelection(page, contractCY);
+  await nextUpdate(page);
+  await openPanel(page);
+  const panel = panelOf(page);
+  for (const text of ['Billing period', 'Yearly', 'Currency', 'EUR', 'Estimated total', '€64']) {
+    await expect(panel).toContainText(text);
+  }
+});
+
+test('[utest->req~summary-breakdown-totals~1] price breakdown: totals when a quote is required', async ({
+  page,
+}) => {
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  await openPanel(page);
+  const panel = panelOf(page);
+  for (const text of ['Known subtotal', '€55', 'Requires quote']) {
+    await expect(panel).toContainText(text);
+  }
+});
+
+test('[utest->req~summary-breakdown-totals~1] price breakdown: no billing period row with one period', async ({
+  page,
+}) => {
+  await addYamlRenderer(page, 'plain', plainYaml);
+  await openPanel(page, '#plain');
+  const panel = panelOf(page, '#plain');
+  for (const text of ['Currency', 'EUR', 'Estimated total', '€10']) {
+    await expect.poll(() => panelTotals(page, '#plain')).toContain(text);
+  }
+  await expect(panel).not.toContainText('Billing period');
+});
+
+test('[utest->req~summary-breakdown-escape~1] price breakdown: Escape on the toggle closes the panel', async ({
+  page,
+}) => {
+  const toggle = toggleOf(page);
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expectPanel(page, true);
+  await page.keyboard.press('Escape');
+  await expectPanel(page, false);
+  await expect(toggle).toBeFocused();
+});
+
+test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape on a plan radio leaves the panel open', async ({
+  page,
+}) => {
+  await openPanel(page);
+  await growthRadio(page).focus();
+  await page.keyboard.press('Escape');
+  await expectPanel(page, true);
+});
+
+test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape cancels the dialog and leaves the panel open', async ({
+  page,
+}) => {
+  await selectGrowthWithExtraStorage(page);
+  await openPanel(page);
+  await page.getByRole('radio', { name: 'Choose Starter' }).click();
+  await expect(planDialog(page)).toContainText('Will remove: extraStorage');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.pr-dialog')).toHaveCount(0);
+  await expect(growthRadio(page)).toBeChecked();
+  await expectPanel(page, true);
+});
+
+test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open when the user picks Growth', async ({
+  page,
+}) => {
+  await openPanel(page);
+  await growthRadio(page).check();
+  await expectPanel(page, true);
+  await expectRows(page, [{ kind: 'plan', id: 'growth', texts: ['Growth', '€45 × 1 × 1 = €45'] }]);
+  await expect.poll(() => panelTotals(page)).toContain('Estimated total');
+  await expect.poll(() => panelTotals(page)).toContain('€45');
+});
+
+test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open when the host applies a selection', async ({
+  page,
+}) => {
+  await openPanel(page);
+  await applySelection(page, contractCY);
+  await nextUpdate(page);
+  await expectPanel(page, true);
+  await expectRows(page, rowsCY);
+});
+
+test('[utest->req~summary-breakdown-closes-on-load~1] price breakdown: closes when the pricing reloads', async ({
+  page,
+}) => {
+  await openPanel(page);
+  await reloadAndWaitForReady(page);
+  await nextUpdate(page);
+  await expectPanel(page, false);
+});
+
+test('[utest->req~summary-breakdown-not-live~1] price breakdown: toggle and panel are outside live regions', async ({
+  page,
+}) => {
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  const liveAncestors = () =>
+    page.evaluate((css) => {
+      const live = '[aria-live]:not([aria-live="off"])';
+      const host = document.querySelector(css)!;
+      const button = host.querySelector('[data-pr-part="breakdown-toggle"]')!;
+      const found = host.querySelector('[data-pr-part="breakdown"]')!;
+      return {
+        toggle: button.closest(live)?.tagName ?? null,
+        panel: found.closest(live)?.tagName ?? null,
+      };
+    }, DEMO);
+  expect(await liveAncestors()).toEqual({ toggle: null, panel: null });
+  await openPanel(page);
+  expect(await liveAncestors()).toEqual({ toggle: null, panel: null });
+});
+
+test('[utest->req~summary-live-region~1] price breakdown: one live region holds label, total and quote note', async ({
+  page,
+}) => {
+  await expect(liveOf(page)).toHaveCount(1);
+  await expect(liveOf(page)).toContainText('Estimated total');
+  await expect(liveOf(page)).toContainText('€20');
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  await expect(liveOf(page)).toHaveCount(1);
+  for (const text of ['Known subtotal', '€55', 'Requires quote']) {
+    await expect(liveOf(page)).toContainText(text);
+  }
+});
+
+test('[utest->req~summary-live-region~1] price breakdown: opening the panel leaves the live text unchanged', async ({
+  page,
+}) => {
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  await expect(liveOf(page)).toContainText('Requires quote');
+  const before = await liveOf(page).evaluate((element) => element.textContent);
+  await openPanel(page);
+  const after = await liveOf(page).evaluate((element) => element.textContent);
+  expect(after).toBe(before);
+});
+
+for (const viewport of [
+  { width: 320, height: 900 },
+  { width: 1440, height: 1000 },
+]) {
+  test(`[utest->req~summary-breakdown-closed-layout~1] price breakdown: the closed toggle keeps the layout at ${viewport.width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await expect(toggleOf(page)).toBeVisible();
+    const measured = await page.evaluate(async (css) => {
+      const frames = () =>
+        new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const measure = () => ({
+        summary: document.querySelector(`${css} .pr-summary`)!.getBoundingClientRect().height,
+        element: document.querySelector(css)!.getBoundingClientRect().height,
+      });
+      await frames();
+      const before = measure();
+      const style = document.createElement('style');
+      style.textContent =
+        "pricing-renderer [data-pr-part='breakdown-toggle'] { display: none !important; }";
+      document.head.append(style);
+      await frames();
+      const after = measure();
+      const toggle = document.querySelector(`${css} [data-pr-part="breakdown-toggle"]`)!;
+      const display = getComputedStyle(toggle).display;
+      style.remove();
+      return { before, after, display };
+    }, DEMO);
+    expect(measured.display).toBe('none');
+    expect(Math.abs(measured.after.summary - measured.before.summary)).toBeLessThan(0.5);
+    expect(Math.abs(measured.after.element - measured.before.element)).toBeLessThan(0.5);
+  });
+}
+
+for (const viewport of [
+  { width: 375, height: 900 },
+  { width: 1440, height: 1000 },
+]) {
+  test(`[utest->req~summary-breakdown-target-size~1] price breakdown: the toggle has a 44 px pointer target at ${viewport.width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await summaryOf(page).scrollIntoViewIfNeeded();
+    const box = await toggleOf(page).boundingBox();
+    if (!box) throw new Error('The breakdown toggle has no box.');
+    expect(box.width).toBeGreaterThanOrEqual(24);
+    expect(box.height).toBeGreaterThanOrEqual(24);
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const hits = await page.evaluate(
+      ([css, x, y]) => {
+        const toggle = document.querySelector(`${css} [data-pr-part="breakdown-toggle"]`);
+        const part = '[data-pr-part="breakdown-toggle"]';
+        const offsets = { left: [-21, 0], right: [21, 0], top: [0, -21], bottom: [0, 21] };
+        const result: Record<string, boolean> = {};
+        for (const [side, [dx = 0, dy = 0]] of Object.entries(offsets)) {
+          const hit = document.elementFromPoint(x + dx, y + dy);
+          result[side] = hit?.closest(part) === toggle;
+        }
+        return result;
+      },
+      [DEMO, cx, cy] as const,
+    );
+    expect(hits).toEqual({ left: true, right: true, top: true, bottom: true });
+    await page.mouse.click(cx + 21, cy);
+    await expectPanel(page, true);
+  });
+}
+
+test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violations with the panel open', async ({
+  page,
+}) => {
+  await applySelection(page, contractE);
+  await nextUpdate(page);
+  await openPanel(page);
+  const serious = async () => {
+    const results = await new AxeBuilder({ page })
+      .exclude('#action-output')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    return results.violations.filter((violation) =>
+      ['serious', 'critical'].includes(violation.impact ?? ''),
+    );
+  };
+  expect(await serious()).toEqual([]);
+  await setTheme(page, 'dark');
+  await expectPanel(page, true);
+  expect(await serious()).toEqual([]);
+});
+
+for (const theme of ['light', 'dark']) {
+  test(`[utest->req~summary-breakdown-icon-contrast~1] price breakdown: icon contrast is at least 3:1 in the ${theme} theme`, async ({
+    page,
+  }) => {
+    await setTheme(page, theme);
+    await expect(toggleOf(page)).toBeVisible();
+    // Poll: the toggle color may still be transitioning right after the theme switch.
+    await expect
+      .poll(() =>
+        page.evaluate((css) => {
+          const rgb = (value: string) => {
+            const probe = document.createElement('span');
+            probe.style.color = value.trim();
+            document.body.append(probe);
+            const computed = getComputedStyle(probe).color;
+            probe.remove();
+            return (computed.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+          };
+          const luminance = (channels: number[]) => {
+            const [r = 0, g = 0, b = 0] = channels.map((channel) => {
+              const value = channel / 255;
+              return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+            });
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          };
+          const host = document.querySelector(css)!;
+          const toggle = host.querySelector('[data-pr-part="breakdown-toggle"]')!;
+          const surfaceValue = getComputedStyle(host).getPropertyValue('--pr-color-surface');
+          const icon = luminance(rgb(getComputedStyle(toggle).color));
+          const surface = luminance(rgb(surfaceValue));
+          return (Math.max(icon, surface) + 0.05) / (Math.min(icon, surface) + 0.05);
+        }, DEMO),
+      )
+      .toBeGreaterThanOrEqual(3);
+  });
+}
+
+test('[utest->req~summary-breakdown-reduced-motion~1] price breakdown: no transitions or animations with reduced motion', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openPanel(page);
+  const durations = await page.evaluate((css) => {
+    const read = (element: Element | null) => {
+      const style = getComputedStyle(element!);
+      return { transition: style.transitionDuration, animation: style.animationDuration };
+    };
+    const host = document.querySelector(css)!;
+    return {
+      toggle: read(host.querySelector('[data-pr-part="breakdown-toggle"]')),
+      panel: read(host.querySelector('[data-pr-part="breakdown"]')),
+    };
+  }, DEMO);
+  const seconds = (list: string) =>
+    list.split(',').map((value) => {
+      const amount = Number.parseFloat(value);
+      return value.trim().endsWith('ms') ? amount / 1000 : amount;
+    });
+  for (const element of [durations.toggle, durations.panel]) {
+    for (const duration of [...seconds(element.transition), ...seconds(element.animation)]) {
+      expect(duration).toBeLessThanOrEqual(0.00001 + 1e-12);
+    }
+  }
+});
