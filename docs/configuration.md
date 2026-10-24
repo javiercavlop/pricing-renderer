@@ -96,6 +96,68 @@ are JavaScript/React properties so `false` remains unambiguous.
 These options only govern supplied UI behavior. Headless consumers decide how
 to expose their own interactions.
 
+## Controlled versus uncontrolled
+
+The element owns the selection unless the host sets the `selection` property.
+
+| Mode         | Who owns the state | How to set it                                |
+| ------------ | ------------------ | -------------------------------------------- |
+| Uncontrolled | The element        | `defaultSelection` at load, `applySelection` |
+| Controlled   | The host           | the `selection` property                     |
+
+- `defaultSelection` is merged over the schema defaults and reconciled silently
+  on each successful load. It is read at load only: setting it later changes
+  nothing until the next load. A later successful load (`reload()` or a new
+  source) restarts from it, so an applied selection is not kept across loads.
+- `applySelection(selection)` replaces the internal selection of a ready,
+  uncontrolled element, validates it and emits no `pricing-selection-change`.
+  It also restarts from the schema defaults for omitted fields, not from the
+  current selection. A reload restarts from `defaultSelection`.
+- `selection` is controlled input. The element never assigns it and shows it
+  reconciled. The host stores each change from `pricing-selection-change` and
+  passes it back. `applySelection` is refused in controlled mode with
+  `applied: false` and the error `PR_SELECTION_CONTROLLED`. Set `selection` to
+  `undefined` to return to uncontrolled mode, which starts from the internal
+  selection.
+
+Uncontrolled, with a preloaded selection:
+
+```tsx
+const ref = useRef<PricingRendererElement>(null);
+
+<PricingRenderer
+  ref={ref}
+  yaml={source}
+  defaultSelection={{ planId: 'growth' }}
+  onReady={() => {
+    ref.current?.applySelection({ planId: 'growth', billingPeriod: 'yearly' });
+  }}
+/>;
+```
+
+If the element may already be ready when the listener is attached, `onReady`
+does not fire for that load; see
+[Preload the current subscription](preload-current-subscription.md) to apply
+at once from `resolvedState`.
+
+Controlled:
+
+```tsx
+const [selection, setSelection] = useState<PricingSelection>();
+
+<PricingRenderer
+  yaml={source}
+  selection={selection}
+  onSelectionChange={(event) => setSelection(event.detail.selection)}
+/>;
+```
+
+Read `resolvedState` in event handlers, for example to show the subtotal in
+host UI after `pricing-ready` or `pricing-selection-change`. It resolves the
+pricing on every read, so do not read it in a render loop. See
+[Preload the current subscription](./preload-current-subscription.md) for
+`applySelection` in a full flow.
+
 ## Presentation precedence
 
 Presentation can be owned by three layers:

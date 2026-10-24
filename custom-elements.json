@@ -98,13 +98,36 @@
               "attribute": "loading-label"
             },
             {
+              "kind": "field",
+              "name": "resolvedState",
+              "type": { "text": "PricingSelectionChangeDetail | undefined" },
+              "readonly": true,
+              "description": "Detached snapshot of the selection in effect and its resolved pricing, or undefined while the element is not ready. It resolves the pricing on every read: read it on events, not in a render loop."
+            },
+            {
               "kind": "method",
               "name": "reload",
               "return": { "type": { "text": "Promise<void>" } }
+            },
+            {
+              "kind": "method",
+              "name": "applySelection",
+              "parameters": [
+                {
+                  "name": "selection",
+                  "type": { "text": "Partial<PricingSelection>" }
+                }
+              ],
+              "return": { "type": { "text": "ApplySelectionResult" } },
+              "description": "Validates the selection against the loaded pricing and replaces the internal selection. Omitted fields take the schema defaults. Emits no pricing-selection-change. Refused by result (applied: false) while the element is not ready or when the selection property is set."
             }
           ],
           "events": [
-            { "name": "pricing-ready", "type": { "text": "CustomEvent<PricingReadyDetail>" } },
+            {
+              "name": "pricing-ready",
+              "type": { "text": "CustomEvent<PricingReadyDetail>" },
+              "description": "Fired after a successful load. The detail has pricing, diagnostics, and the selection in effect and its resolved pricing as selection and resolved."
+            },
             {
               "name": "pricing-selection-change",
               "type": { "text": "CustomEvent<PricingSelectionChangeDetail>" }
@@ -112,7 +135,8 @@
             { "name": "pricing-action", "type": { "text": "CustomEvent<PricingActionDetail>" } },
             {
               "name": "pricing-diagnostic",
-              "type": { "text": "CustomEvent<PricingDiagnosticDetail>" }
+              "type": { "text": "CustomEvent<PricingDiagnosticDetail>" },
+              "description": "Fired with the diagnostics of a load, and after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals. Check the diagnostic code before treating an error as a load failure."
             }
           ]
         }

@@ -6,9 +6,12 @@ import type {
   UnknownRecord,
 } from '../core/index.js';
 
+// [impl->req~ready-detail-required-fields~1]
 export interface PricingReadyDetail {
   pricing: NormalizedPricing;
   diagnostics: PricingDiagnostic[];
+  selection: PricingSelection;
+  resolved: ResolvedPricing;
 }
 
 export interface PricingSelectionChangeDetail {
@@ -28,6 +31,23 @@ export interface PricingActionDetail {
 export interface PricingDiagnosticDetail {
   diagnostics: PricingDiagnostic[];
 }
+
+// [impl->req~apply-selection-result-type~1]
+export type ApplySelectionResult =
+  | {
+      applied: true;
+      selection: PricingSelection;
+      resolved: ResolvedPricing;
+      removedAddOnIds: string[];
+      diagnostics: PricingDiagnostic[];
+    }
+  | {
+      applied: false;
+      selection: PricingSelection | undefined;
+      resolved: ResolvedPricing | undefined;
+      removedAddOnIds: [];
+      diagnostics: PricingDiagnostic[];
+    };
 
 export type PricingReadyEvent = CustomEvent<PricingReadyDetail>;
 export type PricingSelectionChangeEvent = CustomEvent<PricingSelectionChangeDetail>;
