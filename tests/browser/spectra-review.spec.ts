@@ -273,16 +273,28 @@ async function collectMetrics(viewport: Viewport) {
   let stickyHeaderEffective: boolean | null = null;
   let stickyFirstColumnEffective: boolean | null = null;
   if (table && headerCell) {
-    const tableBox = table.getBoundingClientRect();
-    const middle = tableBox.top + window.scrollY + tableBox.height / 2;
-    jump(Math.max(0, Math.round(middle - viewportHeight / 2)));
-    await nextFrame();
-    const tableTop = table.getBoundingClientRect().top;
-    if (tableTop < 0) {
-      const offset = parseFloat(getComputedStyle(headerCell).top) || 0;
-      stickyHeaderEffective = Math.abs(headerCell.getBoundingClientRect().top - offset) <= 2;
-    }
     const scroller = table.closest('.pr-table-scroll');
+    // The table scrolls vertically inside its box (max-block-size), so the header pins to the box:
+    // scroll the box to its middle, bring it into view and compare the header with the box top.
+    if (scroller && scroller.scrollHeight > scroller.clientHeight + 1) {
+      const scrollerTop = scroller.getBoundingClientRect().top + window.scrollY;
+      jump(Math.max(0, Math.round(scrollerTop - 20)));
+      scroller.scrollTop = (scroller.scrollHeight - scroller.clientHeight) / 2;
+      await nextFrame();
+      if (scroller.scrollTop > 2) {
+        const box = scroller.getBoundingClientRect();
+        const offset = parseFloat(getComputedStyle(headerCell).top) || 0;
+        const expectedTop = box.top + scroller.clientTop + offset;
+        const headerBox = headerCell.getBoundingClientRect();
+        const topmost = document.elementFromPoint(
+          headerBox.left + headerBox.width / 2,
+          headerBox.top + headerBox.height / 2,
+        );
+        stickyHeaderEffective =
+          Math.abs(headerBox.top - expectedTop) <= 2 && !!topmost && headerCell.contains(topmost);
+      }
+      scroller.scrollTop = 0;
+    }
     if (scroller && firstCell && scroller.scrollWidth > scroller.clientWidth + 1) {
       scroller.scrollLeft = 200;
       await nextFrame();
@@ -467,9 +479,96 @@ test.describe('spectra metrics', () => {
           ...metrics,
         });
         await expectRendered(page, state, metrics, fixture.saas);
+        expectStickyHeader(metrics);
         expect(errors).toEqual([]);
       });
     }
+  }
+});
+
+// [utest->req~sticky-table-scroll~1] A table layout never reports a header that scrolled away
+// (2 px tolerance in collectMetrics); a table with 20 or more rows is taller than 80% of any
+// tested viewport, so its box scrolls and the check must run and pass. Card layouts are exempt.
+function expectStickyHeader(metrics: {
+  comparisonLayout?: unknown;
+  comparisonRows?: unknown;
+  stickyHeaderEffective?: unknown;
+}): void {
+  if (metrics.comparisonLayout !== 'table') return;
+  expect(metrics.stickyHeaderEffective).not.toBe(false);
+  const rows = metrics.comparisonRows as { rendered?: number } | undefined;
+  if (Number(rows?.rendered) >= 20) expect(metrics.stickyHeaderEffective).toBe(true);
+}
+
+// Quip has plans and no add-ons, the case where the summary can dock after the plans.
+async function openWithoutAddOns(page: Page, viewport: Viewport, layout: string): Promise<void> {
+  await openRenderer(page, viewport);
+  const state = await applyPricing(page, readFixture('quip'), 'en', 'light');
+  expect(state).toBe('ready');
+  await page.evaluate(async (value) => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      layout: string;
+      updateComplete: Promise<unknown>;
+    };
+    renderer.layout = value;
+    await renderer.updateComplete;
+    const plan = renderer.querySelector('.pr-plan-card input[type="radio"]') as HTMLInputElement;
+    if (plan && !plan.checked) plan.click();
+    await renderer.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }, layout);
+  await expect(page.locator('pricing-renderer .pr-summary')).toHaveCount(1);
+}
+
+test.describe('summary position and compactness', () => {
+  // [utest->req~sticky-summary-compact~1]
+  test('docks one compact non-sticky line before the comparison at 1440', async ({ page }) => {
+    await openWithoutAddOns(page, viewports[0], 'auto');
+    const docked = await page.evaluate(() => {
+      const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+      const summary = renderer.querySelector('.pr-flow > .pr-summary');
+      if (!summary) return null;
+      const live = summary.querySelector('.pr-summary__live') as HTMLElement;
+      const label = live.children[0].getBoundingClientRect();
+      const total = live.children[live.children.length - 1].getBoundingClientRect();
+      const comparison = renderer.querySelector('.pr-comparison-toolbar, .pr-table-scroll');
+      return {
+        position: getComputedStyle(summary).position,
+        beforeComparison: comparison
+          ? !!(summary.compareDocumentPosition(comparison) & Node.DOCUMENT_POSITION_FOLLOWING)
+          : true,
+        sameLine: Math.abs(label.top + label.height / 2 - (total.top + total.height / 2)) < 8,
+      };
+    });
+    expect(docked).not.toBeNull();
+    expect(docked!.position).not.toBe('sticky');
+    expect(docked!.beforeComparison).toBe(true);
+    expect(docked!.sameLine).toBe(true);
+  });
+
+  for (const [label, viewport, layout] of [
+    ['600 with layout="table"', { width: 600, height: 800 }, 'table'],
+    ['375 compact', viewports[2], 'auto'],
+  ] as const) {
+    // [utest->req~sticky-summary-compact~1]
+    test(`keeps the summary last and stuck to the bottom at ${label}`, async ({ page }) => {
+      await openWithoutAddOns(page, viewport, layout);
+      const bar = await page.evaluate(() => {
+        const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+        const summary = renderer.querySelector('.pr-summary') as HTMLElement;
+        const style = getComputedStyle(summary);
+        return {
+          docked: summary.parentElement?.classList.contains('pr-flow') ?? false,
+          last: summary.parentElement?.lastElementChild === summary,
+          position: style.position,
+          bottom: parseFloat(style.bottom),
+        };
+      });
+      expect(bar.docked).toBe(false);
+      expect(bar.last).toBe(true);
+      expect(bar.position).toBe('sticky');
+      expect(bar.bottom).toBeGreaterThanOrEqual(0);
+    });
   }
 });
 

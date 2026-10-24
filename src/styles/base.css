@@ -695,8 +695,24 @@
     color: var(--pr-color-muted);
   }
 
+  /* [impl->req~sticky-table-scroll~1] The height limit makes the box scroll vertically, so the
+     sticky header cells pin to it. 80vh is the fallback for browsers without dvh. */
+  pricing-renderer[data-pr-root] .pr-flow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pr-space-section);
+    min-inline-size: 0;
+  }
+
+  /* An empty flow (no summary, comparison or add-ons) takes no space and no gap. */
+  pricing-renderer[data-pr-root] .pr-flow:empty {
+    display: none;
+  }
+
   pricing-renderer[data-pr-root] .pr-table-scroll {
     max-inline-size: 100%;
+    max-block-size: 80vh;
+    max-block-size: 80dvh;
     overflow: auto;
     border: 1px solid var(--pr-color-border);
     border-radius: var(--pr-radius-lg);
@@ -1188,6 +1204,26 @@
 
     pricing-renderer[data-pr-root] .pr-summary__live {
       grid-template-columns: 1fr;
+    }
+
+    /* [impl->req~sticky-summary-compact~1] The summary docked after the plans is one compact
+       line (label and total side by side). It is not sticky, so it never covers the toolbar. */
+    pricing-renderer[data-pr-root] .pr-flow > .pr-summary {
+      position: relative;
+      inset-block-start: auto;
+      padding-block: var(--pr-space-3);
+    }
+
+    pricing-renderer[data-pr-root] .pr-flow > .pr-summary:empty {
+      display: none;
+    }
+
+    pricing-renderer[data-pr-root] .pr-flow > .pr-summary .pr-summary__live {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    pricing-renderer[data-pr-root] .pr-flow > .pr-summary .pr-breakdown-toggle {
+      inset-block-start: var(--pr-space-3);
     }
 
     pricing-renderer[data-pr-root] .pr-breakdown-toggle {

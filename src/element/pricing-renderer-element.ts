@@ -57,6 +57,24 @@ import {
   type RenderState,
 } from './renderers.js';
 
+// [impl->req~sticky-summary-position~1] Everything after the plans lives in one flex column, so a
+// sticky summary has the whole column as its containing block (a grid item would only have its own
+// row). Without add-ons, in the table layout and with a plan selected, the summary is the first
+// child and sticks near the plans while the comparison scrolls. In every other case it keeps its
+// place: with add-ons inside the add-on layout (renderAddOns), otherwise last in the content, where
+// the mobile bottom bar sticks to the viewport. The top dock also needs a container at least 840px
+// wide (`wide`), because layout="table" can render the table in a narrower container, where the
+// bottom bar is still the summary position (RenderState lives in renderers.ts and has no such field).
+export function renderAfterPlans(state: RenderState, wide = true): TemplateResult {
+  const { viewModel, selection, compact } = state;
+  const withoutAddOns = viewModel.addOns.length === 0;
+  const docked = withoutAddOns && !compact && wide && selection.planId !== undefined;
+  const summary = withoutAddOns ? renderSummary(state) : nothing;
+  const parts = [docked ? summary : nothing, renderComparison(state), renderAddOns(state)];
+  return html`<div class="pr-flow">${parts}</div>
+    ${docked ? nothing : summary}`;
+}
+
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const breakdownToggleSelector = '[data-pr-part="breakdown-toggle"]';
@@ -116,6 +134,7 @@ export class PricingRendererElement extends LitElement {
   private _diagnostics: PricingDiagnostic[] = [];
   private _internalSelection?: PricingSelection;
   private _compact = true;
+  private _wide = false;
   private _search = '';
   private _onlyDifferences = false;
   private _expandedGroups = new Set<string>();
@@ -482,8 +501,10 @@ export class PricingRendererElement extends LitElement {
 
   private _updateCompactLayout(width: number): void {
     const next = this.layout === 'compact' ? true : this.layout === 'table' ? false : width < 840;
-    if (next !== this._compact) {
+    const wide = width >= 840;
+    if (next !== this._compact || wide !== this._wide) {
       this._compact = next;
+      this._wide = wide;
       this.requestUpdate();
     }
   }
@@ -922,8 +943,7 @@ export class PricingRendererElement extends LitElement {
               : nothing
           }
           ${renderHeader(state)} ${renderCatalogMetadata(state)} ${renderBilling(state)}
-          ${renderVariables(state)} ${renderPlans(state)} ${renderComparison(state)}
-          ${renderAddOns(state)} ${viewModel.addOns.length === 0 ? renderSummary(state) : nothing}
+          ${renderVariables(state)} ${renderPlans(state)} ${renderAfterPlans(state, this._wide)}
         </div>
         ${renderPendingDialog(state)}
         <p class="pr-sr-only" aria-live="polite">
