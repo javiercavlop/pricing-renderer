@@ -1,0 +1,1 @@
+Fix round integrated; head 2f52a52 (report fixes + test/spec minors; babe5d58 result block was invalid but its 4 checks passed). Pushing now. Next: CI (browsers job must stay green, confirm SPECTRA_SUMMARY still printed), confirm review (reviewer + test-reviewer) on this head, pr_ready, set_review_package, lead_ready.
