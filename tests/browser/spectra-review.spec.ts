@@ -427,12 +427,23 @@ async function expectRendered(
   state: string,
   metrics: { rendererHeight?: unknown; planCardCount?: unknown; comparisonRows?: unknown },
   saas: string,
+  locale = 'en',
 ): Promise<void> {
   expect(state).toBe('ready');
-  if (saas === 'okta') expect(metrics.planCardCount).toBe(0);
-  else expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
+  const noComparison =
+    locale === 'es' ? 'No hay planes que comparar.' : 'There are no plans to compare.';
   const rows = metrics.comparisonRows as { rendered?: number } | undefined;
-  expect(Number(rows?.rendered)).toBeGreaterThan(0);
+  if (saas === 'okta') {
+    // A pricing without plans has nothing to compare: no rows, only the status text.
+    expect(metrics.planCardCount).toBe(0);
+    expect(Number(rows?.rendered)).toBe(0);
+    await expect(page.locator('pricing-renderer .pr-empty', { hasText: noComparison })).toHaveCount(
+      1,
+    );
+  } else {
+    expect(Number(metrics.planCardCount)).toBeGreaterThan(0);
+    expect(Number(rows?.rendered)).toBeGreaterThan(0);
+  }
   await expect(page.locator('pricing-renderer .pr-skeleton')).toHaveCount(0);
   expect(Number(metrics.rendererHeight)).toBeGreaterThan(0);
 }
@@ -495,7 +506,7 @@ test.describe('spectra captures', () => {
             metrics,
             true,
           );
-          await expectRendered(page, state, metrics, saas);
+          await expectRendered(page, state, metrics, saas, variant.locale);
         }
         expect(errors).toEqual([]);
       });
