@@ -409,6 +409,11 @@ const ref = useRef<PricingRendererElement>(null);
 />;
 ```
 
+If the element may already be ready when the listener is attached, `onReady`
+does not fire for that load; see
+[Preload the current subscription](preload-current-subscription.md) to apply
+at once from `resolvedState`.
+
 `ApplySelectionResult` is re-exported from this entry point.
 
 ## CSS entry points

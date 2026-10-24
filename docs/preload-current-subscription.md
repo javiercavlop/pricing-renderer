@@ -24,8 +24,11 @@ interface SpaceContract {
 }
 ```
 
-The contract carries no billing period, so the mapping does not set one and the
-element keeps its default.
+The contract carries no billing period, so the mapping does not set one. An
+omitted `billingPeriod` becomes the schema default (the billing period with
+multiplier 1), not the period in `defaultSelection` and not the one in effect.
+To keep another period, pass `billingPeriod` to `applySelection`, for example
+the one from `renderer.resolvedState?.selection.billingPeriod`.
 
 ## Map the contract to a selection
 
@@ -93,6 +96,24 @@ const ref = useRef<PricingRendererElement>(null);
     ref.current?.applySelection(selectionFromContract(contract, 'acme'));
   }}
 />;
+```
+
+The listener does nothing if you attach it after the first load has finished,
+because `pricing-ready` has already fired. When the element may already be
+ready, check `renderer.resolvedState` and apply at once, and still listen for
+later loads:
+
+```ts
+const apply = () => {
+  const keepPeriod = renderer.resolvedState?.selection.billingPeriod;
+  renderer.applySelection({
+    ...selectionFromContract(contract, 'acme'),
+    billingPeriod: keepPeriod,
+  });
+};
+
+if (renderer.resolvedState) apply(); // already ready
+renderer.addEventListener('pricing-ready', apply); // later loads
 ```
 
 The call is synchronous and the selection applied from the listener stays for
