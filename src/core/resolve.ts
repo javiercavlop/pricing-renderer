@@ -8,6 +8,7 @@ import type {
   ResolvePricingOptions,
   ResolvedPrice,
   ResolvedPricing,
+  SubscriptionConstraints,
 } from './types.js';
 import { cloneValue } from './utils.js';
 
@@ -72,6 +73,15 @@ function resolvePriceSource(
   };
 }
 
+/** Largest quantity on the min/step grid that does not exceed the maximum. */
+export function maxQuantityOnGrid(constraints: SubscriptionConstraints): number | undefined {
+  if (constraints.maxQuantity === undefined) return undefined;
+  const { minQuantity, quantityStep, maxQuantity } = constraints;
+  // the epsilon absorbs floating-point error with decimal steps (0.3 / 0.1 = 2.9999999999999996)
+  const steps = Math.floor((maxQuantity - minQuantity) / quantityStep + 1e-9);
+  return minQuantity + steps * quantityStep;
+}
+
 export function normalizeAddOnQuantity(
   pricing: NormalizedPricing,
   addOnId: string,
@@ -86,7 +96,7 @@ export function normalizeAddOnQuantity(
     return 1;
   }
   const minimum = constraints.minQuantity;
-  const maximum = constraints.maxQuantity ?? Number.POSITIVE_INFINITY;
+  const maximum = maxQuantityOnGrid(constraints) ?? Number.POSITIVE_INFINITY;
   const raw = Number.isFinite(selection.quantity) ? selection.quantity : minimum;
   const stepped =
     minimum + Math.round((raw - minimum) / constraints.quantityStep) * constraints.quantityStep;
@@ -164,6 +174,18 @@ export function resolvePricing(
   }
 
   for (const addOn of pricing.addOns) {
+    const constraints = addOn.subscriptionConstraints;
+    if (
+      constraints?.maxQuantity !== undefined &&
+      Math.abs(maxQuantityOnGrid(constraints)! - constraints.maxQuantity) > 1e-9
+    ) {
+      diagnostics.push({
+        code: 'PR_ADDON_CONSTRAINTS_INVALID',
+        severity: 'warning',
+        message: `Maximum quantity ${constraints.maxQuantity} is not reachable from minimum ${constraints.minQuantity} in steps of ${constraints.quantityStep}; quantities are capped at ${maxQuantityOnGrid(constraints)}.`,
+        path: `addOns.${addOn.id}.subscriptionConstraints`,
+      });
+    }
     const quantity = normalizeAddOnQuantity(pricing, addOn.id, selection.addOns[addOn.id]);
     const resolved = resolvePriceSource(
       addOn.price,

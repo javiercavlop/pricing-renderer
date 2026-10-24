@@ -19,6 +19,7 @@ import {
   type ResolvedPrice,
   type VariableControl,
 } from '../core/index.js';
+import { maxQuantityOnGrid } from '../core/resolve.js';
 import type { PendingAddOnChange } from './events.js';
 
 export interface RenderActions {
@@ -952,7 +953,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                             })}
                             .value=${String(quantity)}
                             min=${constraints.minQuantity}
-                            max=${constraints.maxQuantity ?? nothing}
+                            max=${maxQuantityOnGrid(constraints) ?? nothing}
                             step=${constraints.quantityStep}
                             @change=${(event: Event) =>
                               actions.updateAddOnQuantity(
