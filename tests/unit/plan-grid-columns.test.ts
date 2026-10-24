@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { bands, expectedColumns } from '../browser/helpers/plan-columns.js';
 
 // CSS contract of the plan grid (spectra-item8) and of word breaking (spectra-item10), read from
 // the stylesheet text. Layout itself is measured by tests/browser/spectra-grid.spec.ts and
@@ -17,29 +18,8 @@ const gridSpec = readFileSync(
   'utf8',
 );
 
-// Maximum columns per container band; the same table is in tests/browser/spectra-grid.spec.ts,
-// which cannot be imported here (it loads @playwright/test).
-const bands = [
-  { name: '840-1039', min: 840, max: 1039, columns: 3 },
-  { name: '1040-1279', min: 1040, max: 1279, columns: 4 },
-  { name: '>=1280', min: 1280, max: 1600, columns: 4 },
-] as const;
-
-// Fewest rows, then the fullest last row, then the most columns, never a single card alone in the
-// last of several rows; when every column count leaves one alone, the rule is waived (exempt).
-function expectedColumns(plans: number, maxColumns: number): number {
-  const options = [];
-  for (let columns = Math.min(maxColumns, plans); columns >= 1; columns -= 1) {
-    const rows = Math.ceil(plans / columns);
-    const last = plans - (rows - 1) * columns;
-    options.push({ columns, rows, last, lone: rows > 1 && last === 1 });
-  }
-  const allowed = options.some((option) => !option.lone)
-    ? options.filter((option) => !option.lone)
-    : options;
-  allowed.sort((a, b) => a.rows - b.rows || b.last - a.last || b.columns - a.columns);
-  return allowed[0].columns;
-}
+// The bands and expectedColumns come from tests/browser/helpers/plan-columns.ts, which
+// tests/browser/spectra-grid.spec.ts uses too; the test below checks them against the spec table.
 
 type Rule = { selectors: string[]; declarations: Map<string, string>; order: number };
 type Block = { prelude: string; rules: Rule[]; blocks: Block[] };
@@ -250,10 +230,48 @@ function compoundMatches(compound: string, plans: number): boolean {
   });
 }
 
+// Plan grid rules the evaluator below would get wrong: a rule outside the first
+// `@layer pricing-renderer` block and its `@container pricing-renderer (min-width: Npx)` blocks
+// (top level, @media, @supports, a second @layer, another @container prelude, nested blocks), and a
+// `grid` or `grid-template` shorthand, which can set the columns too.
+function unsupportedPlanGridRules(root: Block): string[] {
+  const rootLayer = root.blocks.find((block) => block.prelude === '@layer pricing-renderer');
+  const found: string[] = [];
+  const visit = (block: Block, recognized: boolean) => {
+    for (const rule of block.rules) {
+      const selectors = rule.selectors.filter(targetsPlanGrid);
+      if (selectors.length === 0) continue;
+      const where = block.prelude || '(top level)';
+      if (!recognized) found.push(`${where}: ${selectors.join(', ')}`);
+      for (const shorthand of ['grid', 'grid-template']) {
+        if (rule.declarations.has(shorthand)) {
+          found.push(`${where}: ${shorthand} on ${selectors.join(', ')}`);
+        }
+      }
+    }
+    for (const child of block.blocks) {
+      const known =
+        (block === root && child === rootLayer) ||
+        (block === rootLayer && containerMin(child.prelude) !== null);
+      visit(child, known);
+    }
+  };
+  visit(root, false);
+  return found;
+}
+
+function assertPlanGridEvaluable(root: Block): void {
+  const found = unsupportedPlanGridRules(root);
+  if (found.length > 0) {
+    throw new Error(`Plan grid rules the test cannot evaluate: ${found.join('; ')}`);
+  }
+}
+
 type Winner = { value: string; selector: string };
 
 // The grid-template-columns that wins for a plan grid with `plans` cards at a container width.
 function planColumnsAt(width: number, plans: number): Winner | null {
+  assertPlanGridEvaluable(sheet);
   let winner: (Winner & { specificity: Specificity; order: number }) | null = null;
   for (const rule of rulesAt(width)) {
     const value = rule.declarations.get('grid-template-columns');
@@ -356,6 +374,33 @@ describe('plan grid columns (spectra-item8)', () => {
         expect(cells?.[index + 1].split(' ')[0], `${band.name} for ${plans}`).toBe(columns);
       });
     }
+  });
+
+  it('refuses plan grid rules it cannot evaluate', () => {
+    expect(unsupportedPlanGridRules(sheet)).toEqual([]);
+    const layered = (inner: string) =>
+      parseBlock(stripComments(`@layer pricing-renderer { ${inner} }`));
+    const cases = [
+      '@media (min-width: 900px) { .pr-plan-grid { grid-template-columns: 1fr; } }',
+      '@supports (display: grid) { .pr-plan-grid { grid-template-columns: 1fr; } }',
+      '@container (min-width: 900px) { .pr-plan-grid { grid-template-columns: 1fr; } }',
+      '@container pricing-renderer (min-width: 900px) { @media print { .pr-plan-grid { gap: 0; } } }',
+      '.pr-plan-grid { grid: auto / 1fr 1fr; }',
+      '@container pricing-renderer (min-width: 900px) { .pr-plan-grid { grid-template: auto / 1fr; } }',
+    ];
+    for (const css of cases) {
+      const root = layered(css);
+      expect(unsupportedPlanGridRules(root), css).not.toEqual([]);
+      expect(() => assertPlanGridEvaluable(root), css).toThrow();
+    }
+    const twoLayers = parseBlock(
+      '@layer pricing-renderer { .pr-plan-grid { gap: 0; } } @layer pricing-renderer { .pr-plan-grid { gap: 1px; } }',
+    );
+    expect(unsupportedPlanGridRules(twoLayers)).toHaveLength(1);
+    expect(unsupportedPlanGridRules(parseBlock('.pr-plan-grid { gap: 0; }'))).toHaveLength(1);
+    expect(
+      unsupportedPlanGridRules(layered('@media (hover: hover) { .pr-plan-card { gap: 0; } }')),
+    ).toEqual([]);
   });
 
   it('balances the documented examples', () => {

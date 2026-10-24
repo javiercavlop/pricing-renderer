@@ -28,9 +28,17 @@ Truncated texts are 0 everywhere today and must stay 0.
   line of its own, and the min-content width of a text keeps its longest word, so tracks and cells no
   longer shrink below a word.
 - Containers whose items relied on `anywhere` to shrink get an explicit minimum instead:
-  - single-column grids (`.pr-content`, `.pr-compact-comparison`, `.pr-feature-card` below 600px,
-    `.pr-feature-card dl`, `.pr-highlight-list`) use `grid-template-columns: minmax(0, 1fr)`, so a
-    long string cannot widen them;
+  - single-column grids holding pricing text (`.pr-content`, `.pr-compact-comparison`,
+    `.pr-feature-card` below 600px, `.pr-feature-card dl`, `.pr-highlight-list`, `.pr-hero`,
+    `.pr-field`, `.pr-addon-layout` below 840px, `.pr-addon-card__details`, `.pr-addon-effects dl`,
+    `.pr-breakdown`, `.pr-breakdown__lines`, `.pr-breakdown__totals`, `.pr-metadata dl`) use
+    `grid-template-columns: minmax(0, 1fr)`, so a long string cannot widen them and the
+    `min-inline-size: 0` of their flex rows' items lets it wrap; grids with explicit columns keep
+    them;
+  - the hero is centered with `margin-inline: auto`, so it is sized to its content: it gets
+    `max-inline-size: min(760px, 100%)` and its items `max-inline-size: 100%` (the subtitle
+    `min(62ch, 100%)`), so a title with a word longer than the line wraps inside the renderer at
+    320 and 375 instead of widening the hero;
   - the label and value rows of the compact comparison (`dt` plan name, `dd` value) and of the plan
     highlights are wrapping flex rows: they share a line when both fit, else the value moves to the
     next line. The label has `flex: 1 1 0` and `max-inline-size: 100%`, so its automatic minimum is
@@ -56,17 +64,35 @@ Truncated texts are 0 everywhere today and must stay 0.
 ## Acceptance criteria
 
 - AC1: `awkwardBreaks.count` is 0 at 1440x900, 1024x768 and 375x812 for mailchimp,
-  microsoft365Business, salesforce, zoom, figma and github. For the other fixtures it is printed only.
+  microsoft365Business, salesforce, zoom, figma and github, and for them `inspectedWords` is above 0
+  (the measurement saw words; `cappedAtWordLimit` is printed only). For the other fixtures it is
+  printed only.
 - AC2: `truncatedTexts.count` is 0 for every fixture at the three viewports.
 - AC3: a 64-character string without spaces placed in a value cell outside `.pr-table-scroll`
   (preferably in a plan card) and in a plan name outside it (the compact comparison `dt`, else the
   plan card heading) wraps on more than one line and stays inside its card and inside the renderer.
-  The probes must find both for every fixture except okta (no plans). Table cells are excluded (see
-  the accepted deviation above).
+  The probes must find both for every fixture with plans; for a fixture without plans (okta,
+  `plans: null`) a probe may find nothing, and a target it finds must wrap and stay inside too.
+  Table cells are excluded (see the accepted deviation above).
 - AC4: the selector contract above holds for every file of `src/styles/`.
 - AC5: no rendered element of the renderer ends outside the renderer box by more than 1px, except
   inside `.pr-table-scroll` and other scroll containers, at the three viewports.
 - AC6: contrast is unchanged (no color is changed by this item).
+- AC7: at 375x812, with the text of the hero title (`h2` inside `[data-pr-part=hero]`) replaced by
+  a 64-character string without spaces, the title wraps on more than one line and no rendered
+  element of the renderer ends outside the renderer box by more than 1px (as in AC5).
+- AC8: at 375x812, when an add-on effect value (`.pr-addon-effects dd`) or a price breakdown name
+  (`.pr-breakdown__name`) is rendered in the default state of the fixture, the first one with its
+  text replaced by a 64-character string without spaces wraps on more than one line and stays
+  inside its add-on card or summary and inside the renderer. When none is rendered the check is
+  skipped; the test opens no dialog, disclosure or toggle. With the current template both start
+  hidden (the add-on effects are a closed `details`, the breakdown is closed until its toggle is
+  pressed), so in CI this probe is skipped for every fixture today: AC8 is a guard for a future
+  default-open state, not coverage of the `minmax(0, 1fr)` columns, which rest on the CSS reasoning
+  above.
+
+The AC7 and AC8 probes replace text in the rendered DOM, so they run last in the test, after the
+AC3 probes.
 
 ## Tests
 
@@ -74,12 +100,14 @@ Truncated texts are 0 everywhere today and must stay 0.
 | -------------------------------------- | ------------ | ------------------------------------------------------------ |
 | `tests/unit/plan-grid-columns.test.ts` | AC4          | Reads every file of `src/styles/` as text                    |
 | `tests/browser/spectra-text.spec.ts`   | AC1-AC3, AC5 | Chromium, every fixture, prints one `SPECTRA_TEXT` JSON line |
+| `tests/browser/spectra-text.spec.ts`   | AC7, AC8     | 375x812 only, last in the test; printed as `hero`, `detail`  |
 
 ## Before and after
 
 Awkward breaks. Before: `docs/agent-work/visual-review-spectra/report.md` sections 4.10 and 6.5,
 which name the split word but give the viewport only for figma (375). After: `awkwardBreaks.count`
-from the `SPECTRA_TEXT` gate (AC1) in CI on head 0041212, where every awkward-break gate passed.
+from the `SPECTRA_TEXT` gate (AC1) in CI, where every awkward-break gate passed on head 0041212
+and every spectra gate passes on head 2094942.
 
 | Fixture              | Before (report)                  | 1440 after | 1024 after | 375 after |
 | -------------------- | -------------------------------- | ---------- | ---------- | --------- |
@@ -90,11 +118,11 @@ from the `SPECTRA_TEXT` gate (AC1) in CI on head 0041212, where every awkward-br
 | figma                | split ("Unlimited") at 375       | 0          | 0          | 0         |
 | github               | split ("PROFESSIONAL" in a `dt`) | 0          | 0          | 0         |
 
-## Snapshots expected to change
+## Snapshots
 
-In `tests/browser/pricing-renderer.spec.ts-snapshots/`, updated only on purpose by a later
-registered step (no PNG is edited here). Any capture whose text broke inside a word or whose table
-columns were squeezed can move: `table-840-linux.png`, `desktop-1024-linux.png`,
-`desktop-1200-linux.png`, `desktop-1440-linux.png` (also changed by item 8) and possibly
-`mobile-320-linux.png`, `mobile-375-linux.png`, `mobile-599-linux.png`, `tablet-600-linux.png`,
-`tablet-839-linux.png` and the matching files without the `-linux` suffix.
+The baselines in `tests/browser/pricing-renderer.spec.ts-snapshots/` were regenerated in a
+separate registered step from the stylesheet of head 2094942 (no PNG is edited here). The hero cap
+and the `minmax(0, 1fr)` columns added in review round 1 change nothing in the demo page: a single
+`minmax(0, 1fr)` track has the size of the single `auto` track it replaces when the content fits,
+and the hero caps only bind when the hero would be wider than the content box, which the demo
+title never is.

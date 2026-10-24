@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { parse } from 'yaml';
 
 // Shared by spectra-grid.spec.ts and spectra-text.spec.ts. The logic follows collectMetrics in
 // spectra-review.spec.ts (a spec file is never imported). This module imports @playwright/test, so
@@ -26,6 +27,13 @@ export function readFixture(saas: string): string {
   const fixture = fixtures.find((candidate) => candidate.saas === saas);
   if (!fixture) throw new Error(`Spectra fixture "${saas}" was not found.`);
   return readFileSync(`${fixturesRoot}${fixture.saas}/${fixture.file}`, 'utf8');
+}
+
+// Number of entries under the top-level `plans` key of a fixture (0 for `plans: null`, as in okta).
+export function planCount(saas: string): number {
+  const document = parse(readFixture(saas)) as { plans?: unknown } | null;
+  const plans = document?.plans;
+  return plans && typeof plans === 'object' ? Object.keys(plans).length : 0;
 }
 
 export async function openRenderer(page: Page, viewport: Viewport): Promise<void> {
@@ -409,4 +417,69 @@ export async function probeLongString(
       insideRenderer: within(renderer.getBoundingClientRect()),
     };
   }, kind);
+}
+
+// Replaces the text of the first rendered element matching `selector` (outside .pr-table-scroll)
+// with a 64-character string without spaces and reports how it lays out; `cardSelector` names the
+// box it must stay in (the renderer when no ancestor matches). Only the data of the existing text
+// nodes is changed, so the nodes the element template manages stay in place. It opens nothing and
+// changes the DOM: call it last in a test.
+export async function probeReplacedText(
+  page: Page,
+  selector: string,
+  cardSelector: string,
+): Promise<LongStringProbe> {
+  return page.evaluate(
+    async ({ selector, cardSelector }) => {
+      const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+      const isRendered = (element: Element) => {
+        const rect = element.getBoundingClientRect();
+        return (
+          rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== 'hidden'
+        );
+      };
+      const target = [...renderer.querySelectorAll(selector)].find(
+        (element) => isRendered(element) && !element.closest('.pr-table-scroll, .pr-sr-only'),
+      );
+      if (!target) {
+        return {
+          found: false,
+          target: null,
+          inPlanCard: false,
+          lines: 0,
+          insideCard: false,
+          insideRenderer: false,
+        };
+      }
+      const texts: Text[] = [];
+      const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) texts.push(node as Text);
+      const probe =
+        texts.find((text) => text.data.trim() !== '') ??
+        target.appendChild(document.createTextNode(''));
+      for (const text of texts) if (text !== probe) text.data = '';
+      probe.data = 'Unbroken'.repeat(8);
+      await nextFrame();
+      await nextFrame();
+      const range = document.createRange();
+      range.selectNodeContents(probe);
+      const rects = [...range.getClientRects()].filter((rect) => rect.width > 0);
+      const tops = [...new Set(rects.map((rect) => Math.round(rect.top)))].sort((a, b) => a - b);
+      const lines = tops.filter((top, index) => index === 0 || top - tops[index - 1] > 4).length;
+      const card = target.closest(cardSelector) ?? renderer;
+      const within = (outer: DOMRect) =>
+        rects.every((rect) => rect.left >= outer.left - 1 && rect.right <= outer.right + 1);
+      const names = Array.from(target.classList).slice(0, 2);
+      return {
+        found: true,
+        target: `${target.tagName.toLowerCase()}${names.map((name) => `.${name}`).join('')}`,
+        inPlanCard: !!target.closest('.pr-plan-card'),
+        lines,
+        insideCard: within(card.getBoundingClientRect()),
+        insideRenderer: within(renderer.getBoundingClientRect()),
+      };
+    },
+    { selector, cardSelector },
+  );
 }
