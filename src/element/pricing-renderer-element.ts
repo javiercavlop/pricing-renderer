@@ -57,6 +57,22 @@ import {
   type RenderState,
 } from './renderers.js';
 
+// [impl->req~sticky-summary-position~1] Everything after the plans lives in one flex column, so a
+// sticky summary has the whole column as its containing block (a grid item would only have its own
+// row). Without add-ons, in the table layout and with a plan selected, the summary is the first
+// child and sticks near the plans while the comparison scrolls. In every other case it keeps its
+// place: with add-ons inside the add-on layout (renderAddOns), otherwise last in the content, where
+// the mobile bottom bar sticks to the viewport.
+export function renderAfterPlans(state: RenderState): TemplateResult {
+  const { viewModel, selection, compact } = state;
+  const withoutAddOns = viewModel.addOns.length === 0;
+  const docked = withoutAddOns && !compact && selection.planId !== undefined;
+  const summary = withoutAddOns ? renderSummary(state) : nothing;
+  const parts = [docked ? summary : nothing, renderComparison(state), renderAddOns(state)];
+  return html`<div class="pr-flow">${parts}</div>
+    ${docked ? nothing : summary}`;
+}
+
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const breakdownToggleSelector = '[data-pr-part="breakdown-toggle"]';
@@ -922,8 +938,7 @@ export class PricingRendererElement extends LitElement {
               : nothing
           }
           ${renderHeader(state)} ${renderCatalogMetadata(state)} ${renderBilling(state)}
-          ${renderVariables(state)} ${renderPlans(state)} ${renderComparison(state)}
-          ${renderAddOns(state)} ${viewModel.addOns.length === 0 ? renderSummary(state) : nothing}
+          ${renderVariables(state)} ${renderPlans(state)} ${renderAfterPlans(state)}
         </div>
         ${renderPendingDialog(state)}
         <p class="pr-sr-only" aria-live="polite">
