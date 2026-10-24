@@ -1,0 +1,1 @@
+Phase 1 of the SPECTRA visual review: tests (load, layout metrics), chromium-only Playwright capture/metrics spec without snapshots, metrics.json/md, prioritized report with CI-measured numbers. Phase 2 (one change per improvement, CRPs for default look/API) waits for the owner's review of report.md.

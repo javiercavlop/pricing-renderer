@@ -86,3 +86,7 @@ yields the `PR_PLANS_EMPTY` warning.
 | Zoom ² | `zoom/2024.yml` | 5 | 143 | 8 | 16 | USD |
 
 ² From the extended copy, not part of SPECTRA 1.2.0.
+
+These fixtures are used by `tests/unit/spectra-load.test.ts`,
+`tests/unit/spectra-layout-metrics.test.ts` and
+`tests/browser/spectra-review.spec.ts`.
