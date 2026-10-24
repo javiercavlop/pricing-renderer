@@ -1,1 +1,6 @@
-1) Done: specs + tests + CSS + changeset (task a8e1ea44, integrated). 2) Push, open PR, read CI: browsers job prints SPECTRA_GRID / SPECTRA_TEXT lines; unit + visual snapshot jobs. 3) Fix failures with debugger tasks (CTA at 1440 is a hard gate, blind CSS). 4) Fill before/after tables, deliberate snapshot update through the project's registered step, review panel (reviewer, test-reviewer, ui-qa), review package, lead_ready.
+# Plan
+
+- Done: specs, tests, CSS and changeset for items 8 and 10 (task a8e1ea44, integrated).
+- Push and open the PR; read the browsers job output (`SPECTRA_GRID` and `SPECTRA_TEXT` lines).
+- Fix failures with debugger tasks. The CTA gate at 1440 and the awkward-break gate were designed without a browser.
+- Fill the before/after tables, update the visual snapshots on purpose, run the review panel, set the review package.
