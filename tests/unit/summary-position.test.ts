@@ -95,6 +95,16 @@ describe('summary position after the plans', () => {
     expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf(comparisonMarker));
   });
 
+  it('keeps the summary last when the container is narrower than 840px (layout table)', async () => {
+    const base = await loadViewModel();
+    const viewModel = { ...base, addOns: [] };
+    const state = stateFor(viewModel, viewModel.plans[0]!.id, false);
+    const text = flatten(renderAfterPlans(state, false));
+    expect(text.split(summaryMarker)).toHaveLength(2);
+    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf(comparisonMarker));
+    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('</div>'));
+  });
+
   it('keeps the summary last when no plan is selected', async () => {
     const base = await loadViewModel();
     const viewModel = { ...base, addOns: [] };

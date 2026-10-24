@@ -589,7 +589,7 @@
   pricing-renderer[data-pr-root] .pr-comparison-toolbar {
     position: sticky;
     z-index: 3;
-    inset-block-start: 0;
+    inset-block-start: var(--pr-docked-summary-offset, 0px);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -702,6 +702,11 @@
     flex-direction: column;
     gap: var(--pr-space-section);
     min-inline-size: 0;
+  }
+
+  /* An empty flow (no summary, comparison or add-ons) takes no space and no gap. */
+  pricing-renderer[data-pr-root] .pr-flow:empty {
+    display: none;
   }
 
   pricing-renderer[data-pr-root] .pr-table-scroll {
@@ -1205,6 +1210,17 @@
        line (label and total side by side) that sticks to the top. */
     pricing-renderer[data-pr-root] .pr-flow > .pr-summary {
       padding-block: var(--pr-space-3);
+    }
+
+    /* The comparison toolbar sticks right below the docked summary (top space + one line of the
+       summary + a gap), so the summary never covers it or a focused control inside it. */
+    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) {
+      --pr-docked-summary-offset: calc(var(--pr-space-4) + 4.5rem + var(--pr-space-2));
+    }
+
+    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) .pr-comparison-toolbar,
+    pricing-renderer[data-pr-root] .pr-flow:has(> .pr-summary) .pr-table-scroll {
+      scroll-margin-block-start: calc(var(--pr-docked-summary-offset) + 4rem);
     }
 
     pricing-renderer[data-pr-root] .pr-flow > .pr-summary .pr-summary__live {

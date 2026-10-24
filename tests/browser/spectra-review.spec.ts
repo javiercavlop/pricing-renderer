@@ -244,6 +244,20 @@ async function collectMetrics(viewport: Viewport) {
 
   const rendererHeight = renderer.getBoundingClientRect().height;
 
+  // The toolbar search input must be the topmost element at its centre, also under a docked summary.
+  const toolbarInput = renderer.querySelector('.pr-comparison-toolbar input');
+  let toolbarInputReachable: boolean | null = null;
+  if (toolbarInput) {
+    const toolbarTop = renderer.querySelector('.pr-comparison-toolbar')!.getBoundingClientRect();
+    jump(Math.max(0, Math.round(toolbarTop.top + window.scrollY + 300)));
+    await nextFrame();
+    const box = toolbarInput.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    toolbarInputReachable = !!hit && toolbarInput.contains(hit);
+    jump(0);
+    await nextFrame();
+  }
+
   // Scroll the renderer to the top of the viewport: the demo page has its own chrome above it.
   jump(rendererTop);
   await nextFrame();
@@ -344,6 +358,7 @@ async function collectMetrics(viewport: Viewport) {
     stickyFirstColumn: isPinned(positionOf(firstCell)),
     stickyHeaderEffective,
     stickyFirstColumnEffective,
+    toolbarInputReachable,
     truncatedTexts: { count: truncatedCount, examples: truncated },
     awkwardBreaks: {
       count: awkwardBreaks,
@@ -477,6 +492,7 @@ test.describe('spectra metrics', () => {
         });
         await expectRendered(page, state, metrics, fixture.saas);
         expectStickyHeader(metrics);
+        expect(metrics.toolbarInputReachable).not.toBe(false);
         expect(errors).toEqual([]);
       });
     }
@@ -496,6 +512,110 @@ function expectStickyHeader(metrics: {
   const rows = metrics.comparisonRows as { rendered?: number } | undefined;
   if (Number(rows?.rendered) >= 20) expect(metrics.stickyHeaderEffective).toBe(true);
 }
+
+// Quip has plans and no add-ons, the case where the summary can dock after the plans.
+async function openWithoutAddOns(page: Page, viewport: Viewport, layout: string): Promise<void> {
+  await openRenderer(page, viewport);
+  const state = await applyPricing(page, readFixture('quip'), 'en', 'light');
+  expect(state).toBe('ready');
+  await page.evaluate(async (value) => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      layout: string;
+      updateComplete: Promise<unknown>;
+    };
+    renderer.layout = value;
+    await renderer.updateComplete;
+    const plan = renderer.querySelector('.pr-plan-card input[type="radio"]') as HTMLInputElement;
+    if (plan && !plan.checked) plan.click();
+    await renderer.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }, layout);
+  await expect(page.locator('pricing-renderer .pr-summary')).toHaveCount(1);
+}
+
+test.describe('summary position and compactness', () => {
+  // [utest->req~sticky-summary-compact~1]
+  test('docks one compact sticky line at 1440 and keeps the toolbar below it', async ({ page }) => {
+    await openWithoutAddOns(page, viewports[0], 'auto');
+    const docked = await page.evaluate(() => {
+      const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+      const summary = renderer.querySelector('.pr-flow > .pr-summary');
+      if (!summary) return null;
+      const style = getComputedStyle(summary);
+      const live = summary.querySelector('.pr-summary__live') as HTMLElement;
+      const label = live.children[0].getBoundingClientRect();
+      const total = live.children[live.children.length - 1].getBoundingClientRect();
+      const space = getComputedStyle(renderer).getPropertyValue('--pr-space-4').trim();
+      const probe = document.createElement('div');
+      probe.style.inlineSize = space;
+      renderer.appendChild(probe);
+      const space4 = probe.getBoundingClientRect().width;
+      probe.remove();
+      const toolbar = renderer.querySelector('.pr-comparison-toolbar');
+      return {
+        position: style.position,
+        top: parseFloat(style.top),
+        space4,
+        sameLine: Math.abs(label.top + label.height / 2 - (total.top + total.height / 2)) < 8,
+        toolbarTop: toolbar ? parseFloat(getComputedStyle(toolbar).top) : null,
+        summaryBottom: summary.getBoundingClientRect().bottom,
+      };
+    });
+    expect(docked).not.toBeNull();
+    expect(docked!.position).toBe('sticky');
+    expect(docked!.top).toBeCloseTo(docked!.space4, 0);
+    expect(docked!.sameLine).toBe(true);
+    // The toolbar sticks below the summary, never under it.
+    if (docked!.toolbarTop !== null) {
+      expect(docked!.toolbarTop).toBeGreaterThanOrEqual(docked!.summaryBottom - 1);
+    }
+  });
+
+  // [utest->req~sticky-summary-compact~1]
+  test('keeps the sticky toolbar search input reachable under the docked summary', async ({
+    page,
+  }) => {
+    await openWithoutAddOns(page, viewports[0], 'auto');
+    const reachable = await page.evaluate(async () => {
+      const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+      const input = renderer.querySelector('.pr-comparison-toolbar input');
+      if (!input) return null;
+      const toolbar = renderer.querySelector('.pr-comparison-toolbar') as HTMLElement;
+      const top = toolbar.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: top + 400, behavior: 'instant' });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const box = input.getBoundingClientRect();
+      const topmost = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return !!topmost && input.contains(topmost);
+    });
+    if (reachable !== null) expect(reachable).toBe(true);
+  });
+
+  for (const [label, viewport, layout] of [
+    ['600 with layout="table"', { width: 600, height: 800 }, 'table'],
+    ['375 compact', viewports[2], 'auto'],
+  ] as const) {
+    // [utest->req~sticky-summary-compact~1]
+    test(`keeps the summary last and stuck to the bottom at ${label}`, async ({ page }) => {
+      await openWithoutAddOns(page, viewport, layout);
+      const bar = await page.evaluate(() => {
+        const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+        const summary = renderer.querySelector('.pr-summary') as HTMLElement;
+        const style = getComputedStyle(summary);
+        return {
+          docked: summary.parentElement?.classList.contains('pr-flow') ?? false,
+          last: summary.parentElement?.lastElementChild === summary,
+          position: style.position,
+          bottom: parseFloat(style.bottom),
+        };
+      });
+      expect(bar.docked).toBe(false);
+      expect(bar.last).toBe(true);
+      expect(bar.position).toBe('sticky');
+      expect(bar.bottom).toBeGreaterThanOrEqual(0);
+    });
+  }
+});
 
 test.describe('spectra captures', () => {
   for (const saas of extremes) {

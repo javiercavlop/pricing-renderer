@@ -35,7 +35,12 @@ and the add-ons. In every other case the summary keeps its place: with add-ons i
 layout (rendered by `renderAddOns`); otherwise (no plan selected, or the compact layout) last, as a
 direct child of the content after `.pr-flow`, so the mobile bottom bar still sticks to the viewport.
 
+- The container must really be at least 840px wide: with `layout="table"` in a narrower container
+  the summary stays last (bottom bar). `renderAfterPlans(state, wide)` takes the width flag from the
+  element (`_wide`, set in `_updateCompactLayout`), because `RenderState` lives in `renderers.ts`
+  and is not changed here; a field there would be the cleaner home.
 - The summary is rendered exactly once in all cases (one live region, one breakdown id).
+- An empty `.pr-flow` is hidden (`.pr-flow:empty { display: none }`).
 - `.pr-flow` is a flex column (not a grid), so the sticky summary has the whole column as its
   containing block.
 
@@ -44,7 +49,14 @@ direct child of the content after `.pr-flow`, so the mobile bottom bar still sti
 WHEN the container is at least 840px wide, the summary directly inside `.pr-flow` SHALL be compact
 (label and total on one line, reduced block padding) and sticky at the top
 (`inset-block-start: var(--pr-space-4)`, existing rule). Below 840px the existing bottom sticky bar
-(`inset-block-end`) is unchanged. The breakdown toggle keeps its 44px target.
+(`inset-block-end`) is unchanged, also in `layout="table"` below 840px. The breakdown toggle keeps
+its 44px target.
+
+While the summary is docked, `.pr-flow` sets `--pr-docked-summary-offset` (space-4 + 4.5rem +
+space-2) and the sticky comparison toolbar (`.pr-comparison-toolbar`) uses it as its
+`inset-block-start`, so it sticks right below the summary instead of under it; the toolbar and the
+table box get a matching `scroll-margin-block-start` so a focused control is not hidden. Without a
+docked summary the offset is `0px`. The 4.5rem is an estimate of the one-line summary height.
 
 ## Measurable criteria
 
@@ -58,6 +70,10 @@ WHEN the container is at least 840px wide, the summary directly inside `.pr-flow
   test.
 - The header is not covered: `stickyHeaderEffective` also requires the topmost element at the header
   center to be the header (the box is brought in below the docked summary).
+- Narrow container with `layout="table"`: unit test (summary last) and browser test at 600px.
+- Docked summary sticky at `--pr-space-4` on one line at 1440, bottom bar at 600 (table) and 375:
+  `tests/browser/spectra-review.spec.ts`, `[utest->req~sticky-summary-compact~1]`.
+- The toolbar search input is the topmost element at its centre (`toolbarInputReachable`).
 - Page horizontal overflow stays absent: existing `horizontalOverflow` metric.
 
 ## Out of scope and known limit
