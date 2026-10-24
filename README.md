@@ -57,6 +57,10 @@ pnpm demo:react
 pnpm demo:next
 ```
 
+A Vue 3 + Vite example is in [`examples/vue`](./examples/vue); run it with
+`pnpm build && pnpm --filter pricing-renderer-vue-demo dev`. See the
+[examples index](./examples/README.md).
+
 The Next example keeps the page server-rendered and isolates only the interactive
 renderer behind a client boundary.
 

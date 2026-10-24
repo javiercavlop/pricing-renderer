@@ -3,8 +3,9 @@
 `<pricing-renderer>` is a standard custom element, so Vue 3 renders it without a
 wrapper. This guide covers the Vite setup, how to pass data in, how to listen to
 its events and the mistakes seen most often. For the event payloads see the
-[events reference](./events.md). A runnable app, if present in the repository,
-lives in `examples/vue`.
+[events reference](./events.md). A runnable app is in
+[`examples/vue`](../examples/vue); run it from the repository root with
+`pnpm build && pnpm --filter pricing-renderer-vue-demo dev`.
 
 ## Install and register
 
