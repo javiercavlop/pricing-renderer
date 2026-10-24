@@ -95,6 +95,14 @@ export type PlanGridMetrics = {
   rendererTopAfterScroll: number;
   firstCtaBottom: number | null;
   minTargetHeight: number | null;
+  // Offsets are "top+height" in px relative to the renderer top (cards: to the first card top).
+  layoutBreakdown: {
+    viewportHeight: number;
+    firstCardHeight: number | null;
+    planSection: string | null;
+    beforePlans: string;
+    firstCardChildren: string;
+  };
 };
 
 // Rows of plan cards, card widths and whether the first CTA is fully inside the viewport after
@@ -142,6 +150,40 @@ export async function measurePlanGrid(page: Page): Promise<PlanGridMetrics> {
       ctaBox.top >= 0 &&
       ctaBox.bottom <= window.innerHeight;
     const rendererTopAfterScroll = round(renderer.getBoundingClientRect().top);
+    // Direct children of .pr-content before the plan section, then the first card's children.
+    const describe = (element: Element) => {
+      const part = element.getAttribute('data-pr-part');
+      const names = Array.from(element.classList).slice(0, 2);
+      return `${element.tagName.toLowerCase()}${names.map((name) => `.${name}`).join('')}${
+        part ? `[${part}]` : ''
+      }`;
+    };
+    const place = (element: Element, originTop: number) => {
+      const box = element.getBoundingClientRect();
+      return `${describe(element)} ${Math.round(box.top - originTop)}+${Math.round(box.height)}`;
+    };
+    const content = renderer.querySelector('.pr-content');
+    const firstCard = renderer.querySelector('.pr-plan-card');
+    const planSection =
+      content && firstCard
+        ? ([...content.children].find((child) => child.contains(firstCard)) ?? null)
+        : null;
+    const before: string[] = [];
+    for (const child of content?.children ?? []) {
+      if (child === planSection) break;
+      before.push(place(child, rendererTopAfterScroll));
+    }
+    const cardTop = firstCard?.getBoundingClientRect().top ?? 0;
+    const layoutBreakdown = {
+      viewportHeight: window.innerHeight,
+      firstCardHeight: firstCard ? Math.round(firstCard.getBoundingClientRect().height) : null,
+      planSection: planSection ? place(planSection, rendererTopAfterScroll) : null,
+      beforePlans: before.join('; ').slice(0, 600),
+      firstCardChildren: [...(firstCard?.children ?? [])]
+        .map((child) => place(child, cardTop))
+        .join('; ')
+        .slice(0, 600),
+    };
     jump(0);
     await nextFrame();
     return {
@@ -157,6 +199,7 @@ export async function measurePlanGrid(page: Page): Promise<PlanGridMetrics> {
       rendererTopAfterScroll,
       firstCtaBottom: ctaBox ? round(ctaBox.bottom - rendererTopAfterScroll) : null,
       minTargetHeight: targets.length === 0 ? null : round(Math.min(...targets)),
+      layoutBreakdown,
     };
   });
 }

@@ -65,10 +65,9 @@ test.describe('spectra text', () => {
         // [utest->spectra-item10:AC5]
         expect(overflow.examples).toEqual([]);
         // [utest->spectra-item10:AC3] Okta has no plans and may have no value cell or plan name
-        // outside the table; every other pricing must offer both.
-        for (const probe of probes) {
-          if (fixture.saas !== 'okta') expect(probe.found).toBe(true);
-          if (!probe.found) continue;
+        // outside the table, so its probes are not asserted; every other pricing must offer both.
+        for (const probe of fixture.saas === 'okta' ? [] : probes) {
+          expect(probe.found).toBe(true);
           expect(probe.lines).toBeGreaterThan(1);
           expect(probe.insideCard).toBe(true);
           expect(probe.insideRenderer).toBe(true);

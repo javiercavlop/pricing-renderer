@@ -91,6 +91,7 @@ test.describe('spectra plan grid', () => {
             firstCtaBottom: grid.firstCtaBottom,
             rendererTopAfterScroll: grid.rendererTopAfterScroll,
             minTargetHeight: grid.minTargetHeight,
+            layoutBreakdown: grid.layoutBreakdown,
             overflow,
           })}`,
         );
@@ -106,7 +107,18 @@ test.describe('spectra plan grid', () => {
           expect(exempt(grid.planCardCount, grid.containerWidth)).toBe(true);
         }
         // [utest->spectra-item8:AC6] A hard gate at 1440x900 only; 1024x768 is printed above.
-        if (viewport.width === 1440) expect(grid.firstCtaVisible).toBe(true);
+        if (viewport.width === 1440) {
+          const layout = grid.layoutBreakdown;
+          const message = [
+            `first CTA not in view: viewport height ${layout.viewportHeight},`,
+            `firstCtaBottom ${grid.firstCtaBottom}, rendererTopAfterScroll ${grid.rendererTopAfterScroll},`,
+            `first card height ${layout.firstCardHeight}.`,
+            `plan section ${layout.planSection}.`,
+            `before plans (top+height): ${layout.beforePlans}.`,
+            `first card children (top+height): ${layout.firstCardChildren}`,
+          ].join(' ');
+          expect(grid.firstCtaVisible, message).toBe(true);
+        }
         // [utest->spectra-item8:AC7]
         expect(overflow.examples).toEqual([]);
         // [utest->spectra-item8:AC8]
