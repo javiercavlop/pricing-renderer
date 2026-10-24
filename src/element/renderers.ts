@@ -72,6 +72,12 @@ function t(
   return translate(viewModel.messages, key, parameters);
 }
 
+function addOnNames(viewModel: PricingViewModel, ids: readonly string[]): string {
+  return ids
+    .map((id) => viewModel.addOns.find((addOn) => addOn.id === id)?.name ?? humanizeIdentifier(id))
+    .join(', ');
+}
+
 const interactiveCardContent =
   'a, button, input, select, textarea, label, summary, details, [contenteditable="true"]';
 
@@ -911,7 +917,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                     addOn.dependsOn.length
                       ? html`<p>
                           ${t(viewModel, 'pricing.dependsOn', {
-                            items: addOn.dependsOn.join(', '),
+                            items: addOnNames(viewModel, addOn.dependsOn),
                           })}
                         </p>`
                       : nothing
@@ -920,7 +926,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                     addOn.excludes.length
                       ? html`<p>
                           ${t(viewModel, 'pricing.excludes', {
-                            items: addOn.excludes.join(', '),
+                            items: addOnNames(viewModel, addOn.excludes),
                           })}
                         </p>`
                       : nothing
@@ -1180,13 +1186,17 @@ export function renderPendingDialog(state: RenderState): TemplateResult | typeof
         <p id="pr-dialog-description">${t(viewModel, 'pricing.confirmChangesDescription')}</p>
         ${
           pending.addIds.length
-            ? html`<p>${t(viewModel, 'pricing.willAdd', { items: pending.addIds.join(', ') })}</p>`
+            ? html`<p>
+                ${t(viewModel, 'pricing.willAdd', { items: addOnNames(viewModel, pending.addIds) })}
+              </p>`
             : nothing
         }
         ${
           pending.removeIds.length
             ? html`<p>
-                ${t(viewModel, 'pricing.willRemove', { items: pending.removeIds.join(', ') })}
+                ${t(viewModel, 'pricing.willRemove', {
+                  items: addOnNames(viewModel, pending.removeIds),
+                })}
               </p>`
             : nothing
         }
