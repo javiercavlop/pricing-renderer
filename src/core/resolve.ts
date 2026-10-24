@@ -93,12 +93,51 @@ export function normalizeAddOnQuantity(
   return Math.min(maximum, Math.max(minimum, stepped));
 }
 
+// [impl->req~reconcile-selection-result~1]
+export function reconcileSelection(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+): { selection: PricingSelection; removedAddOnIds: string[] } {
+  const removed = new Set<string>();
+  // [impl->req~reconcile-unavailable-addons~1]
+  for (const addOn of pricing.addOns) {
+    if (!selection.addOns[addOn.id]?.selected) continue;
+    const available =
+      addOn.availableFor.length === 0 ||
+      (selection.planId !== undefined && addOn.availableFor.includes(selection.planId));
+    if (!available) removed.add(addOn.id);
+  }
+  // [impl->req~reconcile-dependents~1]
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const addOn of pricing.addOns) {
+      if (!selection.addOns[addOn.id]?.selected || removed.has(addOn.id)) continue;
+      if (addOn.dependsOn.some((id) => removed.has(id))) {
+        removed.add(addOn.id);
+        changed = true;
+      }
+    }
+  }
+  // [impl->req~reconcile-unrestricted-addons~1] only the removal set is deselected
+  const removedAddOnIds = pricing.addOns.filter((addOn) => removed.has(addOn.id)).map((a) => a.id);
+  // [impl->req~reconcile-valid-unchanged~1] [impl->req~reconcile-no-mutation~1]
+  // [impl->req~reconcile-preserves-fields~1]
+  const addOns = { ...selection.addOns };
+  for (const id of removedAddOnIds) {
+    addOns[id] = { selected: false, quantity: selection.addOns[id]!.quantity };
+  }
+  return { selection: { ...selection, addOns }, removedAddOnIds };
+}
+
 export function resolvePricing(
   pricing: NormalizedPricing,
   selectionInput?: Partial<PricingSelection>,
   options: ResolvePricingOptions = {},
 ): ResolvedPricing {
   const selection = mergeSelection(pricing, selectionInput);
+  // [impl->req~resolve-totals-exclude-removed~1]
+  const reconciled = reconcileSelection(pricing, selection).selection;
   const billingMultiplier =
     pricing.billing.find((period) => period.id === selection.billingPeriod)?.multiplier ?? 1;
   const diagnostics: PricingDiagnostic[] = [];
@@ -151,7 +190,7 @@ export function resolvePricing(
     selectedPlanPrice.kind === 'label' ||
     selectedPlanPrice.kind === 'error';
 
-  for (const [addOnId, state] of Object.entries(selection.addOns)) {
+  for (const [addOnId, state] of Object.entries(reconciled.addOns)) {
     if (!state.selected) continue;
     const resolved = addOnPrices[addOnId];
     if (resolved?.kind === 'amount') {
@@ -162,6 +201,7 @@ export function resolvePricing(
     }
   }
 
+  // [impl->req~resolve-selection-unreconciled~1]
   return {
     selection,
     planPrices,

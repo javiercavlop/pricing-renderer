@@ -44,6 +44,35 @@ createPricingViewModel(
 diagnostics. `createPricingViewModel` adds presentation, visibility, locale,
 variable controls, and comparison groups.
 
+`resolvePricing` computes `subtotal` and `requiresQuote` from the reconciled
+selection of the merged input, so add-ons that are unavailable for the selected
+plan, and their dependents, are not summed. `resolved.selection` stays the
+merged input, unreconciled.
+
+```ts
+reconcileSelection(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+): { selection: PricingSelection; removedAddOnIds: string[] }
+```
+
+An add-on is available for plan `P` when its `availableFor` is empty, or `P` is
+defined and listed. The removal set is the selected add-ons unavailable for
+`selection.planId`, plus, transitively, the selected add-ons whose `dependsOn`
+contains a member of the set. `removedAddOnIds` lists each removed id once, in
+the order of `pricing.addOns`. Removed entries become
+`{ selected: false, quantity }` with the input quantity. Everything else
+(`planId`, `billingPeriod`, `variables`, unknown add-on ids) is preserved, a
+valid selection comes back deeply equal, and the inputs are not mutated.
+
+```ts
+const { selection: next, removedAddOnIds } = reconcileSelection(pricing, {
+  ...selection,
+  planId: 'starter',
+});
+// removedAddOnIds: ['extraStorage', 'prioritySuccess']
+```
+
 Supporting functions:
 
 | Function                   | Purpose                                                     |
@@ -51,6 +80,7 @@ Supporting functions:
 | `createDefaultSelection`   | Build a complete selection from model defaults              |
 | `mergeSelection`           | Safely merge a partial selection                            |
 | `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                |
+| `reconcileSelection`       | Deselect add-ons unavailable for the plan and dependents    |
 | `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence |
 | `mergePresentationOptions` | Merge project and instance presentation maps                |
 | `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges  |
@@ -214,6 +244,23 @@ All events bubble and are composed.
 
 Cancel `pricing-action` to keep navigation, checkout, or authentication under
 host control.
+
+`detail.selection` of `pricing-selection-change` and `pricing-action` is always
+a reconciled selection (see `reconcileSelection`). The controlled `selection`
+property is never assigned by the element.
+
+### Plan change confirmation
+
+Picking a plan applies it at once (one `pricing-selection-change`) unless
+`reconcileSelection` would remove selected add-ons. In that case the element
+opens the confirmation dialog listing the add-ons it will remove, including
+dependents, and emits nothing while the dialog is open. Apply sets the plan and
+deselects the listed add-ons in one update with one event. Cancel and Escape
+keep the previous plan and its checked radio, emit no event, and restore focus.
+
+A pending plan change is a `PendingAddOnChange` with
+`{ addOnId: '', select: false, addIds: [], removeIds, planId }`. The optional
+`planId` field is set only for plan changes; add-on changes leave it undefined.
 
 ## `pricing-renderer/define`
 

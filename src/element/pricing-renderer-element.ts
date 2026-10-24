@@ -7,6 +7,7 @@ import {
   mergeSelection,
   normalizeAddOnQuantity,
   normalizePricing,
+  reconcileSelection,
   setAtPath,
   translate,
   type IPricingLike,
@@ -245,7 +246,11 @@ export class PricingRendererElement extends LitElement {
       this._normalized = result.value;
       this._lastValidPlanPrices = {};
       this._lastValidAddOnPrices = {};
-      this._internalSelection = mergeSelection(result.value, this.defaultSelection);
+      // [impl->req~default-selection-reconciled~1]
+      this._internalSelection = reconcileSelection(
+        result.value,
+        mergeSelection(result.value, this.defaultSelection),
+      ).selection;
       this._expandedGroups = new Set();
       const viewModel = createPricingViewModel(
         result.value,
@@ -318,9 +323,15 @@ export class PricingRendererElement extends LitElement {
       ? viewModel.resolved.planPrices[viewModel.resolved.selection.planId]
       : undefined;
     let subtotal = planPrice?.kind === 'amount' ? planPrice.amount : 0;
+    // [impl->req~element-subtotal-excludes-removed~1]
+    const removed = new Set(
+      this._normalized
+        ? reconcileSelection(this._normalized, viewModel.resolved.selection).removedAddOnIds
+        : [],
+    );
     for (const [id, state] of Object.entries(viewModel.resolved.selection.addOns)) {
       const addOnPrice = viewModel.resolved.addOnPrices[id];
-      if (state.selected && addOnPrice?.kind === 'amount') {
+      if (state.selected && !removed.has(id) && addOnPrice?.kind === 'amount') {
         subtotal += addOnPrice.amount;
       }
     }
@@ -345,7 +356,9 @@ export class PricingRendererElement extends LitElement {
     }
   }
 
-  private _setSelection(next: PricingSelection): void {
+  private _setSelection(input: PricingSelection): void {
+    // [impl->req~events-reconciled-selection~1] [impl->req~controlled-selection-untouched~1]
+    const next = this._normalized ? reconcileSelection(this._normalized, input).selection : input;
     if (this.selection === undefined) {
       this._internalSelection = next;
     }
@@ -369,9 +382,34 @@ export class PricingRendererElement extends LitElement {
   }
 
   private _selectPlan = (planId: string): void => {
+    if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    this._setSelection({ ...selection, planId });
+    const { selection: reconciled, removedAddOnIds } = reconcileSelection(this._normalized, {
+      ...selection,
+      planId,
+    });
+    if (removedAddOnIds.length === 0) {
+      // [impl->req~plan-change-immediate~1]
+      this._setSelection(reconciled);
+      return;
+    }
+    // [impl->req~plan-change-confirmation~1] [impl->req~pending-plan-change-shape~1]
+    this._pendingAddOnChange = {
+      addOnId: '',
+      select: false,
+      addIds: [],
+      removeIds: removedAddOnIds,
+      planId,
+    };
+    this._previousFocus =
+      this.ownerDocument.activeElement instanceof HTMLElement
+        ? this.ownerDocument.activeElement
+        : undefined;
+    this.requestUpdate();
+    void this.updateComplete.then(() => {
+      this.querySelector<HTMLElement>('.pr-dialog button[autofocus]')?.focus();
+    });
   };
 
   private _selectBilling = (billingPeriod: string): void => {
@@ -479,11 +517,16 @@ export class PricingRendererElement extends LitElement {
         quantity: current?.quantity ?? item?.subscriptionConstraints?.minQuantity ?? 1,
       };
     };
-    setState(change.addOnId, change.select);
+    // [impl->req~plan-change-apply~1]
+    if (change.planId === undefined) setState(change.addOnId, change.select);
     change.addIds.forEach((id) => setState(id, true));
     change.removeIds.forEach((id) => setState(id, false));
     this._pendingAddOnChange = undefined;
-    this._setSelection({ ...selection, addOns });
+    this._setSelection({
+      ...selection,
+      ...(change.planId !== undefined ? { planId: change.planId } : {}),
+      addOns,
+    });
     void this.updateComplete.then(() => this._restoreDialogFocus());
   }
 
@@ -535,7 +578,9 @@ export class PricingRendererElement extends LitElement {
       actionId,
       ...(planId ? { planId } : {}),
       ...(href ? { href } : {}),
-      selection: viewModel.resolved.selection,
+      selection: this._normalized
+        ? reconcileSelection(this._normalized, viewModel.resolved.selection).selection
+        : viewModel.resolved.selection,
       resolved: viewModel.resolved,
       ...(metadata ? { metadata } : {}),
     };

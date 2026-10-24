@@ -20,6 +20,7 @@ export {
   createDefaultSelection,
   mergeSelection,
   normalizeAddOnQuantity,
+  reconcileSelection,
   resolvePricing,
 } from './resolve.js';
 export {
