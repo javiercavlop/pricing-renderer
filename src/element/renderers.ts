@@ -152,6 +152,13 @@ function resolvedValuesDiffer(row: PricingComparisonRow): boolean {
   return values.some((value) => !deepEqual(value, values[0]));
 }
 
+// A description that is empty or only repeats the row name adds nothing, so it is not rendered.
+function rowDescription(row: PricingComparisonRow): string | undefined {
+  const description = row.description?.trim();
+  if (!description) return undefined;
+  return description.toLowerCase() === row.name.trim().toLowerCase() ? undefined : row.description;
+}
+
 function renderRowMetadata(
   viewModel: PricingViewModel,
   row: PricingComparisonRow,
@@ -617,7 +624,7 @@ function renderCompactComparison(
                       <article class="pr-feature-card" data-pr-part="comparison-row">
                         <div>
                           <h5>${row.name}</h5>
-                          ${row.description ? html`<p>${row.description}</p>` : nothing}
+                          ${rowDescription(row) ? html`<p>${rowDescription(row)}</p>` : nothing}
                           ${renderRowMetadata(viewModel, row)}
                           ${
                             row.docUrl && isSafeLink(row.docUrl)
@@ -709,7 +716,11 @@ function renderTableComparison(
                         <tr data-pr-part="comparison-row">
                           <th scope="row">
                             <span>${row.name}</span>
-                            ${row.description ? html`<small>${row.description}</small>` : nothing}
+                            ${
+                              rowDescription(row)
+                                ? html`<small>${rowDescription(row)}</small>`
+                                : nothing
+                            }
                             ${renderRowMetadata(viewModel, row)}
                           </th>
                           ${row.values.map(
