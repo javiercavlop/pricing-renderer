@@ -1,0 +1,2702 @@
+{
+  "summary": {
+    "pricings": 37,
+    "medianRows": 65,
+    "firstQuartileRows": 49,
+    "thirdQuartileRows": 98,
+    "minRows": 15,
+    "maxRows": 174,
+    "over100Rows": 8,
+    "withOneGroup": 4,
+    "withTwoGroups": 30,
+    "withOneOrTwoGroups": 34,
+    "orphanOn3Columns": 17,
+    "orphanOn4Columns": 5,
+    "orphanOn3Or4Columns": 22
+  },
+  "pricings": [
+    {
+      "fixture": "tests/fixtures/spectra/box/2024.yml",
+      "plans": 5,
+      "addOns": 9,
+      "rows": 60,
+      "featureRows": 50,
+      "usageLimitRows": 10,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 50
+        },
+        {
+          "id": "Usage limits",
+          "rows": 10
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 50
+      },
+      "identicalInAllPlans": 23,
+      "rowsAfterDifferencesOnly": 37,
+      "addOnOnlyRows": 4,
+      "addOnOnlyRowIds": ["boxGovernance", "boxZones", "boxKeySafe", "boxShield"],
+      "unitPluralCandidates": 7,
+      "unitPluralExamples": [
+        "storageLimit: 100 GB",
+        "uploadSizeLimit: 2 GB",
+        "industryAppsIntegrationLimit: 0 integration",
+        "versionHistoryThreshold: 25 day",
+        "apiCallsLimit: 25,000 calls/month"
+      ],
+      "rowsWithoutDescription": 60,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 5,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 5,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 47,
+        "id": "includedDocumentsFor3rdPartyAndCustomApps"
+      },
+      "longestDescription": {
+        "length": 132,
+        "id": "addOn:boxKeySafe"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 16,
+        "id": "BUSINESS_STARTER"
+      },
+      "longestAddOnName": {
+        "length": 27,
+        "id": "extraUserBusinessStarter"
+      },
+      "plansMod3": 2,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": true
+    },
+    {
+      "fixture": "tests/fixtures/spectra/buffer/2024.yml",
+      "plans": 4,
+      "addOns": 3,
+      "rows": 92,
+      "featureRows": 76,
+      "usageLimitRows": 16,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 76
+        },
+        {
+          "id": "Usage limits",
+          "rows": 16
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 76
+      },
+      "identicalInAllPlans": 39,
+      "rowsAfterDifferencesOnly": 53,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 16,
+      "unitPluralExamples": [
+        "socialChannelsLimit: 3 account",
+        "postsPerScheduledQueuePerSocialAccountLimit: 10 post/channel",
+        "ideasLimit: 100 idea",
+        "useInstagramHistoricalDataAccess: 0 month",
+        "useTiktokHistoricalDataAccess: 0 month"
+      ],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 10,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 3,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 50,
+        "id": "postsPerScheduledQueuePerSocialAccountLimit"
+      },
+      "longestDescription": {
+        "length": 362,
+        "id": "row:twoFactorAuthentication"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ESSENTIALS"
+      },
+      "longestAddOnName": {
+        "length": 25,
+        "id": "essentialsExtraChannels"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/canva/2024.yml",
+      "plans": 4,
+      "addOns": 0,
+      "rows": 106,
+      "featureRows": 92,
+      "usageLimitRows": 14,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 92
+        },
+        {
+          "id": "Usage limits",
+          "rows": 14
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 92
+      },
+      "identicalInAllPlans": 45,
+      "rowsAfterDifferencesOnly": 61,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 12,
+      "unitPluralExamples": [
+        "minimumUsersRequired: 0 user",
+        "magicDesignUsageTokens: 10 use",
+        "magicWriteTotalUsages: 50 use",
+        "magicWriteReusableTokens: 500 use",
+        "magicText2ImageTotalTokens: 50 use"
+      ],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 14,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 45,
+        "id": "availableOnlyIfMoreThan100SeatsInvoiced"
+      },
+      "longestDescription": {
+        "length": 170,
+        "id": "plan:PRO"
+      },
+      "longestStringCell": {
+        "length": 12,
+        "id": "assets1@FREE"
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/circleci/2024.yml",
+      "plans": 3,
+      "addOns": 7,
+      "rows": 58,
+      "featureRows": 49,
+      "usageLimitRows": 9,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 49
+        },
+        {
+          "id": "Usage limits",
+          "rows": 9
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 49
+      },
+      "identicalInAllPlans": 30,
+      "rowsAfterDifferencesOnly": 28,
+      "addOnOnlyRows": 4,
+      "addOnOnlyRowIds": ["8x5SLA", "12x5SLA", "24x5SLA", "24x7SLA"],
+      "unitPluralCandidates": 9,
+      "unitPluralExamples": [
+        "maxUsers: 5 user",
+        "creditsLimit: 30,000 credit/month",
+        "networkLimit: 5 GB",
+        "storageLimit: 2 GB",
+        "concurrentJobRunsLimitNonMacOs: 30 job"
+      ],
+      "rowsWithoutDescription": 57,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 3,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 7,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 36,
+        "id": "concurrentJobRunsLimitNonMacOs"
+      },
+      "longestDescription": {
+        "length": 23,
+        "id": "row:componentsRelease"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 11,
+        "id": "PERFORMANCE"
+      },
+      "longestAddOnName": {
+        "length": 16,
+        "id": "extraComponents"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/clickup/2024.yml",
+      "plans": 4,
+      "addOns": 2,
+      "rows": 174,
+      "featureRows": 136,
+      "usageLimitRows": 38,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 136
+        },
+        {
+          "id": "Usage limits",
+          "rows": 38
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 136
+      },
+      "identicalInAllPlans": 67,
+      "rowsAfterDifferencesOnly": 107,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["clickUpAI"],
+      "unitPluralCandidates": 38,
+      "unitPluralExamples": [
+        "useUsers: 1,000,000 user",
+        "useTasks: 1,000,000,000,000 task",
+        "useSpaces: 5 space",
+        "useListsPerFolder: 100 list",
+        "useFoldersPerSpace: 400 folder"
+      ],
+      "rowsWithoutDescription": 150,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 2,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 51,
+        "id": "timeTrackingCardsBillableReportsAndTimesheets"
+      },
+      "longestDescription": {
+        "length": 125,
+        "id": "row:proofing"
+      },
+      "longestStringCell": {
+        "length": 13,
+        "id": "hipaaCompliance@ENTERPRISE"
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 31,
+        "id": "extraEmailAccountInClickUp"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/clockify/2024.yml",
+      "plans": 6,
+      "addOns": 4,
+      "rows": 72,
+      "featureRows": 72,
+      "usageLimitRows": 0,
+      "groups": 1,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 72
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 72
+      },
+      "identicalInAllPlans": 23,
+      "rowsAfterDifferencesOnly": 49,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 0,
+      "unitPluralExamples": [],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 4,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 31,
+        "id": "accessToAllCake.comProducts"
+      },
+      "longestDescription": {
+        "length": 139,
+        "id": "row:singleSignOn"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 11,
+        "id": "CAKE_BUNDLE"
+      },
+      "longestAddOnName": {
+        "length": 16,
+        "id": "kioskEnterprise"
+      },
+      "plansMod3": 0,
+      "plansMod2": 0,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/crowdcast/2024.yml",
+      "plans": 3,
+      "addOns": 4,
+      "rows": 22,
+      "featureRows": 17,
+      "usageLimitRows": 5,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 17
+        },
+        {
+          "id": "Usage limits",
+          "rows": 5
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 17
+      },
+      "identicalInAllPlans": 14,
+      "rowsAfterDifferencesOnly": 8,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["crowdcastExpertServices"],
+      "unitPluralCandidates": 5,
+      "unitPluralExamples": [
+        "liveAttendeesLimit: 100 attendee",
+        "liveHoursPerMonthLimit: 10 hour/month",
+        "hostSeatsLimit: 2 seat",
+        "sessionsLimit: 2 hour/session",
+        "multistreamLocationsLimit: 0 location"
+      ],
+      "rowsWithoutDescription": 6,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 28,
+        "id": "hdLiveVideoWithRecording"
+      },
+      "longestDescription": {
+        "length": 224,
+        "id": "row:emailSupport"
+      },
+      "longestStringCell": {
+        "length": 2,
+        "id": "transactionFee@LITE"
+      },
+      "longestPlanName": {
+        "length": 8,
+        "id": "BUSINESS"
+      },
+      "longestAddOnName": {
+        "length": 25,
+        "id": "crowdcastExpertServices"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/databox/2024.yml",
+      "plans": 5,
+      "addOns": 8,
+      "rows": 72,
+      "featureRows": 64,
+      "usageLimitRows": 8,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 64
+        },
+        {
+          "id": "Usage limits",
+          "rows": 8
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 64
+      },
+      "identicalInAllPlans": 30,
+      "rowsAfterDifferencesOnly": 42,
+      "addOnOnlyRows": 3,
+      "addOnOnlyRowIds": ["15minPriorityConnections", "whiteLabeling", "quickstartOnboarding"],
+      "unitPluralCandidates": 8,
+      "unitPluralExamples": [
+        "includedDataSources: 3 data source",
+        "dataSourcesLimit: 3 data source",
+        "historicalDataThreshold: 11 month",
+        "warehouseStorageLimit: 5 GB",
+        "usersLimit: 3 user"
+      ],
+      "rowsWithoutDescription": 60,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 5,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 8,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 34,
+        "id": "customAccountDataboardTemplates"
+      },
+      "longestDescription": {
+        "length": 301,
+        "id": "row:databoardDesigner"
+      },
+      "longestStringCell": {
+        "length": 13,
+        "id": "dataSyncFrequency@STARTER"
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 28,
+        "id": "brandingAndWhiteLabelling"
+      },
+      "plansMod3": 2,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": true
+    },
+    {
+      "fixture": "tests/fixtures/spectra/deskera/2024.yml",
+      "plans": 3,
+      "addOns": 0,
+      "rows": 100,
+      "featureRows": 100,
+      "usageLimitRows": 0,
+      "groups": 1,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 100
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 100
+      },
+      "identicalInAllPlans": 87,
+      "rowsAfterDifferencesOnly": 13,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 0,
+      "unitPluralExamples": [],
+      "rowsWithoutDescription": 100,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 3,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 26,
+        "id": "documentTemplateDesigner"
+      },
+      "longestDescription": {
+        "length": 0,
+        "id": ""
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/dropbox/2024.yml",
+      "plans": 5,
+      "addOns": 4,
+      "rows": 103,
+      "featureRows": 86,
+      "usageLimitRows": 17,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 86
+        },
+        {
+          "id": "Usage limits",
+          "rows": 17
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 86
+      },
+      "identicalInAllPlans": 50,
+      "rowsAfterDifferencesOnly": 53,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 10,
+      "unitPluralExamples": [
+        "storageLimit: 2,000 GB",
+        "users: 3 user",
+        "signatureRequestLimit: 3 signature/month",
+        "templatesLimit: 0 template",
+        "accountRecoveryAndVersionHistoryThreshold: 30 day"
+      ],
+      "rowsWithoutDescription": 103,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 5,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 4,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 52,
+        "id": "apiAccessToDataTransportPlatformPartnersLimit"
+      },
+      "longestDescription": {
+        "length": 0,
+        "id": ""
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 13,
+        "id": "BUSINESS_PLUS"
+      },
+      "longestAddOnName": {
+        "length": 21,
+        "id": "extraEnterpriseUser"
+      },
+      "plansMod3": 2,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": true
+    },
+    {
+      "fixture": "tests/fixtures/spectra/evernote/2024.yml",
+      "plans": 4,
+      "addOns": 0,
+      "rows": 39,
+      "featureRows": 32,
+      "usageLimitRows": 7,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 32
+        },
+        {
+          "id": "Usage limits",
+          "rows": 7
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 32
+      },
+      "identicalInAllPlans": 21,
+      "rowsAfterDifferencesOnly": 18,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 7,
+      "unitPluralExamples": [
+        "notesLimit: 50 notes",
+        "notebooksLimit: 2,000 notebooks",
+        "maximumNoteSize: 25 MB/note",
+        "globalMonthlyUploadLimit: 60 MB",
+        "monthlyUploadLimitByUser: 0 MB"
+      ],
+      "rowsWithoutDescription": 23,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 34,
+        "id": "centralizedAccountAdministration"
+      },
+      "longestDescription": {
+        "length": 93,
+        "id": "row:easySharing"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 11,
+        "id": "PROFESIONAL"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/figma/2024.yml",
+      "plans": 6,
+      "addOns": 0,
+      "rows": 93,
+      "featureRows": 91,
+      "usageLimitRows": 2,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 91
+        },
+        {
+          "id": "Usage limits",
+          "rows": 2
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 91
+      },
+      "identicalInAllPlans": 30,
+      "rowsAfterDifferencesOnly": 63,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 2,
+      "unitPluralExamples": ["versionHistoryDepth: 30 day", "variableModesLimits: 0 mode"],
+      "rowsWithoutDescription": 93,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 6,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 32,
+        "id": "organizationWideDesignSystems"
+      },
+      "longestDescription": {
+        "length": 0,
+        "id": ""
+      },
+      "longestStringCell": {
+        "length": 38,
+        "id": "videosInPrototypes@STARTER"
+      },
+      "longestPlanName": {
+        "length": 21,
+        "id": "DEV_MODE_ORGANIZATION"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 0,
+      "plansMod2": 0,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/github/2024.yml",
+      "plans": 3,
+      "addOns": 14,
+      "rows": 90,
+      "featureRows": 81,
+      "usageLimitRows": 9,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 81
+        },
+        {
+          "id": "Usage limits",
+          "rows": 9
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 81
+      },
+      "identicalInAllPlans": 76,
+      "rowsAfterDifferencesOnly": 14,
+      "addOnOnlyRows": 32,
+      "addOnOnlyRowIds": [
+        "ipAllowList",
+        "preReceiveHooks",
+        "premiumAndPremiumPlusSupport",
+        "selfHostedDeployment",
+        "copilotMessagesAndInteractions",
+        "copilotContextAwareCodingSupport",
+        "copilotContextAwareCodingExplanation",
+        "copilotDebuggingAssistance",
+        "copilotSecurityRemediationAssistance",
+        "copilotConversationsTailoredToRepositories",
+        "copilotAnswersBasedOnKnowledgeBase",
+        "copilotAccessToKnowledgeFromTopOpenSourceRepos",
+        "copilotPullRequestDiffAnalysis",
+        "copilotWebSearch",
+        "copilotRealTimeCodeSuggestions",
+        "copilotCommentsToCode",
+        "copilotFineTunedModels",
+        "copilotInlineChat",
+        "copilotPromptSuggestions",
+        "copilotSlashCommandsAndContextVariables",
+        "copilotCommitmessageGeneration",
+        "copilotPullRequestDescriptionAndSummarization",
+        "copilotIDEIntegration",
+        "copilotCLIIntegration",
+        "copilotForGithubMobile",
+        "copilotForGithubWebsite",
+        "copilotPublicCodeFilter",
+        "copilotUserManagement",
+        "copilotDataExcludedFromTrainingByDefault",
+        "copilotIpIndemnity",
+        "copilotContentExclusions",
+        "copilotSSO"
+      ],
+      "unitPluralCandidates": 5,
+      "unitPluralExamples": [
+        "githubActionsQuota: 2,000 minute/month",
+        "diskSpaceForGithubPackages: 0.5 GB",
+        "githubCodepacesStorage: 15 GB/month",
+        "githubCodepacesCoreHours: 120 coreHours/month",
+        "gitLFSMaximunFileSize: 2 GB"
+      ],
+      "rowsWithoutDescription": 6,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 14,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 54,
+        "id": "copilotAccessToKnowledgeFromTopOpenSourceRepos"
+      },
+      "longestDescription": {
+        "length": 314,
+        "id": "row:githubCodespaces"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 26,
+        "id": "githubCopilotIndividuals"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/hypercontext/2024.yml",
+      "plans": 4,
+      "addOns": 0,
+      "rows": 63,
+      "featureRows": 63,
+      "usageLimitRows": 0,
+      "groups": 1,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 63
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 63
+      },
+      "identicalInAllPlans": 6,
+      "rowsAfterDifferencesOnly": 57,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 0,
+      "unitPluralExamples": [],
+      "rowsWithoutDescription": 63,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 39,
+        "id": "personalProductivityToolsIntegration"
+      },
+      "longestDescription": {
+        "length": 57,
+        "id": "plan:FREE"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/jira/2024.yml",
+      "plans": 4,
+      "addOns": 1,
+      "rows": 66,
+      "featureRows": 60,
+      "usageLimitRows": 6,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 60
+        },
+        {
+          "id": "Usage limits",
+          "rows": 6
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 60
+      },
+      "identicalInAllPlans": 29,
+      "rowsAfterDifferencesOnly": 37,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 6,
+      "unitPluralExamples": [
+        "usersLimit: 10 user/site",
+        "sitesLimit: 150 site",
+        "totalAutomationLimit: 100 rule/month",
+        "perUserAutomationLimit: 1,000 rule/month",
+        "storageLimit: 2 GB"
+      ],
+      "rowsWithoutDescription": 65,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 1,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 41,
+        "id": "businessContinuityAndDisasterRecovery"
+      },
+      "longestDescription": {
+        "length": 79,
+        "id": "row:passwordPolicies"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 22,
+        "id": "atlassianGuardAddOn"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/mailchimp/2024.yml",
+      "plans": 4,
+      "addOns": 5,
+      "rows": 98,
+      "featureRows": 90,
+      "usageLimitRows": 8,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 90
+        },
+        {
+          "id": "Usage limits",
+          "rows": 8
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 90
+      },
+      "identicalInAllPlans": 56,
+      "rowsAfterDifferencesOnly": 42,
+      "addOnOnlyRows": 16,
+      "addOnOnlyRowIds": [
+        "smsMarketing",
+        "mmsMarketing",
+        "sendSmsFromCustomerJourneyBuiler",
+        "sendMmsFromCustomerJourneyBuiler",
+        "smsAutomation",
+        "smsAndMmsAddOnContentTemplates",
+        "smsAndMmsAddOnRealTimeReporting",
+        "smsAndMmsAddOnBulkConversations",
+        "smsAndMmsAddOnTwoWayConversations",
+        "smsAndMmsAddOnTextToJoin",
+        "smsAndMmsAddOnTapToText",
+        "smsAndMmsAddOnMultiStepPopUpForm",
+        "autoVetting",
+        "standardVetting",
+        "premiumMigrationServices",
+        "transactionalEmails"
+      ],
+      "unitPluralCandidates": 8,
+      "unitPluralExamples": [
+        "contactsLimit: 500 contact",
+        "audiencesLimit: 3 audience",
+        "seatsLimit: 3 seat",
+        "appEngagementThreshold: 3 month",
+        "monthlyEmailSends: 2,500 email/month"
+      ],
+      "rowsWithoutDescription": 98,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 5,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 41,
+        "id": "smsAndMmsAddOnMultiStepPopUpForm"
+      },
+      "longestDescription": {
+        "length": 64,
+        "id": "plan:STANDARD"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ESSENTIALS"
+      },
+      "longestAddOnName": {
+        "length": 48,
+        "id": "smsAndMmsMarketingAddOnForEssentialsTier"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/microsoft365Business/2024.yml",
+      "plans": 4,
+      "addOns": 1,
+      "rows": 64,
+      "featureRows": 60,
+      "usageLimitRows": 4,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 60
+        },
+        {
+          "id": "Usage limits",
+          "rows": 4
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 60
+      },
+      "identicalInAllPlans": 30,
+      "rowsAfterDifferencesOnly": 34,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["copilot"],
+      "unitPluralCandidates": 4,
+      "unitPluralExamples": [
+        "cloudStorageLimit: 1,000 GB",
+        "slaMaxUptime: 99 %",
+        "mailboxMaxCapacity: 0 GB",
+        "maxAttendess: 0 people"
+      ],
+      "rowsWithoutDescription": 23,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 1,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 34,
+        "id": "teamSchedulesAndTaskManagement"
+      },
+      "longestDescription": {
+        "length": 130,
+        "id": "row:conditionalAccessDefinition"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 17,
+        "id": "APPS_FOR_BUSINESS"
+      },
+      "longestAddOnName": {
+        "length": 10,
+        "id": "copilotAI"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/notion/2024.yml",
+      "plans": 4,
+      "addOns": 2,
+      "rows": 65,
+      "featureRows": 58,
+      "usageLimitRows": 7,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 58
+        },
+        {
+          "id": "Usage limits",
+          "rows": 7
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 58
+      },
+      "identicalInAllPlans": 32,
+      "rowsAfterDifferencesOnly": 33,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["customDomainAndBranding"],
+      "unitPluralCandidates": 6,
+      "unitPluralExamples": [
+        "fileUploadsLimit: 5 MB",
+        "pageHistoryThreshold: 7 days",
+        "notionSiteDomainLimit: 5 domain",
+        "guestsLimit: 10 guest",
+        "customDomainsLimit: 0 domain"
+      ],
+      "rowsWithoutDescription": 65,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 2,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 36,
+        "id": "advancedWorkspaceSecurityControls"
+      },
+      "longestDescription": {
+        "length": 0,
+        "id": ""
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 19,
+        "id": "extraCustomDomain"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/okta/2024.yml",
+      "plans": 0,
+      "addOns": 18,
+      "rows": 141,
+      "featureRows": 140,
+      "usageLimitRows": 1,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 140
+        },
+        {
+          "id": "Usage limits",
+          "rows": 1
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 140
+      },
+      "identicalInAllPlans": 141,
+      "rowsAfterDifferencesOnly": 0,
+      "addOnOnlyRows": 141,
+      "addOnOnlyRowIds": [
+        "oktaIntegrationNetwork",
+        "oktaTreathInsight",
+        "desktopSSO",
+        "mobileSSO",
+        "3rdPartyMultifactorAuthenticationIntegration",
+        "groupAccessPolicies",
+        "appAccessPolicies",
+        "radiusAuthentication",
+        "pivCardAuthentication",
+        "idpDiscovery",
+        "oktaFastPass",
+        "customOrgUrls",
+        "oktaSignInWidget",
+        "localLanguageSupport",
+        "unlimitedIntegrationsToAd",
+        "unlimitedIntegrationsToLdap",
+        "siemIntegration",
+        "locationContext",
+        "deviceContext",
+        "networkContext",
+        "securityQuestions",
+        "oktaVerifyOtp",
+        "oktaVerifyPush",
+        "emailAsAFactor",
+        "smsAsAFactor",
+        "voiceCallAsAFactor",
+        "u2fAsAFactor",
+        "thirdPartyFactors",
+        "windowsHello",
+        "appleTouchId",
+        "newCityLocationContext",
+        "newStateLocationContext",
+        "newCountryLocationContext",
+        "newGeo-locationLocationContext",
+        "impossibleTravelPatterns",
+        "newDeviceContext",
+        "managedDeviceContext",
+        "deviceSecurityAttributesContext",
+        "newIpNetworkContext",
+        "specifiedIpZonesNetworkContext",
+        "networkAnonymizers",
+        "oktaThreatInsight",
+        "cloudDirectory",
+        "unlimitedDirectoryIntegrations",
+        "unlimitedCustomUserAttributes",
+        "unlimitedCustomUserFields",
+        "customMapping",
+        "customTransformation",
+        "cloud-basedLdapAuthentication",
+        "autoProvisioningForOinApps",
+        "deprovisioningForOinApps",
+        "directoryIntegrationWithAd",
+        "directoryIntegrationWithLdap",
+        "completeAdSynchronizationForOffice365",
+        "appAccessTiedToLifecycleStates",
+        "appProvisioningTiedToLifecycleStates",
+        "createAccountsInApplications",
+        "deactivateAccountsInApplications",
+        "manageEntitlements",
+        "groupDiscovery",
+        "groupMatching",
+        "groupPush",
+        "groupUpdates",
+        "automations",
+        "accessRequestWorkflows",
+        "accessAuditReports",
+        "recentUnassignmentsReport",
+        "apisForFullCustomization",
+        "customizableDirectoryForUsers",
+        "customizableDirectoryForGroups",
+        "customizableDirectoryForDevices",
+        "manageLifecycleStates",
+        "attributeMapping",
+        "attributeTransformation",
+        "builtInStandards-basedProvisioning",
+        "onPremProvisioningSdk",
+        "hr-drivenItProvisioning",
+        "masteringFromSelectOinApps",
+        "masteringFromOnPremisesApps",
+        "masteringFromCsvDirectory",
+        "applicationIntegrations",
+        "directoryIntegrations",
+        "ouath2.0Compliant",
+        "oicdCompliant",
+        "dynamicClientRegistration",
+        "centralAccessManagement",
+        "authorizationManagement",
+        "userConsent",
+        "customizableScopes",
+        "customizableClaims",
+        "customizableAuthorizationServers",
+        "yubiKey",
+        "selfServicePasswordReset",
+        "passwordlessDesktopLogin",
+        "automaticOktaFastPassEnrollment",
+        "privilegedAccessRequests",
+        "jitInfrastructureAccess",
+        "privilegedAccountVaulting",
+        "sessionRecording",
+        "secretsVaulting",
+        "cloudInfrastructureEntitlementDiscovery",
+        "cloudInfrastructureEntitlementAnalysis",
+        "supportsMixedEnvironments",
+        "endToEndLifecycleManagementOfLocalLinuxMachineAccounts",
+        "endToEndLifecycleManagementOfLocalWindowsMachineAccounts",
+        "seamlessSingleSignOnBuiltIntoYourSshWorkflows",
+        "seamlessSingleSignOnBuiltIntoYourRdpWorkflows",
+        "seamlessMfaBuiltIntoYourSshWorkflows",
+        "seamlessMfaBuiltIntoYourRdpWorkflows",
+        "backup",
+        "clienApplicationsForLocalSshIntegrations",
+        "clienApplicationsForLocalRdpIntegrations",
+        "clienApplicationsForDynamicDeviceBinding",
+        "apiAllowsForCustomAuthenticationWorkflows",
+        "apiAllowsForCustomManagementWorkflows",
+        "unlimitedAppIntegrations",
+        "headerBasedApplications",
+        "kerberosApplications",
+        "iwaApplications",
+        "onPremiseApplications",
+        "customWebApps",
+        "customWebPages",
+        "customWebPortals",
+        "unlimitedNumberOfPolicies",
+        "applicationPolicies",
+        "customHeaderVariables",
+        "authorizationPolicies",
+        "accessGatewayServers",
+        "dataCenters",
+        "networks",
+        "hosts",
+        "accessToAllOktaWorkflowsConnectors",
+        "accessToAllOktaWorkflowsTemplates",
+        "accessToAllOktaWorkflowsFeatures",
+        "accessToAllOktaWorkflowsFunctions",
+        "accessCertification",
+        "accessRequests",
+        "reporting",
+        "advancedSourcing",
+        "oppProvisioning",
+        "flowsLimit"
+      ],
+      "unitPluralCandidates": 0,
+      "unitPluralExamples": [],
+      "rowsWithoutDescription": 139,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 18,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 65,
+        "id": "endToEndLifecycleManagementOfLocalWindowsMachineAccounts"
+      },
+      "longestDescription": {
+        "length": 83,
+        "id": "row:backup"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 0,
+        "id": ""
+      },
+      "longestAddOnName": {
+        "length": 36,
+        "id": "adaptiveMultiFactorAuthentication"
+      },
+      "plansMod3": 0,
+      "plansMod2": 0,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/openphone/2024.yml",
+      "plans": 3,
+      "addOns": 6,
+      "rows": 52,
+      "featureRows": 48,
+      "usageLimitRows": 4,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 48
+        },
+        {
+          "id": "Usage limits",
+          "rows": 4
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 48
+      },
+      "identicalInAllPlans": 33,
+      "rowsAfterDifferencesOnly": 19,
+      "addOnOnlyRows": 6,
+      "addOnOnlyRowIds": [
+        "usAndCanadaMessaging",
+        "internationalCalling",
+        "internationalMessaging",
+        "smsViaZapier",
+        "SOC2Report",
+        "useCanadaMessagingFeePayed"
+      ],
+      "unitPluralCandidates": 2,
+      "unitPluralExamples": [
+        "sharedPhoneNumbersLimit: 10 user",
+        "smsViaZapierAddonLimit: 0 message"
+      ],
+      "rowsWithoutDescription": 50,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 3,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 6,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 38,
+        "id": "portPhoneNumbersFromOtherCarriers"
+      },
+      "longestDescription": {
+        "length": 11,
+        "id": "row:groupCalling"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 53,
+        "id": "carrierReviewAndSetupFeesForUsCanadaMessaging"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/overleaf/2024.yml",
+      "plans": 4,
+      "addOns": 0,
+      "rows": 18,
+      "featureRows": 16,
+      "usageLimitRows": 2,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 16
+        },
+        {
+          "id": "Usage limits",
+          "rows": 2
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 16
+      },
+      "identicalInAllPlans": 5,
+      "rowsAfterDifferencesOnly": 13,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 2,
+      "unitPluralExamples": [
+        "maxCollaboratorsPerProject: 6 collaborator",
+        "compileTimeoutLimit: 20 second"
+      ],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 29,
+        "id": "maxCollaboratorsPerProject"
+      },
+      "longestDescription": {
+        "length": 272,
+        "id": "row:latexEditor"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/planable/2024.yml",
+      "plans": 4,
+      "addOns": 5,
+      "rows": 52,
+      "featureRows": 41,
+      "usageLimitRows": 11,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 41
+        },
+        {
+          "id": "Usage limits",
+          "rows": 11
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 41
+      },
+      "identicalInAllPlans": 29,
+      "rowsAfterDifferencesOnly": 23,
+      "addOnOnlyRows": 4,
+      "addOnOnlyRowIds": [
+        "pageLevelInsights",
+        "postLevelMetrics",
+        "customReports",
+        "audienceInsights"
+      ],
+      "unitPluralCandidates": 9,
+      "unitPluralExamples": [
+        "postsLimit: 50 posts",
+        "postsPerMonthLimit: 50 posts/month",
+        "socialMediaPagesLimit: 10 pages/workspace",
+        "tweetsLimit: 1,000,000,000,000 tweet/page/day",
+        "numberOfLabels: 10,000,000 label"
+      ],
+      "rowsWithoutDescription": 42,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 30,
+        "id": "multiLevelApprovalWorkflows"
+      },
+      "longestDescription": {
+        "length": 104,
+        "id": "row:pages"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 25,
+        "id": "extraUserForENTERPRISE"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/postman/2024.yml",
+      "plans": 4,
+      "addOns": 12,
+      "rows": 112,
+      "featureRows": 100,
+      "usageLimitRows": 12,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 100
+        },
+        {
+          "id": "Usage limits",
+          "rows": 12
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 100
+      },
+      "identicalInAllPlans": 66,
+      "rowsAfterDifferencesOnly": 46,
+      "addOnOnlyRows": 14,
+      "addOnOnlyRowIds": [
+        "partnerEditorRole",
+        "postbot",
+        "postbotWriteTestsForAPIs",
+        "postbotAutomatesDocumentation",
+        "postbotDebugsRequests",
+        "postbotVisualizesApiResponses",
+        "postbotExpertSupport",
+        "postbotEnterpriseGradeAvailability",
+        "postbotEnhancedPrivacy",
+        "postmanFlows",
+        "flowsRoleManagement",
+        "flowsSupportForAI",
+        "advancedSecurity",
+        "apiBuilder"
+      ],
+      "unitPluralCandidates": 12,
+      "unitPluralExamples": [
+        "callsToPostmanApi: 10,000 calls/month",
+        "collectionRecoveryLimit: 30 day",
+        "packagesLimit: 3 package",
+        "mockServerCallsLimit: 1,000 call/month",
+        "monitoringCallsLimit: 1,000 call/month"
+      ],
+      "rowsWithoutDescription": 81,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 12,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 37,
+        "id": "postbotEnterpriseGradeAvailability"
+      },
+      "longestDescription": {
+        "length": 108,
+        "id": "row:publicApiDocumentation"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 32,
+        "id": "unlimitedCollectionRunsAddOn"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/pumble/2024.yml",
+      "plans": 4,
+      "addOns": 0,
+      "rows": 41,
+      "featureRows": 34,
+      "usageLimitRows": 7,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 34
+        },
+        {
+          "id": "Usage limits",
+          "rows": 7
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 34
+      },
+      "identicalInAllPlans": 27,
+      "rowsAfterDifferencesOnly": 14,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 7,
+      "unitPluralExamples": [
+        "users: 1,000,000,000 user",
+        "useMessageHistory: 1,000,000,000 day",
+        "useFileStoragePerAccount: 10 GB/account",
+        "useFileStoragePerUser: 0 GB/user",
+        "useVoiceCalls: 25 user"
+      ],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 28,
+        "id": "useFileStoragePerAccount"
+      },
+      "longestDescription": {
+        "length": 133,
+        "id": "row:permissions"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/quip/2024.yml",
+      "plans": 3,
+      "addOns": 0,
+      "rows": 15,
+      "featureRows": 15,
+      "usageLimitRows": 0,
+      "groups": 1,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 15
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 15
+      },
+      "identicalInAllPlans": 7,
+      "rowsAfterDifferencesOnly": 8,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 0,
+      "unitPluralExamples": [],
+      "rowsWithoutDescription": 15,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 41,
+        "id": "embedDocumentsInAllSalesforceObjects"
+      },
+      "longestDescription": {
+        "length": 81,
+        "id": "plan:ADVANCED"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 8,
+        "id": "ADVANCED"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/salesforce/2024.yml",
+      "plans": 3,
+      "addOns": 14,
+      "rows": 124,
+      "featureRows": 111,
+      "usageLimitRows": 13,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 111
+        },
+        {
+          "id": "Usage limits",
+          "rows": 13
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 111
+      },
+      "identicalInAllPlans": 87,
+      "rowsAfterDifferencesOnly": 37,
+      "addOnOnlyRows": 44,
+      "addOnOnlyRowIds": [
+        "einsteinRelationshipInsights",
+        "buyerAssistant",
+        "emailInsights",
+        "leadScoring",
+        "einsteinForecasting",
+        "einsteinCopilot",
+        "slackSalesElevate",
+        "slackIntegration",
+        "flowOrchestration",
+        "developerProSandbox",
+        "fullSandbox",
+        "revenueMilestones",
+        "guidanceCenter",
+        "enablementAnalytics",
+        "bestPracticeTemplates",
+        "inAppCoaching",
+        "inAppGuidance",
+        "inAppWalkthroughs",
+        "einsteinOpportunityScoring",
+        "einsteinDealHealthInsights",
+        "collaborativeForecasting",
+        "predictiveForecasting",
+        "revenueInsightsDashboards",
+        "einsteinAccountManagement",
+        "crmANalyticsPlusLicense",
+        "industryDashboardTemplates",
+        "tableauexplorerLicense",
+        "productCatalog",
+        "productPriceBook",
+        "usagePricing",
+        "quoting",
+        "guidedSelling",
+        "advancedApprovals",
+        "advancedOrderManagement",
+        "documentGeneration",
+        "omniStudio",
+        "personalizedPartnerExperiences",
+        "dealManagement",
+        "unifiedMarketing",
+        "partnerAI",
+        "partnerAnalytics",
+        "customObjects",
+        "partnerRelationshipDataStorage",
+        "partnerRelationshipApi"
+      ],
+      "unitPluralCandidates": 13,
+      "unitPluralExamples": [
+        "numberOfCampaignsPerOportunity: 0 campaign/opportunity",
+        "numberOfCustomAppsPerOrg: 0 customApp/Org",
+        "numberOfProcessesAndFlows: 0 processesFlows/org",
+        "numberOfCustomizableProfiles: 2 profile/org",
+        "numberOfRoles: 2 rol/org"
+      ],
+      "rowsWithoutDescription": 76,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 3,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 14,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 46,
+        "id": "partnerRelationshipDataStorageLimitMember"
+      },
+      "longestDescription": {
+        "length": 159,
+        "id": "row:massEmail"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 13,
+        "id": "STARTER_SUITE"
+      },
+      "longestAddOnName": {
+        "length": 50,
+        "id": "partnerRelationshipManagementWithExternalApps"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/shopify/2022.yml",
+      "plans": 3,
+      "addOns": 1,
+      "rows": 43,
+      "featureRows": 38,
+      "usageLimitRows": 5,
+      "groups": 6,
+      "groupRows": [
+        {
+          "id": "Features",
+          "rows": 17
+        },
+        {
+          "id": "Shopify Shipping",
+          "rows": 5
+        },
+        {
+          "id": "Shopify Payments",
+          "rows": 5
+        },
+        {
+          "id": "Point of Sale",
+          "rows": 2
+        },
+        {
+          "id": "International commerce",
+          "rows": 9
+        },
+        {
+          "id": "Usage limits",
+          "rows": 5
+        }
+      ],
+      "longestGroup": {
+        "id": "Features",
+        "rows": 17
+      },
+      "identicalInAllPlans": 28,
+      "rowsAfterDifferencesOnly": 15,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["shopifyPosPro"],
+      "unitPluralCandidates": 2,
+      "unitPluralExamples": [
+        "staffAccountsLimit: 2 account",
+        "inventoryLocationsLimit: 4 location"
+      ],
+      "rowsWithoutDescription": 6,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 59,
+        "id": "thirdPartyTransactionFeeNotUsingShopifyPaymentsRate"
+      },
+      "longestDescription": {
+        "length": 179,
+        "id": "row:fraudAnalysis"
+      },
+      "longestStringCell": {
+        "length": 10,
+        "id": "onlineCreditCardRates@BASIC"
+      },
+      "longestPlanName": {
+        "length": 8,
+        "id": "ADVANCED"
+      },
+      "longestAddOnName": {
+        "length": 15,
+        "id": "SHOPIFY_POS_PRO"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/slack/2024.yml",
+      "plans": 4,
+      "addOns": 4,
+      "rows": 51,
+      "featureRows": 44,
+      "usageLimitRows": 7,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 44
+        },
+        {
+          "id": "Usage limits",
+          "rows": 7
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 44
+      },
+      "identicalInAllPlans": 13,
+      "rowsAfterDifferencesOnly": 38,
+      "addOnOnlyRows": 2,
+      "addOnOnlyRowIds": ["adminSlackEnterpriseKeys", "slackAI"],
+      "unitPluralCandidates": 6,
+      "unitPluralExamples": [
+        "useMessagesAccess: 90 message",
+        "useAppsAndServices: 10 app",
+        "useVoiceAndVideoCalls: 50 people",
+        "useWorkflowsPremium: 0 execution/month",
+        "useWorkflows: 0 workflow"
+      ],
+      "rowsWithoutDescription": 0,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 4,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 37,
+        "id": "privilegesGeneralChannelManagement"
+      },
+      "longestDescription": {
+        "length": 384,
+        "id": "row:premiumWorkflows"
+      },
+      "longestStringCell": {
+        "length": 62,
+        "id": "support@ENTERPRISE_GRID"
+      },
+      "longestPlanName": {
+        "length": 15,
+        "id": "ENTERPRISE_GRID"
+      },
+      "longestAddOnName": {
+        "length": 29,
+        "id": "premiumWorkflowOverageCost"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/tableau/2024.yml",
+      "plans": 3,
+      "addOns": 7,
+      "rows": 42,
+      "featureRows": 41,
+      "usageLimitRows": 1,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 41
+        },
+        {
+          "id": "Usage limits",
+          "rows": 1
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 41
+      },
+      "identicalInAllPlans": 19,
+      "rowsAfterDifferencesOnly": 23,
+      "addOnOnlyRows": 10,
+      "addOnOnlyRowIds": [
+        "viewLineageAndImpact",
+        "setDataQualityWarnings",
+        "advancedDeploymentMonitoring",
+        "programmaticContentMigration",
+        "seeDataQualityWarnings",
+        "consumePredictiveModels",
+        "scheduleFlows",
+        "monitorFlowPerformance",
+        "monitorFlowHealth",
+        "analyticsAPI"
+      ],
+      "unitPluralCandidates": 1,
+      "unitPluralExamples": ["flowsLimit: 0 flow"],
+      "rowsWithoutDescription": 31,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 7,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 58,
+        "id": "createNewWorkbooksBasedOnPreBuiltDashboardStarters"
+      },
+      "longestDescription": {
+        "length": 139,
+        "id": "row:createAndPublishNewWorkbookFromNewDataSources"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 8,
+        "id": "EXPLORER"
+      },
+      "longestAddOnName": {
+        "length": 24,
+        "id": "dataManagementExplorer"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/trello/2024.yml",
+      "plans": 4,
+      "addOns": 1,
+      "rows": 46,
+      "featureRows": 41,
+      "usageLimitRows": 5,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 41
+        },
+        {
+          "id": "Usage limits",
+          "rows": 5
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 41
+      },
+      "identicalInAllPlans": 18,
+      "rowsAfterDifferencesOnly": 28,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["enforce2FA"],
+      "unitPluralCandidates": 3,
+      "unitPluralExamples": [
+        "workspaceCollaboratorsLimit: 10 collaborator",
+        "boardsLimit: 10 board/workspace",
+        "commandsRunLimit: 1,000 run/board"
+      ],
+      "rowsWithoutDescription": 27,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 4,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 29,
+        "id": "organizationWidePermissions"
+      },
+      "longestDescription": {
+        "length": 233,
+        "id": "row:powerUps"
+      },
+      "longestStringCell": {
+        "length": 23,
+        "id": "support@ENTERPRISE"
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 16,
+        "id": "ATLASSIAN_ACCESS"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/trustmary/2024.yml",
+      "plans": 4,
+      "addOns": 1,
+      "rows": 49,
+      "featureRows": 44,
+      "usageLimitRows": 5,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 44
+        },
+        {
+          "id": "Usage limits",
+          "rows": 5
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 44
+      },
+      "identicalInAllPlans": 28,
+      "rowsAfterDifferencesOnly": 21,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["onboardingPackage"],
+      "unitPluralCandidates": 3,
+      "unitPluralExamples": [
+        "surveyResponsesLimit: 5 response/month",
+        "requestsViaEmailLimit: 5 request/month",
+        "reviewPlatformConnectionsLimit: 3 connection"
+      ],
+      "rowsWithoutDescription": 48,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 1,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 1,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 37,
+        "id": "emailNotificationsForNewResponses"
+      },
+      "longestDescription": {
+        "length": 49,
+        "id": "plan:STARTER"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 8,
+        "id": "BUSINESS"
+      },
+      "longestAddOnName": {
+        "length": 25,
+        "id": "onboardingPackageAddOn"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/userguiding/2024.yml",
+      "plans": 3,
+      "addOns": 11,
+      "rows": 68,
+      "featureRows": 59,
+      "usageLimitRows": 9,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 59
+        },
+        {
+          "id": "Usage limits",
+          "rows": 9
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 59
+      },
+      "identicalInAllPlans": 45,
+      "rowsAfterDifferencesOnly": 23,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 9,
+      "unitPluralExamples": [
+        "activeGuidesLimit: 20 guide",
+        "activeHotspotsLimit: 20 hotspot",
+        "activeChecklistsLimit: 2 checklist",
+        "activeResourceCentersLimit: 1,000,000,000 resource center",
+        "activeSurveysLimit: 3 survey"
+      ],
+      "rowsWithoutDescription": 68,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 1,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 34,
+        "id": "dedicatedCustomerSuccessManager"
+      },
+      "longestDescription": {
+        "length": 96,
+        "id": "plan:BASIC"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 29,
+        "id": "extraActiveResourceCenters"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/webflow/2024.yml",
+      "plans": 15,
+      "addOns": 3,
+      "rows": 118,
+      "featureRows": 94,
+      "usageLimitRows": 24,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 94
+        },
+        {
+          "id": "Usage limits",
+          "rows": 24
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 94
+      },
+      "identicalInAllPlans": 3,
+      "rowsAfterDifferencesOnly": 115,
+      "addOnOnlyRows": 1,
+      "addOnOnlyRowIds": ["localization"],
+      "unitPluralCandidates": 24,
+      "unitPluralExamples": [
+        "pagesLimit: 2 page",
+        "formSubmissionsFixedLimit: 50 submission",
+        "formSubmissionsRenewableLimit: 0 submission",
+        "autoSiteIndexingFrequency: 0 hours",
+        "manualSiteIndexingFrequency: 0 hours"
+      ],
+      "rowsWithoutDescription": 41,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 15,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 3,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 38,
+        "id": "freeAgencyOrFreelancerGuestsLimit"
+      },
+      "longestDescription": {
+        "length": 268,
+        "id": "row:surgeProtection"
+      },
+      "longestStringCell": {
+        "length": 2,
+        "id": "transactionFee@ECOMMERCE_STANDARD"
+      },
+      "longestPlanName": {
+        "length": 29,
+        "id": "WORKSPACES_INHOUSE_ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 22,
+        "id": "extraFormSubmissions"
+      },
+      "plansMod3": 0,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/wrike/2024.yml",
+      "plans": 5,
+      "addOns": 5,
+      "rows": 86,
+      "featureRows": 81,
+      "usageLimitRows": 5,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 81
+        },
+        {
+          "id": "Usage limits",
+          "rows": 5
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 81
+      },
+      "identicalInAllPlans": 21,
+      "rowsAfterDifferencesOnly": 65,
+      "addOnOnlyRows": 3,
+      "addOnOnlyRowIds": ["wrikeIntegrate", "wrikeSync", "wrikeLock"],
+      "unitPluralCandidates": 5,
+      "unitPluralExamples": [
+        "minNumberOfUsers: 3 user",
+        "maxNumberOfUsers: 10,000,000,000 user",
+        "useStorageAccount: 2 GB/account",
+        "useStorage: 0 GB/user",
+        "useAutomations: 0 action/seat"
+      ],
+      "rowsWithoutDescription": 7,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 5,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 42,
+        "id": "teamUtilizationAndPerformanceDashboard"
+      },
+      "longestDescription": {
+        "length": 203,
+        "id": "row:advancedUserAccessControls"
+      },
+      "longestStringCell": {
+        "length": 76,
+        "id": "multiLanguageSupport@FREE"
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 23,
+        "id": "additional500GBStorage"
+      },
+      "plansMod3": 2,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": true
+    },
+    {
+      "fixture": "tests/fixtures/spectra/zapier/2024.yml",
+      "plans": 4,
+      "addOns": 4,
+      "rows": 54,
+      "featureRows": 51,
+      "usageLimitRows": 3,
+      "groups": 2,
+      "groupRows": [
+        {
+          "id": "General",
+          "rows": 51
+        },
+        {
+          "id": "Usage limits",
+          "rows": 3
+        }
+      ],
+      "longestGroup": {
+        "id": "General",
+        "rows": 51
+      },
+      "identicalInAllPlans": 15,
+      "rowsAfterDifferencesOnly": 39,
+      "addOnOnlyRows": 3,
+      "addOnOnlyRowIds": ["tablesPremium", "interfacesPremium", "chatBotsPremium"],
+      "unitPluralCandidates": 2,
+      "unitPluralExamples": ["tasksLimit: 100 task/month", "pollingTimeThreshold: 15 min"],
+      "rowsWithoutDescription": 54,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 0,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 4,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 30,
+        "id": "payPerTaskForOverageTasks"
+      },
+      "longestDescription": {
+        "length": 54,
+        "id": "plan:FREE"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 12,
+        "id": "PROFESSIONAL"
+      },
+      "longestAddOnName": {
+        "length": 26,
+        "id": "samlSingleSignOnAddOn"
+      },
+      "plansMod3": 1,
+      "plansMod2": 0,
+      "orphanOn3Columns": true,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/zenhub/2024.yml",
+      "plans": 2,
+      "addOns": 0,
+      "rows": 43,
+      "featureRows": 39,
+      "usageLimitRows": 4,
+      "groups": 7,
+      "groupRows": [
+        {
+          "id": "Security",
+          "rows": 5
+        },
+        {
+          "id": "Configuration",
+          "rows": 1
+        },
+        {
+          "id": "GitHub",
+          "rows": 4
+        },
+        {
+          "id": "Features",
+          "rows": 20
+        },
+        {
+          "id": "Integrations",
+          "rows": 4
+        },
+        {
+          "id": "Support",
+          "rows": 5
+        },
+        {
+          "id": "Usage limits",
+          "rows": 4
+        }
+      ],
+      "longestGroup": {
+        "id": "Features",
+        "rows": 20
+      },
+      "identicalInAllPlans": 20,
+      "rowsAfterDifferencesOnly": 23,
+      "addOnOnlyRows": 0,
+      "addOnOnlyRowIds": [],
+      "unitPluralCandidates": 4,
+      "unitPluralExamples": [
+        "teamWorkspacesLimit: 10 workspace",
+        "usersLimit: 50 user",
+        "maxConnectedGithubOrganizations: 10 organization",
+        "maxConnectedGithubRepositories: 50 repo"
+      ],
+      "rowsWithoutDescription": 43,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 2,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 0,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 40,
+        "id": "advancedReportingCumulativeFlowChart"
+      },
+      "longestDescription": {
+        "length": 0,
+        "id": ""
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 10,
+        "id": "ENTERPRISE"
+      },
+      "longestAddOnName": {
+        "length": 0,
+        "id": ""
+      },
+      "plansMod3": 2,
+      "plansMod2": 0,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": false
+    },
+    {
+      "fixture": "tests/fixtures/spectra/zoom/2024.yml",
+      "plans": 5,
+      "addOns": 16,
+      "rows": 151,
+      "featureRows": 143,
+      "usageLimitRows": 8,
+      "groups": 10,
+      "groupRows": [
+        {
+          "id": "Core Features",
+          "rows": 21
+        },
+        {
+          "id": "Meetings",
+          "rows": 22
+        },
+        {
+          "id": "General",
+          "rows": 22
+        },
+        {
+          "id": "Team Chat",
+          "rows": 11
+        },
+        {
+          "id": "Integrations",
+          "rows": 5
+        },
+        {
+          "id": "Engagement",
+          "rows": 5
+        },
+        {
+          "id": "Security",
+          "rows": 4
+        },
+        {
+          "id": "Phone",
+          "rows": 45
+        },
+        {
+          "id": "Support",
+          "rows": 8
+        },
+        {
+          "id": "Usage limits",
+          "rows": 8
+        }
+      ],
+      "longestGroup": {
+        "id": "Phone",
+        "rows": 45
+      },
+      "identicalInAllPlans": 64,
+      "rowsAfterDifferencesOnly": 87,
+      "addOnOnlyRows": 13,
+      "addOnOnlyRowIds": [
+        "callOutDialIn",
+        "globalTollFreeDialIn",
+        "localDialInForPremiumCountries",
+        "zoomPhonePowerPack",
+        "conferenceRoomConnector",
+        "premierSupport",
+        "premierPlusSupport",
+        "qualityOfServiceSubscription",
+        "zoomRevenueAccelerator",
+        "zoomMesh",
+        "zoomClipsPlus",
+        "zoomCompliantManager",
+        "zoomCustomerManagedKey"
+      ],
+      "unitPluralCandidates": 8,
+      "unitPluralExamples": [
+        "maxParticipants: 100 participant",
+        "minLicenses: 10 license",
+        "maxLicenses: 9 license",
+        "maxMeetingDuration: 40 min",
+        "maxBreakoutRooms: 50 room"
+      ],
+      "rowsWithoutDescription": 139,
+      "rowsFillerDescription": 0,
+      "plansWithoutDescription": 1,
+      "plansFillerDescription": 0,
+      "addOnsWithoutDescription": 16,
+      "addOnsFillerDescription": 0,
+      "longestRowName": {
+        "length": 39,
+        "id": "endToEndEncryptionForZoomMeetings"
+      },
+      "longestDescription": {
+        "length": 398,
+        "id": "row:waitingRoom"
+      },
+      "longestStringCell": {
+        "length": 0,
+        "id": ""
+      },
+      "longestPlanName": {
+        "length": 13,
+        "id": "BUSINESS_PLUS"
+      },
+      "longestAddOnName": {
+        "length": 44,
+        "id": "zoomCompliantManagerPoweredByThetaLake"
+      },
+      "plansMod3": 2,
+      "plansMod2": 1,
+      "orphanOn3Columns": false,
+      "orphanOn4Columns": true
+    }
+  ]
+}
