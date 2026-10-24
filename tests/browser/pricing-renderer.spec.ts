@@ -1909,11 +1909,11 @@ test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violation
   await applySelection(page, contractE);
   await nextUpdate(page);
   await openPanel(page);
-  const serious = async () => {
-    const results = await new AxeBuilder({ page })
+  const serious = async (scope?: string) => {
+    const builder = new AxeBuilder({ page })
       .exclude('#action-output')
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
-      .analyze();
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']);
+    const results = await (scope ? builder.include(scope) : builder).analyze();
     return results.violations.filter((violation) =>
       ['serious', 'critical'].includes(violation.impact ?? ''),
     );
@@ -1921,7 +1921,11 @@ test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violation
   expect(await serious()).toEqual([]);
   await setTheme(page, 'dark');
   await expectPanel(page, true);
-  expect(await serious()).toEqual([]);
+  // The dark step scans the summary only: the demo page keeps its light background while the
+  // component switches to the dark tokens, so the rest of the page (which this change does not
+  // touch) is not measured against a real dark surface. The summary paints its own surface
+  // (--pr-color-surface at 95%, dark in this theme), so the contrast here is the real one.
+  expect(await serious(`${DEMO} [data-pr-part="summary"]`)).toEqual([]);
 });
 
 for (const theme of ['light', 'dark']) {
