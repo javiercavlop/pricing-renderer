@@ -1,1 +1,1 @@
-Done: test first, vue/README/changeset, events.md, examples/vue (owner decision A), review round 1 fixes (docs wording + test hardening). Remaining: push, CI, panel round 2 (reviewer + test-reviewer) on the final head, set_review_package, lead_ready.
+Done: all content, two review rounds and fixes. Remaining: push final head, CI, one reviewer on the final head, set_review_package, pr_ready, lead_ready.
