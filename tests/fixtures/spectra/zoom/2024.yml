@@ -1,0 +1,1686 @@
+saasName: Zoom - One
+syntaxVersion: '3.1'
+version: '2024'
+url: https://web.archive.org/web/20240717140638/https://zoom.us/pricing
+createdAt: '2024-07-17'
+currency: USD
+billing:
+  monthly: 1
+  annual: 0.83
+variables: {}
+tags:
+  - Core Features
+  - Meetings
+  - Team Chat
+  - Integrations
+  - Engagement
+  - Security
+  - Phone
+  - Support
+features:
+  meetings:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  localRecording:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  cloudRecording:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  teamChat:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  zoomWhiteBoards:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  mail:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  mailService:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  customMailDomain:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Core Features
+  calendarClient:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  aiCompanion:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Core Features
+  calendarService:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  clips:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  notes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Core Features
+  zoomPhone:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  automatedCaptions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: BOT
+    tag: Core Features
+  translatedCaptions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Core Features
+  workspaceReservation:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  visitorManagement:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Core Features
+  zoomScheduler:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Core Features
+  accessAccrossAnyDevice:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Core Features
+  telephoneDialIn:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  screenSharing:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  breakoutRooms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  virtualBackground:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  personalMeetingId:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  hostControls:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  coAnnotationOnScreenShare:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  remoteKeyboardControl:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  remoteMouseControl:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  multiShare:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  waitingRoom:
+    description: >-
+      The Waiting Room feature allows the host to control when a participant
+      joins the meeting. As the meeting host, you can admit attendees one by one
+      or all at once. In settings, you can choose who gets put into the Waiting
+      Room or gets automatically admitted. Every account has the Waiting Room
+      feature. Hosts can message the Waiting Room. You can customize the Waiting
+      Room, if you're on a paid plan.
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  builtIntoZoomForHomeDevices:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Meetings
+  pinMultiplePeople:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Meetings
+  spotlightMultiplePeople:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Meetings
+  filters:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: FILTERING
+    tag: Meetings
+  polling:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  coHost:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  alternateHost:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  assignMeetingScheduler:
+    description: >-
+      Allows you to assign someone else to set up your meetings for you.
+      Assignee must also have a Pro plan.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Meetings
+  restApi:
+    description: >-
+      Allows account owners, admins, and your developers secure access to Zoom
+      REST API. API Rate Limits are applied at the account-level according to
+      Account Type (Pro, Business, Enterprise, etc…) and the API Request Type
+      (Light, Medium, Heavy, etc…). Some APIs are access-limited to specific
+      account types. Use the API Rate Limits & API Reference Documentation for
+      complete details.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+    tag: Meetings
+  skypeForBusinessInteroperability:
+    description: >-
+      Allows Lync users 2010, 2013 and Skype for Business users to initiate a
+      Zoom meeting from the Lync contact list.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Meetings
+  streaming:
+    description: Stream live to Facebook, Youtube or a 3rd party service.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+    tag: Meetings
+  reporting:
+    description: >-
+      Run usage reports to learn how many meetings are taking place, which days,
+      number of participants, number of meeting minutes and more.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Meetings
+  userManagement:
+    description: Owners and Admins can add, delete and assign roles and add-on features
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Meetings
+  adminPortal:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Meetings
+  ltiIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+    tag: Meetings
+  recordingTranscripts:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Meetings
+  branding:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  managedDomains:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Meetings
+  languageInterpretations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  executiveBusinessReviews:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Meetings
+  webinar500:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Meetings
+  directChat:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  channelChat:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  groupChat:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  messageHistory:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Team Chat
+  fileHistory:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Team Chat
+  findPeopleInSearch:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  findChannelsInSearch:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  findFilesInSearch:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  applicationIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+    tag: Team Chat
+  secureFileSharing:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: GUARANTEE
+    tag: Team Chat
+  persistentMeetingChat:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Team Chat
+  cloudStorage:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Core Features
+  microsoft:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Integrations
+  google:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Integrations
+  salesforce:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Integrations
+  servicenow:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Integrations
+  hubspot:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Integrations
+  avatars:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Engagement
+  inMeetingsReactions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Engagement
+  quizzes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Engagement
+  appearanceTouchUp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Engagement
+  originalSoundForMusicians:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Engagement
+  endToEndEncryptionForZoomMeetings:
+    description: >-
+      When enabled, Zoom’s end-to-end encryption (E2EE) for Zoom Meetings means
+      that communications between all meeting participants using Zoom clients in
+      a given meeting are encrypted using cryptographic keys known only to the
+      devices of those participants. This means that no third party — including
+      Zoom — has access to the meeting’s private keys.
+    valueType: BOOLEAN
+    defaultValue: true
+    type: GUARANTEE
+    tag: Security
+  zoomCustomerManagedKey:
+    description: Bring your own encryption keys to protect Zoom data at rest
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Security
+  enterpriseGradeSecurityFeatures:
+    description: >-
+      256-bit AES-GCM encryption for real-time content in transit, advanced chat
+      encryption, passcodes, Waiting Rooms, lock a meeting, audio signatures,
+      screen share watermarks, two-factor authentication, and more.
+    valueType: BOOLEAN
+    defaultValue: true
+    type: GUARANTEE
+    tag: Security
+  singleSignOn:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+    tag: Security
+  unlimitedInternalCalling:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  meteredUnboundCalling:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  unlimitedOutboundCalling:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  industryLeadingHdCallQuality:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  nativeWindowsApp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  nativeMacOsApp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  nativeLinuxApp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  nativeIosApp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  nativeAndroidApp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  portExistingNumers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  purchaseNewNumbers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  tollFreeNumbers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  phoneExtensionNumber:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  voicemailWithTranscription:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  unlimitedAutoAttendants:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  dialByNameDirectory:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  automaticCallDistributionGroups:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  barge:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  monitor:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TRACKING
+    tag: Phone
+  whisper:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  takeover:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  holidayHoursRouting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  businessHoursRouting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  3WayAdHocConferenceCalls:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  callRecording:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  configurableAnonymousBlocking:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Phone
+  configurableSpecifiedCallBlocking:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Phone
+  emergencyCalling:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  nomadicE911Addressing:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  emergenceResponseCenter:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Phone
+  sharedLineAppearance:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  sharedLineDelegation:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  callHandoffBetweenDevices:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  callPark:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  end2EndEncriptionForZoomPhone:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: GUARANTEE
+    tag: Phone
+  zeroTouchProvisioningOfPhones:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  mixTypesOfPlansInAnAccount:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  realTimeReporting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TRACKING
+    tag: Phone
+  qualityDashboards:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Phone
+  supportForVirtualDesktopEnvironment:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  24x7GlobalCustomerCare:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Phone
+  bringYourOwnCarrierSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Phone
+  hybridIntegrationToLegacyPbxs:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+    tag: Phone
+  sms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  mms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Phone
+  helpCenterTechnicalSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Support
+  ticketTechnicalSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  liveChatTechnicalSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  phoneTechnicalSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  knowledgeBase:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Support
+  zoomCommunity:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Support
+  chatBot:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: BOT
+    tag: Support
+  meetWithAgentOnVideo:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  callOutDialIn:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  globalTollFreeDialIn:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  localDialInForPremiumCountries:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  zoomPhonePowerPack:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  conferenceRoomConnector:
+    description: >-
+      Connect your H.323/SIP systems with desktop, tablet, mobile devices, Zoom
+      Rooms and other H.323/SIP endpoints
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  premierSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  premierPlusSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  qualityOfServiceSubscription:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  zoomRevenueAccelerator:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+  zoomMesh:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  zoomClipsPlus:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  zoomCompliantManager:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+usageLimits:
+  maxParticipants:
+    description: >-
+      A Participant is an invitee in a meeting scheduled by someone with a Host
+      license. Participants can join your meeting for free from their phone,
+      desktop, mobile and tablet devices. A participant does not require a Zoom
+      account in order to join a meeting.
+    valueType: NUMERIC
+    defaultValue: 100
+    unit: participant
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - meetings
+  minLicenses:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: license
+    type: NON_RENEWABLE
+    linkedFeatures: null
+  maxLicenses:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: license
+    type: NON_RENEWABLE
+    linkedFeatures: null
+  maxMeetingDuration:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 40
+    unit: min
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - meetings
+  maxBreakoutRooms:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 50
+    unit: room
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - breakoutRooms
+  maxCloudRecordingSize:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: GB
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cloudRecording
+      - cloudStorage
+  zoomWhiteBoardsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 3
+    unit: board
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - zoomWhiteBoards
+  clipsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 5
+    unit: clip
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - clips
+plans:
+  BASIC:
+    description: Personal Meeting
+    price: 0
+    unit: /month
+    features: null
+    usageLimits: null
+  PRO:
+    description: Great for small teams
+    price: 15.99
+    unit: host/month
+    features:
+      cloudRecording:
+        value: true
+      mailService:
+        value: true
+      aiCompanion:
+        value: true
+      calendarService:
+        value: true
+      telephoneDialIn:
+        value: true
+      polling:
+        value: true
+      coHost:
+        value: true
+      alternateHost:
+        value: true
+      assignMeetingScheduler:
+        value: true
+      restApi:
+        value: true
+      skypeForBusinessInteroperability:
+        value: true
+      streaming:
+        value: true
+      reporting:
+        value: true
+      userManagement:
+        value: true
+      languageInterpretations:
+        value: true
+      cloudStorage:
+        value: true
+      quizzes:
+        value: true
+      originalSoundForMusicians:
+        value: true
+      ticketTechnicalSupport:
+        value: true
+      liveChatTechnicalSupport:
+        value: true
+    usageLimits:
+      maxParticipants:
+        value: 100
+      minLicenses:
+        value: 1
+      maxLicenses:
+        value: 9
+      maxMeetingDuration:
+        value: 1800
+      maxCloudRecordingSize:
+        value: 5
+      clipsLimit:
+        value: .inf
+  BUSINESS:
+    description: Small and medium businesses
+    price: 19.99
+    unit: host/month
+    features:
+      cloudRecording:
+        value: true
+      mailService:
+        value: true
+      customMailDomain:
+        value: true
+      aiCompanion:
+        value: true
+      calendarService:
+        value: true
+      zoomScheduler:
+        value: true
+      telephoneDialIn:
+        value: true
+      polling:
+        value: true
+      coHost:
+        value: true
+      alternateHost:
+        value: true
+      assignMeetingScheduler:
+        value: true
+      restApi:
+        value: true
+      skypeForBusinessInteroperability:
+        value: true
+      streaming:
+        value: true
+      reporting:
+        value: true
+      userManagement:
+        value: true
+      adminPortal:
+        value: true
+      ltiIntegration:
+        value: true
+      recordingTranscripts:
+        value: true
+      branding:
+        value: true
+      managedDomains:
+        value: true
+      languageInterpretations:
+        value: true
+      cloudStorage:
+        value: true
+      quizzes:
+        value: true
+      originalSoundForMusicians:
+        value: true
+      ticketTechnicalSupport:
+        value: true
+      liveChatTechnicalSupport:
+        value: true
+      phoneTechnicalSupport:
+        value: true
+      meetWithAgentOnVideo:
+        value: true
+    usageLimits:
+      maxParticipants:
+        value: 300
+      minLicenses:
+        value: 10
+      maxLicenses:
+        value: 250
+      maxMeetingDuration:
+        value: 1800
+      maxCloudRecordingSize:
+        value: 5
+      zoomWhiteBoardsLimit:
+        value: .inf
+      clipsLimit:
+        value: .inf
+  BUSINESS_PLUS:
+    description: ''
+    price: 29.99
+    unit: host/month
+    features:
+      cloudRecording:
+        value: true
+      mailService:
+        value: true
+      customMailDomain:
+        value: true
+      aiCompanion:
+        value: true
+      calendarService:
+        value: true
+      zoomPhone:
+        value: true
+      translatedCaptions:
+        value: true
+      workspaceReservation:
+        value: true
+      visitorManagement:
+        value: true
+      zoomScheduler:
+        value: true
+      telephoneDialIn:
+        value: true
+      polling:
+        value: true
+      coHost:
+        value: true
+      alternateHost:
+        value: true
+      assignMeetingScheduler:
+        value: true
+      restApi:
+        value: true
+      skypeForBusinessInteroperability:
+        value: true
+      streaming:
+        value: true
+      reporting:
+        value: true
+      userManagement:
+        value: true
+      adminPortal:
+        value: true
+      ltiIntegration:
+        value: true
+      recordingTranscripts:
+        value: true
+      branding:
+        value: true
+      managedDomains:
+        value: true
+      languageInterpretations:
+        value: true
+      cloudStorage:
+        value: true
+      quizzes:
+        value: true
+      originalSoundForMusicians:
+        value: true
+      singleSignOn:
+        value: true
+      unlimitedInternalCalling:
+        value: true
+      meteredUnboundCalling:
+        value: true
+      unlimitedOutboundCalling:
+        value: true
+      industryLeadingHdCallQuality:
+        value: true
+      nativeWindowsApp:
+        value: true
+      nativeMacOsApp:
+        value: true
+      nativeLinuxApp:
+        value: true
+      nativeIosApp:
+        value: true
+      nativeAndroidApp:
+        value: true
+      portExistingNumers:
+        value: true
+      purchaseNewNumbers:
+        value: true
+      tollFreeNumbers:
+        value: true
+      phoneExtensionNumber:
+        value: true
+      voicemailWithTranscription:
+        value: true
+      unlimitedAutoAttendants:
+        value: true
+      dialByNameDirectory:
+        value: true
+      automaticCallDistributionGroups:
+        value: true
+      barge:
+        value: true
+      monitor:
+        value: true
+      whisper:
+        value: true
+      takeover:
+        value: true
+      holidayHoursRouting:
+        value: true
+      businessHoursRouting:
+        value: true
+      3WayAdHocConferenceCalls:
+        value: true
+      callRecording:
+        value: true
+      configurableAnonymousBlocking:
+        value: true
+      configurableSpecifiedCallBlocking:
+        value: true
+      emergencyCalling:
+        value: true
+      nomadicE911Addressing:
+        value: true
+      emergenceResponseCenter:
+        value: true
+      sharedLineAppearance:
+        value: true
+      sharedLineDelegation:
+        value: true
+      callHandoffBetweenDevices:
+        value: true
+      callPark:
+        value: true
+      zeroTouchProvisioningOfPhones:
+        value: true
+      mixTypesOfPlansInAnAccount:
+        value: true
+      realTimeReporting:
+        value: true
+      qualityDashboards:
+        value: true
+      supportForVirtualDesktopEnvironment:
+        value: true
+      24x7GlobalCustomerCare:
+        value: true
+      bringYourOwnCarrierSupport:
+        value: true
+      hybridIntegrationToLegacyPbxs:
+        value: true
+      sms:
+        value: true
+      mms:
+        value: true
+      ticketTechnicalSupport:
+        value: true
+      liveChatTechnicalSupport:
+        value: true
+      phoneTechnicalSupport:
+        value: true
+      meetWithAgentOnVideo:
+        value: true
+    usageLimits:
+      maxParticipants:
+        value: 300
+      minLicenses:
+        value: 10
+      maxLicenses:
+        value: 250
+      maxMeetingDuration:
+        value: 1800
+      maxCloudRecordingSize:
+        value: 10
+      zoomWhiteBoardsLimit:
+        value: .inf
+      clipsLimit:
+        value: .inf
+  ENTERPRISE:
+    description: Large enterprise-ready
+    price: Contact us
+    unit: host/month
+    features:
+      cloudRecording:
+        value: true
+      mailService:
+        value: true
+      customMailDomain:
+        value: true
+      aiCompanion:
+        value: true
+      calendarService:
+        value: true
+      translatedCaptions:
+        value: true
+      telephoneDialIn:
+        value: true
+      polling:
+        value: true
+      coHost:
+        value: true
+      alternateHost:
+        value: true
+      assignMeetingScheduler:
+        value: true
+      restApi:
+        value: true
+      skypeForBusinessInteroperability:
+        value: true
+      streaming:
+        value: true
+      reporting:
+        value: true
+      userManagement:
+        value: true
+      adminPortal:
+        value: true
+      ltiIntegration:
+        value: true
+      recordingTranscripts:
+        value: true
+      branding:
+        value: true
+      managedDomains:
+        value: true
+      languageInterpretations:
+        value: true
+      executiveBusinessReviews:
+        value: true
+      webinar500:
+        value: true
+      cloudStorage:
+        value: true
+      quizzes:
+        value: true
+      originalSoundForMusicians:
+        value: true
+      singleSignOn:
+        value: true
+      unlimitedInternalCalling:
+        value: true
+      meteredUnboundCalling:
+        value: true
+      industryLeadingHdCallQuality:
+        value: true
+      nativeWindowsApp:
+        value: true
+      nativeMacOsApp:
+        value: true
+      nativeLinuxApp:
+        value: true
+      nativeIosApp:
+        value: true
+      nativeAndroidApp:
+        value: true
+      portExistingNumers:
+        value: true
+      purchaseNewNumbers:
+        value: true
+      tollFreeNumbers:
+        value: true
+      phoneExtensionNumber:
+        value: true
+      voicemailWithTranscription:
+        value: true
+      unlimitedAutoAttendants:
+        value: true
+      dialByNameDirectory:
+        value: true
+      automaticCallDistributionGroups:
+        value: true
+      barge:
+        value: true
+      monitor:
+        value: true
+      whisper:
+        value: true
+      takeover:
+        value: true
+      holidayHoursRouting:
+        value: true
+      businessHoursRouting:
+        value: true
+      3WayAdHocConferenceCalls:
+        value: true
+      callRecording:
+        value: true
+      configurableAnonymousBlocking:
+        value: true
+      configurableSpecifiedCallBlocking:
+        value: true
+      emergencyCalling:
+        value: true
+      nomadicE911Addressing:
+        value: true
+      emergenceResponseCenter:
+        value: true
+      sharedLineAppearance:
+        value: true
+      sharedLineDelegation:
+        value: true
+      callHandoffBetweenDevices:
+        value: true
+      callPark:
+        value: true
+      zeroTouchProvisioningOfPhones:
+        value: true
+      mixTypesOfPlansInAnAccount:
+        value: true
+      realTimeReporting:
+        value: true
+      qualityDashboards:
+        value: true
+      supportForVirtualDesktopEnvironment:
+        value: true
+      24x7GlobalCustomerCare:
+        value: true
+      bringYourOwnCarrierSupport:
+        value: true
+      hybridIntegrationToLegacyPbxs:
+        value: true
+      sms:
+        value: true
+      mms:
+        value: true
+      ticketTechnicalSupport:
+        value: true
+      liveChatTechnicalSupport:
+        value: true
+      phoneTechnicalSupport:
+        value: true
+      meetWithAgentOnVideo:
+        value: true
+    usageLimits:
+      maxParticipants:
+        value: 500
+      minLicenses:
+        value: 250
+      maxLicenses:
+        value: .inf
+      maxMeetingDuration:
+        value: 1800
+      maxCloudRecordingSize:
+        value: .inf
+      zoomWhiteBoardsLimit:
+        value: .inf
+      clipsLimit:
+        value: .inf
+addOns:
+  largeMeetings:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: 50
+    unit: /month
+    usageLimits:
+      maxParticipants:
+        value: 1000
+  zoomScheduler:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - ENTERPRISE
+    price: 5.49
+    unit: /month
+    features:
+      zoomScheduler:
+        value: true
+  zoomClipsPlus:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: 6.59
+    unit: /month
+    features:
+      zoomClipsPlus:
+        value: true
+  extraCloudRecordingStorage:
+    description: ''
+    availableFor:
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+    price: 40
+    unit: /month
+    usageLimitsExtensions:
+      maxCloudRecordingSize:
+        value: 1
+    subscriptionConstraints:
+      minQuantity: 1
+      maxQuantity: .inf
+      quantityStep: 1
+  zoomWhiteboard:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+    price: 2.49
+    unit: /month
+    usageLimits:
+      zoomWhiteBoardsLimit:
+        value: .inf
+  zoomTranslatedCaptions:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+    price: 5
+    unit: user/month
+    features:
+      translatedCaptions:
+        value: true
+  audioConferencing:
+    description: ''
+    availableFor:
+      - PRO
+      - BUSINESS
+      - ENTERPRISE
+    price: 100
+    unit: /month
+    features:
+      callOutDialIn:
+        value: true
+      globalTollFreeDialIn:
+        value: true
+      localDialInForPremiumCountries:
+        value: true
+  premierSupport:
+    description: ''
+    excludes:
+      - premierPlusSupport
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      premierSupport:
+        value: true
+  premierPlusSupport:
+    description: ''
+    excludes:
+      - premierSupport
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      premierPlusSupport:
+        value: true
+  zoomPhonePowerPack:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: 25
+    unit: /month
+    features:
+      zoomPhonePowerPack:
+        value: true
+  conferenceRoomConnector:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: 49
+    unit: /month
+    features:
+      conferenceRoomConnector:
+        value: true
+  zoomCompliantManagerPoweredByThetaLake:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      zoomCompliantManager:
+        value: true
+  zoomRevenueAccelerator:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      zoomRevenueAccelerator:
+        value: true
+  qualityOfServiceSubscription:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      qualityOfServiceSubscription:
+        value: true
+  zoomMesh:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: Contact us
+    unit: /month
+    features:
+      zoomMesh:
+        value: true
+  zoomCustomerManagedKey:
+    description: ''
+    availableFor:
+      - BASIC
+      - PRO
+      - BUSINESS
+      - BUSINESS_PLUS
+      - ENTERPRISE
+    price: Contact us
+    unit: user/month
+    features:
+      zoomCustomerManagedKey:
+        value: true

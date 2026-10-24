@@ -64,3 +64,15 @@ the React entry point. Versions are the ones installed for development.
 Transitive dependencies are not listed here. Each dependency retains its own
 copyright and license terms; see the package contents in `node_modules` or the
 lockfile for the full set.
+
+## Test data (not distributed)
+
+`tests/fixtures/spectra/` holds 37 iPricings from SPECTRA (Francisco Javier
+Cavero, José Antonio Parejo, Juan C. Alonso and Antonio Ruiz-Cortés, version
+1.2.0, Zenodo, 2025, <https://doi.org/10.5281/zenodo.17237164>), taken from the
+copy in <https://github.com/isa-group/pricing-intelligence-labpack> and
+licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). They were upgraded
+from Pricing2Yaml 2.1 to 3.1 and one Trello value was corrected; the fixture
+README lists the changes. The tests use them; the published package does not
+contain them.

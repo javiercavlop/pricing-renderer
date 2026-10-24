@@ -1,0 +1,2208 @@
+saasName: Webflow
+syntaxVersion: '3.1'
+version: '2024'
+url: https://web.archive.org/web/20240717123947/https://webflow.com/pricing
+createdAt: '2024-07-17'
+currency: USD
+billing:
+  monthly: 1
+  annual: 0.85
+variables: {}
+features:
+  publishToWebflowIo:
+    description: Publish to the webflow.io subdomain (e.g, mysite.webflow.io).
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customDomain:
+    description: Connect and publish your site to a custom domain.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  removeWebflowBadge:
+    description: >-
+      Remove the badge in the bottom right corner of your site that says “Made
+      in Webflow.”
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  publishingWorkflows:
+    description: >-
+      Isolate your staged site from changes occurring in the Designer. Publish
+      directly from staging to production.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  publishingSummary:
+    description: >-
+      Review a summary of changes prior to publishing to reduce the risk of
+      unintended changes going live.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  staticPages:
+    description: The number of static pages your site can have.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  formSubmissions:
+    description: >-
+      Collect form submissions, customize notification emails, and download
+      submissions as a CSV (comma-separated values) file.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  localizationPreview:
+    description: >-
+      Try out basic Localization functionality for free. Pay only when you’re
+      ready to publish.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  sitePasswordProtection:
+    description: Password protect your site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  pagePasswordProtection:
+    description: Password protect individual pages on your site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  customCode:
+    description: >-
+      Add custom code and scripts that apply to your entire site or individual
+      pages.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  siteSearch:
+    description: >-
+      Create a custom search engine and let visitors search for specific content
+      on your site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  formFileUpload:
+    description: >-
+      Collect files with an upload button in forms. Max file size per upload is
+      10MB. Storage is free up to 10GB, and $0.50/month per GB after that.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  fileStorage:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  userAccounts:
+    description: Allow visitors to log in and unlock gated content.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  logicFlows:
+    description: Automate workflows using triggers, actions, and conditions.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  contentEditors:
+    description: >-
+      Invite teammates to write and edit content in Webflow’s simplified Editor
+      interface.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  backups:
+    description: Automatically generated backups — restore your site in one click.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  cmsItems:
+    description: >-
+      The maximum number of records you can have in your CMS database. Ex: 50
+      projects in a portfolio.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cmsCollections:
+    description: The maximum number of Collections you can have in your CMS database.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cmsApi:
+    description: >-
+      Connect to third-party applications to automate adding, updating, or
+      deleting Collection items.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  perItemPublishing:
+    description: >-
+      Unpublish individual CMS items from the Designer, the Editor, and the CMS
+      API — without republishing your entire site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  perItemUnpublishing:
+    description: >-
+      Unpublish individual CMS items from the Designer, the Editor, and the CMS
+      API — without republishing your entire site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  multiItemPublishing:
+    description: Publish and unpublish multiple CMS items at once.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  multiItemUnpublishing:
+    description: Publish and unpublish multiple CMS items at once.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  scheduledPublishing:
+    description: Schedule items to be published at specific times in the future.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  dynamicEmbeds:
+    description: Use your CMS Collection fields to dynamically update embedded code.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  rssFeed:
+    description: >-
+      Auto-generate RSS feeds for your CMS Collections to power every RSS
+      reader.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  surgeProtection:
+    description: >-
+      Basic, CMS, and Business plans receive one month of complimentary surge
+      protection. Sites that exceed their bandwidth limits for a second
+      consecutive month will be automatically upgraded to the plan with the
+      appropriate usage allotment at the end of that second month.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  customSurgeProtection:
+    description: >-
+      Basic, CMS, and Business plans receive one month of complimentary surge
+      protection. Sites that exceed their bandwidth limits for a second
+      consecutive month will be automatically upgraded to the plan with the
+      appropriate usage allotment at the end of that second month.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  globalCdn:
+    description: >-
+      A content delivery network uses the server closest to your site visitors
+      for faster page loads.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customCdn:
+    description: >-
+      A content delivery network uses the server closest to your site visitors
+      for faster page loads.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  uptimeStandardAgreement:
+    description: >-
+      Enterprise Site plans offer a service-level agreement with guaranteed
+      uptime. You'll also receive access to Webflow's security certifications
+      and audits.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: GUARANTEE
+  uptimeSLA:
+    description: >-
+      Enterprise Site plans offer a service-level agreement with guaranteed
+      uptime. You'll also receive access to Webflow's security certifications
+      and audits.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: GUARANTEE
+  301Redirects:
+    description: Redirect traffic from an old to a new URL.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  sitemapsControl:
+    description: >-
+      Optimize SEO rankings and save time with dynamically generated schema
+      markup.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  schemaMarkupSupport:
+    description: >-
+      Optimize SEO rankings and save time with dynamically generated schema
+      markup.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  openGraphMetaTags:
+    description: Manage the look of previews when your page is shared.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  structuredSearchSupport:
+    description: >-
+      Help search engines better understand your site content and improve search
+      visibility and click-through rates.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  preBuiltInteractions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  triggerBasedInteractions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  afterEffectsLottieIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+  twoFactorAuthentication:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  basicDdosProtection:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: GUARANTEE
+  advancedDdosProtection:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: GUARANTEE
+  singleSignOn:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  customSecurityHeaders:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customSslCertificates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  privateWebflowStaging:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  billing:
+    description: ''
+    valueType: TEXT
+    defaultValue:
+      - CARD
+    type: PAYMENT
+  emailSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  customerSuccessManager:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  webflowUniversityTraining:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  guidedOnboardingTraining:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  localization:
+    description: Localize your site for audiences around the world.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  ecommerceItems:
+    description: >-
+      Includes all Ecommerce products, variants, and categories. Independent of
+      CMS items.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customCheckout:
+    description: Visually customize the design and layout of your checkout page.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customShoppingCart:
+    description: >-
+      Visually customize the look and feel of your add to cart and shopping
+      cart.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  paidUserAccounts:
+    description: >-
+      Charge visitors a memberships fee to access gated and personalized
+      content.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  emailProductFields:
+    description: Add custom fields to products and use that data in your designs.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  emailCustomization:
+    description: Customize colors, logos, and text in receipt and order update emails.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unbrandedEmails:
+    description: Remove Webflow references from transaction email footers.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  transactionFee:
+    description: In addition to Stripe or Paypal processing fees
+    valueType: TEXT
+    defaultValue: ''
+    type: DOMAIN
+  stripePoweredPayments:
+    description: Connect a Stripe account to process payments, refunds, and payouts.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://stripe.com/pricing
+  paypalSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: PAYMENT
+  applePay:
+    description: Let customers pay with stored payment details in their browser.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: PAYMENT
+    integrationType: EXTERNAL_DEVICE
+  webPayments:
+    description: Let customers pay with stored payment details in their browser.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: PAYMENT
+  automaticTaxCalculation:
+    description: Automatic sales tax and VAT calculated at checkout.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unlimitedSalesVolume:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  facebookIntegration:
+    description: >-
+      Sync products to Facebook and Instagram to run smarter marketing
+      campaigns.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+  instagramIntegration:
+    description: >-
+      Sync products to Facebook and Instagram to run smarter marketing
+      campaigns.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+  googleShoppingIntegration:
+    description: Sync products to Google to run Google Shopping campaigns.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+  mailchimpIntegration:
+    description: Connect forms to MailChimp for email marketing.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+  configureManualShippingRules:
+    description: Define shipping regions and set custom rates for each location.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  staffAccounts:
+    description: >-
+      Invite colleagues and clients to manage products, inventory, and
+      fulfillment.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  teams:
+    description: >-
+      The maximum number of member seats your Workspace supports. Note:
+      Workspaces are billed per seat.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  fullDesignAccessRole:
+    description: >-
+      These users have full access to design, build, and publish in the visual
+      Designer.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  contentEditingRole:
+    description: >-
+      These users have limited access to safely edit copy, assets
+      (images/videos), and links. They cannot change page design
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  billingPermissions:
+    description: >-
+      Make sure only Workspace admins and owners can edit subscriptions and
+      billing details.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  publishingPermissions:
+    description: Manage which teammates can publish which sites.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  freeAgencyOrFreelancerGuests:
+    description: >-
+      Invite an Agency or Freelancer Guest into your Workspace for free. These
+      do not count against your team size.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  freeCommenters:
+    description: >-
+      Invite comment-only users into your Workspace for free. These do not count
+      against your team size.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  webflowStaging:
+    description: >-
+      Free Starter sites that can be published to webflow.io. Hosted projects
+      with paid Site plans don’t count toward this limit.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  siteTransfer:
+    description: Transfer sites to other Workspaces.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  codeExport:
+    description: >-
+      Export clean and semantic HTML & CSS files to hand off to your dev team.
+      Note: dynamic content (CMS items and pages) cannot be exported.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  shareableLibraries:
+    description: >-
+      Shareable design system to drive consistency and reusability across all of
+      the sites in a Workspace. 
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  siteActivityLog:
+    description: A historical log of important design changes made to your site.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  siteActivityLogApi:
+    description: Query events from the Site Activity log via API.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  pageBranching:
+    description: Multiple designers working on separate pages in parallel.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  branchStaging:
+    description: Publish a branch to its own staging environment to test designs faster.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  privateStaging:
+    description: >-
+      Restrict access to your staged sites to logged-in members of your
+      Workspace.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  advancedPermissions:
+    description: Control who can make global design changes.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  scim:
+    description: Automated user provisioning via SCIM and JIT.
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  siteSpecificAccess:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+usageLimits:
+  pagesLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: page
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - staticPages
+  formSubmissionsFixedLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: submission
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - formSubmissions
+  formSubmissionsRenewableLimit:
+    description: >-
+      Collect form submissions, customize notification emails, and download
+      submissions as a CSV. $1 per 100 extra submissions.
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: submission
+    type: RENEWABLE
+    linkedFeatures:
+      - formSubmissions
+  autoSiteIndexingFrequency:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: hours
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - siteSearch
+  manualSiteIndexingFrequency:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: hours
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - siteSearch
+  userAccountsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: user account
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - userAccounts
+      - paidUserAccounts
+  logicFlowsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: flow
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - logicFlows
+  logicFlowsExecutions:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: flow execution/month
+    type: RENEWABLE
+    linkedFeatures:
+      - logicFlows
+  contentEditorsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: editor
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - contentEditors
+  cmsItemsLimit:
+    description: >-
+      The maximum number of records you can have in your CMS database. Ex: 50
+      projects in a portfolio.
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: item
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cmsItems
+  cmsCollectionsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: item
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cmsCollections
+  fieldsPerCollection:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: field
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cmsCollections
+  referencesPerCollection:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: field
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cmsCollections
+  apiRequestsPerMinute:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: request/min
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - cmsApi
+  cdnBandwidth:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: GB
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - globalCdn
+      - customCdn
+  formFileSizeLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: MB
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - formFileUpload
+  fileStorageLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: GB
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - fileStorage
+  ecommerceItemsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: account
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - ecommerceItems
+  staffAccountsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: account
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - staffAccounts
+  teamSizeLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: seat
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - teams
+  freeAgencyOrFreelancerGuestsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: guest
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - freeAgencyOrFreelancerGuests
+  freeCommentersLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: guest
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - freeCommenters
+  webflowStagingLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: site
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - webflowStaging
+  webflowStagingPageLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: site
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - webflowStaging
+plans:
+  WEBSITE_STARTER:
+    description: ''
+    price: 0
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 2
+      formSubmissionsFixedLimit:
+        value: 50
+      userAccountsLimit:
+        value: 100
+      logicFlowsLimit:
+        value: 2
+      logicFlowsExecutions:
+        value: 100
+      cmsItemsLimit:
+        value: 50
+      cmsCollectionsLimit:
+        value: 20
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 60
+      cdnBandwidth:
+        value: 1
+  WEBSITE_BASIC:
+    description: ''
+    price: 18
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      backups:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 150
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 500
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      cdnBandwidth:
+        value: 10
+  WEBSITE_CMS:
+    description: ''
+    price: 29
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 150
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 1000
+      autoSiteIndexingFrequency:
+        value: 72
+      manualSiteIndexingFrequency:
+        value: 24
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      contentEditorsLimit:
+        value: 3
+      cmsItemsLimit:
+        value: 2000
+      cmsCollectionsLimit:
+        value: 20
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 120
+      cdnBandwidth:
+        value: 50
+  WEBSITE_BUSINESS:
+    description: ''
+    price: 49
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      formFileUpload:
+        value: true
+      fileStorage:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 300
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 2500
+      autoSiteIndexingFrequency:
+        value: 12
+      manualSiteIndexingFrequency:
+        value: 1
+      formFileSizeLimit:
+        value: 10
+      fileStorageLimit:
+        value: 10
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      contentEditorsLimit:
+        value: 10
+      cmsItemsLimit:
+        value: 20000
+      cmsCollectionsLimit:
+        value: 40
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 120
+      cdnBandwidth:
+        value: 500
+  WEBSITE_ENTERPRISE:
+    description: ''
+    price: Contact us
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      publishingWorkflows:
+        value: true
+      publishingSummary:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      formFileUpload:
+        value: true
+      fileStorage:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      customSurgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      customCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      uptimeSLA:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      advancedDdosProtection:
+        value: true
+      singleSignOn:
+        value: true
+      customSecurityHeaders:
+        value: true
+      customSslCertificates:
+        value: true
+      privateWebflowStaging:
+        value: true
+      billing:
+        value:
+          - CARD
+          - INVOICE
+      emailSupport:
+        value: true
+      customerSuccessManager:
+        value: true
+      webflowUniversityTraining:
+        value: true
+      guidedOnboardingTraining:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: .inf
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: .inf
+      autoSiteIndexingFrequency:
+        value: 12
+      manualSiteIndexingFrequency:
+        value: 1
+      formFileSizeLimit:
+        value: 10
+      fileStorageLimit:
+        value: 10
+      userAccountsLimit:
+        value: .inf
+      logicFlowsLimit:
+        value: .inf
+      logicFlowsExecutions:
+        value: .inf
+      contentEditorsLimit:
+        value: .inf
+      cmsItemsLimit:
+        value: .inf
+      cmsCollectionsLimit:
+        value: .inf
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: .inf
+      cdnBandwidth:
+        value: .inf
+  ECOMMERCE_STANDARD:
+    description: ''
+    price: 42
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+      ecommerceItems:
+        value: true
+      customCheckout:
+        value: true
+      customShoppingCart:
+        value: true
+      emailProductFields:
+        value: true
+      emailCustomization:
+        value: true
+      transactionFee:
+        value: 2%
+      stripePoweredPayments:
+        value: true
+      paypalSupport:
+        value: true
+      applePay:
+        value: true
+      webPayments:
+        value: true
+      automaticTaxCalculation:
+        value: true
+      unlimitedSalesVolume:
+        value: true
+      facebookIntegration:
+        value: true
+      instagramIntegration:
+        value: true
+      googleShoppingIntegration:
+        value: true
+      mailchimpIntegration:
+        value: true
+      configureManualShippingRules:
+        value: true
+      staffAccounts:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 150
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 1000
+      autoSiteIndexingFrequency:
+        value: 72
+      manualSiteIndexingFrequency:
+        value: 24
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      contentEditorsLimit:
+        value: 3
+      cmsItemsLimit:
+        value: 2000
+      cmsCollectionsLimit:
+        value: 20
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 120
+      cdnBandwidth:
+        value: 50
+      ecommerceItemsLimit:
+        value: 500
+      staffAccountsLimit:
+        value: 3
+  ECOMMERCE_PLUS:
+    description: ''
+    price: 84
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      formFileUpload:
+        value: true
+      fileStorage:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+      ecommerceItems:
+        value: true
+      customCheckout:
+        value: true
+      customShoppingCart:
+        value: true
+      emailProductFields:
+        value: true
+      emailCustomization:
+        value: true
+      unbrandedEmails:
+        value: true
+      transactionFee:
+        value: 0%
+      stripePoweredPayments:
+        value: true
+      paypalSupport:
+        value: true
+      applePay:
+        value: true
+      webPayments:
+        value: true
+      automaticTaxCalculation:
+        value: true
+      unlimitedSalesVolume:
+        value: true
+      facebookIntegration:
+        value: true
+      instagramIntegration:
+        value: true
+      googleShoppingIntegration:
+        value: true
+      mailchimpIntegration:
+        value: true
+      configureManualShippingRules:
+        value: true
+      staffAccounts:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 300
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 2500
+      autoSiteIndexingFrequency:
+        value: 12
+      manualSiteIndexingFrequency:
+        value: 1
+      formFileSizeLimit:
+        value: 10
+      fileStorageLimit:
+        value: 10
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      contentEditorsLimit:
+        value: 10
+      cmsItemsLimit:
+        value: 20000
+      cmsCollectionsLimit:
+        value: 40
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 120
+      cdnBandwidth:
+        value: 500
+      ecommerceItemsLimit:
+        value: 5000
+      staffAccountsLimit:
+        value: 10
+  ECOMMERCE_ADVANCED:
+    description: ''
+    price: 235
+    unit: site/month
+    features:
+      publishToWebflowIo:
+        value: true
+      customDomain:
+        value: true
+      removeWebflowBadge:
+        value: true
+      staticPages:
+        value: true
+      formSubmissions:
+        value: true
+      localizationPreview:
+        value: true
+      sitePasswordProtection:
+        value: true
+      pagePasswordProtection:
+        value: true
+      customCode:
+        value: true
+      siteSearch:
+        value: true
+      formFileUpload:
+        value: true
+      fileStorage:
+        value: true
+      userAccounts:
+        value: true
+      logicFlows:
+        value: true
+      contentEditors:
+        value: true
+      backups:
+        value: true
+      cmsItems:
+        value: true
+      cmsCollections:
+        value: true
+      cmsApi:
+        value: true
+      perItemPublishing:
+        value: true
+      perItemUnpublishing:
+        value: true
+      multiItemPublishing:
+        value: true
+      multiItemUnpublishing:
+        value: true
+      scheduledPublishing:
+        value: true
+      dynamicEmbeds:
+        value: true
+      rssFeed:
+        value: true
+      surgeProtection:
+        value: true
+      globalCdn:
+        value: true
+      uptimeStandardAgreement:
+        value: true
+      301Redirects:
+        value: true
+      sitemapsControl:
+        value: true
+      schemaMarkupSupport:
+        value: true
+      openGraphMetaTags:
+        value: true
+      structuredSearchSupport:
+        value: true
+      preBuiltInteractions:
+        value: true
+      triggerBasedInteractions:
+        value: true
+      afterEffectsLottieIntegration:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      basicDdosProtection:
+        value: true
+      billing:
+        value:
+          - CARD
+      emailSupport:
+        value: true
+      webflowUniversityTraining:
+        value: true
+      ecommerceItems:
+        value: true
+      customCheckout:
+        value: true
+      customShoppingCart:
+        value: true
+      emailProductFields:
+        value: true
+      emailCustomization:
+        value: true
+      unbrandedEmails:
+        value: true
+      transactionFee:
+        value: 0%
+      stripePoweredPayments:
+        value: true
+      paypalSupport:
+        value: true
+      applePay:
+        value: true
+      webPayments:
+        value: true
+      automaticTaxCalculation:
+        value: true
+      unlimitedSalesVolume:
+        value: true
+      facebookIntegration:
+        value: true
+      instagramIntegration:
+        value: true
+      googleShoppingIntegration:
+        value: true
+      mailchimpIntegration:
+        value: true
+      configureManualShippingRules:
+        value: true
+      staffAccounts:
+        value: true
+    usageLimits:
+      pagesLimit:
+        value: 300
+      formSubmissionsFixedLimit:
+        value: .inf
+      formSubmissionsRenewableLimit:
+        value: 2500
+      autoSiteIndexingFrequency:
+        value: 12
+      manualSiteIndexingFrequency:
+        value: 1
+      formFileSizeLimit:
+        value: 10
+      fileStorageLimit:
+        value: 10
+      userAccountsLimit:
+        value: 20000
+      logicFlowsLimit:
+        value: 20
+      logicFlowsExecutions:
+        value: 10000
+      contentEditorsLimit:
+        value: 10
+      cmsItemsLimit:
+        value: 20000
+      cmsCollectionsLimit:
+        value: 40
+      fieldsPerCollection:
+        value: 60
+      referencesPerCollection:
+        value: 10
+      apiRequestsPerMinute:
+        value: 120
+      cdnBandwidth:
+        value: 500
+      ecommerceItemsLimit:
+        value: 15000
+      staffAccountsLimit:
+        value: 15
+  WORKSPACES_INHOUSE_STARTER:
+    description: ''
+    price: 0
+    unit: /month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      siteTransfer:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+    usageLimits:
+      teamSizeLimit:
+        value: 1
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 2
+      webflowStagingLimit:
+        value: 2
+      webflowStagingPageLimit:
+        value: 2
+  WORKSPACES_INHOUSE_CORE:
+    description: ''
+    price: 28
+    unit: seat/month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      contentEditingRole:
+        value: true
+      billingPermissions:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      customCode:
+        value: true
+      sitePasswordProtection:
+        value: true
+      siteTransfer:
+        value: true
+      codeExport:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+      billing:
+        value:
+          - CARD
+    usageLimits:
+      teamSizeLimit:
+        value: 3
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 10
+      webflowStagingLimit:
+        value: 10
+      webflowStagingPageLimit:
+        value: 150
+  WORKSPACES_INHOUSE_GROWTH:
+    description: ''
+    price: 60
+    unit: seat/month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      contentEditingRole:
+        value: true
+      billingPermissions:
+        value: true
+      publishingPermissions:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      customCode:
+        value: true
+      sitePasswordProtection:
+        value: true
+      removeWebflowBadge:
+        value: true
+      siteTransfer:
+        value: true
+      codeExport:
+        value: true
+      shareableLibraries:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+      billing:
+        value:
+          - CARD
+    usageLimits:
+      teamSizeLimit:
+        value: 9
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 10
+      webflowStagingLimit:
+        value: .inf
+      webflowStagingPageLimit:
+        value: 150
+  WORKSPACES_INHOUSE_ENTERPRISE:
+    description: ''
+    price: Contact us
+    unit: seat/month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      contentEditingRole:
+        value: true
+      billingPermissions:
+        value: true
+      publishingPermissions:
+        value: true
+      siteSpecificAccess:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      pageBranching:
+        value: true
+      advancedPermissions:
+        value: true
+      webflowStaging:
+        value: true
+      customCode:
+        value: true
+      sitePasswordProtection:
+        value: true
+      removeWebflowBadge:
+        value: true
+      siteTransfer:
+        value: true
+      codeExport:
+        value: true
+      shareableLibraries:
+        value: true
+      siteActivityLog:
+        value: true
+      siteActivityLogApi:
+        value: true
+      branchStaging:
+        value: true
+      privateStaging:
+        value: true
+      customDomain:
+        value: true
+      publishingWorkflows:
+        value: true
+      publishingSummary:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      singleSignOn:
+        value: true
+      scim:
+        value: true
+      emailSupport:
+        value: true
+      customerSuccessManager:
+        value: true
+      billing:
+        value:
+          - CARD
+          - INVOICE
+    usageLimits:
+      teamSizeLimit:
+        value: .inf
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 10
+      freeCommentersLimit:
+        value: 30
+      webflowStagingLimit:
+        value: .inf
+      webflowStagingPageLimit:
+        value: .inf
+  WORKSPACES_STARTER:
+    description: ''
+    price: 0
+    unit: /month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      siteTransfer:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+      paidUserAccounts:
+        value: true
+    usageLimits:
+      userAccountsLimit:
+        value: 20000
+      teamSizeLimit:
+        value: 1
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 3
+      webflowStagingLimit:
+        value: 2
+      webflowStagingPageLimit:
+        value: 2
+  WORKSPACES_FREELANCER:
+    description: ''
+    price: 24
+    unit: user/month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      contentEditingRole:
+        value: true
+      billingPermissions:
+        value: true
+      siteSpecificAccess:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      customCode:
+        value: true
+      sitePasswordProtection:
+        value: true
+      siteTransfer:
+        value: true
+      codeExport:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+      paidUserAccounts:
+        value: true
+      billing:
+        value:
+          - CARD
+    usageLimits:
+      userAccountsLimit:
+        value: 20000
+      teamSizeLimit:
+        value: 3
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 10
+      webflowStagingLimit:
+        value: 10
+      webflowStagingPageLimit:
+        value: 150
+  WORKSPACES_AGENCY:
+    description: ''
+    price: 42
+    unit: user/month
+    features:
+      teams:
+        value: true
+      fullDesignAccessRole:
+        value: true
+      contentEditingRole:
+        value: true
+      billingPermissions:
+        value: true
+      publishingPermissions:
+        value: true
+      siteSpecificAccess:
+        value: true
+      freeAgencyOrFreelancerGuests:
+        value: true
+      freeCommenters:
+        value: true
+      webflowStaging:
+        value: true
+      customCode:
+        value: true
+      sitePasswordProtection:
+        value: true
+      removeWebflowBadge:
+        value: true
+      siteTransfer:
+        value: true
+      codeExport:
+        value: true
+      shareableLibraries:
+        value: true
+      twoFactorAuthentication:
+        value: true
+      emailSupport:
+        value: true
+      paidUserAccounts:
+        value: true
+      billing:
+        value:
+          - CARD
+    usageLimits:
+      userAccountsLimit:
+        value: 20000
+      teamSizeLimit:
+        value: 9
+      freeAgencyOrFreelancerGuestsLimit:
+        value: 2
+      freeCommentersLimit:
+        value: 10
+      webflowStagingLimit:
+        value: .inf
+      webflowStagingPageLimit:
+        value: 150
+addOns:
+  extraFormSubmissions:
+    description: ''
+    availableFor:
+      - WEBSITE_BUSINESS
+      - WEBSITE_ENTERPRISE
+      - ECOMMERCE_PLUS
+      - ECOMMERCE_ADVANCED
+    price: 1
+    unit: /month
+    usageLimitsExtensions:
+      formSubmissionsRenewableLimit:
+        value: 100
+    subscriptionConstraints:
+      minQuantity: 1
+      maxQuantity: .inf
+      quantityStep: 1
+  extraFileStorage:
+    description: ''
+    availableFor:
+      - WEBSITE_BUSINESS
+      - WEBSITE_ENTERPRISE
+      - ECOMMERCE_PLUS
+      - ECOMMERCE_ADVANCED
+    price: 0.5
+    unit: /month
+    usageLimitsExtensions:
+      fileStorageLimit:
+        value: 1
+    subscriptionConstraints:
+      minQuantity: 1
+      maxQuantity: .inf
+      quantityStep: 1
+  localization:
+    description: ''
+    availableFor:
+      - WEBSITE_STARTER
+      - WEBSITE_BASIC
+      - WEBSITE_CMS
+      - WEBSITE_BUSINESS
+      - WEBSITE_ENTERPRISE
+    price: 9
+    unit: /month
+    features:
+      localization:
+        value: true

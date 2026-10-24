@@ -1,0 +1,443 @@
+saasName: Trustmary - Collect
+syntaxVersion: '3.1'
+version: '2024-07-14'
+url: https://web.archive.org/web/20240715101914/https://trustmary.com/pricing/
+createdAt: '2024-07-14'
+currency: USD
+variables: {}
+features:
+  3in1Surveys:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  teams:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  surveys:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  responses:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  requestsViaEmail:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: API
+  reviewPlatform:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  combinedReview:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  feedbackCollection:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  surveyLogic:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  customTheme:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  quickPreview:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  multilanguage:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: GUARANTEE
+  emailNotificationsForNewResponses:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: TRACKING
+  surveyTemplateLibrary:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  surveyStatus:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  progressBar:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  urlResponses:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  emailResponses:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  htmlEmbeds:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTENSION
+  popupSurvey:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTENSION
+  emailSignature:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTENSION
+  qrCode:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  smsRequests:
+    description: In europe
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  npsForms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  csatForms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customizableForms:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  eighteenQuestionTypes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  anonymizedResponses:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  analyzeFeedback:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  manageReviews:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+  tagReviews:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: MANAGEMENT
+  autotagReviews:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  createReviewsManually:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  importReviewsFromSpreadsheets:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  publicReviewProfilePage:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+  syncReviewsAutomatically:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  zapierIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://zapier.com/pricing
+  makeIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://www.make.com/pricing
+  hubspotIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://www.hubspot.com/pricing/marketing/starter
+  pipedriveIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://www.pipedrive.com/en/pricing
+  freeSurveyHelp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+  chatSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+  phoneSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+  onboardingPackage:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+usageLimits:
+  unlimitedTeamMembers:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - teams
+  unlimitedSuveys:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - surveys
+  surveyResponsesLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 5
+    unit: response/month
+    type: RENEWABLE
+  requestsViaEmailLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 5
+    unit: request/month
+    type: RENEWABLE
+  reviewPlatformConnectionsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: connection
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - reviewPlatform
+plans:
+  SOLO:
+    description: Essentials to get more reviews and feedback
+    price: 0
+    unit: /month
+    features: null
+    usageLimits: null
+  STARTER:
+    description: For smaller teams, more responses and automations
+    price: 29
+    unit: /month
+    features:
+      teams:
+        value: true
+      surveys:
+        value: true
+      surveyTemplateLibrary:
+        value: true
+      surveyStatus:
+        value: true
+      progressBar:
+        value: true
+      htmlEmbeds:
+        value: true
+      smsRequests:
+        value: true
+      csatForms:
+        value: true
+      customizableForms:
+        value: true
+      eighteenQuestionTypes:
+        value: true
+      anonymizedResponses:
+        value: true
+      analyzeFeedback:
+        value: true
+      syncReviewsAutomatically:
+        value: true
+    usageLimits:
+      unlimitedTeamMembers:
+        value: .inf
+      unlimitedSuveys:
+        value: .inf
+      surveyResponsesLimit:
+        value: 20
+      requestsViaEmailLimit:
+        value: 200
+      reviewPlatformConnectionsLimit:
+        value: 3
+  BUSINESS:
+    description: The best Collect plan for growing companies
+    price: 79
+    unit: /month
+    features:
+      teams:
+        value: true
+      surveys:
+        value: true
+      surveyTemplateLibrary:
+        value: true
+      surveyStatus:
+        value: true
+      progressBar:
+        value: true
+      htmlEmbeds:
+        value: true
+      smsRequests:
+        value: true
+      csatForms:
+        value: true
+      customizableForms:
+        value: true
+      eighteenQuestionTypes:
+        value: true
+      anonymizedResponses:
+        value: true
+      analyzeFeedback:
+        value: true
+      syncReviewsAutomatically:
+        value: true
+      hubspotIntegration:
+        value: true
+      pipedriveIntegration:
+        value: true
+      phoneSupport:
+        value: true
+    usageLimits:
+      unlimitedTeamMembers:
+        value: .inf
+      unlimitedSuveys:
+        value: .inf
+      surveyResponsesLimit:
+        value: 50
+      requestsViaEmailLimit:
+        value: 600
+      reviewPlatformConnectionsLimit:
+        value: 10
+  SCALE:
+    description: ''
+    price: 159
+    unit: /month
+    features:
+      teams:
+        value: true
+      surveys:
+        value: true
+      surveyTemplateLibrary:
+        value: true
+      surveyStatus:
+        value: true
+      progressBar:
+        value: true
+      htmlEmbeds:
+        value: true
+      smsRequests:
+        value: true
+      csatForms:
+        value: true
+      customizableForms:
+        value: true
+      eighteenQuestionTypes:
+        value: true
+      anonymizedResponses:
+        value: true
+      analyzeFeedback:
+        value: true
+      syncReviewsAutomatically:
+        value: true
+      hubspotIntegration:
+        value: true
+      pipedriveIntegration:
+        value: true
+      phoneSupport:
+        value: true
+    usageLimits:
+      unlimitedTeamMembers:
+        value: .inf
+      unlimitedSuveys:
+        value: .inf
+      surveyResponsesLimit:
+        value: 500
+      requestsViaEmailLimit:
+        value: 6000
+      reviewPlatformConnectionsLimit:
+        value: 25
+addOns:
+  onboardingPackageAddOn:
+    availableFor:
+      - SOLO
+      - STARTER
+      - BUSINESS
+      - SCALE
+    price: 990
+    unit: one time payment
+    features:
+      onboardingPackage:
+        value: true
+    usageLimits: null
+    usageLimitsExtensions: null

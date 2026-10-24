@@ -1,0 +1,1523 @@
+saasName: Okta - Workfoce Identity
+syntaxVersion: '3.1'
+version: '2024'
+url: https://web.archive.org/web/20240724220227/https://www.okta.com/pricing/
+createdAt: '2024-07-24'
+currency: USD
+variables: {}
+features:
+  oktaIntegrationNetwork:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oktaTreathInsight:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  desktopSSO:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  mobileSSO:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  3rdPartyMultifactorAuthenticationIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  groupAccessPolicies:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  appAccessPolicies:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  radiusAuthentication:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  pivCardAuthentication:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  idpDiscovery:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oktaFastPass:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customOrgUrls:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  oktaSignInWidget:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTENSION
+  localLanguageSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unlimitedIntegrationsToAd:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  unlimitedIntegrationsToLdap:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  siemIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  locationContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  deviceContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  networkContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  securityQuestions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oktaVerifyOtp:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oktaVerifyPush:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  emailAsAFactor:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  smsAsAFactor:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  voiceCallAsAFactor:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  u2fAsAFactor:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  thirdPartyFactors:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  windowsHello:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  appleTouchId:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  newCityLocationContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  newStateLocationContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  newCountryLocationContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  newGeo-locationLocationContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  impossibleTravelPatterns:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  newDeviceContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  managedDeviceContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  deviceSecurityAttributesContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  newIpNetworkContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  specifiedIpZonesNetworkContext:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  networkAnonymizers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oktaThreatInsight:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cloudDirectory:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unlimitedDirectoryIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  unlimitedCustomUserAttributes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unlimitedCustomUserFields:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customMapping:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customTransformation:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cloud-basedLdapAuthentication:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+  autoProvisioningForOinApps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  deprovisioningForOinApps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  directoryIntegrationWithAd:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  directoryIntegrationWithLdap:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  completeAdSynchronizationForOffice365:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  appAccessTiedToLifecycleStates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TRACKING
+  appProvisioningTiedToLifecycleStates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TRACKING
+  createAccountsInApplications:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  deactivateAccountsInApplications:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  manageEntitlements:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  groupDiscovery:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  groupMatching:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  groupPush:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  groupUpdates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  automations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+  accessRequestWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessAuditReports:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  recentUnassignmentsReport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  apisForFullCustomization:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  customizableDirectoryForUsers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  customizableDirectoryForGroups:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  customizableDirectoryForDevices:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  manageLifecycleStates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  attributeMapping:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  attributeTransformation:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  builtInStandards-basedProvisioning:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  onPremProvisioningSdk:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: EXTERNAL_DEVICE
+  hr-drivenItProvisioning:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  masteringFromSelectOinApps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  masteringFromOnPremisesApps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  masteringFromCsvDirectory:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  applicationIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  directoryIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  ouath2.0Compliant:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  oicdCompliant:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  dynamicClientRegistration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  centralAccessManagement:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  authorizationManagement:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+  userConsent:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customizableScopes:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customizableClaims:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customizableAuthorizationServers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  yubiKey:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  selfServicePasswordReset:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  passwordlessDesktopLogin:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  automaticOktaFastPassEnrollment:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  privilegedAccessRequests:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  jitInfrastructureAccess:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  privilegedAccountVaulting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  sessionRecording:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  secretsVaulting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cloudInfrastructureEntitlementDiscovery:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  cloudInfrastructureEntitlementAnalysis:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  supportsMixedEnvironments:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  endToEndLifecycleManagementOfLocalLinuxMachineAccounts:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  endToEndLifecycleManagementOfLocalWindowsMachineAccounts:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  seamlessSingleSignOnBuiltIntoYourSshWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  seamlessSingleSignOnBuiltIntoYourRdpWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  seamlessMfaBuiltIntoYourSshWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  seamlessMfaBuiltIntoYourRdpWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  backup:
+    description: >-
+      Backed by a Programmable CA that mints just-in-time, single-use client
+      certificates
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  clienApplicationsForLocalSshIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  clienApplicationsForLocalRdpIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  clienApplicationsForDynamicDeviceBinding:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  apiAllowsForCustomAuthenticationWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  apiAllowsForCustomManagementWorkflows:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: API
+  unlimitedAppIntegrations:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  headerBasedApplications:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  kerberosApplications:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  iwaApplications:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  onPremiseApplications:
+    description: Such as Oracle E-Business Suite, PeopleSoft, and Sharepoint
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: MARKETPLACE
+  customWebApps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customWebPages:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customWebPortals:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  unlimitedNumberOfPolicies:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  applicationPolicies:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  customHeaderVariables:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  authorizationPolicies:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessGatewayServers:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  dataCenters:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  networks:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  hosts:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessToAllOktaWorkflowsConnectors:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessToAllOktaWorkflowsTemplates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessToAllOktaWorkflowsFeatures:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessToAllOktaWorkflowsFunctions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessCertification:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  accessRequests:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  reporting:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+  advancedSourcing:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+  oppProvisioning:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+usageLimits:
+  flowsLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 0
+    unit: flow/month
+    type: RENEWABLE
+    linkedFeatures:
+      - accessToAllOktaWorkflowsConnectors
+      - accessToAllOktaWorkflowsTemplates
+      - accessToAllOktaWorkflowsFeatures
+      - accessToAllOktaWorkflowsFunctions
+plans: null
+addOns:
+  singleSignOn:
+    description: ''
+    price: 2
+    unit: user/month
+    excludes:
+      - adaptiveSingleSignOn
+    features:
+      oktaIntegrationNetwork:
+        value: true
+      oktaTreathInsight:
+        value: true
+      desktopSSO:
+        value: true
+      mobileSSO:
+        value: true
+      securityQuestions:
+        value: true
+      emailAsAFactor:
+        value: true
+      3rdPartyMultifactorAuthenticationIntegration:
+        value: true
+      groupAccessPolicies:
+        value: true
+      appAccessPolicies:
+        value: true
+      radiusAuthentication:
+        value: true
+      pivCardAuthentication:
+        value: true
+      idpDiscovery:
+        value: true
+      oktaFastPass:
+        value: true
+      customOrgUrls:
+        value: true
+      oktaSignInWidget:
+        value: true
+      localLanguageSupport:
+        value: true
+      unlimitedIntegrationsToAd:
+        value: true
+      unlimitedIntegrationsToLdap:
+        value: true
+      siemIntegration:
+        value: true
+  adaptiveSingleSignOn:
+    description: ''
+    price: 5
+    unit: user/month
+    excludes:
+      - singleSignOn
+    features:
+      oktaIntegrationNetwork:
+        value: true
+      oktaTreathInsight:
+        value: true
+      desktopSSO:
+        value: true
+      mobileSSO:
+        value: true
+      securityQuestions:
+        value: true
+      emailAsAFactor:
+        value: true
+      3rdPartyMultifactorAuthenticationIntegration:
+        value: true
+      groupAccessPolicies:
+        value: true
+      appAccessPolicies:
+        value: true
+      radiusAuthentication:
+        value: true
+      pivCardAuthentication:
+        value: true
+      idpDiscovery:
+        value: true
+      oktaFastPass:
+        value: true
+      customOrgUrls:
+        value: true
+      oktaSignInWidget:
+        value: true
+      localLanguageSupport:
+        value: true
+      unlimitedIntegrationsToAd:
+        value: true
+      unlimitedIntegrationsToLdap:
+        value: true
+      siemIntegration:
+        value: true
+      locationContext:
+        value: true
+      deviceContext:
+        value: true
+      networkContext:
+        value: true
+  multiFactorAuthentication:
+    description: ''
+    price: 3
+    unit: user/month
+    excludes:
+      - adaptiveMultiFactorAuthentication
+    features:
+      securityQuestions:
+        value: true
+      oktaVerifyOtp:
+        value: true
+      oktaVerifyPush:
+        value: true
+      oktaFastPass:
+        value: true
+      emailAsAFactor:
+        value: true
+      smsAsAFactor:
+        value: true
+      voiceCallAsAFactor:
+        value: true
+      u2fAsAFactor:
+        value: true
+      thirdPartyFactors:
+        value: true
+      windowsHello:
+        value: true
+      appleTouchId:
+        value: true
+      specifiedIpZonesNetworkContext:
+        value: true
+      oktaThreatInsight:
+        value: true
+  adaptiveMultiFactorAuthentication:
+    description: ''
+    price: 6
+    unit: user/month
+    excludes:
+      - multiFactorAuthentication
+    features:
+      securityQuestions:
+        value: true
+      oktaVerifyOtp:
+        value: true
+      oktaVerifyPush:
+        value: true
+      oktaFastPass:
+        value: true
+      emailAsAFactor:
+        value: true
+      smsAsAFactor:
+        value: true
+      voiceCallAsAFactor:
+        value: true
+      u2fAsAFactor:
+        value: true
+      thirdPartyFactors:
+        value: true
+      windowsHello:
+        value: true
+      appleTouchId:
+        value: true
+      newCityLocationContext:
+        value: true
+      newStateLocationContext:
+        value: true
+      newCountryLocationContext:
+        value: true
+      newGeo-locationLocationContext:
+        value: true
+      impossibleTravelPatterns:
+        value: true
+      newDeviceContext:
+        value: true
+      managedDeviceContext:
+        value: true
+      deviceSecurityAttributesContext:
+        value: true
+      newIpNetworkContext:
+        value: true
+      specifiedIpZonesNetworkContext:
+        value: true
+      networkAnonymizers:
+        value: true
+      oktaThreatInsight:
+        value: true
+  universalDirectory:
+    description: ''
+    price: 2
+    unit: user/month
+    features:
+      cloudDirectory:
+        value: true
+      unlimitedDirectoryIntegrations:
+        value: true
+      unlimitedCustomUserAttributes:
+        value: true
+      unlimitedCustomUserFields:
+        value: true
+      customMapping:
+        value: true
+      customTransformation:
+        value: true
+      cloud-basedLdapAuthentication:
+        value: true
+  lifecycleManagement:
+    description: ''
+    price: 4
+    unit: user/month
+    dependsOn:
+      - universalDirectory
+    features:
+      autoProvisioningForOinApps:
+        value: true
+      deprovisioningForOinApps:
+        value: true
+      directoryIntegrationWithAd:
+        value: true
+      directoryIntegrationWithLdap:
+        value: true
+      completeAdSynchronizationForOffice365:
+        value: true
+      appAccessTiedToLifecycleStates:
+        value: true
+      appProvisioningTiedToLifecycleStates:
+        value: true
+      createAccountsInApplications:
+        value: true
+      deactivateAccountsInApplications:
+        value: true
+      manageEntitlements:
+        value: true
+      groupDiscovery:
+        value: true
+      groupMatching:
+        value: true
+      groupPush:
+        value: true
+      groupUpdates:
+        value: true
+      automations:
+        value: true
+      accessRequestWorkflows:
+        value: true
+      accessAuditReports:
+        value: true
+      recentUnassignmentsReport:
+        value: true
+      apisForFullCustomization:
+        value: true
+      customizableDirectoryForUsers:
+        value: true
+      customizableDirectoryForGroups:
+        value: true
+      customizableDirectoryForDevices:
+        value: true
+      manageLifecycleStates:
+        value: true
+      attributeMapping:
+        value: true
+      attributeTransformation:
+        value: true
+      builtInStandards-basedProvisioning:
+        value: true
+      onPremProvisioningSdk:
+        value: true
+      hr-drivenItProvisioning:
+        value: true
+      masteringFromSelectOinApps:
+        value: true
+      masteringFromOnPremisesApps:
+        value: true
+      masteringFromCsvDirectory:
+        value: true
+  apiAccessManagement:
+    description: ''
+    price: 2
+    unit: user/month
+    features:
+      applicationIntegrations:
+        value: true
+      directoryIntegrations:
+        value: true
+      ouath2.0Compliant:
+        value: true
+      oicdCompliant:
+        value: true
+      dynamicClientRegistration:
+        value: true
+      centralAccessManagement:
+        value: true
+      authorizationManagement:
+        value: true
+      userConsent:
+        value: true
+      customizableScopes:
+        value: true
+      customizableClaims:
+        value: true
+      customizableAuthorizationServers:
+        value: true
+  deviceAccess:
+    description: ''
+    price: 4
+    unit: user/month
+    features:
+      oktaVerifyOtp:
+        value: true
+      oktaVerifyPush:
+        value: true
+      yubiKey:
+        value: true
+      selfServicePasswordReset:
+        value: true
+      passwordlessDesktopLogin:
+        value: true
+      automaticOktaFastPassEnrollment:
+        value: true
+  oktaPrivilegedAccess:
+    description: ''
+    price: 14
+    unit: user/month
+    features:
+      privilegedAccessRequests:
+        value: true
+      jitInfrastructureAccess:
+        value: true
+      privilegedAccountVaulting:
+        value: true
+      sessionRecording:
+        value: true
+      secretsVaulting:
+        value: true
+      cloudInfrastructureEntitlementDiscovery:
+        value: true
+      cloudInfrastructureEntitlementAnalysis:
+        value: true
+  advancedServerAccess:
+    description: ''
+    price: 15
+    unit: user/month
+    features:
+      supportsMixedEnvironments:
+        value: true
+      endToEndLifecycleManagementOfLocalLinuxMachineAccounts:
+        value: true
+      endToEndLifecycleManagementOfLocalWindowsMachineAccounts:
+        value: true
+      seamlessSingleSignOnBuiltIntoYourSshWorkflows:
+        value: true
+      seamlessSingleSignOnBuiltIntoYourRdpWorkflows:
+        value: true
+      seamlessMfaBuiltIntoYourSshWorkflows:
+        value: true
+      seamlessMfaBuiltIntoYourRdpWorkflows:
+        value: true
+      backup:
+        value: true
+      clienApplicationsForLocalSshIntegrations:
+        value: true
+      clienApplicationsForLocalRdpIntegrations:
+        value: true
+      clienApplicationsForDynamicDeviceBinding:
+        value: true
+      apiAllowsForCustomAuthenticationWorkflows:
+        value: true
+      apiAllowsForCustomManagementWorkflows:
+        value: true
+  accessGateway:
+    description: ''
+    price: 3
+    unit: user/month
+    features:
+      unlimitedAppIntegrations:
+        value: true
+      headerBasedApplications:
+        value: true
+      kerberosApplications:
+        value: true
+      iwaApplications:
+        value: true
+      onPremiseApplications:
+        value: true
+      customWebApps:
+        value: true
+      customWebPages:
+        value: true
+      customWebPortals:
+        value: true
+      unlimitedNumberOfPolicies:
+        value: true
+      applicationPolicies:
+        value: true
+      customHeaderVariables:
+        value: true
+      authorizationPolicies:
+        value: true
+      accessGatewayServers:
+        value: true
+      dataCenters:
+        value: true
+      networks:
+        value: true
+      hosts:
+        value: true
+  starterWorkflows:
+    description: ''
+    price: 0
+    unit: user/month
+    excludes:
+      - lightWorkflows
+      - mediumWorkflows
+      - unlimitedWorkflows
+    features:
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: 5
+  lightWorkflows:
+    description: ''
+    price: 4
+    unit: user/month
+    excludes:
+      - starterWorkflows
+      - mediumWorkflows
+      - unlimitedWorkflows
+    features:
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: 50
+  mediumWorkflows:
+    description: ''
+    price: 5
+    unit: user/month
+    excludes:
+      - starterWorkflows
+      - lightWorkflows
+      - unlimitedWorkflows
+    features:
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: 150
+  unlimitedWorkflows:
+    description: ''
+    price: 6
+    unit: user/month
+    excludes:
+      - starterWorkflows
+      - lightWorkflows
+      - mediumWorkflows
+    features:
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: .inf
+  lightIdentityGovernance:
+    description: ''
+    price: 9
+    unit: user/month
+    excludes:
+      - lifecycleManagement
+      - lightWorkflows
+      - mediumWorkflows
+      - unlimitedWorkflows
+      - mediumIdentityGovernance
+      - unlimitedIdentityGovernance
+    features:
+      accessCertification:
+        value: true
+      accessRequests:
+        value: true
+      reporting:
+        value: true
+      autoProvisioningForOinApps:
+        value: true
+      deprovisioningForOinApps:
+        value: true
+      directoryIntegrationWithAd:
+        value: true
+      directoryIntegrationWithLdap:
+        value: true
+      completeAdSynchronizationForOffice365:
+        value: true
+      appAccessTiedToLifecycleStates:
+        value: true
+      appProvisioningTiedToLifecycleStates:
+        value: true
+      createAccountsInApplications:
+        value: true
+      deactivateAccountsInApplications:
+        value: true
+      manageEntitlements:
+        value: true
+      groupDiscovery:
+        value: true
+      groupMatching:
+        value: true
+      groupPush:
+        value: true
+      groupUpdates:
+        value: true
+      automations:
+        value: true
+      accessRequestWorkflows:
+        value: true
+      accessAuditReports:
+        value: true
+      recentUnassignmentsReport:
+        value: true
+      apisForFullCustomization:
+        value: true
+      customizableDirectoryForUsers:
+        value: true
+      customizableDirectoryForGroups:
+        value: true
+      customizableDirectoryForDevices:
+        value: true
+      manageLifecycleStates:
+        value: true
+      attributeMapping:
+        value: true
+      attributeTransformation:
+        value: true
+      builtInStandards-basedProvisioning:
+        value: true
+      onPremProvisioningSdk:
+        value: true
+      hr-drivenItProvisioning:
+        value: true
+      masteringFromSelectOinApps:
+        value: true
+      masteringFromOnPremisesApps:
+        value: true
+      masteringFromCsvDirectory:
+        value: true
+      advancedSourcing:
+        value: true
+      oppProvisioning:
+        value: true
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: 50
+  mediumIdentityGovernance:
+    description: ''
+    price: 10
+    unit: user/month
+    excludes:
+      - lifecycleManagement
+      - lightWorkflows
+      - mediumWorkflows
+      - unlimitedWorkflows
+      - lightIdentityGovernance
+      - unlimitedIdentityGovernance
+    features:
+      accessCertification:
+        value: true
+      accessRequests:
+        value: true
+      reporting:
+        value: true
+      autoProvisioningForOinApps:
+        value: true
+      deprovisioningForOinApps:
+        value: true
+      directoryIntegrationWithAd:
+        value: true
+      directoryIntegrationWithLdap:
+        value: true
+      completeAdSynchronizationForOffice365:
+        value: true
+      appAccessTiedToLifecycleStates:
+        value: true
+      appProvisioningTiedToLifecycleStates:
+        value: true
+      createAccountsInApplications:
+        value: true
+      deactivateAccountsInApplications:
+        value: true
+      manageEntitlements:
+        value: true
+      groupDiscovery:
+        value: true
+      groupMatching:
+        value: true
+      groupPush:
+        value: true
+      groupUpdates:
+        value: true
+      automations:
+        value: true
+      accessRequestWorkflows:
+        value: true
+      accessAuditReports:
+        value: true
+      recentUnassignmentsReport:
+        value: true
+      apisForFullCustomization:
+        value: true
+      customizableDirectoryForUsers:
+        value: true
+      customizableDirectoryForGroups:
+        value: true
+      customizableDirectoryForDevices:
+        value: true
+      manageLifecycleStates:
+        value: true
+      attributeMapping:
+        value: true
+      attributeTransformation:
+        value: true
+      builtInStandards-basedProvisioning:
+        value: true
+      onPremProvisioningSdk:
+        value: true
+      hr-drivenItProvisioning:
+        value: true
+      masteringFromSelectOinApps:
+        value: true
+      masteringFromOnPremisesApps:
+        value: true
+      masteringFromCsvDirectory:
+        value: true
+      advancedSourcing:
+        value: true
+      oppProvisioning:
+        value: true
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: 150
+  unlimitedIdentityGovernance:
+    description: ''
+    price: 11
+    unit: user/month
+    excludes:
+      - lifecycleManagement
+      - lightWorkflows
+      - mediumWorkflows
+      - unlimitedWorkflows
+      - lightIdentityGovernance
+      - mediumIdentityGovernance
+    features:
+      accessCertification:
+        value: true
+      accessRequests:
+        value: true
+      reporting:
+        value: true
+      autoProvisioningForOinApps:
+        value: true
+      deprovisioningForOinApps:
+        value: true
+      directoryIntegrationWithAd:
+        value: true
+      directoryIntegrationWithLdap:
+        value: true
+      completeAdSynchronizationForOffice365:
+        value: true
+      appAccessTiedToLifecycleStates:
+        value: true
+      appProvisioningTiedToLifecycleStates:
+        value: true
+      createAccountsInApplications:
+        value: true
+      deactivateAccountsInApplications:
+        value: true
+      manageEntitlements:
+        value: true
+      groupDiscovery:
+        value: true
+      groupMatching:
+        value: true
+      groupPush:
+        value: true
+      groupUpdates:
+        value: true
+      automations:
+        value: true
+      accessRequestWorkflows:
+        value: true
+      accessAuditReports:
+        value: true
+      recentUnassignmentsReport:
+        value: true
+      apisForFullCustomization:
+        value: true
+      customizableDirectoryForUsers:
+        value: true
+      customizableDirectoryForGroups:
+        value: true
+      customizableDirectoryForDevices:
+        value: true
+      manageLifecycleStates:
+        value: true
+      attributeMapping:
+        value: true
+      attributeTransformation:
+        value: true
+      builtInStandards-basedProvisioning:
+        value: true
+      onPremProvisioningSdk:
+        value: true
+      hr-drivenItProvisioning:
+        value: true
+      masteringFromSelectOinApps:
+        value: true
+      masteringFromOnPremisesApps:
+        value: true
+      masteringFromCsvDirectory:
+        value: true
+      advancedSourcing:
+        value: true
+      oppProvisioning:
+        value: true
+      accessToAllOktaWorkflowsConnectors:
+        value: true
+      accessToAllOktaWorkflowsTemplates:
+        value: true
+      accessToAllOktaWorkflowsFeatures:
+        value: true
+      accessToAllOktaWorkflowsFunctions:
+        value: true
+    usageLimits:
+      flowsLimit:
+        value: .inf

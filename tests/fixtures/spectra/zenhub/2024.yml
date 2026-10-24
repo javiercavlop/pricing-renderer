@@ -1,0 +1,368 @@
+saasName: Zenhub
+syntaxVersion: '3.1'
+version: '2024'
+url: https://web.archive.org/web/20240725151808/https://www.zenhub.com/pricing
+createdAt: '2024-07-25'
+currency: USD
+billing:
+  monthly: 1
+  annual: 0.66
+variables: {}
+tags:
+  - Security
+  - Configuration
+  - GitHub
+  - Features
+  - Integrations
+  - Support
+features:
+  signUpWithEmail:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Security
+  emailDomainVerification:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Security
+  cloudHosted:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Security
+  googleSSO:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: IDENTITY_PROVIDER
+    tag: Security
+  selfHostedOnPremise:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    tag: Security
+  teamWorkspaces:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Configuration
+  githubIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://github.com/pricing
+    tag: GitHub
+  zenhubExtensionForGithub:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: EXTENSION
+    tag: GitHub
+  githubInsights:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: GitHub
+  nonGithubUsersCanViewGithubIssues:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: GitHub
+  automatedSprintPlanning:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Features
+  planningPoker:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  estimates:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  zenhubProjects:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  epics:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  issues:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  realTimeRoadmaps:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: DOMAIN
+    tag: Features
+  basicSprintReports:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Features
+  velocityReport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Features
+  sprintInsights:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INFORMATION
+    tag: Features
+  aiSuggestedLabels:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Features
+  aiAcceptanceCriteria:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: BOT
+    tag: Features
+  sprintReview:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: DOMAIN
+    tag: Features
+  workspaceAutomation:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Features
+  advancedReportingControlChart:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Features
+  advancedReportingCumulativeFlowChart:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Features
+  advancedReportingGithubInsights:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INFORMATION
+    tag: Features
+  togglePublicAndPrivateWorkspaces:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Features
+  togglePublicAndPrivateFiles:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: MANAGEMENT
+    tag: Features
+  smartPipelinesPermissions:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: AUTOMATION
+    automationType: TASK_AUTOMATION
+    tag: Features
+  slackIntegration:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://slack.com/pricing
+    tag: Integrations
+  figma:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://figma.com/pricing
+    tag: Integrations
+  loom:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://www.loom.com/pricing
+    tag: Integrations
+  miro:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: INTEGRATION
+    integrationType: WEB_SAAS
+    pricingUrls:
+      - https://miro.com/pricing/
+    tag: Integrations
+  communitySupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Support
+  emailSupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: true
+    type: SUPPORT
+    tag: Support
+  prioritySupport:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  sharedSlackChannelWithZenhubTeam:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+  liveGuidedOnboardingForYourTeam:
+    description: ''
+    valueType: BOOLEAN
+    defaultValue: false
+    type: SUPPORT
+    tag: Support
+usageLimits:
+  teamWorkspacesLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 10
+    unit: workspace
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - teamWorkspaces
+  usersLimit:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 50
+    unit: user
+    type: NON_RENEWABLE
+    linkedFeatures: null
+  maxConnectedGithubOrganizations:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 1
+    unit: organization
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - githubIntegration
+  maxConnectedGithubRepositories:
+    description: ''
+    valueType: NUMERIC
+    defaultValue: 50
+    unit: repo
+    type: NON_RENEWABLE
+    linkedFeatures:
+      - githubIntegration
+plans:
+  TEAMS:
+    description: ''
+    price: 12.5
+    unit: /month
+    features: null
+    usageLimits: null
+  ENTERPRISE:
+    description: ''
+    price: Contact us
+    unit: user/month
+    features:
+      selfHostedOnPremise:
+        value: true
+      githubInsights:
+        value: true
+      nonGithubUsersCanViewGithubIssues:
+        value: true
+      aiSuggestedLabels:
+        value: true
+      aiAcceptanceCriteria:
+        value: true
+      sprintReview:
+        value: true
+      workspaceAutomation:
+        value: true
+      advancedReportingControlChart:
+        value: true
+      advancedReportingCumulativeFlowChart:
+        value: true
+      advancedReportingGithubInsights:
+        value: true
+      togglePublicAndPrivateWorkspaces:
+        value: true
+      togglePublicAndPrivateFiles:
+        value: true
+      smartPipelinesPermissions:
+        value: true
+      figma:
+        value: true
+      loom:
+        value: true
+      miro:
+        value: true
+      prioritySupport:
+        value: true
+      sharedSlackChannelWithZenhubTeam:
+        value: true
+      liveGuidedOnboardingForYourTeam:
+        value: true
+    usageLimits:
+      teamWorkspacesLimit:
+        value: .inf
+      usersLimit:
+        value: .inf
+      maxConnectedGithubOrganizations:
+        value: 10
+      maxConnectedGithubRepositories:
+        value: .inf
+addOns: null
