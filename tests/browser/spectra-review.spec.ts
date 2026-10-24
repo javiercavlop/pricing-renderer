@@ -248,12 +248,24 @@ async function collectMetrics(viewport: Viewport) {
   const toolbarInput = renderer.querySelector('.pr-comparison-toolbar input');
   let toolbarInputReachable: boolean | null = null;
   if (toolbarInput) {
-    const toolbarTop = renderer.querySelector('.pr-comparison-toolbar')!.getBoundingClientRect();
-    jump(Math.max(0, Math.round(toolbarTop.top + window.scrollY + 300)));
+    const toolbar = renderer.querySelector('.pr-comparison-toolbar') as HTMLElement;
+    const toolbarRect = toolbar.getBoundingClientRect();
+    const toolbarPageTop = toolbarRect.top + window.scrollY;
+    const stickyOffset = parseFloat(getComputedStyle(toolbar).insetBlockStart) || 0;
+    const container = toolbar.parentElement!.getBoundingClientRect();
+    // How far the page can scroll past the toolbar's natural position while its container still holds it.
+    const holdRoom = container.bottom + window.scrollY - toolbarPageTop - toolbarRect.height;
+    // Scroll to the middle of that range, always beyond the sticky offset so the bar is really stuck.
+    const shift = Math.max(stickyOffset + 1, Math.min(holdRoom, holdRoom / 2));
+    jump(Math.max(0, Math.round(toolbarPageTop + shift)));
     await nextFrame();
     const box = toolbarInput.getBoundingClientRect();
-    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-    toolbarInputReachable = !!hit && toolbarInput.contains(hit);
+    const centerX = box.left + box.width / 2;
+    const centerY = box.top + box.height / 2;
+    const centerInViewport =
+      centerX >= 0 && centerX <= window.innerWidth && centerY >= 0 && centerY <= viewportHeight;
+    const hit = centerInViewport ? document.elementFromPoint(centerX, centerY) : null;
+    toolbarInputReachable = centerInViewport && !!hit && toolbarInput.contains(hit);
     jump(0);
     await nextFrame();
   }
