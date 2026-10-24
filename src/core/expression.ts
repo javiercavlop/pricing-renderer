@@ -517,10 +517,10 @@ function evaluateNode(
           return left >= right;
         case '===':
         case '==':
-          return Object.is(left, right);
+          return left === right;
         case '!==':
         case '!=':
-          return !Object.is(left, right);
+          return left !== right;
         default:
           throw new Error(`Operator "${node.operator}" is not allowed.`);
       }
