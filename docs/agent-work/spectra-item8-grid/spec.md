@@ -92,11 +92,54 @@ Columns (rows) per band; `+1` marks an exempt lone last card.
   than all of them and keeps today's tracks: `repeat(2, minmax(0, 320px))` centered from 600px and
   `repeat(auto-fit, minmax(220px, 320px))` from 840px (`auto-fit` counts its repetitions with the
   320px maximum, so it would give a single column below a content width of 656px).
-- First screen levers, from 840px only: plan card padding 24px to 16px, price padding-block 24px to
-  12px, highlight list gap 12px to 8px and its bottom margin 24px to 16px, and the gap between the
-  blocks above the plans (hero, metadata, billing, variables) from `--pr-space-section` (96px at a
-  1440px viewport) to `clamp(2rem, 3cqi, 2.5rem)` (40px there); the space after the plans is
-  unchanged. Below 840px the cards keep today's spacing.
+- First screen levers, from 840px only (below 840px nothing changes): plan card padding 24px to
+  16px, highlight list gap 12px to 8px, and the levers L1 to L7 below. The space after the plans
+  stays `--pr-space-section`: the blocks after the plans section get
+  `margin-block-start: calc(var(--pr-space-section) - var(--pr-space-5))`, which adds back what the
+  smaller row gap removes.
+
+### First CTA arithmetic at 1440x900
+
+Measured in CI on head 0041212, before the levers L1 to L7 below, with the renderer scrolled to
+the top of the viewport: every fixture with plans passed the CTA gate except three, whose first CTA
+bottom was below 900px: shopify 917.52 (miss 17.5), zenhub 955.71 (miss 55.7), zoom 963.71 (miss
+63.7). Layout of the three (px from the renderer top): content padding about 46, `header.pr-hero`
+189 tall, row gap 40, `fieldset.pr-billing` 83 (zenhub, zoom 92), row gap 40, plans section at 398
+(zenhub, zoom 408), its heading (eyebrow, h3 and a 24px bottom margin) about 95, then the first
+card: padding 16, top block 120 (zenhub 88), price 72, highlight list 152 plus its 16px margin and
+the CTA 47 tall. The CTA bottom is about 493-500px below the section top.
+
+Levers from 840px and what each saves at 1440 above the first CTA:
+
+- L1: `.pr-content` padding-block-start from `--pr-shell-padding` (about 46px) to `--pr-space-4`
+  (16px): 30.
+- L2: `.pr-content` row gap from `clamp(2rem, 3cqi, 2.5rem)` (40px) to `--pr-space-5` (24px), two
+  gaps above the plans (hero to billing, billing to plans): 32.
+- L3: `.pr-hero__title` maximum font size from 4rem (64px) to 3rem (48px), line-height 1.02 kept:
+  16.3 per title line (65.28 to 48.96).
+- L4: margin-block-end of the plans section heading from `--pr-space-5` (24px) to `--pr-space-3`
+  (12px): 12.
+- L5: plan card `.pr-price` padding-block from `--pr-space-3` (12px) to `--pr-space-2` (8px) and
+  min-block-size from 4.5rem (72px) to 4rem (64px): 8.
+- L6: `.pr-highlight-list` margin-block-end from `--pr-space-4` (16px) to `--pr-space-3` (12px): 4.
+- L7: plan name (`.pr-plan-card__top h4`) margin-block-start from `--pr-space-3` (12px) to
+  `--pr-space-2` (8px): 4.
+- Total: at least 30 + 32 + 16.3 + 12 + 8 + 4 + 4 = 106.3.
+
+Notes on the levers:
+
+- L5: with `box-sizing: border-box` the 72px minimum already holds a 48px amount line plus 2 x 12px
+  padding, so lowering the padding alone would save nothing; the minimum goes down with it to keep
+  prices aligned across cards (64px = 48px + 2 x 8px).
+- L3 counts one title line; a title on two lines saves 32.6.
+- L5 to L7 are inside every card, so the grid row (the tallest card sets it, and the CTA sits at the
+  bottom of the card with `margin-block-start: auto`) gets shorter by the same 16px.
+- The billing fieldset, the eyebrows, the h3 and the 44px minimum of the CTA and the selection
+  controls are unchanged, and no color changes.
+
+Expected first CTA bottom at 1440x900 (measured value minus 106.3): shopify about 811, zenhub about
+849, zoom about 857, all at or below the 860px target, which leaves at least 40px for font
+differences. The gate itself (AC6) stays at 900px.
 
 ## Acceptance criteria
 
@@ -131,19 +174,30 @@ Columns (rows) per band; `+1` marks an exempt lone last card.
 
 ## Before and after
 
-Filled from the `SPECTRA_GRID` lines of the CI run before and after this change.
+Before: `docs/agent-work/visual-review-spectra/report.md` sections 6.2 (cards per row, fixed 320px
+tracks) and 6.3 (first CTA with the pricing at the top of the viewport). After: rows are the column
+table values for the band of the measured container (1280 and up at 1440, 840-1039 at 1024), which
+the AC5 gate checks; the 1440 CTA is the AC6 gate of the `SPECTRA_GRID` test, and the 1024 CTA is
+printed in CI only.
 
-| Fixture     | Plans | 1440 rows before | 1440 rows after | 1440 CTA before | 1440 CTA after | 1024 rows before | 1024 rows after | 1024 CTA before | 1024 CTA after |
-| ----------- | ----- | ---------------- | --------------- | --------------- | -------------- | ---------------- | --------------- | --------------- | -------------- |
-| shopify     | 3     |                  |                 |                 |                |                  |                 |                 |                |
-| tableau     | 3     |                  |                 |                 |                |                  |                 |                 |                |
-| userguiding | 3     |                  |                 |                 |                |                  |                 |                 |                |
-| trello      | 4     |                  |                 |                 |                |                  |                 |                 |                |
-| trustmary   | 4     |                  |                 |                 |                |                  |                 |                 |                |
-| wrike       | 5     |                  |                 |                 |                |                  |                 |                 |                |
-| zoom        | 5     |                  |                 |                 |                |                  |                 |                 |                |
-| figma       | 6     |                  |                 |                 |                |                  |                 |                 |                |
-| webflow     | 15    |                  |                 |                 |                |                  |                 |                 |                |
+| Fixture     | Plans | 1440 rows before | 1440 rows after | 1440 CTA before | 1440 CTA after | 1024 rows before | 1024 rows after | 1024 CTA before | 1024 CTA after           |
+| ----------- | ----- | ---------------- | --------------- | --------------- | -------------- | ---------------- | --------------- | --------------- | ------------------------ |
+| shopify     | 3     | 3                | 3               | hidden          | visible (gate) | 2+1              | 3               | hidden          | printed in CI, not gated |
+| tableau     | 3     | 3                | 3               | hidden          | visible (gate) | 2+1              | 3               | hidden          | printed in CI, not gated |
+| userguiding | 3     | 3                | 3               | hidden          | visible (gate) | 2+1              | 3               | hidden          | printed in CI, not gated |
+| trello      | 4     | 3+1              | 4               | hidden          | visible (gate) | 2+2              | 2+2             | hidden          | printed in CI, not gated |
+| trustmary   | 4     | 3+1              | 4               | hidden          | visible (gate) | 2+2              | 2+2             | hidden          | printed in CI, not gated |
+| wrike       | 5     | 3+2              | 3+2             | hidden          | visible (gate) | 2+2+1            | 3+2             | hidden          | printed in CI, not gated |
+| zoom        | 5     | 3+2              | 3+2             | hidden          | visible (gate) | 2+2+1            | 3+2             | hidden          | printed in CI, not gated |
+| figma       | 6     | 3+3              | 3+3             | visible         | visible (gate) | 2+2+2            | 3+3             | visible         | printed in CI, not gated |
+| webflow     | 15    | 3x5              | 4x3+3           | hidden          | visible (gate) | 2x7+1            | 3x5             | hidden          | printed in CI, not gated |
+
+The report gives the 4-plan rows at 1440 as 3+1 for trello and trustmary (seen in the log) and the
+other rows by plan count. On head 0041212, before the tightening of the "First CTA arithmetic"
+levers, the 1440 CTA gate failed for shopify (first CTA bottom 917.52, miss 17.5), zoom (963.71,
+miss 63.7) and zenhub (955.71, miss 55.7; not in this table); the other fixtures passed. "visible
+(gate)" for shopify and zoom is what the gate requires after these levers, with the expected
+bottoms of the arithmetic above; it holds once the browsers job passes on the new head.
 
 ## Snapshots expected to change
 

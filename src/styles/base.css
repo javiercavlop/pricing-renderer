@@ -1247,26 +1247,41 @@
     }
 
     /* Tighter plan cards and less space above the plans bring the first CTA into the first
-       screen; the space after the plans stays var(--pr-space-section). */
+       screen (savings per lever in docs/agent-work/spectra-item8-grid/spec.md); the space after
+       the plans stays var(--pr-space-section). */
     pricing-renderer[data-pr-root] .pr-plan-card {
       padding: var(--pr-space-4);
     }
 
+    pricing-renderer[data-pr-root] .pr-plan-card__top h4 {
+      margin-block-start: var(--pr-space-2);
+    }
+
     pricing-renderer[data-pr-root] .pr-plan-card .pr-price {
-      padding-block: var(--pr-space-3);
+      min-block-size: 4rem;
+      padding-block: var(--pr-space-2);
     }
 
     pricing-renderer[data-pr-root] .pr-highlight-list {
       gap: var(--pr-space-2);
-      margin-block-end: var(--pr-space-4);
+      margin-block-end: var(--pr-space-3);
+    }
+
+    pricing-renderer[data-pr-root] .pr-hero__title {
+      font-size: clamp(2rem, 8cqi, 3rem);
+    }
+
+    pricing-renderer[data-pr-root] [data-pr-part='plans'] > .pr-section__heading {
+      margin-block-end: var(--pr-space-3);
     }
 
     pricing-renderer[data-pr-root] .pr-content {
-      gap: clamp(2rem, 3cqi, 2.5rem);
+      gap: var(--pr-space-5);
+      padding-block-start: var(--pr-space-4);
     }
 
     pricing-renderer[data-pr-root] .pr-content > [data-pr-part='plans'] ~ * {
-      margin-block-start: calc(var(--pr-space-section) - clamp(2rem, 3cqi, 2.5rem));
+      margin-block-start: calc(var(--pr-space-section) - var(--pr-space-5));
     }
 
     pricing-renderer[data-pr-root] .pr-addon-layout {

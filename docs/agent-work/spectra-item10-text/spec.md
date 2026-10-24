@@ -77,16 +77,18 @@ Truncated texts are 0 everywhere today and must stay 0.
 
 ## Before and after
 
-Filled from the `SPECTRA_TEXT` lines of the CI run before and after this change (awkward breaks).
+Awkward breaks. Before: `docs/agent-work/visual-review-spectra/report.md` sections 4.10 and 6.5,
+which name the split word but give the viewport only for figma (375). After: `awkwardBreaks.count`
+from the `SPECTRA_TEXT` gate (AC1) in CI on head 0041212, where every awkward-break gate passed.
 
-| Fixture              | 1440 before | 1440 after | 1024 before | 1024 after | 375 before | 375 after |
-| -------------------- | ----------- | ---------- | ----------- | ---------- | ---------- | --------- |
-| mailchimp            |             |            |             |            |            |           |
-| microsoft365Business |             |            |             |            |            |           |
-| salesforce           |             |            |             |            |            |           |
-| zoom                 |             |            |             |            |            |           |
-| figma                |             |            |             |            |            |           |
-| github               |             |            |             |            |            |           |
+| Fixture              | Before (report)                  | 1440 after | 1024 after | 375 after |
+| -------------------- | -------------------------------- | ---------- | ---------- | --------- |
+| mailchimp            | split ("Unlimited")              | 0          | 0          | 0         |
+| microsoft365Business | split ("Unlimited")              | 0          | 0          | 0         |
+| salesforce           | split ("Unlimited")              | 0          | 0          | 0         |
+| zoom                 | split ("Unlimited")              | 0          | 0          | 0         |
+| figma                | split ("Unlimited") at 375       | 0          | 0          | 0         |
+| github               | split ("PROFESSIONAL" in a `dt`) | 0          | 0          | 0         |
 
 ## Snapshots expected to change
 
