@@ -32,7 +32,6 @@ export {
   mergePresentation,
   mergePresentationOptions,
 } from './view-model.js';
-export { formatUnit } from './units.js';
 export {
   asRecord,
   cloneValue,

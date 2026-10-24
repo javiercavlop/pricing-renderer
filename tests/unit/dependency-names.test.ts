@@ -102,6 +102,16 @@ describe('add-on names in dependencies', () => {
     expect(text).not.toContain('Cannot be combined with legacy-pack');
   });
 
+  it('shows names in the Spanish dependency lines', async () => {
+    const path = fileURLToPath(new URL('../fixtures/acme-pricing.yml', import.meta.url));
+    const pricing = parsePricingYaml(await readFile(path, 'utf8')).value!;
+    const base = createPricingViewModel(pricing, undefined, { locale: 'es' });
+    const viewModel = { ...base, addOns: base.addOns.map(named) };
+    const text = flatten(renderAddOns(stateFor(viewModel)));
+    expect(text).toContain('Requiere Storage packs');
+    expect(text).not.toContain('Requiere extraStorage');
+  });
+
   it('shows names in Will add and Will remove in the confirmation dialog', async () => {
     const viewModel = await loadViewModel(named);
     const pending: PendingAddOnChange = {

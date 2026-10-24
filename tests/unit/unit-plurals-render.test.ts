@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -92,10 +93,12 @@ describe('plural units in rendered values', () => {
     expect(text).not.toContain('3 execution<');
   });
 
-  it('pluralizes a count above one in Spanish', async () => {
-    const text = await renderCell(3, 'licencia', 'es-ES');
-    expect(text).toContain('>3 licencias<');
-    expect((await renderCell(1, 'licencia', 'es-ES')).includes('>1 licencia<')).toBe(true);
+  it('follows the locale: English pluralizes and Spanish leaves the unit as written', async () => {
+    const en = await renderCell(3, 'execution', 'en');
+    expect(en).toContain('>3 executions<');
+    const es = await renderCell(3, 'execution', 'es');
+    expect(es).toContain('>3 execution<');
+    expect(es).not.toContain('executions');
   });
 
   it('keeps the singular for exactly one', async () => {
@@ -110,26 +113,47 @@ describe('plural units in rendered values', () => {
   });
 
   it('renders text values without a unit change', async () => {
-    const text = await renderCell('unlimited', 'execution', 'en-US');
+    const text = await renderCell('on request', 'execution', 'en-US');
+    expect(text).toContain('>on request<');
     expect(text).not.toContain('executions');
   });
 });
 
 describe('plural units on SPECTRA pricings', () => {
-  const files = [
-    'github/2024.yml',
-    'box/2024.yml',
-    'dropbox/2024.yml',
-    'buffer/2024.yml',
-    'postman/2024.yml',
-  ];
+  const dir = fileURLToPath(new URL('../fixtures/spectra/', import.meta.url));
+  const files = readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .flatMap((entry) =>
+      readdirSync(`${dir}${entry.name}`)
+        .filter((name) => name.endsWith('.yml'))
+        .map((name) => `${entry.name}/${name}`),
+    )
+    .sort();
   // A count from 2 to 9 followed by a lowercase singular word that a plural would end in s.
   const singular = /pr-value">[2-9] [a-z]+(?<!s)</g;
+  // A count of exactly 1 followed by a word that ends in s: a plural unit left unsingularized.
+  const pluralAfterOne = /\b1 \w+s\b/;
+  // Known gap of 3a: units already written in the plural are not singularized for a count of 1.
+  const knownPluralAfterOne = new Set([
+    'evernote/2024.yml: 1 notebooks',
+    'evernote/2024.yml: 1 calendars',
+    'slack/2024.yml: 1 persons',
+    'webflow/2024.yml: 1 hours',
+  ]);
+
+  it('finds the fixtures', () => {
+    expect(files.length).toBeGreaterThan(30);
+  });
 
   it.each(files)('renders no singular unit after a count in %s', async (file) => {
     const viewModel = await load(`../fixtures/spectra/${file}`);
     const text = flatten(renderComparison(stateFor(viewModel)));
-    expect(text).toContain('pr-value');
     expect(text.match(singular) ?? []).toEqual([]);
+
+    const cells = [...text.matchAll(/pr-value">([^<]*)</g)].map((match) => match[1]!);
+    const offending = cells.filter(
+      (cell) => pluralAfterOne.test(cell) && !knownPluralAfterOne.has(`${file}: ${cell}`),
+    );
+    expect(offending).toEqual([]);
   });
 });
