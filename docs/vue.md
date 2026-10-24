@@ -147,7 +147,8 @@ function onAction(event: PricingActionEvent) {
 - `pricing-action` is cancelable. Call `event.preventDefault()` to stop the
   default navigation to `href` and run your own checkout. The detail has
   `actionId`, `planId`, `href`, `selection`, `resolved` and `metadata`.
-- `pricing-ready` fires after each successful load, with `pricing`,
+- `pricing-ready` fires after each load that produced a pricing, even when it carries
+  diagnostics, with `pricing`,
   `diagnostics`, `selection` and `resolved`.
 - `pricing-selection-change` fires when the user changes the selection, with
   `selection` and `resolved`.
@@ -200,14 +201,16 @@ for the contract mapping, the billing period, diagnostics and reloads.
   list above.
 - **The listener never runs.** Check the spelling: the names are
   `pricing-ready`, `pricing-selection-change`, `pricing-action` and
-  `pricing-diagnostic`. There is no camel-case form to use in a Vue template.
+  `pricing-diagnostic`.
 - **`pricing-ready` does not fire for a listener added later.** The event fires
   once per load. If you attach the listener after the first load, read
   `renderer.value?.resolvedState` for the current state.
 - **Checkout opens twice.** Call `event.preventDefault()` in `@pricing-action`,
   or the element also follows `href`.
 - **Nothing is rendered on the server.** The element needs the browser. In a
-  server-rendered app such as Nuxt, import `pricing-renderer/define` only on the
+  server-rendered app such as Nuxt (general guidance, not tested here), set
+  `isCustomElement` in the Nuxt config (`vue.compilerOptions.isCustomElement` in
+  `nuxt.config`; the Vite setup above is for Vite apps), import `pricing-renderer/define` only on the
   client (for example in a client-only plugin or component) and render the tag
   inside `<ClientOnly>`. The library does not render pricing content on the
   server.

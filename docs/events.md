@@ -7,15 +7,16 @@
 
 | Event                      | Emitted when                                         | Cancelable | `detail`                                                       |
 | -------------------------- | ---------------------------------------------------- | ---------- | -------------------------------------------------------------- |
-| `pricing-ready`            | A load produced a pricing value, on every load       | No         | `{ pricing, diagnostics, selection, resolved }`                |
+| `pricing-ready`            | Every load that completes produced a pricing value   | No         | `{ pricing, diagnostics, selection, resolved }`                |
 | `pricing-selection-change` | The user changed plan, billing, variables or add-ons | No         | `{ selection, resolved }`                                      |
 | `pricing-action`           | The user clicked a plan CTA                          | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
 | `pricing-diagnostic`       | A load or applySelection returned diagnostics        | No         | `{ diagnostics }`                                              |
 
 Details that the table leaves out:
 
-- `pricing-ready` is emitted for a load of `pricing`, `yaml`, `src` or
-  `loadPricing`, on the first load and on every later one. It fires before the
+- `pricing-ready` is emitted for a load of `pricing`, `yaml` or `src` (with or
+  without `loadPricing`), on the first load and on every later load that
+  completes. A load superseded by a newer one emits nothing. It fires before the
   `pricing-diagnostic` event of the same load.
 - `pricing-selection-change` follows a change by the user: plan, billing period,
   variable, add-on or add-on quantity, including a confirmed dialog. It is not
@@ -83,12 +84,12 @@ interface PricingActionDetail {
 - `planId`: the plan of the card that was clicked. It is not the plan in
   `selection`, which is the plan currently selected. Typed optional; set for plan
   card CTAs.
-- `href`: the `href` of the configured CTA, exactly as configured. Present only
+- `href`: the `href` of the configured CTA, as configured but trimmed. Present only
   when the CTA has an `href`; check it before you use it.
 - `selection`: the reconciled selection at the time of the click (plan, billing
   period, variables and add-ons). Always present.
-- `resolved`: the prices resolved for that selection: `subtotal`,
-  `requiresQuote`, `planPrices`, `addOnPrices`, `breakdown` and `diagnostics`.
+- `resolved`: the prices resolved for that selection: `selection`, `planPrices`,
+  `addOnPrices`, `subtotal`, `requiresQuote`, `diagnostics` and `breakdown`.
   Always present.
 - `metadata`: the `metadata` of the configured CTA, passed through. Present only
   when the CTA has `metadata`.
@@ -96,19 +97,20 @@ interface PricingActionDetail {
 ### Cancel the default navigation
 
 The event is `cancelable`. A CTA with a safe `href` (`http:`, `https:`,
-`mailto:`, a relative path or a `#` fragment) renders as a link. When a listener
-calls `event.preventDefault()`, the element cancels the click, so the browser
-does not follow the link. A CTA without an `href`, or with one that is not safe,
-renders as a button and has no default navigation. Either way, calling
+`mailto:`, a path starting with `/`, `./` or `../`, or a `#` fragment) renders
+as a link. When a listener calls `event.preventDefault()`, the element cancels
+the click, so the browser does not follow the link. A CTA without an `href`, or
+with one that is not safe (such as `checkout/growth` or `?plan=x`), renders as a
+button and has no default navigation. Either way, calling
 `preventDefault()` is how the host takes ownership of checkout, authentication
 and navigation: the element never opens a checkout itself.
 
 ```ts
-const renderer = document.querySelector('pricing-renderer');
+const renderer = document.querySelector('pricing-renderer')!;
 
 renderer.addEventListener('pricing-action', (event) => {
   event.preventDefault();
-  const { planId, selection } = event.detail;
+  const { planId, selection } = (event as PricingActionEvent).detail;
 
   const params = new URLSearchParams({
     plan: planId ?? selection.planId ?? '',
@@ -132,7 +134,7 @@ host does not need to resolve the pricing again:
 
 ```ts
 renderer.addEventListener('pricing-action', (event) => {
-  const { resolved, planId } = event.detail;
+  const { resolved, planId } = (event as PricingActionEvent).detail;
 
   if (resolved.requiresQuote) {
     // at least one selected price has no amount: send the customer to sales
@@ -164,8 +166,8 @@ interface PricingDiagnostic {
 
 It is emitted in three cases:
 
-- **Load.** After each load (`pricing`, `yaml`, `src` or `loadPricing`) that
-  returns diagnostics: source problems, YAML parse problems, validation of the
+- **Load.** After each load (`pricing`, `yaml` or `src`, with or without
+  `loadPricing`) that returns diagnostics: source problems, YAML parse problems, validation of the
   pricing (version, prices, billing, add-ons). A successful load can carry
   warnings, so `pricing-ready` and `pricing-diagnostic` can both be emitted for
   one load.
@@ -184,7 +186,7 @@ A diagnostic with `severity: 'error'` does not always mean the pricing failed
 to load. The pricing is usable when the load emitted `pricing-ready`, even if it
 carries errors such as `PR_PRICE_INVALID`. Errors from `applySelection`
 (`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`) mean only that the call
-was refused. Do not treat any diagnostic as a load failure: decide by code.
+was refused. Do not treat every error as a load failure: decide by code.
 
 ```ts
 const loadFailures = new Set([
@@ -207,7 +209,7 @@ const loadFailures = new Set([
 ]);
 
 renderer.addEventListener('pricing-diagnostic', (event) => {
-  for (const diagnostic of event.detail.diagnostics) {
+  for (const diagnostic of (event as PricingDiagnosticEvent).detail.diagnostics) {
     if (loadFailures.has(diagnostic.code)) {
       showPricingUnavailable(diagnostic); // no pricing to show
     } else if (diagnostic.severity === 'error') {
@@ -269,7 +271,7 @@ The source is the stage that creates the diagnostic: **load** (`src` or
 <tr><td><code>PR_SELECTION_UNKNOWN_PLAN</code></td><td>warning</td><td>applySelection</td><td><code>planId</code> is not a plan id (ids are case-sensitive); the plan in effect is kept. Map the name to a valid id.</td></tr>
 <tr><td><code>PR_SELECTION_UNKNOWN_BILLING_PERIOD</code></td><td>warning</td><td>applySelection</td><td><code>billingPeriod</code> is not a billing period of the pricing; the one in effect is kept. Use an id from the pricing.</td></tr>
 <tr><td><code>PR_SELECTION_UNKNOWN_ADDON</code></td><td>warning</td><td>applySelection</td><td>An add-on id is not in the pricing and is ignored. Drop it from the mapping.</td></tr>
-<tr><td><code>PR_SELECTION_ADDON_REMOVED</code></td><td>info</td><td>applySelection</td><td>The plan does not allow the add-on, so it was deselected; <code>details.addOnId</code> has the id. Tell the customer if it matters.</td></tr>
+<tr><td><code>PR_SELECTION_ADDON_REMOVED</code></td><td>info</td><td>applySelection</td><td>The plan does not allow the add-on, or it depends on an add-on that was removed, so it was deselected; <code>details.addOnId</code> has the id. Tell the customer if it matters.</td></tr>
 <tr><td><code>PR_SELECTION_NOT_READY</code></td><td>error</td><td>element</td><td><code>applySelection</code> was called before the pricing was ready; nothing was stored. Call it from <code>pricing-ready</code>.</td></tr>
 <tr><td><code>PR_SELECTION_CONTROLLED</code></td><td>error</td><td>element</td><td><code>applySelection</code> was called while the <code>selection</code> property is set; nothing was stored. Update the property instead.</td></tr>
 </tbody>
