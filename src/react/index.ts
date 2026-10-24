@@ -97,7 +97,9 @@ export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingR
 PricingRenderer.displayName = 'PricingRenderer';
 
 export { PricingRendererElement };
+// [impl->req~react-reexports-result-type~1]
 export type {
+  ApplySelectionResult,
   PricingActionDetail,
   PricingActionEvent,
   PricingDiagnosticDetail,

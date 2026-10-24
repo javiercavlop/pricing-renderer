@@ -1,5 +1,6 @@
 export { PricingRendererElement } from './pricing-renderer-element.js';
 export type {
+  ApplySelectionResult,
   PendingAddOnChange,
   PricingActionDetail,
   PricingActionEvent,

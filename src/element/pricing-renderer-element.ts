@@ -26,6 +26,7 @@ import {
   type ResolvedPrice,
   type ViewModelOptions,
 } from '../core/index.js';
+import { applySelectionInput } from '../core/apply-selection.js';
 import {
   loadPricingFromUrl,
   parsePricingYaml,
@@ -33,6 +34,7 @@ import {
   type PricingRequestOptions,
 } from '../yaml/index.js';
 import type {
+  ApplySelectionResult,
   PendingAddOnChange,
   PricingActionDetail,
   PricingActionEvent,
@@ -240,13 +242,111 @@ export class PricingRendererElement extends LitElement {
     this._applyLoadResult(result);
   }
 
+  // [impl->req~resolved-state-not-ready~1] [impl->req~resolved-state-snapshot~1]
+  // [impl->req~resolved-state-detached~1] [impl->req~resolved-state-controlled~1]
+  // [impl->req~resolved-state-read-only~1] [impl->req~react-ref-load-api~1]
+  public get resolvedState(): PricingSelectionChangeDetail | undefined {
+    return this._snapshot();
+  }
+
+  // [impl->req~apply-selection-replaces~1] [impl->req~apply-selection-result~1]
+  // [impl->req~react-ref-load-api~1]
+  public applySelection(selection: Partial<PricingSelection>): ApplySelectionResult {
+    // [impl->req~apply-selection-not-ready~1] [impl->req~apply-selection-refusal-keeps-state~1]
+    if (!this._isReady()) {
+      return this._refuseSelection(undefined, {
+        code: 'PR_SELECTION_NOT_READY',
+        severity: 'error',
+        message: 'The pricing is not ready; applySelection was ignored.',
+      });
+    }
+    // [impl->req~apply-selection-controlled~1]
+    if (this.selection !== undefined) {
+      return this._refuseSelection(this._snapshot(), {
+        code: 'PR_SELECTION_CONTROLLED',
+        severity: 'error',
+        message: 'The selection property is set; applySelection was ignored.',
+      });
+    }
+    // [impl->req~apply-selection-uses-selection-in-effect~1] [impl->req~apply-selection-input-unmutated~1]
+    // [impl->req~apply-selection-input-detached~1]
+    const { removedAddOnIds, diagnostics, ...next } = applySelectionInput(
+      this._normalized!,
+      this._selectionInEffect()!,
+      cloneValue(selection),
+    );
+    // [impl->req~apply-selection-silent~1] [impl->req~apply-selection-no-dialog~1]
+    this._internalSelection = next.selection;
+    // [impl->req~apply-selection-discards-pending~1]
+    if (this._pendingAddOnChange) this._cancelAddOnChange();
+    this.requestUpdate();
+    const state = this._snapshot()!;
+    const result: ApplySelectionResult = {
+      applied: true,
+      selection: state.selection,
+      resolved: state.resolved,
+      removedAddOnIds,
+      diagnostics,
+    };
+    this._dispatchSelectionDiagnostics(diagnostics);
+    return result;
+  }
+
+  private _isReady(): boolean {
+    return this._status === 'ready' && this._normalized !== undefined;
+  }
+
+  private _selectionInEffect(): PricingSelection | undefined {
+    const selection = this._effectiveSelection();
+    if (!selection || !this._normalized) return selection;
+    return reconcileSelection(this._normalized, selection).selection;
+  }
+
+  private _snapshot(): PricingSelectionChangeDetail | undefined {
+    if (!this._isReady()) return undefined;
+    const selection = this._selectionInEffect();
+    if (!selection) return undefined;
+    const { resolved } = this._stabilizeResolvedPrices(
+      createPricingViewModel(this._normalized!, selection, { ...this._viewModelOptions() }),
+    );
+    return cloneValue({ selection, resolved });
+  }
+
+  private _refuseSelection(
+    state: PricingSelectionChangeDetail | undefined,
+    diagnostic: PricingDiagnostic,
+  ): ApplySelectionResult {
+    const result: ApplySelectionResult = {
+      applied: false,
+      selection: state?.selection,
+      resolved: state?.resolved,
+      removedAddOnIds: [],
+      diagnostics: [diagnostic],
+    };
+    this._dispatchSelectionDiagnostics(result.diagnostics);
+    return result;
+  }
+
+  // [impl->req~apply-selection-diagnostic-event~1] [impl->req~apply-selection-no-empty-diagnostic~1]
+  // [impl->req~apply-selection-diagnostics-not-rendered~1] the rendered list is left unchanged
+  private _dispatchSelectionDiagnostics(diagnostics: PricingDiagnostic[]): void {
+    if (diagnostics.length === 0) return;
+    this.dispatchEvent(
+      new CustomEvent<PricingDiagnosticDetail>('pricing-diagnostic', {
+        detail: { diagnostics: cloneValue(diagnostics) },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   private _applyLoadResult(result: PricingResult<NormalizedPricing>): void {
     this._diagnostics = result.diagnostics;
     if (result.value) {
       this._normalized = result.value;
       this._lastValidPlanPrices = {};
       this._lastValidAddOnPrices = {};
-      // [impl->req~default-selection-reconciled~1]
+      // [impl->req~default-selection-reconciled~1] [impl->req~apply-selection-reload-restarts~1]
       this._internalSelection = reconcileSelection(
         result.value,
         mergeSelection(result.value, this.defaultSelection),
@@ -263,9 +363,12 @@ export class PricingRendererElement extends LitElement {
         this._expandedGroups.add(viewModel.comparisonGroups[0].id);
       }
       this._status = 'ready';
+      // [impl->req~ready-detail-selection~1] [impl->req~apply-selection-in-ready-listener~1]
+      // Ready state and internal selection are set before the dispatch and not assigned after it,
+      // so a listener's applySelection call stays in effect for this load.
       this.dispatchEvent(
         new CustomEvent<PricingReadyDetail>('pricing-ready', {
-          detail: { pricing: result.value, diagnostics: result.diagnostics },
+          detail: { pricing: result.value, diagnostics: result.diagnostics, ...this._snapshot()! },
           bubbles: true,
           composed: true,
         }),
