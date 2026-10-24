@@ -100,15 +100,19 @@ async function applyPricing(
     },
     { yaml, locale, theme },
   );
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // The demo page uses smooth scrolling; jump instantly so later reads see the final position.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   return state;
 }
 
-function collectMetrics(viewport: Viewport) {
+async function collectMetrics(viewport: Viewport) {
   const renderer = document.querySelector('pricing-renderer') as HTMLElement;
-  window.scrollTo(0, 0);
+  const jump = (top: number) => window.scrollTo({ top, behavior: 'instant' });
+  jump(0);
   const viewportHeight = window.innerHeight;
   const round = (value: number) => Math.round(value * 100) / 100;
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  const rendererTop = Math.round(renderer.getBoundingClientRect().top + window.scrollY);
   const describe = (element: Element) => {
     const names = Array.from(element.classList).slice(0, 2);
     const classes = names.map((name) => `.${name}`).join('');
@@ -136,7 +140,6 @@ function collectMetrics(viewport: Viewport) {
   }
   const rowTops = [...rowBuckets.keys()].sort((a, b) => a - b);
   const cardsPerRow = rowTops.map((top) => rowBuckets.get(top));
-  const visiblePlanCards = planRects.filter((rect) => rect.top < viewportHeight && rect.bottom > 0);
   const addOnRects = [...renderer.querySelectorAll('.pr-addon-card')].map((card) =>
     card.getBoundingClientRect(),
   );
@@ -156,7 +159,22 @@ function collectMetrics(viewport: Viewport) {
   const firstPrice = renderer.querySelector('.pr-plan-card .pr-price');
   const firstCta = renderer.querySelector('[data-pr-part="cta"]');
   const summary = renderer.querySelector('.pr-summary');
-  const summaryRect = summary?.getBoundingClientRect();
+
+  const firstScreen = () => {
+    const rects = planCards.map((card) => card.getBoundingClientRect());
+    const summaryRect = summary?.getBoundingClientRect();
+    return {
+      planCardsVisible: rects.filter((rect) => rect.top < viewportHeight && rect.bottom > 0).length,
+      firstPriceVisible: firstPrice
+        ? firstPrice.getBoundingClientRect().bottom <= viewportHeight
+        : false,
+      firstCtaVisible: firstCta ? firstCta.getBoundingClientRect().bottom <= viewportHeight : false,
+      summaryVisible: summaryRect
+        ? summaryRect.height > 0 && summaryRect.top < viewportHeight && summaryRect.bottom > 0
+        : false,
+    };
+  };
+  const firstViewportPageTop = firstScreen();
 
   const overflowing: string[] = [];
   const truncated: { selector: string; text: string }[] = [];
@@ -174,7 +192,7 @@ function collectMetrics(viewport: Viewport) {
         style.textOverflow === 'ellipsis';
       if (clips) {
         truncatedCount += 1;
-        if (truncated.length < 5) {
+        if (truncated.length < 3) {
           truncated.push({ selector: describe(element), text: snippet(element) });
         }
       }
@@ -182,7 +200,7 @@ function collectMetrics(viewport: Viewport) {
     const clamp = style.getPropertyValue('-webkit-line-clamp');
     if (clamp && clamp !== 'none' && element.scrollHeight > element.clientHeight + 1) {
       truncatedCount += 1;
-      if (truncated.length < 5) {
+      if (truncated.length < 3) {
         truncated.push({ selector: `${describe(element)} (line-clamp)`, text: snippet(element) });
       }
     }
@@ -211,19 +229,72 @@ function collectMetrics(viewport: Viewport) {
       const lines = [...tops].sort((a, b) => a - b);
       if (lines.length > 1 && lines[lines.length - 1] - lines[0] > 4) {
         awkwardBreaks += 1;
-        if (awkwardExamples.length < 5) awkwardExamples.push(`${describe(parent)}: ${match[0]}`);
+        if (awkwardExamples.length < 3) awkwardExamples.push(`${describe(parent)}: ${match[0]}`);
       }
     }
   }
 
   const rendererHeight = renderer.getBoundingClientRect().height;
+
+  // Scroll the renderer to the top of the viewport: the demo page has its own chrome above it.
+  jump(rendererTop);
+  await nextFrame();
+  const firstViewport = firstScreen();
+  const rendererBox = renderer.getBoundingClientRect();
+  const firstCtaBottom = firstCta ? firstCta.getBoundingClientRect().bottom : null;
+  const firstRowBottoms: number[] = [];
+  for (const card of planCards) {
+    const box = card.getBoundingClientRect();
+    if (Math.round(box.top + window.scrollY) === rowTops[0]) firstRowBottoms.push(box.bottom);
+  }
+  const planGridBottomOffset = {
+    firstPlanRow:
+      firstRowBottoms.length === 0
+        ? null
+        : Math.round(Math.max(...firstRowBottoms) - rendererBox.top),
+    firstCta: firstCtaBottom === null ? null : Math.round(firstCtaBottom - rendererBox.top),
+  };
+
+  // Effective stickiness: scroll the middle of the comparison table into view.
+  const headerCell = renderer.querySelector('.pr-comparison-table thead th');
+  const firstCell = renderer.querySelector(
+    '.pr-comparison-table tbody tr[data-pr-part="comparison-row"] > :first-child',
+  );
+  let stickyHeaderEffective: boolean | null = null;
+  let stickyFirstColumnEffective: boolean | null = null;
+  if (table && headerCell) {
+    const tableBox = table.getBoundingClientRect();
+    const middle = tableBox.top + window.scrollY + tableBox.height / 2;
+    jump(Math.max(0, Math.round(middle - viewportHeight / 2)));
+    await nextFrame();
+    const tableTop = table.getBoundingClientRect().top;
+    if (tableTop < 0) {
+      const offset = parseFloat(getComputedStyle(headerCell).top) || 0;
+      stickyHeaderEffective = Math.abs(headerCell.getBoundingClientRect().top - offset) <= 2;
+    }
+    const scroller = table.closest('.pr-table-scroll');
+    if (scroller && firstCell && scroller.scrollWidth > scroller.clientWidth + 1) {
+      scroller.scrollLeft = 200;
+      await nextFrame();
+      if (scroller.scrollLeft > 2) {
+        const offset = parseFloat(getComputedStyle(firstCell).left) || 0;
+        const expectedLeft = scroller.getBoundingClientRect().left + offset;
+        stickyFirstColumnEffective =
+          Math.abs(firstCell.getBoundingClientRect().left - expectedLeft) <= 2;
+      }
+      scroller.scrollLeft = 0;
+    }
+  }
+  jump(0);
+  await nextFrame();
+
   return {
     viewport,
     rendererHeight: round(rendererHeight),
     documentHeight: document.documentElement.scrollHeight,
     rendererHeightInViewports: round(rendererHeight / viewportHeight),
     horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth,
-    rendererOverflowX: { count: overflowing.length, examples: overflowing.slice(0, 5) },
+    rendererOverflowX: { count: overflowing.length, examples: overflowing.slice(0, 3) },
     planCardCount: planCards.length,
     planCardWidths: range(planRects.map((rect) => rect.width)),
     planCardsPerRow: cardsPerRow,
@@ -234,24 +305,14 @@ function collectMetrics(viewport: Viewport) {
       visible: comparisonRows.filter(isRendered).length,
     },
     comparisonLayout,
-    firstViewport: {
-      planCardsVisible: visiblePlanCards.length,
-      firstPriceVisible: firstPrice
-        ? firstPrice.getBoundingClientRect().bottom <= viewportHeight
-        : false,
-      firstCtaVisible: firstCta ? firstCta.getBoundingClientRect().bottom <= viewportHeight : false,
-      summaryVisible: summaryRect
-        ? summaryRect.height > 0 && summaryRect.top < viewportHeight && summaryRect.bottom > 0
-        : false,
-    },
-    stickyHeader: isPinned(positionOf(renderer.querySelector('.pr-comparison-table thead th'))),
-    stickyFirstColumn: isPinned(
-      positionOf(
-        renderer.querySelector(
-          '.pr-comparison-table tbody tr[data-pr-part="comparison-row"] > :first-child',
-        ),
-      ),
-    ),
+    rendererTop,
+    firstViewport,
+    firstViewportPageTop,
+    planGridBottomOffset,
+    stickyHeader: isPinned(positionOf(headerCell)),
+    stickyFirstColumn: isPinned(positionOf(firstCell)),
+    stickyHeaderEffective,
+    stickyFirstColumnEffective,
     truncatedTexts: { count: truncatedCount, examples: truncated },
     awkwardBreaks: { count: awkwardBreaks, examples: awkwardExamples },
   };
@@ -265,14 +326,58 @@ async function contrast(page: Page): Promise<Metrics> {
   const nodes = results.violations.flatMap((violation) => violation.nodes);
   return {
     contrastViolations: nodes.length,
-    contrastExamples: nodes.slice(0, 5).map((node) => ({
+    contrastExamples: nodes.slice(0, 3).map((node) => ({
       target: node.target.join(' '),
       summary: node.any[0]?.message ?? node.failureSummary ?? '',
     })),
   };
 }
 
+function summaryLine(metrics: Metrics): string {
+  type Counted = { count?: number };
+  const m = metrics as {
+    fixture?: string;
+    theme?: string;
+    locale?: string;
+    viewport?: Viewport;
+    rendererHeightInViewports?: number;
+    rendererTop?: number;
+    planCardCount?: number;
+    planCardsPerRow?: number[];
+    planCardWidths?: { min: number } | null;
+    firstViewport?: Record<string, number | boolean>;
+    stickyHeader?: boolean | null;
+    stickyFirstColumn?: boolean | null;
+    stickyHeaderEffective?: boolean | null;
+    stickyFirstColumnEffective?: boolean | null;
+    truncatedTexts?: Counted;
+    awkwardBreaks?: Counted;
+    contrastViolations?: number;
+  };
+  const flag = (value: unknown) => (typeof value === 'boolean' ? (value ? '1' : '0') : 'n');
+  const count = (value: number | undefined) => (typeof value === 'number' ? String(value) : '-');
+  const fv = m.firstViewport ?? {};
+  return [
+    'SPECTRA_SUMMARY',
+    m.fixture,
+    m.viewport?.width,
+    m.theme,
+    m.locale,
+    `screens=${m.rendererHeightInViewports}`,
+    `top=${m.rendererTop}`,
+    `cards=${m.planCardCount}/${(m.planCardsPerRow ?? []).join('+')}`,
+    `w=${m.planCardWidths?.min ?? '-'}`,
+    `fv=${fv.planCardsVisible}/${flag(fv.firstPriceVisible)}/${flag(fv.firstCtaVisible)}`,
+    `sticky=${flag(m.stickyHeader)}/${flag(m.stickyFirstColumn)}/${flag(m.stickyHeaderEffective)}/${flag(m.stickyFirstColumnEffective)}`,
+    `trunc=${count(m.truncatedTexts?.count)}`,
+    `breaks=${count(m.awkwardBreaks?.count)}`,
+    `contrast=${count(m.contrastViolations)}`,
+  ].join(' ');
+}
+
 async function report(testInfo: TestInfo, name: string, metrics: Metrics): Promise<void> {
+  // eslint-disable-next-line no-console
+  console.log(summaryLine(metrics));
   const body = JSON.stringify(metrics);
   // eslint-disable-next-line no-console
   console.log(`SPECTRA_METRICS ${body}`);
