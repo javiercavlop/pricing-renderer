@@ -2,16 +2,15 @@
 
 ## Projects that informed this package
 
-This project was informed by the following MIT-licensed projects. Their editor
-implementations are not bundled into this package.
+This project was informed by the following projects, both licensed under the
+MIT License (reproduced below). Their editor implementations are not bundled
+into this package.
 
 - Sphere — Copyright (c) 2024 Alejandro García Fernández — https://github.com/Alex-GF/Sphere
 - Pricing4TS — Copyright (c) 2024 Alejandro García Fernández — https://github.com/Alex-GF/Pricing4TS
 
 The copyright lines above were checked against the `LICENSE` file at the
-default branch of each repository. Both are MIT.
-
-Both projects are licensed under the MIT License, reproduced below.
+default branch of each repository.
 
 ```text
 MIT License
