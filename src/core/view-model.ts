@@ -508,6 +508,21 @@ export function isSafeLink(value: string | undefined): boolean {
   return /^(?:https?:|mailto:|\/|\.\/|\.\.\/|#)/.test(normalized);
 }
 
+function isEmptyCell(value: unknown): boolean {
+  return value === false || value === null || value === undefined;
+}
+
+export function isAddOnOnlyRow(viewModel: PricingViewModel, row: PricingComparisonRow): boolean {
+  if (!row.values.every((cell) => isEmptyCell(cell.value))) return false;
+  return viewModel.addOns.some((addOn) => {
+    if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
+    return (
+      !isEmptyCell(unwrapValue(addOn.usageLimits[row.id])) ||
+      !isEmptyCell(unwrapValue(addOn.usageLimitsExtensions[row.id]))
+    );
+  });
+}
+
 export function getCustomDetails(pricing: NormalizedPricing): UnknownRecord {
   return asRecord(pricing.custom);
 }
