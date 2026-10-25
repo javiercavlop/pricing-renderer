@@ -55,6 +55,7 @@ export interface RenderState {
   compact: boolean;
   search: string;
   onlyDifferences: boolean;
+  toolbarThreshold?: number;
   selectionEnabled: boolean;
   ctaEnabled: boolean;
   variablesEnabled: boolean;
@@ -64,6 +65,37 @@ export interface RenderState {
   breakdownOpen: boolean;
   breakdownId: string;
   actions: RenderActions;
+}
+
+export const DEFAULT_TOOLBAR_THRESHOLD = 40;
+export const AUTO_DIFFERENCES_MIN_ROWS = 100;
+
+export function comparisonRowTotal(viewModel: PricingViewModel): number {
+  return viewModel.comparisonGroups.reduce((total, group) => total + group.rows.length, 0);
+}
+
+// [impl->req~shorter-page-toolbar-threshold~1] a missing, non-finite or negative value gives 40
+export function toolbarThresholdOf(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : DEFAULT_TOOLBAR_THRESHOLD;
+}
+
+// [impl->req~shorter-page-auto-default~1]
+// An explicit initial state wins. Otherwise a long comparison with several plans starts with only
+// the differences, as long as the toolbar is there to switch the filter off.
+export function resolveOnlyDifferences(
+  viewModel: PricingViewModel,
+  initial: boolean | undefined,
+  toolbarThreshold: number = DEFAULT_TOOLBAR_THRESHOLD,
+): boolean {
+  if (initial !== undefined) return initial;
+  const total = comparisonRowTotal(viewModel);
+  return (
+    total > AUTO_DIFFERENCES_MIN_ROWS &&
+    viewModel.plans.length >= 2 &&
+    total > toolbarThresholdOf(toolbarThreshold)
+  );
 }
 
 function t(
@@ -567,12 +599,29 @@ function visibleRows(state: RenderState, group: PricingComparisonGroup): Pricing
   return state.revealedGroups.has(group.id) ? group.rows : group.rows.slice(0, 30);
 }
 
+function isGroupExpanded(state: RenderState, group: PricingComparisonGroup): boolean {
+  return state.expandedGroups.has(group.id) || Boolean(state.search);
+}
+
+// [impl->req~shorter-page-counter~1]
+// The rows that are on the page: those of expanded groups, after the cap per group.
+function renderedRowCount(state: RenderState, groups: PricingComparisonGroup[]): number {
+  return groups.reduce(
+    (count, group) =>
+      count + (isGroupExpanded(state, group) ? visibleRows(state, group).length : 0),
+    0,
+  );
+}
+
 function renderComparisonToolbar(
   state: RenderState,
-  totalRows: number,
+  groups: PricingComparisonGroup[],
 ): TemplateResult | typeof nothing {
-  if (state.viewModel.comparisonGroups.flatMap((group) => group.rows).length <= 40) return nothing;
   const { viewModel, actions } = state;
+  const total = comparisonRowTotal(viewModel);
+  // [impl->req~shorter-page-no-look-change~1] a short comparison gets no toolbar and looks as before
+  if (total <= toolbarThresholdOf(state.toolbarThreshold)) return nothing;
+  const shown = renderedRowCount(state, groups);
   return html`
     <div class="pr-comparison-toolbar" data-pr-part="comparison-toolbar">
       <label class="pr-search">
@@ -602,7 +651,7 @@ function renderComparisonToolbar(
           ${t(viewModel, 'pricing.collapseAll')}
         </button>
       </div>
-      <span aria-live="polite">${t(viewModel, 'pricing.rowsShown', { count: totalRows })}</span>
+      <span aria-live="polite">${t(viewModel, 'pricing.rowsShownOf', { shown, total })}</span>
     </div>
   `;
 }
@@ -614,7 +663,7 @@ function renderCompactComparison(
   const { viewModel, actions } = state;
   return html`<div class="pr-compact-comparison">
     ${groups.map((group) => {
-      const expanded = state.expandedGroups.has(group.id) || Boolean(state.search);
+      const expanded = isGroupExpanded(state, group);
       const rows = visibleRows(state, group);
       return html`
         <section class="pr-comparison-group">
@@ -706,7 +755,7 @@ function renderTableComparison(
           </tr>
         </thead>
         ${groups.map((group) => {
-          const expanded = state.expandedGroups.has(group.id) || Boolean(state.search);
+          const expanded = isGroupExpanded(state, group);
           const rows = visibleRows(state, group);
           return html`
             <tbody>
@@ -776,7 +825,6 @@ function renderTableComparison(
 export function renderComparison(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel } = state;
   const groups = filterGroups(state);
-  const totalRows = groups.reduce((total, group) => total + group.rows.length, 0);
   if (viewModel.comparisonGroups.length === 0) return nothing;
   return html`
     <section
@@ -793,11 +841,16 @@ export function renderComparison(state: RenderState): TemplateResult | typeof no
       ${
         viewModel.plans.length === 0
           ? html`<p class="pr-empty">${t(viewModel, 'pricing.noComparison')}</p>`
-          : html`${renderComparisonToolbar(state, totalRows)}
+          : html`${renderComparisonToolbar(state, groups)}
             ${
-              state.compact
-                ? renderCompactComparison(state, groups)
-                : renderTableComparison(state, groups)
+              /* [impl->req~shorter-page-empty-state~1] */
+              groups.length === 0
+                ? html`<p class="pr-empty" role="status" data-pr-part="comparison-empty">
+                    ${t(viewModel, 'pricing.noMatches')}
+                  </p>`
+                : state.compact
+                  ? renderCompactComparison(state, groups)
+                  : renderTableComparison(state, groups)
             }`
       }
     </section>

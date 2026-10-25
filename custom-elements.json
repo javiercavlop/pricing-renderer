@@ -99,6 +99,20 @@
             },
             {
               "kind": "field",
+              "name": "onlyDifferences",
+              "type": { "text": "boolean | undefined" },
+              "attribute": "only-differences",
+              "description": "Initial state of the Only differences checkbox of the comparison toolbar. Absent is automatic (on when the pricing has more than 100 comparison rows, at least 2 plans and the toolbar is shown, otherwise off), present or any value except \"false\" is on, \"false\" is off."
+            },
+            {
+              "kind": "field",
+              "name": "toolbarThreshold",
+              "type": { "text": "number" },
+              "attribute": "toolbar-threshold",
+              "description": "The toolbar is shown when the pricing has more than this many comparison rows (default 40). Invalid or negative values fall back to 40."
+            },
+            {
+              "kind": "field",
               "name": "resolvedState",
               "type": { "text": "PricingSelectionChangeDetail | undefined" },
               "readonly": true,

@@ -1,0 +1,1 @@
+SPECTRA item 2 delivered in slices: spec, docs/manifest, tests first, implementation (all integrated). Remaining: push, PR, CI (browser spec only in CI), review panel (reviewer + test-reviewer, medium risk), ready.
