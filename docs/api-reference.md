@@ -154,6 +154,14 @@ interface PricingPlanHighlightConfiguration {
   maxItems?: number;
 }
 
+interface PricingUnitLabel {
+  one: string;
+  other: string;
+}
+
+// locale -> unit -> label; the locale key `*` applies to every locale
+type PricingUnitLabels = Record<string, Record<string, PricingUnitLabel>>;
+
 type PriceSource =
   | { kind: 'fixed'; amount: number }
   | { kind: 'label'; text: string }
@@ -165,6 +173,9 @@ interface PricingResult<T> {
   diagnostics: PricingDiagnostic[];
 }
 ```
+
+`PricingPresentation.unitLabels?: PricingUnitLabels` overrides how a usage unit
+is shown next to a number. See [Unit labels](configuration.md#unit-labels).
 
 `ResolvedPricing` has the required field `breakdown: PriceBreakdown`, a
 JSON-safe description of the lines that make up `subtotal` and

@@ -178,7 +178,42 @@ Presentation can be owned by three layers:
 
 Plan-keyed `planHighlights` and `planBadges` maps merge by plan, while an entry
 from a higher layer replaces the same plan's entry. This makes shared defaults
-easy to extend for one pricing page without mutating the iPricing.
+easy to extend for one pricing page without mutating the iPricing. `unitLabels`
+merges per locale and per unit, and the higher layer wins.
+
+## Unit labels
+
+`presentation.unitLabels` sets the singular and plural text of a usage unit
+shown next to a number. It is keyed by locale, then by unit, and each entry has
+a `one` and an `other` form. The locale key `*` applies to every locale.
+
+```ts
+configurePricingRenderer({
+  presentation: {
+    unitLabels: {
+      '*': { seat: { one: 'seat', other: 'seats' } },
+      es: { credit: { one: 'crédito', other: 'créditos' } },
+    },
+  },
+});
+```
+
+The same map can live in the pricing, so it travels with the YAML:
+
+```yaml
+custom:
+  pricingRenderer:
+    unitLabels:
+      es:
+        credit:
+          one: crédito
+          other: créditos
+```
+
+An entry wins over the built-in unit rules, including for compound or
+uppercase units such as `user/month` or `GB`. Entries that are not an object,
+or whose `one` or `other` is missing or empty, are ignored. See
+[Internationalization](i18n.md#unit-labels) for the lookup order.
 
 ## Reading and validating configuration
 
