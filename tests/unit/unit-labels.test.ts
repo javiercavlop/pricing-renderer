@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mergePresentationOptions } from '../../src/core/index.js';
 import { formatUnit } from '../../src/core/units.js';
 
-// The fourth argument is not in the current signature; the alias keeps malformed shapes callable.
+// The cast keeps malformed unitLabels shapes callable.
 const format = formatUnit as unknown as (
   unit: string,
   count: number,
@@ -36,6 +36,8 @@ describe('formatUnit with unitLabels', () => {
     expect(format('execution', 1, 'en-US', { '*': runs })).toBe('run');
     const labels = { '*': { GB: { one: 'gigabyte', other: 'gigabytes' } } };
     expect(format('GB', 1, 'en-US', labels)).toBe('gigabyte');
+    expect(format('execution', 1, 'es', { '*': runs })).toBe('run');
+    expect(format('execution', 2, 'es', { '*': runs })).toBe('runs');
   });
 
   it('U4 an invalid locale uses one for a count of 1 and other for any other count', () => {
@@ -49,6 +51,10 @@ describe('formatUnit with unitLabels', () => {
     expect(format('execution', 0, 'fr', { '*': runs })).toBe('run');
     expect(format('execution', 1.5, 'fr', { '*': runs })).toBe('run');
     expect(format('execution', 2, 'fr', { '*': runs })).toBe('runs');
+  });
+
+  it('U4 an underscore tag reaches Intl.PluralRules normalized', () => {
+    expect(format('execution', 0, 'fr_CA', { '*': runs })).toBe('run');
   });
 
   it('U5 a unit without an entry keeps the built-in rule', () => {
@@ -99,6 +105,11 @@ describe('unitLabels locale lookup', () => {
     expect(format('execution', 3, 'en-US', broken)).toBe('runs');
   });
 
+  it('U8 a non-object locale value ahead of a valid key continues to the next key', () => {
+    const ahead = { 'en-US': 'nope', en: null, '*': { execution: any } };
+    expect(format('execution', 3, 'en-US', ahead)).toBe('runs');
+  });
+
   it('U9 underscore and case forms of the locale tag are equivalent', () => {
     expect(format('execution', 3, 'es_MX', labels)).toBe('ejecuciones mx');
     expect(format('execution', 3, 'ES-mx', labels)).toBe('ejecuciones mx');
@@ -125,6 +136,15 @@ describe('unitLabels malformed entries', () => {
     ['a non-string other', { '*': { execution: { one: 'run', other: {} } } }],
     ['an empty one', { '*': { execution: { one: '', other: 'runs' } } }],
     ['a blank other', { '*': { execution: { one: 'run', other: '   ' } } }],
+    ['a blank one', { '*': { execution: { one: '  ', other: 'runs' } } }],
+    [
+      'an array unit entry with own one and other',
+      { '*': { execution: Object.assign([], { one: 'run', other: 'runs' }) } },
+    ],
+    [
+      'an inherited one and other',
+      { '*': { execution: Object.create({ one: 'run', other: 'runs' }) as unknown } },
+    ],
   ];
 
   it.each(malformed)('U10 ignores %s without throwing', (_name, labels) => {
@@ -202,6 +222,47 @@ describe('unitLabels in mergePresentationOptions', () => {
       es: { execution: { one: 'base ejecución', other: 'base ejecuciones' } },
       fr: { execution: { one: 'exécution', other: 'exécutions' } },
     });
+  });
+
+  it('U13 locale keys that differ in case or underscore merge as one key', () => {
+    const label = (other: string) => ({ one: 'one', other });
+    const merged = mergePresentationOptions(
+      { unitLabels: { 'ES-MX': { a: label('Z') }, 'es-mx': { a: label('W') } } },
+      { unitLabels: { es_MX: { a: label('Y') } } },
+    );
+    expect(formatUnit('a', 3, 'es-MX', merged.unitLabels)).toBe('Y');
+    expect(Object.keys(merged.unitLabels ?? {})).toStrictEqual(['es-mx']);
+  });
+
+  it('U13 two spellings in one layer merge per unit, the later winning', () => {
+    const label = (other: string) => ({ one: 'one', other });
+    const merged = mergePresentationOptions(undefined, {
+      unitLabels: {
+        'ES-MX': { a: label('first'), b: label('only b') },
+        es_mx: { a: label('second') },
+      },
+    });
+    expect(merged.unitLabels).toStrictEqual({
+      'es-mx': { a: label('second'), b: label('only b') },
+    });
+  });
+
+  it('U13 a malformed defaults layer keeps the valid provided layer', () => {
+    const merged = mergePresentationOptions({ unitLabels: { '*': { a: { one: 'x' } } } } as never, {
+      unitLabels: { '*': { b: { one: 'b', other: 'bs' } } },
+    });
+    expect(merged.unitLabels).toStrictEqual({ '*': { b: { one: 'b', other: 'bs' } } });
+  });
+
+  it('U13 an own __proto__ unit survives normalize and merge', () => {
+    const parse = (text: string) => JSON.parse(text) as never;
+    const merged = mergePresentationOptions(
+      { unitLabels: parse('{"*":{"__proto__":{"one":"p","other":"ps"}}}') },
+      { unitLabels: parse('{"es":{"a":{"one":"a","other":"as"}}}') },
+    );
+    expect(formatUnit('__proto__', 3, 'en-US', merged.unitLabels)).toBe('ps');
+    expect(Object.prototype.hasOwnProperty.call(merged.unitLabels?.['*'], '__proto__')).toBe(true);
+    expect(({} as Record<string, unknown>).one).toBeUndefined();
   });
 
   it('U13 does not mutate the inputs', () => {

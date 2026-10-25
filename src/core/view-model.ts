@@ -163,14 +163,21 @@ function normalizePlanBadge(input: unknown): PricingPlanBadge | undefined {
 
 function normalizeUnitLabels(input: unknown): PricingUnitLabels | undefined {
   if (!isRecord(input)) return undefined;
-  const locales = Object.entries(input).flatMap(([locale, units]) => {
-    if (!isRecord(units)) return [];
-    const entries = Object.entries(units).flatMap(([unit, label]) =>
-      isUnitLabel(label) ? [[unit, { one: label.one, other: label.other }]] : [],
-    );
-    return entries.length > 0 ? [[locale, Object.fromEntries(entries)]] : [];
-  });
-  return locales.length > 0 ? Object.fromEntries(locales) : undefined;
+  // locale keys are canonical (`_` as `-`, lower case) so layers merge the way the lookup reads them;
+  // spellings that collapse to one key merge per unit, the later key winning
+  const locales = new Map<string, Map<string, PricingUnitLabel>>();
+  for (const [rawLocale, units] of Object.entries(input)) {
+    if (!isRecord(units)) continue;
+    const locale = rawLocale === '*' ? rawLocale : rawLocale.replace(/_/g, '-').toLowerCase();
+    const merged = locales.get(locale) ?? new Map<string, PricingUnitLabel>();
+    for (const [unit, label] of Object.entries(units)) {
+      if (isUnitLabel(label)) merged.set(unit, { one: label.one, other: label.other });
+    }
+    if (merged.size > 0) locales.set(locale, merged);
+  }
+  return locales.size > 0
+    ? Object.fromEntries([...locales].map(([locale, units]) => [locale, Object.fromEntries(units)]))
+    : undefined;
 }
 
 function mergeUnitLabels(

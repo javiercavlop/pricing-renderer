@@ -212,8 +212,12 @@ custom:
 
 An entry wins over the built-in unit rules, including for compound or
 uppercase units such as `user/month` or `GB`. Entries that are not an object,
-or whose `one` or `other` is missing or empty, are ignored. See
-[Internationalization](i18n.md#unit-labels) for the lookup order.
+or whose `one` or `other` is missing, not a string or blank, are ignored.
+Layers merge per locale key first, then the lookup order (exact tag, base
+language, `*`) applies to the merged map, so an exact-locale entry from a lower
+layer wins over a `*` or base-language entry from a higher layer. Locale keys
+ignore case and treat `_` as `-`. See [Internationalization](i18n.md#unit-labels)
+for the lookup order.
 
 ## Reading and validating configuration
 
