@@ -4,6 +4,8 @@ import { applyPricing, openRenderer, readFixture, type Viewport } from './helper
 // Spectra item 7 (docs/agent-work/spectra-item7-addon-grid/spec.md, criterion e): equal card height
 // per grid row, the initial cap of 8 cards and the add-on search. Every test prints one
 // SPECTRA_ADDON_GRID JSON line.
+// [utest->req~addon-grid-equal-height~1] [utest->req~addon-grid-cap~1]
+// [utest->req~addon-grid-filter~1] [utest->req~addon-grid-total-visible~1]
 
 const viewports: Viewport[] = [
   { width: 1440, height: 900 },
@@ -63,17 +65,23 @@ test.describe('spectra add-on grid', () => {
           expect(names.length).toBeGreaterThan(visibleCap);
           const term = names[visibleCap].trim();
 
-          // A new load resets the revealed flag and the search.
+          // [utest->req~addon-grid-filter~1] Fill the search first, then a new load resets both the
+          // revealed flag and the search.
+          const search = page.locator(
+            'pricing-renderer [data-pr-part="addon-toolbar"] input[type=search]',
+          );
+          await search.fill(term);
           await applyPricing(page, yaml);
+          await expect(search).toHaveValue('');
           await expect(cards).toHaveCount(initialCount);
-          await page
-            .locator('pricing-renderer [data-pr-part="addon-toolbar"] input[type=search]')
-            .fill(term);
+
+          await search.fill(term);
           const card = page.locator('pricing-renderer .pr-addon-card h4', { hasText: term });
           await expect(card.first()).toBeVisible();
           const count = await cards.count();
           searched = { term, count, found: true };
-          expect(count).toBeLessThan(names.length);
+          expect(count).toBeGreaterThanOrEqual(1);
+          expect(count).toBeLessThan(initialCount);
         }
 
         console.info(
