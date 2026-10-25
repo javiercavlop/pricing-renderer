@@ -1427,4 +1427,26 @@
       border-color: ButtonText;
     }
   }
+
+  /* Dense add-on grid: cards in a row share a height, and the disclosure and the stepper sit at the
+     bottom of each card. */
+  pricing-renderer[data-pr-root] .pr-addon-grid--dense {
+    align-items: stretch;
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-card--dense .pr-addon-card__details {
+    flex: 1 1 auto;
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-effects .pr-addon-notes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-2);
+    margin: var(--pr-space-3) 0 0;
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-effects .pr-addon-notes p {
+    margin: 0;
+    font-size: var(--pr-font-size-sm);
+  }
 }

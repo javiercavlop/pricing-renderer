@@ -69,6 +69,10 @@ export interface RenderState {
 
 export const DEFAULT_TOOLBAR_THRESHOLD = 40;
 export const AUTO_DIFFERENCES_MIN_ROWS = 100;
+// [impl->req~addon-grid-dense-details~1]
+export const ADDON_DENSE_THRESHOLD = 8;
+export const ADDON_VISIBLE_CAP = 8;
+export const DEFAULT_ADDON_FILTER_THRESHOLD = 13;
 
 export function comparisonRowTotal(viewModel: PricingViewModel): number {
   return viewModel.comparisonGroups.reduce((total, group) => total + group.rows.length, 0);
@@ -79,6 +83,13 @@ export function toolbarThresholdOf(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
     : DEFAULT_TOOLBAR_THRESHOLD;
+}
+
+// [impl->req~addon-grid-dense-details~1] a missing, non-finite or negative value gives 13
+export function addOnFilterThresholdOf(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : DEFAULT_ADDON_FILTER_THRESHOLD;
 }
 
 // [impl->req~shorter-page-auto-default~1]
@@ -865,9 +876,66 @@ function addOnAvailability(addOn: NormalizedAddOn, planId: string | undefined): 
   );
 }
 
+function hasAddOnNotes(addOn: NormalizedAddOn): boolean {
+  return (
+    addOn.availableFor.length > 0 ||
+    addOn.dependsOn.length > 0 ||
+    addOn.excludes.length > 0 ||
+    addOn.subscriptionConstraints !== undefined
+  );
+}
+
+// The availability, dependency, exclusion and quantity paragraphs of an add-on card.
+function renderAddOnNotes(viewModel: PricingViewModel, addOn: NormalizedAddOn): TemplateResult {
+  const constraints = addOn.subscriptionConstraints;
+  return html`
+    ${
+      addOn.availableFor.length
+        ? html`<p>
+            ${t(viewModel, 'pricing.availableFor', {
+              plans: addOn.availableFor
+                .map((id) => viewModel.pricing.plans.find((plan) => plan.id === id)?.name ?? id)
+                .join(', '),
+            })}
+          </p>`
+        : nothing
+    }
+    ${
+      addOn.dependsOn.length
+        ? html`<p>
+            ${t(viewModel, 'pricing.dependsOn', {
+              items: addOnNames(viewModel, addOn.dependsOn),
+            })}
+          </p>`
+        : nothing
+    }
+    ${
+      addOn.excludes.length
+        ? html`<p>
+            ${t(viewModel, 'pricing.excludes', {
+              items: addOnNames(viewModel, addOn.excludes),
+            })}
+          </p>`
+        : nothing
+    }
+    ${
+      constraints
+        ? html`<p>
+            ${t(viewModel, 'pricing.quantityConstraints', {
+              min: constraints.minQuantity,
+              max: constraints.maxQuantity ?? t(viewModel, 'pricing.unbounded'),
+              step: constraints.quantityStep,
+            })}
+          </p>`
+        : nothing
+    }
+  `;
+}
+
 function renderAddOnEffects(
   viewModel: PricingViewModel,
   addOn: NormalizedAddOn,
+  dense = false,
 ): TemplateResult | typeof nothing {
   const effects = [
     ...Object.entries(addOn.features).map(([id, value]) => ({
@@ -886,6 +954,33 @@ function renderAddOnEffects(
       value: unwrapValue(value),
     })),
   ];
+  if (dense) {
+    // [impl->req~addon-grid-dense-details~1] the paragraphs join the effects behind one disclosure
+    if (effects.length === 0 && !hasAddOnNotes(addOn)) return nothing;
+    return html`
+      <details class="pr-addon-effects">
+        <summary>${t(viewModel, 'pricing.moreDetails')}</summary>
+        ${
+          hasAddOnNotes(addOn)
+            ? html`<div class="pr-addon-notes">${renderAddOnNotes(viewModel, addOn)}</div>`
+            : nothing
+        }
+        ${
+          effects.length
+            ? html`<dl>
+                ${effects.map(
+                  (effect) =>
+                    html`<div>
+                      <dt>${effect.kind}: ${humanizeIdentifier(effect.id)}</dt>
+                      <dd>${renderValue(viewModel, effect.value)}</dd>
+                    </div>`,
+                )}
+              </dl>`
+            : nothing
+        }
+      </details>
+    `;
+  }
   if (effects.length === 0) return nothing;
   return html`
     <details class="pr-addon-effects">
@@ -906,6 +1001,8 @@ function renderAddOnEffects(
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel, selection, selectionEnabled, actions } = state;
   if (viewModel.addOns.length === 0) return nothing;
+  // [impl->req~addon-grid-dense-details~1]
+  const dense = viewModel.addOns.length > ADDON_DENSE_THRESHOLD;
   return html`
     <section class="pr-section" aria-labelledby="pr-addons-title" data-pr-part="add-ons">
       <div class="pr-section__heading">
@@ -915,7 +1012,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
         </div>
       </div>
       <div class="pr-addon-layout">
-        <div class="pr-addon-grid">
+        <div class="pr-addon-grid${dense ? ' pr-addon-grid--dense' : ''}">
           ${viewModel.addOns.map((addOn) => {
             const selected = selection.addOns[addOn.id]?.selected ?? false;
             const addOnSelection = selection.addOns[addOn.id];
@@ -931,7 +1028,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
               <article
                 class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
                   selected ? 'is-selected' : ''
-                } ${available ? '' : 'is-unavailable'}"
+                } ${available ? '' : 'is-unavailable'}${dense ? ' pr-addon-card--dense' : ''}"
                 data-pr-part="add-on-card"
                 data-add-on-id=${addOn.id}
                 data-selected=${String(selected)}
@@ -986,52 +1083,9 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
                       ? html`<p class="pr-status">${t(viewModel, 'pricing.notAvailable')}</p>`
                       : nothing
                   }
-                  ${
-                    addOn.availableFor.length
-                      ? html`<p>
-                          ${t(viewModel, 'pricing.availableFor', {
-                            plans: addOn.availableFor
-                              .map(
-                                (id) =>
-                                  viewModel.pricing.plans.find((plan) => plan.id === id)?.name ??
-                                  id,
-                              )
-                              .join(', '),
-                          })}
-                        </p>`
-                      : nothing
-                  }
-                  ${
-                    addOn.dependsOn.length
-                      ? html`<p>
-                          ${t(viewModel, 'pricing.dependsOn', {
-                            items: addOnNames(viewModel, addOn.dependsOn),
-                          })}
-                        </p>`
-                      : nothing
-                  }
-                  ${
-                    addOn.excludes.length
-                      ? html`<p>
-                          ${t(viewModel, 'pricing.excludes', {
-                            items: addOnNames(viewModel, addOn.excludes),
-                          })}
-                        </p>`
-                      : nothing
-                  }
-                  ${
-                    constraints
-                      ? html`<p>
-                          ${t(viewModel, 'pricing.quantityConstraints', {
-                            min: constraints.minQuantity,
-                            max: constraints.maxQuantity ?? t(viewModel, 'pricing.unbounded'),
-                            step: constraints.quantityStep,
-                          })}
-                        </p>`
-                      : nothing
-                  }
+                  ${dense ? nothing : renderAddOnNotes(viewModel, addOn)}
                 </div>
-                ${renderAddOnEffects(viewModel, addOn)}
+                ${renderAddOnEffects(viewModel, addOn, dense)}
                 ${
                   selectionEnabled && selected && constraints
                     ? html`<div class="pr-stepper" data-pr-part="add-on-quantity">
