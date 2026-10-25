@@ -44,6 +44,7 @@ import type {
   PricingSelectionChangeDetail,
 } from './events.js';
 import {
+  DEFAULT_TOOLBAR_THRESHOLD,
   renderAddOns,
   renderBilling,
   renderCatalogMetadata,
@@ -53,6 +54,7 @@ import {
   renderPlans,
   renderSummary,
   renderVariables,
+  resolveOnlyDifferences,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -81,6 +83,14 @@ const breakdownToggleSelector = '[data-pr-part="breakdown-toggle"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
 
+// [impl->req~shorter-page-only-differences~1] absent is automatic, `false` is off, anything else is on
+export const onlyDifferencesConverter = {
+  fromAttribute(value: string | null): boolean | undefined {
+    if (value === null) return undefined;
+    return value !== 'false';
+  },
+};
+
 export class PricingRendererElement extends LitElement {
   static properties = {
     pricing: { attribute: false },
@@ -104,6 +114,8 @@ export class PricingRendererElement extends LitElement {
     visibility: { type: String, reflect: true },
     theme: { type: String, reflect: true },
     loadingLabel: { type: String, attribute: 'loading-label' },
+    onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
+    toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
   };
 
   declare pricing?: IPricingLike;
@@ -127,6 +139,8 @@ export class PricingRendererElement extends LitElement {
   declare visibility: PricingVisibility;
   declare theme: 'light' | 'dark' | 'auto';
   declare loadingLabel?: string;
+  declare onlyDifferences?: boolean;
+  declare toolbarThreshold: number;
 
   private _status: LoadStatus = 'idle';
   private readonly _projectPresentation: PricingPresentation;
@@ -136,7 +150,9 @@ export class PricingRendererElement extends LitElement {
   private _compact = true;
   private _wide = false;
   private _search = '';
-  private _onlyDifferences = false;
+  // The checkbox state set by the user; it replaces the initial state until a reload or a change of
+  // the onlyDifferences property.
+  private _onlyDifferencesOverride?: boolean;
   private _expandedGroups = new Set<string>();
   private _revealedGroups = new Set<string>();
   private _pendingAddOnChange?: PendingAddOnChange;
@@ -165,6 +181,12 @@ export class PricingRendererElement extends LitElement {
     this.layout = 'auto';
     this.visibility = 'public-only';
     this.theme = 'light';
+    this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
+  }
+
+  private _toolbarThreshold(): number {
+    const value = this.toolbarThreshold;
+    return Number.isFinite(value) && value >= 0 ? value : DEFAULT_TOOLBAR_THRESHOLD;
   }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -197,6 +219,10 @@ export class PricingRendererElement extends LitElement {
     queueMicrotask(() => {
       this._reloadOnPropertyChange = true;
     });
+  }
+
+  protected willUpdate(changed: PropertyValues<this>): void {
+    if (changed.has('onlyDifferences')) this._onlyDifferencesOverride = undefined;
   }
 
   protected updated(changed: PropertyValues<this>): void {
@@ -379,6 +405,7 @@ export class PricingRendererElement extends LitElement {
         mergeSelection(result.value, this.defaultSelection),
       ).selection;
       this._expandedGroups = new Set();
+      this._onlyDifferencesOverride = undefined;
       this._pendingAddOnChange = undefined;
       this._previousFocus = undefined;
       // [impl->req~summary-breakdown-closes-on-load~1]
@@ -833,7 +860,7 @@ export class PricingRendererElement extends LitElement {
       this.requestUpdate();
     },
     updateOnlyDifferences: (value) => {
-      this._onlyDifferences = value;
+      this._onlyDifferencesOverride = value;
       this.requestUpdate();
     },
     toggleGroup: this._toggleGroup,
@@ -900,12 +927,16 @@ export class PricingRendererElement extends LitElement {
     }
 
     const viewModel = this._viewModel()!;
+    const toolbarThreshold = this._toolbarThreshold();
     const state: RenderState = {
       viewModel,
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: this._search,
-      onlyDifferences: this._onlyDifferences,
+      onlyDifferences:
+        this._onlyDifferencesOverride ??
+        resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold),
+      toolbarThreshold,
       selectionEnabled: this.selectionEnabled,
       ctaEnabled: this.ctaEnabled,
       variablesEnabled: this.variablesEnabled,
