@@ -65,8 +65,31 @@ function stateFor(
   };
 }
 
+interface RepeatResult {
+  values: unknown[];
+}
+
+const isDirectiveResult = (value: unknown): value is RepeatResult =>
+  typeof value === 'object' && value !== null && '_$litDirective$' in value && 'values' in value;
+
+// The items of a repeat() result as the rendered templates: values hold [items, keyFn, template]
+// or [items, template].
+function unwrapRepeat(result: RepeatResult): unknown[] {
+  const [items, second, third] = result.values as [
+    unknown[],
+    unknown,
+    ((item: unknown, index: number) => unknown) | undefined,
+  ];
+  const template = (typeof third === 'function' ? third : second) as (
+    item: unknown,
+    index: number,
+  ) => unknown;
+  return [...items].map((item, index) => template(item, index));
+}
+
 // Flattens a lit template (strings and values, nested templates and arrays) into plain text.
 function flatten(template: unknown): string {
+  if (isDirectiveResult(template)) return flatten(unwrapRepeat(template));
   if (Array.isArray(template)) return template.map(flatten).join('');
   if (typeof template === 'string' || typeof template === 'number') return String(template);
   if (typeof template === 'object' && template !== null && 'strings' in template) {
@@ -89,7 +112,9 @@ function handlersOf(template: unknown): Handler[] {
   const found: Handler[] = [];
   let text = '';
   const walk = (node: unknown): void => {
-    if (Array.isArray(node)) {
+    if (isDirectiveResult(node)) {
+      walk(unwrapRepeat(node));
+    } else if (Array.isArray(node)) {
       node.forEach(walk);
     } else if (typeof node === 'string' || typeof node === 'number') {
       text += String(node);
@@ -317,6 +342,41 @@ describe('cap of 8 cards', () => {
   it('keeps the show-more button below the grid', () => {
     const text = render(synthetic());
     expect(text.indexOf('pr-button--quiet')).toBeGreaterThan(text.lastIndexOf('add-on-card'));
+  });
+});
+
+// The repeat() results found in a template tree.
+function repeatsOf(node: unknown, found: RepeatResult[] = []): RepeatResult[] {
+  if (isDirectiveResult(node)) {
+    found.push(node);
+  } else if (Array.isArray(node)) {
+    node.forEach((child) => repeatsOf(child, found));
+  } else if (typeof node === 'object' && node !== null && 'values' in node) {
+    (node as RepeatResult).values.forEach((child) => repeatsOf(child, found));
+  }
+  return found;
+}
+
+// [utest->req~addon-grid-cap~1]
+describe('keyed rendering', () => {
+  const keysOf = (overrides: Partial<FilterState> = {}, selected: string[] = []): unknown[] => {
+    const state = stateFor(synthetic(), selected, overrides) as RenderState;
+    const grids = repeatsOf(renderAddOns(state));
+    expect(grids).toHaveLength(1);
+    const [items, keyFn] = grids[0]!.values as [{ id: string }[], (item: { id: string }) => string];
+    return items.map((item) => keyFn(item));
+  };
+
+  it('keys the visible cards by add-on id, in order', () => {
+    expect(keysOf()).toEqual(first(8));
+    expect(keysOf({ addOnsRevealed: true })).toEqual(first(18));
+    expect(keysOf({ addOnSearch: 'sso' })).toEqual(['a05', 'a07']);
+    expect(keysOf({}, ['a12'])).toEqual([...first(8), 'a12']);
+  });
+
+  it('keeps the plain list below the filter threshold', () => {
+    const state = stateFor(synthetic(8), [], {}) as RenderState;
+    expect(repeatsOf(renderAddOns(state))).toHaveLength(0);
   });
 });
 

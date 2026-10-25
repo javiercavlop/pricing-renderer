@@ -53,6 +53,19 @@ function stateFor(viewModel: PricingViewModel): RenderState {
 
 // Flattens a lit template (strings and values, nested templates and arrays) into plain text.
 function flatten(template: unknown): string {
+  if (typeof template === 'object' && template !== null && '_$litDirective$' in template) {
+    // repeat(): values hold [items, keyFn, itemTemplate] or [items, itemTemplate].
+    const [items, second, third] = (template as { values: unknown[] }).values as [
+      unknown[],
+      unknown,
+      unknown,
+    ];
+    const itemTemplate = (typeof third === 'function' ? third : second) as (
+      item: unknown,
+      index: number,
+    ) => unknown;
+    return [...items].map((item, index) => flatten(itemTemplate(item, index))).join('');
+  }
   if (Array.isArray(template)) return template.map(flatten).join('');
   if (typeof template === 'string' || typeof template === 'number') return String(template);
   if (typeof template === 'object' && template !== null && 'strings' in template) {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { applyPricing, openRenderer, readFixture, type Viewport } from './helpers/spectra.js';
 
 // Spectra item 7 (docs/agent-work/spectra-item7-addon-grid/spec.md, criterion e): equal card height
@@ -101,4 +101,58 @@ test.describe('spectra add-on grid', () => {
       });
     }
   }
+});
+
+const toolbar = '[data-pr-part="addon-toolbar"]';
+const cardSelector = 'pricing-renderer .pr-addon-card';
+
+async function setAttribute(page: Page, name: string, value: string): Promise<void> {
+  await page.evaluate(
+    ({ name, value }) => {
+      document.querySelector('pricing-renderer')?.setAttribute(name, value);
+    },
+    { name, value },
+  );
+}
+
+test.describe('spectra add-on grid threshold attribute', () => {
+  // [utest->req~addon-grid-threshold-attribute~1]
+  test('add-on-filter-threshold="20" removes the toolbar on okta', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openRenderer(page, viewports[0]);
+    expect(await applyPricing(page, readFixture('okta'))).toBe('ready');
+    await expect(page.locator(toolbar)).toHaveCount(1);
+    await setAttribute(page, 'add-on-filter-threshold', '20');
+    await expect(page.locator(toolbar)).toHaveCount(0);
+    await expect(page.locator(cardSelector)).toHaveCount(18);
+  });
+
+  // [utest->req~addon-grid-threshold-attribute~1]
+  test('an invalid add-on-filter-threshold keeps the toolbar on okta', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openRenderer(page, viewports[0]);
+    expect(await applyPricing(page, readFixture('okta'))).toBe('ready');
+    await setAttribute(page, 'add-on-filter-threshold', '20');
+    await expect(page.locator(toolbar)).toHaveCount(0);
+    // Honouring -5 or "abc" would not fall back to the default threshold; the toolbar returns.
+    for (const value of ['-5', 'abc']) {
+      await setAttribute(page, 'add-on-filter-threshold', '20');
+      await expect(page.locator(toolbar)).toHaveCount(0);
+      await setAttribute(page, 'add-on-filter-threshold', value);
+      await expect(page.locator(toolbar), `add-on-filter-threshold="${value}"`).toHaveCount(1);
+    }
+  });
+
+  // [utest->req~addon-grid-threshold-attribute~1]
+  test('add-on-filter-threshold="0" filters the demo pricing without a cap', async ({ page }) => {
+    await openRenderer(page, viewports[0]);
+    await expect(page.locator(toolbar)).toHaveCount(0);
+    const before = await page.locator(cardSelector).count();
+    expect(before).toBeGreaterThan(0);
+    await setAttribute(page, 'add-on-filter-threshold', '0');
+    await expect(page.locator(toolbar)).toHaveCount(1);
+    await expect(page.locator(cardSelector)).toHaveCount(before);
+    const showMore = page.locator('pricing-renderer .pr-addon-main button.pr-button--quiet');
+    await expect(showMore).toHaveCount(0);
+  });
 });

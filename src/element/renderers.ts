@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { live } from 'lit/directives/live.js';
+import { repeat } from 'lit/directives/repeat.js';
 import {
   deepEqual,
   formatCurrency,
@@ -1123,9 +1124,20 @@ function renderAddOnGrid(
   state: RenderState,
   addOns: readonly NormalizedAddOn[],
   dense: boolean,
+  keyed = false,
 ): TemplateResult {
+  // The visible cards of the filter mode change with the search and show-more, so they are keyed
+  // by id: an open disclosure or the focus stays with its add-on.
   return html`<div class="pr-addon-grid${dense ? ' pr-addon-grid--dense' : ''}">
-    ${addOns.map((addOn) => renderAddOnCard(state, addOn, dense))}
+    ${
+      keyed
+        ? repeat(
+            addOns,
+            (addOn) => addOn.id,
+            (addOn) => renderAddOnCard(state, addOn, dense),
+          )
+        : addOns.map((addOn) => renderAddOnCard(state, addOn, dense))
+    }
   </div>`;
 }
 
@@ -1171,7 +1183,7 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
         ? html`<p class="pr-empty" role="status" data-pr-part="addon-empty">
             ${t(viewModel, 'pricing.noMatches')}
           </p>`
-        : renderAddOnGrid(state, visible, dense)
+        : renderAddOnGrid(state, visible, dense, true)
     }
     ${
       !search && hidden > 0
