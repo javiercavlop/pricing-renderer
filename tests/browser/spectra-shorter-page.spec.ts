@@ -61,6 +61,24 @@ async function setAttribute(page: Page, name: string, value: string): Promise<vo
   await settle(page);
 }
 
+async function setOnlyDifferences(page: Page, value: boolean): Promise<void> {
+  await page.evaluate((value) => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      onlyDifferences?: boolean;
+    };
+    renderer.onlyDifferences = value;
+  }, value);
+  await settle(page);
+}
+
+// The counter reads "{shown} of {total} items".
+async function readCounter(page: Page): Promise<{ shown: number; total: number }> {
+  const text = ((await page.locator(counter).textContent()) ?? '').trim();
+  const match = /^(\d+) of (\d+) items$/.exec(text);
+  expect(match, `counter text "${text}"`).not.toBeNull();
+  return { shown: Number(match![1]), total: Number(match![2]) };
+}
+
 test.describe('spectra shorter page', () => {
   for (const [saas, baseline] of Object.entries(baselines)) {
     // [utest->req~shorter-page-auto-default~1] [utest->req~shorter-page-counter~1]
@@ -143,6 +161,88 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(toolbar)).toHaveCount(1);
     await setAttribute(page, 'toolbar-threshold', '200');
     await expect(page.locator(toolbar)).toHaveCount(0);
+  });
+
+  // [utest->req~shorter-page-toolbar-threshold~1]
+  test('an invalid toolbar-threshold falls back to 40 on the demo page', async ({ page }) => {
+    await openRenderer(page, viewport);
+    await expect(page.locator(toolbar)).toHaveCount(0);
+    // Honouring -5 or "abc" would show the toolbar on the demo pricing.
+    for (const value of ['-5', 'abc', 'Infinity']) {
+      await setAttribute(page, 'toolbar-threshold', value);
+      await expect(page.locator(toolbar), `toolbar-threshold="${value}"`).toHaveCount(0);
+    }
+    // The demo pricing has 5 rows and the toolbar needs more rows than the threshold.
+    await setAttribute(page, 'toolbar-threshold', '4');
+    await expect(page.locator(toolbar)).toHaveCount(1);
+  });
+
+  // [utest->req~shorter-page-only-differences~1]
+  test('the checkbox overrides the property until the next change', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openPricing(page, 'clickup');
+    await setOnlyDifferences(page, false);
+    await expect(page.locator(checkbox)).not.toBeChecked();
+    const before = await readCounter(page);
+
+    await page.locator(checkbox).check();
+    await settle(page);
+    await expect(page.locator(checkbox)).toBeChecked();
+    const checked = await readCounter(page);
+    expect(checked.total, 'the total does not change').toBe(before.total);
+    const rendered = await page.locator(rows).count();
+    expect(checked.shown, 'the counter counts the rendered rows').toBe(rendered);
+
+    await setAttribute(page, 'only-differences', '');
+    await expect(page.locator(checkbox), 'the attribute wins over the override').toBeChecked();
+
+    await page.locator(checkbox).uncheck();
+    await settle(page);
+    await expect(page.locator(checkbox)).not.toBeChecked();
+    // Removing the attribute gives an automatic default of on for clickup: the override is gone.
+    await page.evaluate(() => {
+      document.querySelector('pricing-renderer')?.removeAttribute('only-differences');
+    });
+    await settle(page);
+    await expect(page.locator(checkbox), 'the removed attribute drops the override').toBeChecked();
+
+    await page.locator(checkbox).uncheck();
+    await settle(page);
+    await expect(page.locator(checkbox)).not.toBeChecked();
+    await setOnlyDifferences(page, true);
+    await expect(page.locator(checkbox), 'the property drops the override').toBeChecked();
+    await page.locator(checkbox).uncheck();
+    await settle(page);
+    await setOnlyDifferences(page, false);
+    await expect(page.locator(checkbox)).not.toBeChecked();
+  });
+
+  // [utest->req~shorter-page-only-differences~1]
+  test('a reload drops the checkbox override', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openPricing(page, 'clickup');
+    await expect(page.locator(checkbox)).toBeChecked();
+    await page.locator(checkbox).uncheck();
+    await settle(page);
+    await expect(page.locator(checkbox)).not.toBeChecked();
+    const state = await applyPricing(page, readFixture('clickup'), 'en', 'light');
+    expect(state, 'the same pricing reloads').toBe('ready');
+    await expect(page.locator(checkbox)).toBeChecked();
+  });
+
+  // [utest->req~shorter-page-toolbar-threshold~1] [utest->req~shorter-page-empty-state~1]
+  test('a hidden toolbar ignores the search text', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openPricing(page, 'clickup');
+    await page.locator(search).fill('zzzz-no-such-row');
+    await settle(page);
+    const empty = page.locator('[data-pr-part="comparison-empty"]');
+    await expect(empty).toBeVisible();
+
+    await setAttribute(page, 'toolbar-threshold', '500');
+    await expect(page.locator(toolbar)).toHaveCount(0);
+    await expect(empty).toHaveCount(0);
+    expect(await page.locator(rows).count(), 'the rows are back').toBeGreaterThan(0);
   });
 
   // [utest->req~shorter-page-no-look-change~1]

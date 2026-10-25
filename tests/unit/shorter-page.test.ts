@@ -1,3 +1,8 @@
+// Known coverage limits of this file:
+// - Byte-identical demo markup is covered only by the existing visual baselines; the acme pricing
+//   renders no toolbar or empty state here, so these tests cannot show that its markup is unchanged.
+// - The element-level override and reset rules (checkbox override, reload, hidden toolbar) are
+//   covered in the browser spec tests/browser/spectra-shorter-page.spec.ts.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
