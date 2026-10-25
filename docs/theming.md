@@ -82,9 +82,15 @@ pricing-renderer [data-pr-part='cta'] {
 Stable values:
 
 `hero`, `billing`, `variables`, `plans`, `plan-card`, `plan-badge`,
-`plan-inheritance`, `plan-highlight`, `price`, `cta`, `comparison`,
-`comparison-toolbar`, `comparison-table`, `comparison-row`, `add-ons`,
-`add-on-card`, `add-on-quantity`, `summary`, `metadata`, and `diagnostics`.
+`plan-inheritance`, `plan-highlight`, `selection-control`, `price`, `cta`,
+`comparison`, `comparison-toolbar`, `comparison-table`, `comparison-row`,
+`comparison-empty`, `add-ons`, `add-on-card`, `add-on-quantity`,
+`addon-toolbar`, `addon-empty`, `summary`, `breakdown`, `breakdown-line`,
+`breakdown-toggle`, `metadata`, and `diagnostics`.
+
+`comparison-empty` is the "No matching items" line of the comparison,
+`addon-toolbar` is the add-on search toolbar, and `addon-empty` is the add-on
+empty line.
 
 Internal `pr-*` class names and markup nesting are not public contracts.
 
