@@ -75,6 +75,12 @@ export interface PricingRendererSharedProps {
   visibility?: PricingVisibility;
   theme?: 'light' | 'dark' | 'auto';
   loadingLabel?: string;
+  // Absent is automatic, `false` is off, `true` is on.
+  onlyDifferences?: boolean;
+  // Number of comparison rows above which the comparison toolbar is shown.
+  toolbarThreshold?: number;
+  // Number of add-ons above which the add-on search and "Show more" are shown.
+  addOnFilterThreshold?: number;
   className?: string;
   id?: string;
   'aria-label'?: string;
