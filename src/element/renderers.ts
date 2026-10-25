@@ -179,7 +179,9 @@ function renderValue(
   }
   if (typeof value === 'number') {
     const formatted = new Intl.NumberFormat(viewModel.locale).format(value);
-    const label = unit ? ` ${formatUnit(unit, value, viewModel.locale)}` : '';
+    const label = unit
+      ? ` ${formatUnit(unit, value, viewModel.locale, viewModel.presentation.unitLabels)}`
+      : '';
     return html`<span class="pr-value">${formatted}${label}</span>`;
   }
   if (Array.isArray(value)) {

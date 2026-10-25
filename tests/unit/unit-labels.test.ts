@@ -103,7 +103,7 @@ describe('unitLabels locale lookup', () => {
     expect(format('execution', 3, 'es_MX', labels)).toBe('ejecuciones mx');
     expect(format('execution', 3, 'ES-mx', labels)).toBe('ejecuciones mx');
     expect(format('execution', 3, 'es-MX', { ES_mx: { execution: mx } })).toBe('ejecuciones mx');
-    expect(format('execution', 3, 'es_MX', { es })).toBe('ejecuciones');
+    expect(format('execution', 3, 'es_MX', { es: { execution: es } })).toBe('ejecuciones');
   });
 });
 

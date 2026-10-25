@@ -1,6 +1,7 @@
 import { getMessages, translate } from './i18n.js';
 import { getPricingRendererCustom } from './normalize.js';
 import { resolvePricing } from './resolve.js';
+import { isUnitLabel } from './units.js';
 import type {
   NormalizedPricing,
   PricingComparisonGroup,
@@ -13,6 +14,8 @@ import type {
   PricingPlanHighlightSummary,
   PricingPlanInheritanceSetting,
   PricingPresentation,
+  PricingUnitLabel,
+  PricingUnitLabels,
   PricingSelection,
   PricingViewModel,
   UnknownRecord,
@@ -158,8 +161,40 @@ function normalizePlanBadge(input: unknown): PricingPlanBadge | undefined {
   };
 }
 
+function normalizeUnitLabels(input: unknown): PricingUnitLabels | undefined {
+  if (!isRecord(input)) return undefined;
+  const locales = Object.entries(input).flatMap(([locale, units]) => {
+    if (!isRecord(units)) return [];
+    const entries = Object.entries(units).flatMap(([unit, label]) =>
+      isUnitLabel(label) ? [[unit, { one: label.one, other: label.other }]] : [],
+    );
+    return entries.length > 0 ? [[locale, Object.fromEntries(entries)]] : [];
+  });
+  return locales.length > 0 ? Object.fromEntries(locales) : undefined;
+}
+
+function mergeUnitLabels(
+  base: PricingUnitLabels | undefined,
+  override: PricingUnitLabels | undefined,
+): PricingUnitLabels | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const locales = new Map<string, Array<[string, PricingUnitLabel]>>();
+  for (const layer of [base, override]) {
+    for (const [locale, units] of Object.entries(layer)) {
+      const merged = new Map(locales.get(locale));
+      for (const [unit, label] of Object.entries(units)) merged.set(unit, label);
+      locales.set(locale, [...merged]);
+    }
+  }
+  return Object.fromEntries(
+    [...locales].map(([locale, units]) => [locale, Object.fromEntries(units)]),
+  );
+}
+
 function normalizePresentation(input: unknown): PricingPresentation {
   const value = asRecord(input);
+  const unitLabels = normalizeUnitLabels(value.unitLabels);
   const variableControls =
     value.variableControls === false || value.variableControls === 'auto'
       ? value.variableControls
@@ -202,6 +237,7 @@ function normalizePresentation(input: unknown): PricingPresentation {
     ...(ctas ? { ctas } : {}),
     ...(variableControls !== undefined ? { variableControls } : {}),
     ...(Object.keys(billingLabels).length > 0 ? { billingLabels } : {}),
+    ...(unitLabels ? { unitLabels } : {}),
     ...(asFiniteNumber(value.maxHighlights) !== undefined
       ? { maxHighlights: Math.max(0, Math.floor(asFiniteNumber(value.maxHighlights)!)) }
       : {}),
@@ -228,6 +264,7 @@ export function mergePresentationOptions(
   const override = normalizePresentation(provided);
   const ctas = override.ctas ?? base.ctas;
   const variableControls = override.variableControls ?? base.variableControls;
+  const unitLabels = mergeUnitLabels(base.unitLabels, override.unitLabels);
   return {
     ...base,
     ...override,
@@ -245,6 +282,7 @@ export function mergePresentationOptions(
     },
     ...(ctas !== undefined ? { ctas } : {}),
     ...(variableControls !== undefined ? { variableControls } : {}),
+    ...(unitLabels ? { unitLabels } : {}),
   };
 }
 

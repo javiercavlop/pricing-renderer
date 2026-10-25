@@ -275,6 +275,13 @@ export interface PricingPlanBadge {
   emphasize?: boolean;
 }
 
+export interface PricingUnitLabel {
+  one: string;
+  other: string;
+}
+
+export type PricingUnitLabels = Record<string, Record<string, PricingUnitLabel>>;
+
 export interface PricingPresentation {
   title?: string;
   subtitle?: string;
@@ -284,6 +291,7 @@ export interface PricingPresentation {
   ctas?: PricingCta[];
   variableControls?: 'auto' | false | VariableControl[];
   billingLabels?: Record<string, string>;
+  unitLabels?: PricingUnitLabels;
   maxHighlights?: number;
 }
 

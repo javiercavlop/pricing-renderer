@@ -72,6 +72,8 @@ export type {
   PricingMetadata,
   PricingMode,
   PricingPresentation,
+  PricingUnitLabel,
+  PricingUnitLabels,
   PricingPlanBadge,
   PricingPlanHighlightConfiguration,
   PricingPlanHighlightSetting,
