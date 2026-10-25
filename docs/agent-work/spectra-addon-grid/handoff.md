@@ -1,1 +1,22 @@
-Wake 7: tasks 996705bd (filter/cap/threshold + no-plans edit), 7511b06d (api-reference + custom-elements.json), c97ae119 (changeset) integrated; head 624fddb4. Next: checkpoint commit, push, pr_open into develop, follow CI (browser spec runs only in CI; no baseline may move), panel reviewer + test-reviewer (max 2 rounds), short how-to-test limited to what tests assert/CI logs, set_review_package, lead_ready. Known minor: focus loss when deselecting a selected add-on past the cap (spec-mandated); no element-level test for attribute mapping/reset on load (reviewer may flag).
+## State
+
+PR 50 is open on feat/spectra-addon-grid. Spec, tests, dense mode, filter and cap, docs and changeset are integrated. The coordinator widened the scope with tests/unit/no-plans.test.ts, which now sets addOnFilterThreshold to 99 in the Okta add-ons test.
+
+## CI
+
+The first push failed only on the prettier format check of the checkpoint plan file. This checkpoint rewrites it in a clean format. The browsers job stopped at the same step, so the browser spec has not run yet.
+
+## Panel
+
+Reviewer 4610c985 and test-reviewer dfd485f0 were started on the earlier head. The new head differs only in the docs/agent-work/spectra-addon-grid files.
+
+## Next steps
+
+1. Push, then read the CI result, including the browsers job.
+2. Read the panel findings and fix blockers and majors, two rounds at most.
+3. Mark the PR ready, set the review package and call lead_ready.
+
+## Known minor points
+
+- Deselecting a selected add-on beyond the cap removes its card while the checkbox has focus (the spec mandates this).
+- No element-level test for the attribute mapping and the reset on load.

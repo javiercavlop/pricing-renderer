@@ -1,6 +1,9 @@
-Design (smallest, scoped so acme (3 add-ons) renders byte-identical and no baseline moves):
-- Dense mode when add-ons > 8 (const ADDON_DENSE_THRESHOLD=8): grid/card modifier classes; availableFor/dependsOn/excludes/constraints move into the existing details disclosure with effects (new key pricing.moreDetails); unavailable status stays visible; details block flex-grows so disclosure/stepper sit at the bottom -> equal-content cards per row. All new CSS only under the new modifier classes.
-- Filter + cap when add-ons > addOnFilterThreshold (new attribute add-on-filter-threshold / property addOnFilterThreshold, default 13, i.e. 14+; invalid -> 13): toolbar with search (pricing.searchAddOns), counter (pricing.rowsShownOf), cap of 8 + "Show N more" (pricing.showRemaining), selected add-ons never hidden, empty state pricing.noMatches. State in element, reset on load.
-- Total: unchanged (sticky in the right column at 840+, bottom bar on mobile); the cap shortens the list so it is reached sooner. No new CSS for it.
-Slices: T1 spec (docs); T2 tests first (unit + browser, red_before); T3 dense mode impl; T4 filter/cap/attribute impl; T5 docs/changeset/custom-elements (parallel with T4). Then PR, panel (reviewer + test-reviewer), ready.
-Baseline impact: none by design (acme <= 8 add-ons, defaults unchanged).
+Design for SPECTRA item 7, scoped so the demo pricing (3 add-ons) renders equivalent markup and no baseline moves.
+
+- Dense mode when add-ons exceed 8: grid and card modifier classes; availability, dependency, exclusion and constraint notes move into the existing details disclosure (key pricing.moreDetails); the unavailable status stays visible; all new CSS sits under the new modifier classes.
+- Filter and cap when add-ons exceed addOnFilterThreshold (attribute add-on-filter-threshold, default 13, so 14 or more; invalid values give 13): search toolbar, counter, cap of 8 with a show-more button, selected add-ons never hidden, empty state. State lives in the element and resets on load.
+- Total: unchanged.
+
+Slices: spec, tests first, dense mode, filter and cap, docs and changeset, then PR, panel (reviewer and test-reviewer) and ready.
+
+Baseline impact: none by design.
