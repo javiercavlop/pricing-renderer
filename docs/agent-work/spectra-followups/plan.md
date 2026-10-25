@@ -1,0 +1,1 @@
+Done: T1 React props, T2 theming part hooks, T3 pill wrapping + token-cap tests; verification task a24fb23f5113483b passed install, 3 new unit files, full unit suite, typecheck, lint, prettier check. Next: push, open PR, run panel (reviewer + test-reviewer), fix findings (max two rounds), ready.
