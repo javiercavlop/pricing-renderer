@@ -319,31 +319,32 @@ Exports `PricingRendererElement` without registering it globally.
 
 ### Properties and attributes
 
-| Property            | Attribute           | Type                             | Default            |
-| ------------------- | ------------------- | -------------------------------- | ------------------ |
-| `pricing`           | —                   | `IPricingLike`                   | —                  |
-| `yaml`              | —                   | `string`                         | —                  |
-| `src`               | `src`               | `string`                         | —                  |
-| `request`           | —                   | `PricingRequestOptions`          | —                  |
-| `loadPricing`       | —                   | `PricingLoader`                  | —                  |
-| `normalizeOptions`  | —                   | `NormalizePricingOptions`        | —                  |
-| `expressionOptions` | —                   | `ExpressionOptions`              | —                  |
-| `selection`         | —                   | `PricingSelection`               | uncontrolled       |
-| `defaultSelection`  | —                   | `Partial<PricingSelection>`      | schema defaults    |
-| `presentation`      | —                   | `PricingPresentation`            | merged defaults    |
-| `locale`            | `locale`            | `string`                         | `"en-US"`          |
-| `pricingPath`       | `pricing-path`      | `string`                         | `"/pricing"`       |
-| `selectionEnabled`  | —                   | `boolean`                        | `true`             |
-| `ctaEnabled`        | —                   | `boolean`                        | `true`             |
-| `variablesEnabled`  | —                   | `boolean`                        | `true`             |
-| `messages`          | —                   | `MessageCatalog`                 | registered catalog |
-| `mode`              | `mode`              | `"commercial" \| "catalog"`      | `"commercial"`     |
-| `layout`            | `layout`            | `"auto" \| "compact" \| "table"` | `"auto"`           |
-| `visibility`        | `visibility`        | `"public-only" \| "all"`         | `"public-only"`    |
-| `theme`             | `theme`             | `"light" \| "dark" \| "auto"`    | `"light"`          |
-| `loadingLabel`      | `loading-label`     | `string`                         | localized          |
-| `onlyDifferences`   | `only-differences`  | `boolean`                        | automatic          |
-| `toolbarThreshold`  | `toolbar-threshold` | `number`                         | `40`               |
+| Property               | Attribute                 | Type                             | Default            |
+| ---------------------- | ------------------------- | -------------------------------- | ------------------ |
+| `pricing`              | —                         | `IPricingLike`                   | —                  |
+| `yaml`                 | —                         | `string`                         | —                  |
+| `src`                  | `src`                     | `string`                         | —                  |
+| `request`              | —                         | `PricingRequestOptions`          | —                  |
+| `loadPricing`          | —                         | `PricingLoader`                  | —                  |
+| `normalizeOptions`     | —                         | `NormalizePricingOptions`        | —                  |
+| `expressionOptions`    | —                         | `ExpressionOptions`              | —                  |
+| `selection`            | —                         | `PricingSelection`               | uncontrolled       |
+| `defaultSelection`     | —                         | `Partial<PricingSelection>`      | schema defaults    |
+| `presentation`         | —                         | `PricingPresentation`            | merged defaults    |
+| `locale`               | `locale`                  | `string`                         | `"en-US"`          |
+| `pricingPath`          | `pricing-path`            | `string`                         | `"/pricing"`       |
+| `selectionEnabled`     | —                         | `boolean`                        | `true`             |
+| `ctaEnabled`           | —                         | `boolean`                        | `true`             |
+| `variablesEnabled`     | —                         | `boolean`                        | `true`             |
+| `messages`             | —                         | `MessageCatalog`                 | registered catalog |
+| `mode`                 | `mode`                    | `"commercial" \| "catalog"`      | `"commercial"`     |
+| `layout`               | `layout`                  | `"auto" \| "compact" \| "table"` | `"auto"`           |
+| `visibility`           | `visibility`              | `"public-only" \| "all"`         | `"public-only"`    |
+| `theme`                | `theme`                   | `"light" \| "dark" \| "auto"`    | `"light"`          |
+| `loadingLabel`         | `loading-label`           | `string`                         | localized          |
+| `onlyDifferences`      | `only-differences`        | `boolean`                        | automatic          |
+| `toolbarThreshold`     | `toolbar-threshold`       | `number`                         | `40`               |
+| `addOnFilterThreshold` | `add-on-filter-threshold` | `number`                         | `13`               |
 
 Exactly one of `pricing`, `yaml`, or `src` is required. Sensitive request
 configuration is property-only.
@@ -379,6 +380,31 @@ empty state exposes the stable part hook `comparison-empty`.
 The texts come from the i18n keys `pricing.rowsShownOf` and
 `pricing.noMatches`. The key `pricing.rowsShown` stays in the catalogs but is
 no longer rendered.
+
+### Add-on grid for long lists
+
+`add-on-filter-threshold` (property `addOnFilterThreshold`, default 13) sets
+when the add-on grid switches to filter mode: it applies when the pricing has
+more add-ons than the threshold, so 14 add-ons or more by default. An empty
+attribute value counts as 0, so every pricing with add-ons is in filter mode.
+Other invalid or negative values fall back to 13.
+
+In filter mode the grid gets a toolbar with a search input and a counter. The
+toolbar exposes the stable part hook `addon-toolbar`. The
+search matches the add-on name and description, case-insensitive. Only the
+first 8 add-ons are shown initially, followed by a button that reveals the
+rest. Selected add-ons are never hidden: they are rendered even beyond the
+first 8. When no add-on matches the search, the grid shows an empty state that
+exposes the stable part hook `addon-empty`.
+
+When a pricing has more than 8 add-ons the cards are compact: the secondary
+details sit inside a disclosure instead of the card body. This applies with or
+without the filter.
+
+The texts come from the i18n keys `pricing.moreDetails` (the disclosure
+summary: `More details`, Spanish `Más detalles`) and `pricing.searchAddOns`
+(the search label and placeholder: `Search add-ons`, Spanish
+`Buscar complementos`).
 
 ### Price breakdown disclosure
 

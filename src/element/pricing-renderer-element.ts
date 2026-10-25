@@ -45,6 +45,7 @@ import type {
 } from './events.js';
 import {
   comparisonRowTotal,
+  DEFAULT_ADDON_FILTER_THRESHOLD,
   DEFAULT_TOOLBAR_THRESHOLD,
   renderAddOns,
   renderBilling,
@@ -57,6 +58,7 @@ import {
   renderVariables,
   resolveOnlyDifferences,
   toolbarThresholdOf,
+  addOnFilterThresholdOf,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -118,6 +120,7 @@ export class PricingRendererElement extends LitElement {
     loadingLabel: { type: String, attribute: 'loading-label' },
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
+    addOnFilterThreshold: { type: Number, attribute: 'add-on-filter-threshold' },
   };
 
   declare pricing?: IPricingLike;
@@ -143,6 +146,8 @@ export class PricingRendererElement extends LitElement {
   declare loadingLabel?: string;
   declare onlyDifferences?: boolean;
   declare toolbarThreshold: number;
+  // [impl->req~addon-grid-threshold-attribute~1]
+  declare addOnFilterThreshold: number;
 
   private _status: LoadStatus = 'idle';
   private readonly _projectPresentation: PricingPresentation;
@@ -157,6 +162,8 @@ export class PricingRendererElement extends LitElement {
   private _onlyDifferencesOverride?: boolean;
   private _expandedGroups = new Set<string>();
   private _revealedGroups = new Set<string>();
+  private _addOnSearch = '';
+  private _addOnsRevealed = false;
   private _pendingAddOnChange?: PendingAddOnChange;
   private _lastValidPlanPrices: Record<string, ResolvedPrice> = {};
   private _lastValidAddOnPrices: Record<string, ResolvedPrice> = {};
@@ -184,6 +191,7 @@ export class PricingRendererElement extends LitElement {
     this.visibility = 'public-only';
     this.theme = 'light';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
+    this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
   }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -402,6 +410,9 @@ export class PricingRendererElement extends LitElement {
         mergeSelection(result.value, this.defaultSelection),
       ).selection;
       this._expandedGroups = new Set();
+      // [impl->req~addon-grid-cap~1] the add-on search and reveal state start over with a new pricing
+      this._addOnSearch = '';
+      this._addOnsRevealed = false;
       this._onlyDifferencesOverride = undefined;
       this._pendingAddOnChange = undefined;
       this._previousFocus = undefined;
@@ -863,6 +874,14 @@ export class PricingRendererElement extends LitElement {
     toggleGroup: this._toggleGroup,
     setAllGroups: this._setAllGroups,
     revealGroup: this._revealGroup,
+    updateAddOnSearch: (value) => {
+      this._addOnSearch = value;
+      this.requestUpdate();
+    },
+    revealAddOns: () => {
+      this._addOnsRevealed = true;
+      this.requestUpdate();
+    },
     confirmAddOnChange: this._confirmAddOnChange,
     cancelAddOnChange: this._cancelAddOnChange,
     toggleBreakdown: this._toggleBreakdown,
@@ -942,6 +961,9 @@ export class PricingRendererElement extends LitElement {
       variablesEnabled: this.variablesEnabled,
       expandedGroups: this._expandedGroups,
       revealedGroups: this._revealedGroups,
+      addOnSearch: this._addOnSearch,
+      addOnsRevealed: this._addOnsRevealed,
+      addOnFilterThreshold: addOnFilterThresholdOf(this.addOnFilterThreshold),
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),
       breakdownOpen: this._breakdownOpen,
       breakdownId: this._breakdownId,

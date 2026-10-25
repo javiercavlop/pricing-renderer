@@ -113,6 +113,13 @@
             },
             {
               "kind": "field",
+              "name": "addOnFilterThreshold",
+              "type": { "text": "number" },
+              "attribute": "add-on-filter-threshold",
+              "description": "The add-on grid switches to filter mode (search, counter and a cap of 8 initial cards, selected add-ons are never hidden) when the pricing has more add-ons than this (default 13). Invalid or negative values fall back to 13."
+            },
+            {
+              "kind": "field",
               "name": "resolvedState",
               "type": { "text": "PricingSelectionChangeDetail | undefined" },
               "readonly": true,
