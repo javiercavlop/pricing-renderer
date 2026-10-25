@@ -49,6 +49,7 @@ describe('React adapter props for the toolbar and add-on filter', () => {
     declare const pricing: IPricingLike;
   `;
 
+  // [utest->spectra-followups:AC3]
   it('accepts onlyDifferences, toolbarThreshold and addOnFilterThreshold', () => {
     const diagnostics = typeCheckSnippet(
       `${header}\nexport const element = React.createElement(PricingRenderer, { pricing, onlyDifferences: false, toolbarThreshold: 10, addOnFilterThreshold: 3 });`,
@@ -61,10 +62,13 @@ describe('React adapter props for the toolbar and add-on filter', () => {
       `${header}\nexport const element = React.createElement(PricingRenderer, { pricing, toolbarThreshold: 'x', addOnFilterThreshold: 'y', onlyDifferences: 'z' });`,
     );
     expect(diagnostics.length).toBeGreaterThan(0);
-    expect(messages(diagnostics).join('\n')).toMatch(/not assignable/);
+    const joined = messages(diagnostics).join('\n');
+    expect(joined).toMatch(/Type 'string' is not assignable to type 'number'/);
+    expect(joined).toMatch(/Type 'string' is not assignable to type 'boolean \| undefined'/);
   });
 
-  it('forwards the three props to the underlying component unchanged', async () => {
+  // The type test above is the real check; this only guards the spread of the props.
+  it('guards the spread of the three props to the underlying component', async () => {
     const { PricingRenderer } = await import('../../src/react/index.js');
     const render = (
       PricingRenderer as unknown as {

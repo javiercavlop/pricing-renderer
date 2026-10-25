@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
@@ -14,6 +14,13 @@ const acme = readFileSync(
   fileURLToPath(new URL('../fixtures/acme-pricing.yml', import.meta.url)),
   'utf8',
 );
+
+const rendererWidth = (page: Page): Promise<number> =>
+  page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer');
+    if (!renderer) throw new Error('pricing-renderer was not found.');
+    return renderer.clientWidth;
+  });
 
 test.beforeEach(({ browserName }) => {
   test.skip(browserName !== 'chromium', 'The spectra checks run in chromium only.');
@@ -45,6 +52,7 @@ test.describe('spectra follow-ups', () => {
     test(`token caps at ${width}px`, async ({ page }) => {
       await openRenderer(page, { width, height: 900 });
       expect(await applyPricing(page, acme)).toBe('ready');
+      expect(await rendererWidth(page)).toBeGreaterThanOrEqual(840);
       const read = () =>
         page.evaluate(() => {
           const content = document.querySelector('pricing-renderer .pr-content');
@@ -61,4 +69,44 @@ test.describe('spectra follow-ups', () => {
       expect(await read()).toEqual({ paddingTop: '8px', rowGap: '12px' });
     });
   }
+
+  // [utest->spectra-followups:AC2] The margin after the plans adds back what the gap cap removed.
+  for (const width of [1024, 1440]) {
+    test(`space after the plans at ${width}px`, async ({ page }) => {
+      await openRenderer(page, { width, height: 900 });
+      expect(await applyPricing(page, acme)).toBe('ready');
+      expect(await rendererWidth(page)).toBeGreaterThanOrEqual(840);
+      const marginAfterPlans = (): Promise<string | null> =>
+        page.evaluate(() => {
+          const plans = document.querySelector(
+            'pricing-renderer .pr-content > [data-pr-part="plans"]',
+          );
+          const next = plans?.nextElementSibling;
+          return next ? getComputedStyle(next).marginTop : null;
+        });
+      expect(await marginAfterPlans()).not.toBeNull();
+      const setSection = (value: string) =>
+        page.evaluate((section) => {
+          const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+          renderer.style.setProperty('--pr-space-section', section);
+        }, value);
+      await setSection('40px');
+      expect(await marginAfterPlans()).toBe('16px');
+      await setSection('12px');
+      expect(await marginAfterPlans()).toBe('0px');
+    });
+  }
+
+  // [utest->spectra-followups:AC2] Below 840px the caps do not apply: the demo token (>= 40px) is kept.
+  test('keeps the full section gap below 840px', async ({ page }) => {
+    await openRenderer(page, { width: 800, height: 900 });
+    expect(await applyPricing(page, acme)).toBe('ready');
+    expect(await rendererWidth(page)).toBeLessThan(840);
+    const rowGap = await page.evaluate(() => {
+      const content = document.querySelector('pricing-renderer .pr-content');
+      if (!content) throw new Error('.pr-content was not found.');
+      return Number.parseFloat(getComputedStyle(content).rowGap);
+    });
+    expect(rowGap).toBeGreaterThan(24);
+  });
 });

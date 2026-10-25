@@ -26,6 +26,7 @@ async function documentedParts(): Promise<string[]> {
 }
 
 describe('docs/theming.md stable part hooks', () => {
+  // [utest->spectra-followups:AC4]
   it('lists every data-pr-part value the code renders', async () => {
     const documented = new Set(await documentedParts());
     const missing = (await renderedParts()).filter((part) => !documented.has(part));

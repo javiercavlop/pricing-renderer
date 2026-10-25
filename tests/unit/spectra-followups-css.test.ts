@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('../../src/styles/base.css', import.meta.url), 'utf8');
+const css = readFileSync(new URL('../../src/styles/base.css', import.meta.url), 'utf8').replace(
+  /\/\*[\s\S]*?\*\//g,
+  '',
+);
 
 // The text of the `{ ... }` block that follows `header` (nested braces are balanced).
 function blockAfter(source: string, header: RegExp): string {
@@ -25,6 +28,10 @@ describe('spectra follow-ups css', () => {
     expect(rule?.[0]).toMatch(/min-inline-size:\s*0\s*;/);
     expect(rule?.[0]).toMatch(/max-inline-size:\s*100%\s*;/);
     expect(rule?.[0]).toMatch(/overflow-wrap:\s*anywhere\s*;/);
+    const badges = /\.pr-plan-card__badges\s*\{[^}]*\}/.exec(css);
+    expect(badges).not.toBeNull();
+    expect(badges?.[0]).toMatch(/min-inline-size:\s*0\s*;/);
+    expect(badges?.[0]).toMatch(/max-inline-size:\s*100%\s*;/);
   });
 
   // [utest->spectra-followups:AC2] The caps keep smaller token values in effect.
