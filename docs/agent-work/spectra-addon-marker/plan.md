@@ -1,1 +1,1 @@
-Implementation, unit tests, browser spec integrated (head 1a19647). Next: push, open PR, read CI (browsers job runs the new spec), fix failures, panel (reviewer, test-reviewer, ui-qa), review package, ready.
+Pushed head adds only the how-to-test guide over the reviewed code head a573fc4. Next: CI on the new head, set review package, lead_ready with the panel tasks.
