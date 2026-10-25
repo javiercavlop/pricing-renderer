@@ -117,6 +117,11 @@
   pricing-renderer[data-pr-root] .pr-badge {
     display: inline-flex;
     align-items: center;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    /* The text is an anonymous flex item whose min-content width stays that of the longest word
+       with break-word; anywhere lets it shrink, and still breaks only a word that does not fit. */
+    overflow-wrap: anywhere;
     min-block-size: 28px;
     padding: 0.2rem 0.65rem;
     border: 1px solid var(--pr-color-border);
@@ -294,6 +299,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--pr-space-2);
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   pricing-renderer[data-pr-root] .pr-selection-control {
