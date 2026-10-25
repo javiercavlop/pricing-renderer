@@ -76,17 +76,12 @@ r.querySelectorAll('[data-pr-part="comparison-row"]').length; // 30, same as the
 ```
 
 b. Uncheck the checkbox. The counter **stays** at `30 of 174 items`: only the first group
-is expanded, every group is capped at 30 rows, and the first group still has more than 30
-rows after the filter. The **rows change**: rows with the same value on every plan (for
-example Tasks) are hidden when the box is checked and shown when it is unchecked.
+is expanded and each group shows at most 30 rows. The **rows change**: rows with the same
+value on every plan (for example Tasks) are hidden when the box is checked and shown when
+it is unchecked.
 
-c. Press "Expand all". The counter does not change with the box either: it reads
-`60 of 174 items` with the box checked and with it unchecked (both groups are expanded,
-each capped at 30 rows). Only the rows differ.
-
-d. To see the counter change: with the box unchecked, press `Show 106 more` under the first
-group. The counter reads `136 of 174 items`. Then check the box: the counter reads
-`73 of 174 items`.
+c. Press "Expand all". The second group (Usage limits) is expanded too, so the counter
+changes to a larger number than 30.
 
 In every case the number of rendered rows equals the first number of the counter.
 
