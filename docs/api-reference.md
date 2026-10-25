@@ -308,32 +308,66 @@ Exports `PricingRendererElement` without registering it globally.
 
 ### Properties and attributes
 
-| Property            | Attribute       | Type                             | Default            |
-| ------------------- | --------------- | -------------------------------- | ------------------ |
-| `pricing`           | —               | `IPricingLike`                   | —                  |
-| `yaml`              | —               | `string`                         | —                  |
-| `src`               | `src`           | `string`                         | —                  |
-| `request`           | —               | `PricingRequestOptions`          | —                  |
-| `loadPricing`       | —               | `PricingLoader`                  | —                  |
-| `normalizeOptions`  | —               | `NormalizePricingOptions`        | —                  |
-| `expressionOptions` | —               | `ExpressionOptions`              | —                  |
-| `selection`         | —               | `PricingSelection`               | uncontrolled       |
-| `defaultSelection`  | —               | `Partial<PricingSelection>`      | schema defaults    |
-| `presentation`      | —               | `PricingPresentation`            | merged defaults    |
-| `locale`            | `locale`        | `string`                         | `"en-US"`          |
-| `pricingPath`       | `pricing-path`  | `string`                         | `"/pricing"`       |
-| `selectionEnabled`  | —               | `boolean`                        | `true`             |
-| `ctaEnabled`        | —               | `boolean`                        | `true`             |
-| `variablesEnabled`  | —               | `boolean`                        | `true`             |
-| `messages`          | —               | `MessageCatalog`                 | registered catalog |
-| `mode`              | `mode`          | `"commercial" \| "catalog"`      | `"commercial"`     |
-| `layout`            | `layout`        | `"auto" \| "compact" \| "table"` | `"auto"`           |
-| `visibility`        | `visibility`    | `"public-only" \| "all"`         | `"public-only"`    |
-| `theme`             | `theme`         | `"light" \| "dark" \| "auto"`    | `"light"`          |
-| `loadingLabel`      | `loading-label` | `string`                         | localized          |
+| Property            | Attribute           | Type                             | Default            |
+| ------------------- | ------------------- | -------------------------------- | ------------------ |
+| `pricing`           | —                   | `IPricingLike`                   | —                  |
+| `yaml`              | —                   | `string`                         | —                  |
+| `src`               | `src`               | `string`                         | —                  |
+| `request`           | —                   | `PricingRequestOptions`          | —                  |
+| `loadPricing`       | —                   | `PricingLoader`                  | —                  |
+| `normalizeOptions`  | —                   | `NormalizePricingOptions`        | —                  |
+| `expressionOptions` | —                   | `ExpressionOptions`              | —                  |
+| `selection`         | —                   | `PricingSelection`               | uncontrolled       |
+| `defaultSelection`  | —                   | `Partial<PricingSelection>`      | schema defaults    |
+| `presentation`      | —                   | `PricingPresentation`            | merged defaults    |
+| `locale`            | `locale`            | `string`                         | `"en-US"`          |
+| `pricingPath`       | `pricing-path`      | `string`                         | `"/pricing"`       |
+| `selectionEnabled`  | —                   | `boolean`                        | `true`             |
+| `ctaEnabled`        | —                   | `boolean`                        | `true`             |
+| `variablesEnabled`  | —                   | `boolean`                        | `true`             |
+| `messages`          | —                   | `MessageCatalog`                 | registered catalog |
+| `mode`              | `mode`              | `"commercial" \| "catalog"`      | `"commercial"`     |
+| `layout`            | `layout`            | `"auto" \| "compact" \| "table"` | `"auto"`           |
+| `visibility`        | `visibility`        | `"public-only" \| "all"`         | `"public-only"`    |
+| `theme`             | `theme`             | `"light" \| "dark" \| "auto"`    | `"light"`          |
+| `loadingLabel`      | `loading-label`     | `string`                         | localized          |
+| `onlyDifferences`   | `only-differences`  | `boolean`                        | automatic          |
+| `toolbarThreshold`  | `toolbar-threshold` | `number`                         | `40`               |
 
 Exactly one of `pricing`, `yaml`, or `src` is required. Sensitive request
 configuration is property-only.
+
+### Comparison toolbar and the shorter page
+
+The comparison toolbar (search, Only differences, expand all, collapse all
+and a counter) is shown when the pricing has more than `toolbarThreshold`
+comparison rows. The default is 40, unchanged. Invalid or negative values
+fall back to 40.
+
+`only-differences` sets the initial state of the Only differences checkbox:
+
+- Absent: automatic.
+- Present, or any value except `false`: on.
+- `only-differences="false"`: off.
+
+The automatic default is on when the pricing has more than 100 comparison
+rows, at least 2 plans, and the toolbar is shown. Otherwise it is off, so
+small pricings (including the demo pricing) look as before. A click on the
+checkbox overrides the initial state until a new pricing loads or the
+property changes.
+
+The counter reads `{shown} of {total} items` (Spanish:
+`{shown} de {total} elementos`). `shown` is the number of rows rendered
+right now: rows of collapsed groups and rows behind `Show N more` are not
+counted. `total` is all comparison rows of the pricing.
+
+When the search or Only differences leaves no row, the comparison shows
+`No matching items` (Spanish: `Sin resultados`) and keeps the toolbar. The
+empty state exposes the stable part hook `comparison-empty`.
+
+The texts come from the i18n keys `pricing.rowsShownOf` and
+`pricing.noMatches`. The key `pricing.rowsShown` stays in the catalogs but is
+no longer rendered.
 
 ### Price breakdown disclosure
 
