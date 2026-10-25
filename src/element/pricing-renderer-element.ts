@@ -44,6 +44,7 @@ import type {
   PricingSelectionChangeDetail,
 } from './events.js';
 import {
+  comparisonRowTotal,
   DEFAULT_TOOLBAR_THRESHOLD,
   renderAddOns,
   renderBilling,
@@ -55,6 +56,7 @@ import {
   renderSummary,
   renderVariables,
   resolveOnlyDifferences,
+  toolbarThresholdOf,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -182,11 +184,6 @@ export class PricingRendererElement extends LitElement {
     this.visibility = 'public-only';
     this.theme = 'light';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
-  }
-
-  private _toolbarThreshold(): number {
-    const value = this.toolbarThreshold;
-    return Number.isFinite(value) && value >= 0 ? value : DEFAULT_TOOLBAR_THRESHOLD;
   }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -927,14 +924,17 @@ export class PricingRendererElement extends LitElement {
     }
 
     const viewModel = this._viewModel()!;
-    const toolbarThreshold = this._toolbarThreshold();
+    const toolbarThreshold = toolbarThresholdOf(this.toolbarThreshold);
+    // Without a toolbar the user cannot undo a filter, so the search text and the checkbox override
+    // are ignored while it is hidden (the stored values are kept).
+    const toolbarShown = comparisonRowTotal(viewModel) > toolbarThreshold;
     const state: RenderState = {
       viewModel,
       selection: viewModel.resolved.selection,
       compact: this._compact,
-      search: this._search,
+      search: toolbarShown ? this._search : '',
       onlyDifferences:
-        this._onlyDifferencesOverride ??
+        (toolbarShown ? this._onlyDifferencesOverride : undefined) ??
         resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold),
       toolbarThreshold,
       selectionEnabled: this.selectionEnabled,

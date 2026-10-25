@@ -109,7 +109,7 @@
               "name": "toolbarThreshold",
               "type": { "text": "number" },
               "attribute": "toolbar-threshold",
-              "description": "Minimum number of comparison rows above which the comparison toolbar is shown. Invalid or negative values fall back to 40."
+              "description": "The toolbar is shown when the pricing has more than this many comparison rows (default 40). Invalid or negative values fall back to 40."
             },
             {
               "kind": "field",

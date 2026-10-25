@@ -74,17 +74,27 @@ export function comparisonRowTotal(viewModel: PricingViewModel): number {
   return viewModel.comparisonGroups.reduce((total, group) => total + group.rows.length, 0);
 }
 
+// [impl->req~shorter-page-toolbar-threshold~1] a missing, non-finite or negative value gives 40
+export function toolbarThresholdOf(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : DEFAULT_TOOLBAR_THRESHOLD;
+}
+
+// [impl->req~shorter-page-auto-default~1]
 // An explicit initial state wins. Otherwise a long comparison with several plans starts with only
 // the differences, as long as the toolbar is there to switch the filter off.
 export function resolveOnlyDifferences(
   viewModel: PricingViewModel,
   initial: boolean | undefined,
-  toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD,
+  toolbarThreshold: number = DEFAULT_TOOLBAR_THRESHOLD,
 ): boolean {
   if (initial !== undefined) return initial;
   const total = comparisonRowTotal(viewModel);
   return (
-    total > AUTO_DIFFERENCES_MIN_ROWS && viewModel.plans.length >= 2 && total > toolbarThreshold
+    total > AUTO_DIFFERENCES_MIN_ROWS &&
+    viewModel.plans.length >= 2 &&
+    total > toolbarThresholdOf(toolbarThreshold)
   );
 }
 
@@ -593,6 +603,7 @@ function isGroupExpanded(state: RenderState, group: PricingComparisonGroup): boo
   return state.expandedGroups.has(group.id) || Boolean(state.search);
 }
 
+// [impl->req~shorter-page-counter~1]
 // The rows that are on the page: those of expanded groups, after the cap per group.
 function renderedRowCount(state: RenderState, groups: PricingComparisonGroup[]): number {
   return groups.reduce(
@@ -608,7 +619,8 @@ function renderComparisonToolbar(
 ): TemplateResult | typeof nothing {
   const { viewModel, actions } = state;
   const total = comparisonRowTotal(viewModel);
-  if (total <= (state.toolbarThreshold ?? DEFAULT_TOOLBAR_THRESHOLD)) return nothing;
+  // [impl->req~shorter-page-no-look-change~1] a short comparison gets no toolbar and looks as before
+  if (total <= toolbarThresholdOf(state.toolbarThreshold)) return nothing;
   const shown = renderedRowCount(state, groups);
   return html`
     <div class="pr-comparison-toolbar" data-pr-part="comparison-toolbar">
@@ -831,6 +843,7 @@ export function renderComparison(state: RenderState): TemplateResult | typeof no
           ? html`<p class="pr-empty">${t(viewModel, 'pricing.noComparison')}</p>`
           : html`${renderComparisonToolbar(state, groups)}
             ${
+              /* [impl->req~shorter-page-empty-state~1] */
               groups.length === 0
                 ? html`<p class="pr-empty" role="status" data-pr-part="comparison-empty">
                     ${t(viewModel, 'pricing.noMatches')}
