@@ -251,10 +251,9 @@ describe('filter mode markup', () => {
     expect(summary).toBeGreaterThan(grid);
   });
 
-  it('renders the toolbar with the comparison toolbar classes', () => {
-    expect(text).toContain(
-      '<div class="pr-comparison-toolbar pr-addon-toolbar" data-pr-part="addon-toolbar">',
-    );
+  it('renders the toolbar with its own class, not the comparison toolbar class', () => {
+    expect(text).toContain('<div class="pr-addon-toolbar" data-pr-part="addon-toolbar">');
+    expect(toolbarOf(text)).not.toContain('pr-comparison-toolbar');
   });
 
   it('renders a search input with the add-on label and placeholder', () => {

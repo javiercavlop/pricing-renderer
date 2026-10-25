@@ -1165,7 +1165,7 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
   const label = t(viewModel, 'pricing.searchAddOns');
   const counter = t(viewModel, 'pricing.rowsShownOf', { shown: visible.length, total: all.length });
   return html`<div class="pr-addon-main">
-    <div class="pr-comparison-toolbar pr-addon-toolbar" data-pr-part="addon-toolbar">
+    <div class="pr-addon-toolbar" data-pr-part="addon-toolbar">
       <label class="pr-search">
         <span class="pr-sr-only">${label}</span>
         <input

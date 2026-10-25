@@ -88,7 +88,8 @@ toolbar with a search input and a counter above the add-on grid.
   UserGuiding (11) and Box (9) are dense only.
 - Only in filter mode, the toolbar and the grid are wrapped in `<div class="pr-addon-main">`, which
   takes the left column of `.pr-addon-layout`; the summary stays in the right column.
-- The toolbar is `<div class="pr-comparison-toolbar pr-addon-toolbar" data-pr-part="addon-toolbar">`.
+- The toolbar is `<div class="pr-addon-toolbar" data-pr-part="addon-toolbar">`. The comparison
+  toolbar class is not reused, so selectors for the comparison toolbar keep matching one element.
 - The search input reuses the `.pr-search` markup of the comparison toolbar; its label and
   placeholder read the new key `pricing.searchAddOns`: `en` `Search add-ons`, `es`
   `Buscar complementos`.
@@ -96,8 +97,8 @@ toolbar with a search input and a counter above the add-on grid.
   cards rendered and `total` = the number of all add-ons of the pricing.
 - The search matches the add-on name and description, case-insensitive, after trimming the search
   text.
-- The add-on toolbar is not sticky: a new rule scoped to `.pr-addon-toolbar` overrides the sticky
-  position of `.pr-comparison-toolbar`.
+- The add-on toolbar is not sticky and has its own full styling: a rule scoped to
+  `.pr-addon-toolbar` sets its layout, border, background and `position: static`.
 
 Scenario: Given the Okta fixture (18 add-ons) and default options, When it renders, Then
 `data-pr-part="addon-toolbar"` is inside `.pr-addon-main`, the input placeholder is
