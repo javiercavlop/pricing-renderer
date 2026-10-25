@@ -55,8 +55,8 @@ r.theme = 'light'; // or 'dark'
 ```
 
 Widths: use the responsive mode of the browser or resize the window. The table layout is
-used at 1440 px wide (the tests use 1440x900; the switch to the compact layout is at
-768 px).
+used at 1440 px wide (the tests use 1440x900; the switch to the compact layout happens at
+a renderer width below 840 px, measured on the renderer element, not the window).
 
 ## UI steps
 
@@ -74,10 +74,11 @@ of the counter:
 r.querySelectorAll('[data-pr-part="comparison-row"]').length; // 30, same as the counter
 ```
 
-Uncheck the checkbox: the counter changes (more rows are available) and the number of
-rows still equals the first number of the counter. Check it again: the counter returns to
-its previous value. Open another group to see the counter follow the rows of the expanded
-groups only (collapsed groups are not counted).
+Uncheck the checkbox: the counter stays at `30 of 174 items` and the rows are the same,
+because only the first group is expanded, each group is capped at 30 rows and its first 30
+rows differ anyway. To see the counter change, press "Expand all" (or open a second group)
+and then toggle the checkbox: the counter and the rows change, and the number of rows still
+equals the first number of the counter. Collapsed groups are not counted.
 
 Planned capture: none (no images in this guide).
 
@@ -117,8 +118,10 @@ r.setAttribute('toolbar-threshold', '200'); // the toolbar disappears (174 rows 
 r.setAttribute('toolbar-threshold', '10'); // the toolbar is back
 ```
 
-Each change drops any choice you made by clicking the checkbox, and the new value
-applies. Then reload the demo (acme pricing, 5 rows, no toolbar) and run:
+A change to the `only-differences` attribute or property (and a reload) drops any choice
+you made by clicking the checkbox, and the new value applies. Changing `toolbar-threshold`
+does not drop it: while the toolbar is hidden, the stored search text and checkbox choice
+are ignored, and they apply again when the toolbar comes back. Then reload the demo (acme pricing, 5 rows, no toolbar) and run:
 
 ```js
 r.setAttribute('toolbar-threshold', '-5'); // still no toolbar: falls back to 40
@@ -161,8 +164,8 @@ pnpm exec vitest run tests/unit/shorter-page.test.ts tests/unit/shorter-page-fix
 pnpm exec playwright test tests/browser/spectra-shorter-page.spec.ts
 ```
 
-Expect all of them to pass. The browser spec runs in chromium only and has a 60 s timeout
-per test. In CI (head `2d2d3bf28e4c6dfbea79a84039ecf997118564aa`) the whole browser spec
+Expect all of them to pass. The browser spec runs in chromium only and most tests set a
+60 s timeout. In CI (head `2d2d3bf28e4c6dfbea79a84039ecf997118564aa`) the whole browser spec
 passed and logged these lines (screens = renderer height / 900 at 1440x900):
 
 | Pricing    | Default screens | Forced off screens | Counter           |
@@ -202,8 +205,8 @@ Any value other than `false` (including the empty value) means `true`. A click o
 checkbox overrides the value until the pricing is reloaded or the attribute or property
 changes.
 
-Negative case: `only-differences="false"` on ClickUp keeps all rows (the page is not
-filtered), and `only-differences="x"` is read as `true`, not as an error.
+Negative case: `only-differences="false"` on ClickUp hides no row through
+the differences filter (the 30-row cap and collapsed groups still apply), and `only-differences="x"` is read as `true`, not as an error.
 
 ### `toolbar-threshold` (property `toolbarThreshold: number`, default 40)
 
