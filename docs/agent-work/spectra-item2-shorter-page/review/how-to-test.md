@@ -65,20 +65,30 @@ All UI steps are manual.
 ### 1. ClickUp: checked by default, counter equals the rows
 
 Load the ClickUp pricing (174 comparison rows), locale `en`, window 1440 px wide, table
-layout. Do not set any attribute. Open the comparison section. Expect the toolbar above
-the comparison with the "Only differences" checkbox **checked** and the counter text
-`30 of 174 items`. In the console, the number of rendered rows must equal the first number
-of the counter:
+layout. Do not set any attribute. Open the comparison section.
+
+a. Default state. Expect the toolbar above the comparison with the "Only differences"
+checkbox **checked** and the counter text `30 of 174 items`. In the console, the number of
+rendered rows must equal the first number of the counter:
 
 ```js
 r.querySelectorAll('[data-pr-part="comparison-row"]').length; // 30, same as the counter
 ```
 
-Uncheck the checkbox: the counter stays at `30 of 174 items` and the rows are the same,
-because only the first group is expanded, each group is capped at 30 rows and its first 30
-rows differ anyway. To see the counter change, press "Expand all" (or open a second group)
-and then toggle the checkbox: the counter and the rows change, and the number of rows still
-equals the first number of the counter. Collapsed groups are not counted.
+b. Uncheck the checkbox. The counter **stays** at `30 of 174 items`: only the first group
+is expanded, every group is capped at 30 rows, and the first group still has more than 30
+rows after the filter. The **rows change**: rows with the same value on every plan (for
+example Tasks) are hidden when the box is checked and shown when it is unchecked.
+
+c. Press "Expand all". The counter does not change with the box either: it reads
+`60 of 174 items` with the box checked and with it unchecked (both groups are expanded,
+each capped at 30 rows). Only the rows differ.
+
+d. To see the counter change: with the box unchecked, press `Show 106 more` under the first
+group. The counter reads `136 of 174 items`. Then check the box: the counter reads
+`73 of 174 items`.
+
+In every case the number of rendered rows equals the first number of the counter.
 
 Planned capture: none (no images in this guide).
 
