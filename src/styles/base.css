@@ -827,6 +827,19 @@
     color: var(--pr-color-muted);
   }
 
+  pricing-renderer[data-pr-root] .pr-value--addon {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--pr-color-accent) 45%, var(--pr-color-border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pr-color-accent) 11%, var(--pr-color-surface-raised));
+    color: var(--pr-color-link);
+    font-size: var(--pr-font-size-xs);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
   pricing-renderer[data-pr-root] .pr-value--code {
     white-space: pre-wrap;
   }

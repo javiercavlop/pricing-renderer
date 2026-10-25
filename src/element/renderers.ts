@@ -22,6 +22,7 @@ import {
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
+import { isAddOnOnlyRow } from '../core/view-model.js';
 import { formatUnit } from '../core/units.js';
 import type { PendingAddOnChange } from './events.js';
 
@@ -112,7 +113,12 @@ function renderPrice(
   `;
 }
 
-function renderValue(viewModel: PricingViewModel, value: unknown, unit?: string): TemplateResult {
+function renderValue(
+  viewModel: PricingViewModel,
+  value: unknown,
+  unit?: string,
+  addOnOnly = false,
+): TemplateResult {
   if (value === true) {
     return html`<span class="pr-value pr-value--included"
       ><span aria-hidden="true">✓</span
@@ -120,6 +126,12 @@ function renderValue(viewModel: PricingViewModel, value: unknown, unit?: string)
     >`;
   }
   if (value === false || value === null || value === undefined) {
+    if (addOnOnly) {
+      return html`<span class="pr-value pr-value--addon"
+        ><span aria-hidden="true">${t(viewModel, 'pricing.addOnOnly')}</span
+        ><span class="pr-sr-only">${t(viewModel, 'pricing.addOnOnlySr')}</span></span
+      >`;
+    }
     return html`<span class="pr-value pr-value--excluded"
       ><span aria-hidden="true">—</span
       ><span class="pr-sr-only">${t(viewModel, 'pricing.notIncluded')}</span></span
@@ -619,8 +631,9 @@ function renderCompactComparison(
           ${
             expanded
               ? html`<div id="pr-group-${group.id}">
-                  ${rows.map(
-                    (row) => html`
+                  ${rows.map((row) => {
+                    const addOnOnly = isAddOnOnlyRow(viewModel, row);
+                    return html`
                       <article class="pr-feature-card" data-pr-part="comparison-row">
                         <div>
                           <h5>${row.name}</h5>
@@ -641,13 +654,13 @@ function renderCompactComparison(
                             );
                             return html`<div>
                               <dt>${plan?.name ?? cell.planId}</dt>
-                              <dd>${renderValue(viewModel, cell.value, row.unit)}</dd>
+                              <dd>${renderValue(viewModel, cell.value, row.unit, addOnOnly)}</dd>
                             </div>`;
                           })}
                         </dl>
                       </article>
-                    `,
-                  )}
+                    `;
+                  })}
                   ${
                     group.rows.length > rows.length
                       ? html`<button
@@ -711,8 +724,9 @@ function renderTableComparison(
               </tr>
               ${
                 expanded
-                  ? rows.map(
-                      (row) => html`
+                  ? rows.map((row) => {
+                      const addOnOnly = isAddOnOnlyRow(viewModel, row);
+                      return html`
                         <tr data-pr-part="comparison-row">
                           <th scope="row">
                             <span>${row.name}</span>
@@ -725,11 +739,13 @@ function renderTableComparison(
                           </th>
                           ${row.values.map(
                             (cell) =>
-                              html`<td>${renderValue(viewModel, cell.value, row.unit)}</td>`,
+                              html`<td>
+                                ${renderValue(viewModel, cell.value, row.unit, addOnOnly)}
+                              </td>`,
                           )}
                         </tr>
-                      `,
-                    )
+                      `;
+                    })
                   : nothing
               }
               ${
