@@ -20,10 +20,11 @@ mobile bottom bar sits next to a list the user has to scroll through to compare.
 ### `req~addon-grid-no-look-change~1`
 
 WHILE the pricing has 8 add-ons or fewer and the options are the defaults, the renderer SHALL render
-the add-on section with markup byte-identical to the output before this change.
+the add-on section with the same elements, attributes, classes and text as before this change
+(the serialized DOM is equivalent; Lit comment markers and whitespace-only text nodes may differ).
 
 - The demo pricing `tests/fixtures/acme-pricing.yml` (3 add-ons), used by every Playwright visual
-  baseline, renders byte-identical add-on markup: the grid's class is exactly `pr-addon-grid`, the
+  baseline, renders equivalent add-on markup (same elements, attributes and text): the grid's class is exactly `pr-addon-grid`, the
   cards have no `pr-addon-card--dense`, the effects summary reads `pricing.effects`, and there is no
   `pr-addon-main` wrapper, no add-on toolbar and no show-more button.
 - All new CSS lives in new rules under the new classes only (`pr-addon-grid--dense`,
@@ -31,7 +32,7 @@ the add-on section with markup byte-identical to the output before this change.
   `src/styles/base.css` is edited, so no screenshot baseline moves.
 
 Scenario: Given `tests/fixtures/acme-pricing.yml` and default options, When the add-on section
-renders, Then its markup is identical to the output before the change, has no
+renders, Then its markup is equivalent to the output before the change, has no
 `pr-addon-grid--dense` and no `data-pr-part="addon-toolbar"`.
 
 ### `req~addon-grid-dense-details~1`

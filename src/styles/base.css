@@ -1438,6 +1438,23 @@
     flex: 1 1 auto;
   }
 
+  /* Filter mode: the toolbar and the grid share the left column of the layout. */
+  pricing-renderer[data-pr-root] .pr-addon-layout > .pr-addon-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-4);
+    min-inline-size: 0;
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-main > .pr-button {
+    justify-self: start;
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-toolbar {
+    position: static;
+    margin-block-end: 0;
+  }
+
   pricing-renderer[data-pr-root] .pr-addon-effects .pr-addon-notes {
     display: grid;
     grid-template-columns: minmax(0, 1fr);

@@ -47,6 +47,8 @@ export interface RenderActions {
   confirmAddOnChange(): void;
   cancelAddOnChange(): void;
   toggleBreakdown(): void;
+  updateAddOnSearch?(value: string): void;
+  revealAddOns?(): void;
 }
 
 export interface RenderState {
@@ -61,6 +63,9 @@ export interface RenderState {
   variablesEnabled: boolean;
   expandedGroups: ReadonlySet<string>;
   revealedGroups: ReadonlySet<string>;
+  addOnSearch?: string;
+  addOnsRevealed?: boolean;
+  addOnFilterThreshold?: number;
   pendingAddOnChange?: PendingAddOnChange;
   breakdownOpen: boolean;
   breakdownId: string;
@@ -85,7 +90,7 @@ export function toolbarThresholdOf(value: unknown): number {
     : DEFAULT_TOOLBAR_THRESHOLD;
 }
 
-// [impl->req~addon-grid-dense-details~1] a missing, non-finite or negative value gives 13
+// [impl->req~addon-grid-threshold-attribute~1] a missing, non-finite or negative value gives 13
 export function addOnFilterThresholdOf(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
@@ -998,11 +1003,197 @@ function renderAddOnEffects(
   `;
 }
 
-export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
+function renderAddOnCard(
+  state: RenderState,
+  addOn: NormalizedAddOn,
+  dense: boolean,
+): TemplateResult {
   const { viewModel, selection, selectionEnabled, actions } = state;
+  const selected = selection.addOns[addOn.id]?.selected ?? false;
+  const addOnSelection = selection.addOns[addOn.id];
+  const quantity = addOnSelection
+    ? normalizeAddOnQuantity(viewModel.pricing, addOn.id, {
+        ...addOnSelection,
+        selected: true,
+      })
+    : (addOn.subscriptionConstraints?.minQuantity ?? 1);
+  const available = addOnAvailability(addOn, selection.planId);
+  const constraints = addOn.subscriptionConstraints;
+  return html`
+    <article
+      class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
+        selected ? 'is-selected' : ''
+      } ${available ? '' : 'is-unavailable'}${dense ? ' pr-addon-card--dense' : ''}"
+      data-pr-part="add-on-card"
+      data-add-on-id=${addOn.id}
+      data-selected=${String(selected)}
+      @click=${(event: MouseEvent) =>
+        selectionEnabled && available
+          ? selectFromCard(event, () => actions.toggleAddOn(addOn.id, !selected))
+          : undefined}
+    >
+      <div class="pr-addon-card__heading">
+        <div>
+          <h4>${addOn.name}</h4>
+          ${addOn.description ? html`<p>${addOn.description}</p>` : nothing}
+        </div>
+        ${
+          selectionEnabled
+            ? html`<label
+                class="pr-selection-control pr-addon-card__check"
+                data-pr-part="selection-control"
+              >
+                <input
+                  type="checkbox"
+                  .checked=${selected}
+                  ?disabled=${!available}
+                  aria-label=${t(viewModel, selected ? 'pricing.removeAddOn' : 'pricing.addAddOn', {
+                    addOn: addOn.name,
+                  })}
+                  aria-describedby="pr-addon-help-${addOn.id}"
+                  @change=${(event: Event) =>
+                    actions.toggleAddOn(
+                      addOn.id,
+                      (event.currentTarget as HTMLInputElement).checked,
+                    )}
+                />
+                <span class="pr-selection-control__icon" aria-hidden="true"></span>
+                <span class="pr-selection-control__label" aria-hidden="true"
+                  >${selected ? t(viewModel, 'pricing.added') : t(viewModel, 'pricing.add')}</span
+                >
+              </label>`
+            : nothing
+        }
+      </div>
+      <div class="pr-price pr-price--addon">
+        ${renderPrice(viewModel, viewModel.resolved.addOnPrices[addOn.id], addOn.unit)}
+      </div>
+      <div id="pr-addon-help-${addOn.id}" class="pr-addon-card__details">
+        ${
+          !available
+            ? html`<p class="pr-status">${t(viewModel, 'pricing.notAvailable')}</p>`
+            : nothing
+        }
+        ${dense ? nothing : renderAddOnNotes(viewModel, addOn)}
+      </div>
+      ${renderAddOnEffects(viewModel, addOn, dense)}
+      ${
+        selectionEnabled && selected && constraints
+          ? html`<div class="pr-stepper" data-pr-part="add-on-quantity">
+              <span>${t(viewModel, 'pricing.addOnQuantity', { addOn: addOn.name })}</span>
+              <div>
+                <button
+                  type="button"
+                  aria-label=${t(viewModel, 'pricing.decrease', { item: addOn.name })}
+                  @click=${() =>
+                    actions.updateAddOnQuantity(addOn.id, quantity - constraints.quantityStep)}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  aria-label=${t(viewModel, 'pricing.addOnQuantity', { addOn: addOn.name })}
+                  .value=${String(quantity)}
+                  min=${constraints.minQuantity}
+                  max=${maxQuantityOnGrid(constraints) ?? nothing}
+                  step=${constraints.quantityStep}
+                  @change=${(event: Event) =>
+                    actions.updateAddOnQuantity(
+                      addOn.id,
+                      Number((event.currentTarget as HTMLInputElement).value),
+                    )}
+                />
+                <button
+                  type="button"
+                  aria-label=${t(viewModel, 'pricing.increase', { item: addOn.name })}
+                  @click=${() =>
+                    actions.updateAddOnQuantity(addOn.id, quantity + constraints.quantityStep)}
+                >
+                  +
+                </button>
+              </div>
+            </div>`
+          : nothing
+      }
+    </article>
+  `;
+}
+
+function renderAddOnGrid(
+  state: RenderState,
+  addOns: readonly NormalizedAddOn[],
+  dense: boolean,
+): TemplateResult {
+  return html`<div class="pr-addon-grid${dense ? ' pr-addon-grid--dense' : ''}">
+    ${addOns.map((addOn) => renderAddOnCard(state, addOn, dense))}
+  </div>`;
+}
+
+// [impl->req~addon-grid-filter~1] [impl->req~addon-grid-cap~1]
+function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResult {
+  const { viewModel, selection, actions } = state;
+  const all = viewModel.addOns;
+  const search = (state.addOnSearch ?? '').trim().toLowerCase();
+  const isSelected = (addOn: NormalizedAddOn): boolean =>
+    selection.addOns[addOn.id]?.selected ?? false;
+  let visible: NormalizedAddOn[];
+  if (search) {
+    visible = all.filter(
+      (addOn) =>
+        isSelected(addOn) ||
+        addOn.name.toLowerCase().includes(search) ||
+        (addOn.description ?? '').toLowerCase().includes(search),
+    );
+  } else if (state.addOnsRevealed) {
+    visible = [...all];
+  } else {
+    visible = all.filter((addOn, index) => index < ADDON_VISIBLE_CAP || isSelected(addOn));
+  }
+  const hidden = all.length - visible.length;
+  const label = t(viewModel, 'pricing.searchAddOns');
+  const counter = t(viewModel, 'pricing.rowsShownOf', { shown: visible.length, total: all.length });
+  return html`<div class="pr-addon-main">
+    <div class="pr-comparison-toolbar pr-addon-toolbar" data-pr-part="addon-toolbar">
+      <label class="pr-search">
+        <span class="pr-sr-only">${label}</span>
+        <input
+          type="search"
+          placeholder=${label}
+          .value=${state.addOnSearch ?? ''}
+          @input=${(event: Event) =>
+            actions.updateAddOnSearch?.((event.currentTarget as HTMLInputElement).value)}
+        />
+      </label>
+      <span aria-live="polite">${counter}</span>
+    </div>
+    ${
+      visible.length === 0
+        ? html`<p class="pr-empty" role="status" data-pr-part="addon-empty">
+            ${t(viewModel, 'pricing.noMatches')}
+          </p>`
+        : renderAddOnGrid(state, visible, dense)
+    }
+    ${
+      !search && hidden > 0
+        ? html`<button
+            class="pr-button pr-button--quiet"
+            type="button"
+            @click=${() => actions.revealAddOns?.()}
+          >
+            ${t(viewModel, 'pricing.showRemaining', { count: hidden })}
+          </button>`
+        : nothing
+    }
+  </div>`;
+}
+
+export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
+  const { viewModel } = state;
   if (viewModel.addOns.length === 0) return nothing;
   // [impl->req~addon-grid-dense-details~1]
   const dense = viewModel.addOns.length > ADDON_DENSE_THRESHOLD;
+  // [impl->req~addon-grid-filter~1] [impl->req~addon-grid-threshold-attribute~1]
+  const filtered = viewModel.addOns.length > addOnFilterThresholdOf(state.addOnFilterThreshold);
   return html`
     <section class="pr-section" aria-labelledby="pr-addons-title" data-pr-part="add-ons">
       <div class="pr-section__heading">
@@ -1012,130 +1203,11 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
         </div>
       </div>
       <div class="pr-addon-layout">
-        <div class="pr-addon-grid${dense ? ' pr-addon-grid--dense' : ''}">
-          ${viewModel.addOns.map((addOn) => {
-            const selected = selection.addOns[addOn.id]?.selected ?? false;
-            const addOnSelection = selection.addOns[addOn.id];
-            const quantity = addOnSelection
-              ? normalizeAddOnQuantity(viewModel.pricing, addOn.id, {
-                  ...addOnSelection,
-                  selected: true,
-                })
-              : (addOn.subscriptionConstraints?.minQuantity ?? 1);
-            const available = addOnAvailability(addOn, selection.planId);
-            const constraints = addOn.subscriptionConstraints;
-            return html`
-              <article
-                class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
-                  selected ? 'is-selected' : ''
-                } ${available ? '' : 'is-unavailable'}${dense ? ' pr-addon-card--dense' : ''}"
-                data-pr-part="add-on-card"
-                data-add-on-id=${addOn.id}
-                data-selected=${String(selected)}
-                @click=${(event: MouseEvent) =>
-                  selectionEnabled && available
-                    ? selectFromCard(event, () => actions.toggleAddOn(addOn.id, !selected))
-                    : undefined}
-              >
-                <div class="pr-addon-card__heading">
-                  <div>
-                    <h4>${addOn.name}</h4>
-                    ${addOn.description ? html`<p>${addOn.description}</p>` : nothing}
-                  </div>
-                  ${
-                    selectionEnabled
-                      ? html`<label
-                          class="pr-selection-control pr-addon-card__check"
-                          data-pr-part="selection-control"
-                        >
-                          <input
-                            type="checkbox"
-                            .checked=${selected}
-                            ?disabled=${!available}
-                            aria-label=${t(
-                              viewModel,
-                              selected ? 'pricing.removeAddOn' : 'pricing.addAddOn',
-                              { addOn: addOn.name },
-                            )}
-                            aria-describedby="pr-addon-help-${addOn.id}"
-                            @change=${(event: Event) =>
-                              actions.toggleAddOn(
-                                addOn.id,
-                                (event.currentTarget as HTMLInputElement).checked,
-                              )}
-                          />
-                          <span class="pr-selection-control__icon" aria-hidden="true"></span>
-                          <span class="pr-selection-control__label" aria-hidden="true"
-                            >${
-                              selected ? t(viewModel, 'pricing.added') : t(viewModel, 'pricing.add')
-                            }</span
-                          >
-                        </label>`
-                      : nothing
-                  }
-                </div>
-                <div class="pr-price pr-price--addon">
-                  ${renderPrice(viewModel, viewModel.resolved.addOnPrices[addOn.id], addOn.unit)}
-                </div>
-                <div id="pr-addon-help-${addOn.id}" class="pr-addon-card__details">
-                  ${
-                    !available
-                      ? html`<p class="pr-status">${t(viewModel, 'pricing.notAvailable')}</p>`
-                      : nothing
-                  }
-                  ${dense ? nothing : renderAddOnNotes(viewModel, addOn)}
-                </div>
-                ${renderAddOnEffects(viewModel, addOn, dense)}
-                ${
-                  selectionEnabled && selected && constraints
-                    ? html`<div class="pr-stepper" data-pr-part="add-on-quantity">
-                        <span>${t(viewModel, 'pricing.addOnQuantity', { addOn: addOn.name })}</span>
-                        <div>
-                          <button
-                            type="button"
-                            aria-label=${t(viewModel, 'pricing.decrease', { item: addOn.name })}
-                            @click=${() =>
-                              actions.updateAddOnQuantity(
-                                addOn.id,
-                                quantity - constraints.quantityStep,
-                              )}
-                          >
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            aria-label=${t(viewModel, 'pricing.addOnQuantity', {
-                              addOn: addOn.name,
-                            })}
-                            .value=${String(quantity)}
-                            min=${constraints.minQuantity}
-                            max=${maxQuantityOnGrid(constraints) ?? nothing}
-                            step=${constraints.quantityStep}
-                            @change=${(event: Event) =>
-                              actions.updateAddOnQuantity(
-                                addOn.id,
-                                Number((event.currentTarget as HTMLInputElement).value),
-                              )}
-                          />
-                          <button
-                            type="button"
-                            aria-label=${t(viewModel, 'pricing.increase', { item: addOn.name })}
-                            @click=${() =>
-                              actions.updateAddOnQuantity(
-                                addOn.id,
-                                quantity + constraints.quantityStep,
-                              )}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>`
-                    : nothing
-                }
-              </article>
-            `;
-          })}
-        </div>
+        ${
+          filtered
+            ? renderFilteredAddOns(state, dense)
+            : renderAddOnGrid(state, viewModel.addOns, dense)
+        }
         ${renderSummary(state)}
       </div>
     </section>

@@ -96,7 +96,8 @@ describe('pricing without plans', () => {
 
   it('keeps the add-ons available', async () => {
     const viewModel = await load('../fixtures/spectra/okta/2024.yml');
-    const text = flatten(renderAddOns(stateFor(viewModel)));
+    // the filter mode caps the cards at 8; a high threshold keeps one card per add-on
+    const text = flatten(renderAddOns({ ...stateFor(viewModel), addOnFilterThreshold: 99 }));
     expect(text).toContain('add-on-card');
     expect(text.match(/data-pr-part="add-on-card"/g)).toHaveLength(viewModel.addOns.length);
   });
