@@ -385,14 +385,17 @@ no longer rendered.
 
 `add-on-filter-threshold` (property `addOnFilterThreshold`, default 13) sets
 when the add-on grid switches to filter mode: it applies when the pricing has
-more add-ons than the threshold, so 14 add-ons or more by default. Invalid or
-negative values fall back to 13.
+more add-ons than the threshold, so 14 add-ons or more by default. An empty
+attribute value counts as 0, so every pricing with add-ons is in filter mode.
+Other invalid or negative values fall back to 13.
 
 In filter mode the grid gets a toolbar with a search input and a counter. The
+toolbar exposes the stable part hook `addon-toolbar`. The
 search matches the add-on name and description, case-insensitive. Only the
 first 8 add-ons are shown initially, followed by a button that reveals the
 rest. Selected add-ons are never hidden: they are rendered even beyond the
-first 8.
+first 8. When no add-on matches the search, the grid shows an empty state that
+exposes the stable part hook `addon-empty`.
 
 When a pricing has more than 8 add-ons the cards are compact: the secondary
 details sit inside a disclosure instead of the card body. This applies with or
