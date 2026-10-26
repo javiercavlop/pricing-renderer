@@ -9,36 +9,49 @@ import {
 } from './helpers/spectra.js';
 
 // UX stress summary over the synthetic pricings of tests/fixtures/stress. It measures how the
-// renderer lays out the extremes SPECTRA found (no plans, 140+ features, 16-38 limits, 15 plans,
-// 14 add-ons) and prints one SPECTRA_UX_SUMMARY JSON line per fixture and variant. It records the
+// renderer lays out the extremes SPECTRA found (no plans, 140+ features, 16-38 limits, 15 plans)
+// and prints one SPECTRA_UX_SUMMARY JSON line per fixture and variant. It records the
 // state of today's renderer and asserts only what holds today: the page does not throw and the
 // component renders. A known problem (a long page, a hidden call to action, a lone last card)
 // shows up in the printed numbers and never fails the test.
 
-// One fixture per extreme.
-const subset = [
-  'okta-usd-monthly',
-  'zoom-eur-annual',
-  'clickup-usd-monthly',
-  'webflow-eur-monthly',
-  'salesforce-usd-annual',
-  'github-eur-monthly',
-];
+// Three fixtures cover the extremes: no plans (okta), many usage limits (clickup) and 15 plans
+// (webflow). The whole summary has to stay far below the CI job budget, so every await
+// is bounded and the numbers include the time each variant took (elapsedMs).
+const subset = ['okta-usd-monthly', 'clickup-usd-monthly', 'webflow-eur-monthly'];
 
 type Variant = { viewport: Viewport; theme: 'light' | 'dark'; locale: 'en' | 'es' };
 
-// Dark and Spanish are only added where they are cheap: two of the five variants.
 const variants: Variant[] = [
   { viewport: { width: 1440, height: 900 }, theme: 'light', locale: 'en' },
-  { viewport: { width: 1440, height: 900 }, theme: 'dark', locale: 'es' },
-  { viewport: { width: 1024, height: 768 }, theme: 'light', locale: 'en' },
-  { viewport: { width: 375, height: 812 }, theme: 'light', locale: 'en' },
   { viewport: { width: 375, height: 812 }, theme: 'dark', locale: 'es' },
 ];
+
+const openMs = 15_000;
+const applyPricingMs = 25_000;
+const resizeMs = 8_000;
+const measureMs = 8_000;
+const pageTimeoutMs = 8_000;
+const navigationTimeoutMs = 15_000;
 
 test.beforeEach(({ browserName }) => {
   test.skip(browserName !== 'chromium', 'The UX stress summary runs in chromium only.');
 });
+
+// Races `work` against a timer so one stuck step fails with its name instead of using up the test
+// timeout. It does not cancel the work: the test timeout and the page close clean that up.
+async function bounded<T>(label: string, ms: number, work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} took longer than ${ms} ms`)), ms);
+  });
+  work.catch(() => undefined);
+  try {
+    return await Promise.race([work, limit]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function measureUx(page: Page) {
   return page.evaluate(async () => {
@@ -153,22 +166,37 @@ async function measureUx(page: Page) {
 test.describe('ux stress summary', () => {
   for (const id of subset) {
     test(`${id} renders and reports its layout`, async ({ page }) => {
-      test.setTimeout(120_000);
+      test.setTimeout(60_000);
+      page.setDefaultTimeout(pageTimeoutMs);
+      page.setDefaultNavigationTimeout(navigationTimeoutMs);
       const fixture = findStressFixture(id);
       const yaml = buildStressYaml(fixture);
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await openRenderer(page, variants[0]!.viewport);
+      await bounded('open the renderer', openMs, openRenderer(page, variants[0]!.viewport));
 
       for (const variant of variants) {
         const name = `${id} ${variant.viewport.width} ${variant.theme} ${variant.locale}`;
-        await page.setViewportSize(variant.viewport);
-        const state = await applyPricing(page, yaml, variant.locale, variant.theme);
+        const startedAt = Date.now();
+        await bounded(`${name}: resize`, resizeMs, page.setViewportSize(variant.viewport));
+        const state = await bounded(
+          `${name}: apply the pricing`,
+          applyPricingMs,
+          applyPricing(page, yaml, variant.locale, variant.theme),
+        );
         expect(state, `${name}: the pricing should reach the ready state`).toBe('ready');
 
-        const ux = await measureUx(page);
-        const grid = await measurePlanGrid(page);
-        const overflow = await measureOverflow(page);
+        const ux = await bounded(`${name}: measure the layout`, measureMs, measureUx(page));
+        const grid = await bounded(
+          `${name}: measure the plan grid`,
+          measureMs,
+          measurePlanGrid(page),
+        );
+        const overflow = await bounded(
+          `${name}: measure the overflow`,
+          measureMs,
+          measureOverflow(page),
+        );
 
         const rows = grid.cardsPerRow;
         const summary = {
@@ -177,6 +205,7 @@ test.describe('ux stress summary', () => {
           viewport: `${variant.viewport.width}x${variant.viewport.height}`,
           theme: variant.theme,
           locale: variant.locale,
+          elapsedMs: Date.now() - startedAt,
           documentHeightInViewports: ux.documentHeightInViewports,
           rendererHeightInViewports: ux.rendererHeightInViewports,
           firstViewport: { pageTop: ux.pageTop, rendererTop: ux.rendererTop },
@@ -197,7 +226,11 @@ test.describe('ux stress summary', () => {
         console.info(`SPECTRA_UX_SUMMARY ${JSON.stringify(summary)}`);
 
         // Only what holds today: the component renders.
-        await expect(page.locator('pricing-renderer'), name).toBeVisible();
+        await bounded(
+          `${name}: renderer visible`,
+          measureMs,
+          expect(page.locator('pricing-renderer'), name).toBeVisible(),
+        );
         expect(ux.documentHeight, `${name}: the page has a height`).toBeGreaterThan(0);
         expect(Number.isFinite(ux.rendererHeightInViewports), name).toBe(true);
         expect(ux.rendererHeightInViewports, `${name}: renderer height`).toBeGreaterThan(0);

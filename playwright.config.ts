@@ -17,10 +17,13 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
+  // On CI a run that goes wrong stops early instead of using the whole job budget.
+  globalTimeout: process.env.CI ? 30 * 60_000 : 0,
+  maxFailures: process.env.CI ? 20 : 0,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['github']] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
-    trace: 'retain-on-failure',
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   webServer: {

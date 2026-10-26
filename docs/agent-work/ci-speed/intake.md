@@ -249,6 +249,7 @@ reporter switch. S3 and S4 come after S2.
     - `LICENSE`, `.github/dependabot.yml`
 
     On `push` it is always `true`. No third-party action is used.
+
   - `browser-shards` matrix, with `PW_BLOB=1`, `if: needs.changes.outputs.rendered == 'true'`:
     - shard `chromium 1/2`: `--project=chromium --shard=1/2`, installs chromium only
     - shard `chromium 2/2`: `--project=chromium --shard=2/2`, installs chromium only
@@ -256,6 +257,7 @@ reporter switch. S3 and S4 come after S2.
 
     Each shard uploads `blob-report/`. Do not cache browsers (L3: the docs advise against it, and
     install takes 0.7 min).
+
   - A `merge-report` job (`if: always()` after the shards) runs
     `pnpm exec playwright merge-reports --reporter html ./all-blob-reports` (L3) and uploads
     `playwright-report/`.
@@ -325,6 +327,7 @@ reporter switch. S3 and S4 come after S2.
   - Caching browser binaries is not recommended.
 
   Sources: playwright.dev test-sharding, class-testconfig, trace-viewer and ci.
+
 - L4: browser and image sizes. Low confidence, estimates. Sources:
   - playwright.dev/docs/browsers
   - the playwright-core `browsers.json` on GitHub
