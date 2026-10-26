@@ -176,9 +176,31 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
+        timeout-minutes: 10
         env:
           INSTALL: ${{ matrix.install }}
-        run: pnpm exec playwright install --with-deps ${INSTALL}
+          ATTEMPTS: '2'
+          ATTEMPT_TIMEOUT: '4m'
+        run: |
+          printf '%s\n' \
+            'Acquire::Retries "3";' \
+            'Acquire::http::Timeout "20";' \
+            'Acquire::https::Timeout "20";' \
+            'DPkg::Lock::Timeout "60";' \
+            | sudo tee /etc/apt/apt.conf.d/99ci-resilience > /dev/null
+          attempt=1
+          while true; do
+            if timeout --kill-after=15s "${ATTEMPT_TIMEOUT}" pnpm exec playwright install --with-deps ${INSTALL}; then
+              exit 0
+            fi
+            echo "::warning::Browser install attempt ${attempt}/${ATTEMPTS} failed or timed out after ${ATTEMPT_TIMEOUT}"
+            if [ "${attempt}" -ge "${ATTEMPTS}" ]; then
+              echo "::error::Browser install failed after ${ATTEMPTS} attempts"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            sleep 10
+          done
       - name: Run browser tests
         env:
           ARGS: ${{ matrix.args }}
