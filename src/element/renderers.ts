@@ -44,7 +44,7 @@ export interface RenderActions {
   updateOnlyDifferences(value: boolean): void;
   toggleGroup(groupId: string): void;
   setAllGroups(expanded: boolean): void;
-  revealGroup(groupId: string): void;
+  revealGroup(groupId: string, origin?: HTMLElement): void;
   confirmAddOnChange(): void;
   cancelAddOnChange(): void;
   toggleBreakdown(): void;
@@ -734,7 +734,8 @@ function renderCompactComparison(
                       ? html`<button
                           class="pr-button pr-button--quiet"
                           type="button"
-                          @click=${() => actions.revealGroup(group.id)}
+                          @click=${(event: MouseEvent) =>
+                            actions.revealGroup(group.id, event.currentTarget as HTMLElement)}
                         >
                           ${t(viewModel, 'pricing.showRemaining', {
                             count: group.rows.length - rows.length,
@@ -823,7 +824,8 @@ function renderTableComparison(
                         <button
                           class="pr-button pr-button--quiet"
                           type="button"
-                          @click=${() => actions.revealGroup(group.id)}
+                          @click=${(event: MouseEvent) =>
+                            actions.revealGroup(group.id, event.currentTarget as HTMLElement)}
                         >
                           ${t(viewModel, 'pricing.showRemaining', {
                             count: group.rows.length - rows.length,
