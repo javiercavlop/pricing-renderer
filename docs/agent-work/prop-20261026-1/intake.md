@@ -45,7 +45,7 @@ see whether items 8 and 10 worked.
 - `spectra metrics` runs every fixture at 1440x900, 1024x768 and 375x812, in light and `en`. Each
   test prints one `SPECTRA_SUMMARY` line and one `SPECTRA_METRICS` JSON line
   (`spectra-review.spec.ts:30-34,407-414,463-487`). The summary fields are `screens=`, `cards=<n>/<per
-  row>`, `fv=<cards>/<price>/<cta>`, `trunc=` and `breaks=` (`spectra-review.spec.ts:388-404`). It
+row>`, `fv=<cards>/<price>/<cta>`, `trunc=` and `breaks=` (`spectra-review.spec.ts:388-404`). It
   runs in chromium only (`:49-51`).
 - `fv` is read after the renderer is scrolled to the top of the viewport
   (`spectra-review.spec.ts:247-250`). That is the definition used in the report (`report.md:451-454`).

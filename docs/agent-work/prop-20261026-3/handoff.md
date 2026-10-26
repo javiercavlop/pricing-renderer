@@ -27,7 +27,7 @@ add-on grid (P-20261026-3, INTENT O2, `INTENT.md:44`).
   disjoint.
 - Focus the row or card itself, with `tabindex="-1"` set only on the target by the handler. Reason:
   rows have no control, and cards have one only with selection enabled (`renderers.ts:798-814,
-  1041-1066`). Rendered markup stays the same for the unit regex tests.
+1041-1066`). Rendered markup stays the same for the unit regex tests.
 - Pass the clicked button to the internal `revealGroup` as an optional second argument. Reason: the
   table `<tbody>` has no id (`renderers.ts:780`). `RenderActions` is not exported, so this is not
   public API.

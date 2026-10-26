@@ -149,14 +149,14 @@ One change, one PR into develop. S1 and S2 are tasks of that PR and are not merg
   the test is the same in WebKit. Run in all three projects (no chromium-only skip), because focus
   behaviour differs per engine. Tag
   `[utest->req~reveal-focus-comparison~1] [utest->req~reveal-focus-addons~1]
-  [utest->req~reveal-focus-visible~1]` (final ids from the coordinator).
+[utest->req~reveal-focus-visible~1]` (final ids from the coordinator).
 - Size: about 120-170 lines. Risk: **low** (score 0: tests only -2, floor 0).
 - Checks:
   - `["pnpm", "install", "--frozen-lockfile"]`
   - red-before (G3), timeout 900: `{"argv": ["pnpm", "exec", "playwright", "test",
-    "tests/browser/reveal-focus.spec.ts", "--reporter=line"], "type": "red_before",
-    "expect_exit": [1], "expect_pattern": "toBeFocused|toBe\\(|toEqual\\(", "overlay":
-    ["tests/browser/reveal-focus.spec.ts"]}`. On the base, the focused element is `<body>`, so the
+"tests/browser/reveal-focus.spec.ts", "--reporter=line"], "type": "red_before",
+"expect_exit": [1], "expect_pattern": "toBeFocused|toBe\\(|toEqual\\(", "overlay":
+["tests/browser/reveal-focus.spec.ts"]}`. On the base, the focused element is `<body>`, so the
     test fails by assertion. The pattern must match the assertion the test-designer actually uses.
   - `["pnpm", "exec", "eslint", "tests/browser/reveal-focus.spec.ts"]`
   - `["pnpm", "exec", "prettier", "--check", "tests/browser/reveal-focus.spec.ts"]`
@@ -188,7 +188,7 @@ One change, one PR into develop. S1 and S2 are tasks of that PR and are not merg
   - `["pnpm", "exec", "playwright", "test", "tests/browser/reveal-focus.spec.ts", "--reporter=line"]`
     (timeout 900; must now pass in chromium, firefox and webkit)
   - `["pnpm", "exec", "playwright", "test", "tests/browser/spectra-addon-grid.spec.ts",
-    "tests/browser/spectra-addon-marker.spec.ts", "--project=chromium", "--reporter=line"]`
+"tests/browser/spectra-addon-marker.spec.ts", "--project=chromium", "--reporter=line"]`
     (timeout 1200; regression for the two specs that click these buttons)
   - `["pnpm", "format:check"]`
 - Depends on: S1 integrated (its test is the acceptance).
