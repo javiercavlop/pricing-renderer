@@ -21,6 +21,13 @@ Re-measure the four SPECTRA O1 signals on develop and record old vs new values. 
   per row at 1440, 1200 and 1024. `spectra-text.spec.ts:81-86` gates truncation, and awkward breaks
   for 6 pricings. These assertions passed on PR #51.
 
+- S1 done, partial coverage: `docs/agent-work/visual-review-spectra/o1-remeasure.md` written. The
+  develop head `5b75ae6` `browsers` job (121524468410) was in progress and its log returned 404, so the
+  values come from PR 53's `browsers` job (121511930049, head 57a25c2). The 1500-line tail holds
+  `SPECTRA_SUMMARY` for 5 pricings only: 14 of 111 light `en` pairs measured, 32 pricings not measured.
+  `xscreens=` is `-` on every line. Tree equality of 5b75ae6 and 57a25c2 was not verified.
+- S2 not started (waits for Q1).
+
 ## Decisions
 
 - Two slices: S1 is the results file `docs/agent-work/visual-review-spectra/o1-remeasure.md`, S2 is
