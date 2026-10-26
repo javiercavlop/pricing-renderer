@@ -40,7 +40,7 @@ The step in `jobs.browser-shards` of `.github/workflows/ci.yml`:
 6. Mirror fallback, from attempt 2 on, before the install: writes
    `http://archive.ubuntu.com/ubuntu/` to `/etc/apt/apt-mirrors.txt` (the runner's sources use
    `mirror+file:/etc/apt/apt-mirrors.txt`, seen in the log as `Get:1 file:/etc/apt/apt-mirrors.txt
-   Mirrorlist`) and logs a `::notice::`. This is best effort: it cannot be verified outside CI.
+Mirrorlist`) and logs a `::notice::`. This is best effort: it cannot be verified outside CI.
 
 Values and why:
 
