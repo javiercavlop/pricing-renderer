@@ -89,24 +89,14 @@ test.describe('focus after Show N more', () => {
       page,
     }) => {
       await loadPricing(page, 'clickup', layout.viewport);
-      const expandAll = page.getByRole('button', { name: 'Expand all' });
-      if ((await expandAll.count()) > 0) await expandAll.click();
+      // clickup starts with only the differences, which leaves its first group (General, 136 rows)
+      // under the cap. With the filter off the group is expanded and shows 30 rows and "Show 106 more".
+      await page.getByRole('checkbox', { name: 'Only differences' }).uncheck();
 
-      const button = page
-        .locator(`${layout.group} button.pr-button--quiet`)
-        .filter({ hasText: showMore })
-        .first();
-      await expect(button).toBeVisible();
-      const index = await button.evaluate(
-        (element, selector) =>
-          [...document.querySelectorAll(selector)].indexOf(
-            element.closest(selector.split(' ').pop() ?? '') as Element,
-          ),
-        layout.group,
-      );
-      expect(index, 'the group of the button').toBeGreaterThanOrEqual(0);
-      const group = page.locator(layout.group).nth(index);
+      const group = page.locator(layout.group).first();
       await expect(group.locator(rowPart)).toHaveCount(rowCap);
+      const button = group.getByRole('button', { name: showMore });
+      await expect(button).toBeVisible();
 
       await activate(page, button);
       await expect(group.locator(rowPart)).not.toHaveCount(rowCap);
