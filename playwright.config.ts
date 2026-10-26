@@ -10,9 +10,13 @@ const ciReporter: ReporterDescription[] = isBlobRun
   ? [['blob'], ['github']]
   : [['html', { open: 'never' }], ['github']];
 const reporter = process.env.CI ? ciReporter : 'list';
+// The SPECTRA stress spec is on demand on CI: only the manual ux-stress job sets PW_UX_STRESS=1.
+const testIgnore =
+  process.env.CI && process.env.PW_UX_STRESS !== '1' ? '**/ux-stress.spec.ts' : undefined;
 
 export default defineConfig({
   testDir: './tests/browser',
+  testIgnore,
   snapshotPathTemplate: `{testDir}/{testFilePath}-snapshots/{arg}${visualSnapshotSuffix}{ext}`,
   timeout: 30_000,
   expect: {

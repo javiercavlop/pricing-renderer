@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - develop
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -265,3 +266,40 @@ jobs:
               exit 1
               ;;
           esac
+
+  # The SPECTRA stress spec (tests/browser/ux-stress.spec.ts), on demand only.
+  # playwright.config.ts ignores it on CI unless PW_UX_STRESS=1, so no shard
+  # runs it, and it is not a required check: `browsers` does not need this job.
+  # Trigger it from the Actions tab (CI > Run workflow) or with
+  # `gh workflow run ci.yml --ref <branch>`. A manual dispatch also runs the
+  # other jobs: `changes` emits rendered=true for any event that is not
+  # pull_request, so the shards and the gate run too.
+  ux-stress:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the ux-stress spec
+        env:
+          PW_UX_STRESS: '1'
+        run: pnpm exec playwright test --project=chromium tests/browser/ux-stress.spec.ts
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: ux-stress-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+          overwrite: true

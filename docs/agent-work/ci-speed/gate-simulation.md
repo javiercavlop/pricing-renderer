@@ -20,9 +20,17 @@ real `run:` scripts with bash. The tables below are its output, not predictions;
 - `browsers` always runs (`if: always()`). It is the required status check and keeps its old name,
   so branch protection does not change. It must not use `!cancelled()`: GitHub counts a skipped
   required check as passed, so the job must run and fail itself.
+- `ux-stress` runs only on a manual dispatch (`if: github.event_name == 'workflow_dispatch'`, no
+  `needs`). It runs `tests/browser/ux-stress.spec.ts` on chromium with `PW_UX_STRESS: '1'` and
+  uploads the `ux-stress-report` HTML artifact. It is not required, and `browsers` does not need
+  it. `playwright.config.ts` ignores that spec on CI unless `PW_UX_STRESS` is `1`, so no shard
+  runs it. See `ux-stress-on-demand.md`.
+
+The workflow also has `workflow_dispatch` in `on:`. On a manual dispatch every other job runs too:
+`changes` emits `rendered=true` because the event is not `pull_request`.
 
 No step puts a `${{ }}` expression inside a `run:` block. Every value reaches the scripts through
-`env:`. The checkout steps of `changes`, `browser-shards` and `merge-report` set
+`env:`. The checkout steps of `changes`, `browser-shards`, `merge-report` and `ux-stress` set
 `persist-credentials: false`.
 
 ## Gate rule
@@ -81,6 +89,32 @@ the broken assertion:
   `github.event.pull_request.head.sha`.
 - Every project named in the `projects` array of `playwright.config.ts` appears in the `args` of a
   `browser-shards` matrix entry.
+- `on` contains `workflow_dispatch`.
+- `jobs.ux-stress.if` is `github.event_name == 'workflow_dispatch'`, and `jobs.ux-stress` has no
+  `needs`.
+- `jobs.browsers.needs` does not include `ux-stress` (also implied by the exact `needs` check
+  above, stated on its own so the reason is visible in the output).
+- No `args` of a `browser-shards` matrix entry mentions `ux-stress`.
+- The `ux-stress` step whose `run:` holds `playwright test` sets env `PW_UX_STRESS: '1'`, and its
+  script names `tests/browser/ux-stress.spec.ts`.
+- The text of `playwright.config.ts` contains the pattern `'**/ux-stress.spec.ts'`, the condition
+  `process.env.PW_UX_STRESS !== '1'` and a `testIgnore,` line that passes it to `defineConfig`.
+  These match code, not the comment above `testIgnore`, which also names `PW_UX_STRESS`. They are
+  text checks: they do not evaluate the condition. Checks 3 and 4 of the task (`--list` with
+  `CI=1`, with and without `PW_UX_STRESS=1`) test the behaviour.
+
+Each of these assertions fails the script when its part of `ci.yml` or `playwright.config.ts` is
+removed: the script collects every failed assertion and exits 1. The mutations were not run by
+hand in a temporary copy: the task that added the `ux-stress` assertions could run only its
+registered checks, which execute the script against the repository files. Two mutations to try by
+hand in a copy under `$TMPDIR` (copy `.github/workflows/ci.yml`, `playwright.config.ts`,
+`package.json` and this directory with their relative paths, and add a symlink to the repository's
+`node_modules`, which provides the `yaml` package):
+
+- Delete `workflow_dispatch:` from `on:`. Expected: `WIRING FAILED: on contains workflow_dispatch`
+  and exit 1.
+- Delete `PW_UX_STRESS: '1'` from the `ux-stress` run step. Expected: a `WIRING FAILED:` line for
+  the assertion "the ux-stress playwright test step sets env PW_UX_STRESS '1'", and exit 1.
 
 The scripts then get their environment from the parsed `env:` maps: the simulation keys its test
 values by expression (for example `${{ needs.browser-shards.result }}`) and passes each one under
@@ -88,7 +122,8 @@ the env name the workflow maps it to. A renamed or swapped env entry therefore f
 
 ## Simulation output
 
-Run with `bash docs/agent-work/ci-speed/simulate-ci.sh` (registered check 2). The scripts run as
+Run with `bash docs/agent-work/ci-speed/simulate-ci.sh` (registered check 5 of the task that added
+the `ux-stress` job; check 2 in the earlier S2 task). The scripts run as
 `bash --noprofile --norc -eo pipefail`, which is how GitHub runs `shell: bash` steps, with a clean
 environment that holds only `PATH`, `HOME`, the `GIT_CONFIG_*` isolation variables, `GITHUB_OUTPUT`
 (change detection only) and the step's env. git ignores the caller's global and
@@ -100,14 +135,15 @@ holds `src/element/x.ts`, `src/x.ts`, `docs/a.md`, `tests/browser/a.spec.ts` and
 `examples/vanilla/index.html`, so the deletions and moves are real. The SHAs in the two `fatal:`
 rows come from that temporary repository and change on every run.
 
-The script prints Markdown tables. They are kept verbatim in a text block below. Check 2 shows
-only the last 30 lines of the output. Those lines, from the `Playwright config` row to the
-`SUMMARY` line, are copied from that run. The lines above them contain no SHA or timestamp and are
-the same on every run. They were reconstructed from that deterministic output, not copied from the
-check log.
+The script prints Markdown tables. They are kept verbatim in a text block below. Check 5 shows
+only the end of the output. The lines from the gate row `| cancelled | (empty) | skipped |` to the
+`SUMMARY` line are copied from that run. The lines above them contain no SHA or timestamp and are
+the same on every run: the wiring labels are fixed strings in the script, printed in the order of
+the assertions, and the check exited 0, which the script does only when every assertion holds.
+They were reconstructed from that deterministic output, not copied from the check log.
 
 ```text
-## Wiring of jobs.changes, jobs.browser-shards and jobs.browsers
+## Wiring of on, jobs.changes, jobs.browser-shards, jobs.browsers and jobs.ux-stress
 
 - ok: jobs.browsers.if is 'always()'
 - ok: jobs.browsers.needs is exactly [changes, browser-shards]
@@ -123,8 +159,18 @@ check log.
 - ok: no run: script of any job contains ${{
 - ok: playwright.config.ts declares at least one project
 - ok: every Playwright project (chromium, firefox, webkit) is in the args of a browser-shards matrix entry
+- ok: on contains workflow_dispatch
+- ok: jobs.ux-stress.if is github.event_name == 'workflow_dispatch'
+- ok: jobs.ux-stress has no needs
+- ok: jobs.browsers.needs does not include ux-stress
+- ok: no browser-shards matrix args mention ux-stress
+- ok: the ux-stress playwright test step sets env PW_UX_STRESS '1'
+- ok: the ux-stress playwright test step runs tests/browser/ux-stress.spec.ts
+- ok: playwright.config.ts has the pattern '**/ux-stress.spec.ts'
+- ok: playwright.config.ts tests process.env.PW_UX_STRESS !== '1'
+- ok: playwright.config.ts passes testIgnore to defineConfig
 
-WIRING: 14/14 assertions hold
+WIRING: 24/24 assertions hold
 
 ## Gate: jobs.browsers.steps[0].run
 
@@ -223,9 +269,9 @@ WIRING: 14/14 assertions hold
 | pull request into main, docs only | pull_request | main | docs/a.md | true | true | rendered=true: pull request into main |
 | empty diff | pull_request | develop | (none) | true | true | rendered=true: empty diff |
 | missing SHAs | pull_request | develop | (none) | true | true | rendered=true: base or head SHA missing |
-| unknown base SHA (git diff fails) | pull_request | develop | docs/a.md | true | true | fatal: Invalid symmetric difference expression 0000000000000000000000000000000000000000...e558850ae8fc1b4f179ed6395659da274e7035da rendered=true: git diff failed |
+| unknown base SHA (git diff fails) | pull_request | develop | docs/a.md | true | true | fatal: Invalid symmetric difference expression 0000000000000000000000000000000000000000...73432cdfd6344e46a3175d0d1bad6461979c090e rendered=true: git diff failed |
 | diverged: base advanced with src/element/y.ts, PR changes docs/a.md | pull_request | develop | docs/a.md | false | false | rendered=false: only docs, changesets, specs and unit tests changed |
-| unrelated roots (no merge base) | pull_request | develop | docs/a.md | true | true | fatal: b96dc1d1e4c551e9f738ea45e0a5ea0045a8d24e...babbeddc07c914cc68ec4a4ce2ede2a79bc63070: no merge base rendered=true: git diff failed |
+| unrelated roots (no merge base) | pull_request | develop | docs/a.md | true | true | fatal: d12f33f2516cd55fb8aafbe389ebe556342dcd20...37cc0599c1f819cead79308afbbbfc22af9994d9: no merge base rendered=true: git diff failed |
 
 SUMMARY: gate 48/48 cases as expected; change detection 43/43 scenarios as expected
 ```

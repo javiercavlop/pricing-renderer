@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs the real scripts of .github/workflows/ci.yml outside GitHub Actions:
-#   (w) asserts the job wiring around them (needs, if, outputs, env, shell, matrix);
+#   (w) asserts the job wiring around them (needs, if, outputs, env, shell, matrix)
+#       and that the on-demand ux-stress job stays out of the shards and the gate;
 #   (a) the `browsers` gate script for every combination of job results;
 #   (b) the `changes` detection script against a temporary git repository.
 # Exits non-zero on the first wrong outcome. Writes only under $TMPDIR.
@@ -122,7 +123,59 @@ assert(
   { missing, shardProjects: [...shardProjects] },
 );
 
-console.log('## Wiring of jobs.changes, jobs.browser-shards and jobs.browsers');
+// The SPECTRA stress spec runs only in the manual ux-stress job, never in a
+// shard, and the required gate does not depend on that job.
+const on = doc.on ?? {};
+const events = typeof on === 'string' ? [on] : Array.isArray(on) ? on : Object.keys(on);
+assert(events.includes('workflow_dispatch'), 'on contains workflow_dispatch', events);
+const uxJob = jobs['ux-stress'] ?? {};
+assert(
+  uxJob.if === "github.event_name == 'workflow_dispatch'",
+  "jobs.ux-stress.if is github.event_name == 'workflow_dispatch'",
+  uxJob.if,
+);
+assert(!('needs' in uxJob), 'jobs.ux-stress has no needs', uxJob.needs);
+assert(
+  ![gateJob.needs].flat().includes('ux-stress'),
+  'jobs.browsers.needs does not include ux-stress',
+  gateJob.needs,
+);
+const uxShards = include
+  .filter((entry) => String(entry.args ?? '').includes('ux-stress'))
+  .map((entry) => entry.id);
+assert(uxShards.length === 0, 'no browser-shards matrix args mention ux-stress', uxShards);
+const uxRun =
+  (uxJob.steps ?? []).find(
+    (step) => typeof step.run === 'string' && step.run.includes('playwright test'),
+  ) ?? {};
+assert(
+  uxRun.env?.PW_UX_STRESS === '1',
+  "the ux-stress playwright test step sets env PW_UX_STRESS '1'",
+  uxRun.env,
+);
+assert(
+  typeof uxRun.run === 'string' && uxRun.run.includes('tests/browser/ux-stress.spec.ts'),
+  'the ux-stress playwright test step runs tests/browser/ux-stress.spec.ts',
+  uxRun.run,
+);
+// Code, not comments: the comment above testIgnore also names PW_UX_STRESS.
+assert(
+  configText.includes("'**/ux-stress.spec.ts'"),
+  "playwright.config.ts has the pattern '**/ux-stress.spec.ts'",
+  null,
+);
+assert(
+  configText.includes("process.env.PW_UX_STRESS !== '1'"),
+  "playwright.config.ts tests process.env.PW_UX_STRESS !== '1'",
+  null,
+);
+assert(
+  /^\s*testIgnore,$/m.test(configText),
+  'playwright.config.ts passes testIgnore to defineConfig',
+  null,
+);
+
+console.log('## Wiring of on, jobs.changes, jobs.browser-shards, jobs.browsers and jobs.ux-stress');
 console.log();
 for (const label of passed) console.log(`- ok: ${label}`);
 for (const label of failures) console.log(`- WIRING FAILED: ${label}`);
