@@ -33,6 +33,32 @@
     outline-offset: 3px;
   }
 
+  /* A focused table row sits inside the scroll container and under the opaque sticky first cell,
+     so the ring is drawn inside the row and again as an inset shadow on its cells. */
+  pricing-renderer[data-pr-root] tr[data-pr-part='comparison-row']:focus-visible {
+    outline-offset: -2px;
+  }
+
+  pricing-renderer[data-pr-root] tr[data-pr-part='comparison-row']:focus-visible > :where(th, td) {
+    box-shadow:
+      inset 0 2px 0 var(--pr-color-focus),
+      inset 0 -2px 0 var(--pr-color-focus);
+  }
+
+  pricing-renderer[data-pr-root] tr[data-pr-part='comparison-row']:focus-visible > :first-child {
+    box-shadow:
+      inset 0 2px 0 var(--pr-color-focus),
+      inset 0 -2px 0 var(--pr-color-focus),
+      inset 2px 0 0 var(--pr-color-focus);
+  }
+
+  pricing-renderer[data-pr-root] tr[data-pr-part='comparison-row']:focus-visible > :last-child {
+    box-shadow:
+      inset 0 2px 0 var(--pr-color-focus),
+      inset 0 -2px 0 var(--pr-color-focus),
+      inset -2px 0 0 var(--pr-color-focus);
+  }
+
   pricing-renderer[data-pr-root] :where(a) {
     color: var(--pr-color-link);
     text-underline-offset: 0.18em;

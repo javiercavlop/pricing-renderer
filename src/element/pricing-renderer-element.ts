@@ -817,7 +817,11 @@ export class PricingRendererElement extends LitElement {
   };
 
   private _focusRevealed(target: HTMLElement): void {
-    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    if (!target.hasAttribute('tabindex')) {
+      target.setAttribute('tabindex', '-1');
+      // the attribute is only a focus aid for the reveal, so it goes away on blur
+      target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
+    }
     target.focus();
   }
 
