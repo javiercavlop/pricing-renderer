@@ -24,28 +24,36 @@ The intake listed three hypotheses (H1 to H3).
 
 ## What the config already limits
 
-From `playwright.config.ts`:
+From the current `playwright.config.ts`:
 
-- `trace` is `on-first-retry` on CI (line 26). Traces are no longer kept for every failure.
-- `globalTimeout` is 30 min on CI (line 21).
-- `maxFailures` is 20 on CI (line 22).
-- `retries` is 2 and `workers` is 2 on CI (lines 17 and 19).
+- `trace` is `on-first-retry` on CI (line 35). Traces are no longer kept for every failure.
+- `globalTimeout` (line 30) takes its value from line 8:
+  - 15 min on the shard jobs of `ci.yml`, which set `PW_BLOB=1` (`isBlobRun`, line 6). Those jobs
+    have a 25 min job timeout (`timeout-minutes: 25`), so Playwright stops first.
+  - 30 min on every other CI run, including the browser step of the release job in
+    `release.yml`, which runs `pnpm test:browser` without `PW_BLOB`.
+  - No limit outside CI.
+- `maxFailures` is 20 on CI (line 31).
+- `retries` is 2 (line 28) and `workers` is 2 (line 26) on CI.
 
-With these limits, one Playwright run on CI stops after 30 min at most. A job timeout in
-`ci.yml` is a separate change (slice S2).
+With these limits, one Playwright run stops after 15 min at most in a shard job and after 30 min
+at most in any other CI run. The release job had no such limit before.
 
 ## What is not known
 
 The 69 min peak run id is still unknown. It is owner question Q4. Run
 `121594178028` is not that run, so it says nothing about why the peak happened.
 
-The cause of the 69 min run is not established. Any explanation is a guess.
+The 69 min run is still not explained. Its cause is not established, and any explanation is a
+guess. The new limits cap how long such a run can last; they do not explain it.
 The intake figures for run time are estimates unless a log backs them.
 
 ## What to collect if a slow run happens again
 
-- The job log of the `browsers` job, saved before it expires.
-- The `playwright-report` artifact. It holds traces of retried tests.
+- The job logs of the `browsers (...)` shard jobs and of the `browsers` gate job, saved before
+  they expire.
+- The `playwright-report` artifact (or the `blob-report-*` artifacts if `merge-report` failed).
+  It holds traces of retried tests.
 - The run id, the PR number and the head commit.
 - The start and end time of each step, to see which step took the time.
 - The number of failed and retried tests in the log summary.

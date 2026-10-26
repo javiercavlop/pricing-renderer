@@ -49,7 +49,8 @@ Targeted, per spec file:
   "--project=chromium",
   "--workers=2",
   "--ignore-snapshots",
-  "--reporter=line"
+  "--reporter=line",
+  "--global-timeout=1500000"
 ]
 ```
 
@@ -64,16 +65,29 @@ Change level:
   "--project=chromium",
   "--workers=2",
   "--ignore-snapshots",
-  "--reporter=line"
+  "--reporter=line",
+  "--global-timeout=1500000"
 ]
 ```
+
+### `CI` in the lab and the global timeout
+
+This repository cannot tell whether the lab sets `CI`. If it does, `playwright.config.ts` sets
+`globalTimeout` to 30 min (line 8), the same as the check timeout of 1800 s. The check would then
+be killed at the moment Playwright tries to stop, and no summary would be printed. Without `CI`,
+there is no global timeout at all.
+
+Decision: both arrays pass `--global-timeout=1500000` (25 min). The CLI flag overrides the config,
+so Playwright stops 5 min before the check timeout and prints its summary whether `CI` is set or
+not. The checks do not depend on `CI` being unset.
 
 `test-results/` and `playwright-report/` are gitignored, so the checks leave no tracked
 files.
 
 ## Font and snapshot caveat
 
-The `-linux` baselines come from GitHub runners (`playwright.config.ts`, lines 3 and 7).
+The `-linux` baselines come from GitHub runners (`playwright.config.ts`: the suffix on line 3,
+the `snapshotPathTemplate` on line 16).
 Lab fonts may differ. So the lab checks pass `--ignore-snapshots`. Visual baselines stay
 CI-only until one lab run shows they match.
 
