@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Runs the real scripts of .github/workflows/ci.yml outside GitHub Actions:
-#   (w) asserts the job wiring around them (needs, if, outputs, env, shell, matrix)
-#       and that the on-demand ux-stress job stays out of the shards and the gate;
+#   (w) asserts the job wiring around them (on, concurrency, needs, if, outputs,
+#       env, shell, matrix, timeouts) and that the on-demand-specs job stays out
+#       of the shards and the gate;
+#   (l) lists the Playwright tests with CI=1, with and without PW_UX_STRESS=1;
 #   (a) the `browsers` gate script for every combination of job results;
 #   (b) the `changes` detection script against a temporary git repository.
 # Exits non-zero on the first wrong outcome. Writes only under $TMPDIR.
@@ -110,58 +112,191 @@ const projects =
     ? []
     : [...configText.slice(projectsAt).matchAll(/name:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
 assert(projects.length > 0, 'playwright.config.ts declares at least one project', projects);
+// Every project must run whole: either in one matrix entry without --shard, or
+// split over entries whose --shard values are exactly 1/N..N/N with one N.
 const include = shardsJob.strategy?.matrix?.include ?? [];
-const shardProjects = new Set(
-  include.flatMap((entry) =>
-    [...String(entry.args ?? '').matchAll(/--project=(\S+)/g)].map((m) => m[1]),
-  ),
-);
-const missing = projects.filter((name) => !shardProjects.has(name));
+const runsByProject = new Map(projects.map((name) => [name, []]));
+const installGaps = [];
+for (const entry of include) {
+  const args = String(entry.args ?? '');
+  const entryProjects = [...args.matchAll(/--project=(\S+)/g)].map((m) => m[1]);
+  const shards = [...args.matchAll(/--shard=(\d+)\/(\d+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  const shard = shards.length === 1 ? shards[0] : shards.length === 0 ? null : 'several --shard';
+  for (const name of entryProjects) {
+    if (!runsByProject.has(name)) runsByProject.set(name, []);
+    runsByProject.get(name).push(shard);
+  }
+  // Project names equal browser names, so `install` must name every project.
+  const installed = String(entry.install ?? '').split(/\s+/);
+  const notInstalled = entryProjects.filter((name) => !installed.includes(name));
+  if (notInstalled.length > 0) installGaps.push({ id: entry.id, notInstalled });
+}
+const coverageGaps = [];
+for (const [name, shards] of runsByProject) {
+  const whole = shards.length === 1 && shards[0] === null;
+  const total = shards.length > 0 && Array.isArray(shards[0]) ? shards[0][1] : null;
+  const split =
+    total !== null &&
+    shards.length === total &&
+    shards.every((shard) => Array.isArray(shard) && shard[1] === total) &&
+    isDeepStrictEqual(
+      shards.map((shard) => shard[0]).sort((a, b) => a - b),
+      Array.from({ length: total }, (_, i) => i + 1),
+    );
+  if (!whole && !split) coverageGaps.push({ name, shards });
+}
 assert(
-  missing.length === 0,
-  `every Playwright project (${projects.join(', ')}) is in the args of a browser-shards matrix entry`,
-  { missing, shardProjects: [...shardProjects] },
+  coverageGaps.length === 0,
+  `every Playwright project (${projects.join(', ')}) runs once without --shard or as shards 1/N..N/N in browser-shards`,
+  coverageGaps,
+);
+assert(
+  installGaps.length === 0,
+  'the install of every browser-shards matrix entry names every project in its args',
+  installGaps,
 );
 
-// The SPECTRA stress spec runs only in the manual ux-stress job, never in a
-// shard, and the required gate does not depend on that job.
+// No step or setting can make the required path pass on a failure.
+const requiredJobs = { changes: changesJob, 'browser-shards': shardsJob, browsers: gateJob };
+const softJobs = [];
+const swallowedRuns = [];
+for (const [jobId, job] of Object.entries(requiredJobs)) {
+  if ('continue-on-error' in job) softJobs.push(`jobs.${jobId}`);
+  (job.steps ?? []).forEach((step, index) => {
+    if ('continue-on-error' in step) softJobs.push(`jobs.${jobId}.steps[${index}]`);
+    if (typeof step.run === 'string' && step.run.includes('|| true')) {
+      swallowedRuns.push(`jobs.${jobId}.steps[${index}]`);
+    }
+  });
+}
+assert(
+  softJobs.length === 0,
+  'no continue-on-error on jobs changes, browser-shards, browsers or their steps',
+  softJobs,
+);
+assert(
+  swallowedRuns.length === 0,
+  'no run: script in jobs changes, browser-shards, browsers contains || true',
+  swallowedRuns,
+);
+assert(!('if' in gate), 'the gate step has no if', gate.if);
+assert(gateJob.name === undefined, 'jobs.browsers has no name (the check is named browsers)', gateJob.name);
+const shardRun = (shardsJob.steps ?? []).filter((step) => step.name === 'Run browser tests');
+assert(
+  shardRun.length === 1 && shardRun[0].run === 'pnpm exec playwright test ${ARGS}',
+  "the shard step 'Run browser tests' runs exactly pnpm exec playwright test ${ARGS}",
+  shardRun.map((step) => step.run),
+);
+const checkout = (changesJob.steps ?? []).find((step) =>
+  String(step.uses ?? '').startsWith('actions/checkout@'),
+);
+assert(
+  checkout?.with?.['fetch-depth'] === 0 && checkout?.with?.['persist-credentials'] === false,
+  'the jobs.changes checkout has fetch-depth 0 and persist-credentials false',
+  checkout?.with,
+);
+
+// Triggers, concurrency, timeouts and runners.
 const on = doc.on ?? {};
 const events = typeof on === 'string' ? [on] : Array.isArray(on) ? on : Object.keys(on);
 assert(events.includes('workflow_dispatch'), 'on contains workflow_dispatch', events);
-const uxJob = jobs['ux-stress'] ?? {};
 assert(
-  uxJob.if === "github.event_name == 'workflow_dispatch'",
-  "jobs.ux-stress.if is github.event_name == 'workflow_dispatch'",
-  uxJob.if,
+  isDeepStrictEqual(on.pull_request?.branches, ['main', 'develop']),
+  'on.pull_request.branches is [main, develop]',
+  on.pull_request?.branches,
 );
-assert(!('needs' in uxJob), 'jobs.ux-stress has no needs', uxJob.needs);
 assert(
-  ![gateJob.needs].flat().includes('ux-stress'),
-  'jobs.browsers.needs does not include ux-stress',
+  isDeepStrictEqual(on.push?.branches, ['main', 'develop']),
+  'on.push.branches is [main, develop]',
+  on.push?.branches,
+);
+const concurrencyGroup =
+  "ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}";
+assert(
+  doc.concurrency?.group === concurrencyGroup,
+  'concurrency.group keys pull requests by number and other runs by event and ref',
+  doc.concurrency?.group,
+);
+assert(
+  doc.concurrency?.['cancel-in-progress'] === "${{ github.event_name == 'pull_request' }}",
+  'concurrency.cancel-in-progress is true only for pull_request',
+  doc.concurrency?.['cancel-in-progress'],
+);
+const noTimeout = Object.keys(jobs).filter(
+  (jobId) => typeof jobs[jobId]['timeout-minutes'] !== 'number',
+);
+assert(noTimeout.length === 0, 'every job has a numeric timeout-minutes', noTimeout);
+const selfHosted = Object.keys(jobs).filter((jobId) =>
+  [jobs[jobId]['runs-on']].flat().some((label) => String(label).startsWith('self-hosted')),
+);
+assert(selfHosted.length === 0, 'no job runs on a self-hosted runner', selfHosted);
+assert(
+  configText.includes('(isBlobRun ? 15 : 30) * 60_000') && shardsJob['timeout-minutes'] > 15,
+  'jobs.browser-shards timeout-minutes exceeds the 15 min PW_BLOB globalTimeout',
+  shardsJob['timeout-minutes'],
+);
+
+// The two heavy specs run only in the manual on-demand-specs job, never in a
+// shard, and the required gate does not depend on that job.
+const onDemandId = 'on-demand-specs';
+const onDemandSpecs = ['tests/browser/ux-stress.spec.ts', 'tests/browser/spectra-review.spec.ts'];
+const onDemandJob = jobs[onDemandId] ?? {};
+assert(
+  onDemandJob.if === "github.event_name == 'workflow_dispatch'",
+  "jobs.on-demand-specs.if is github.event_name == 'workflow_dispatch'",
+  onDemandJob.if,
+);
+assert(!('needs' in onDemandJob), 'jobs.on-demand-specs has no needs', onDemandJob.needs);
+assert(
+  ![gateJob.needs].flat().includes(onDemandId),
+  'jobs.browsers.needs does not include on-demand-specs',
   gateJob.needs,
 );
-const uxShards = include
-  .filter((entry) => String(entry.args ?? '').includes('ux-stress'))
-  .map((entry) => entry.id);
-assert(uxShards.length === 0, 'no browser-shards matrix args mention ux-stress', uxShards);
-const uxRun =
-  (uxJob.steps ?? []).find(
+const shardTexts = { 'jobs.browser-shards': JSON.stringify(shardsJob), env: JSON.stringify(doc.env ?? {}) };
+(shardsJob.steps ?? []).forEach((step, index) => {
+  shardTexts[`jobs.browser-shards.steps[${index}]`] = JSON.stringify(step);
+});
+const leaks = Object.entries(shardTexts)
+  .filter(([, text]) => /PW_UX_STRESS|ux-stress|spectra-review/.test(text))
+  .map(([where]) => where);
+assert(
+  leaks.length === 0,
+  'jobs.browser-shards (matrix, env, steps) and the workflow env never mention PW_UX_STRESS, ux-stress or spectra-review',
+  leaks,
+);
+const flagSetters = Object.keys(jobs).filter((jobId) =>
+  JSON.stringify(jobs[jobId]).includes('PW_UX_STRESS'),
+);
+assert(
+  isDeepStrictEqual(flagSetters, [onDemandId]) && !JSON.stringify(doc.env ?? {}).includes('PW_UX_STRESS'),
+  'only jobs.on-demand-specs sets PW_UX_STRESS (no other job, not the workflow env)',
+  { flagSetters, env: doc.env },
+);
+const onDemandRun =
+  (onDemandJob.steps ?? []).find(
     (step) => typeof step.run === 'string' && step.run.includes('playwright test'),
   ) ?? {};
 assert(
-  uxRun.env?.PW_UX_STRESS === '1',
-  "the ux-stress playwright test step sets env PW_UX_STRESS '1'",
-  uxRun.env,
+  onDemandRun.env?.PW_UX_STRESS === '1',
+  "the on-demand-specs playwright test step sets env PW_UX_STRESS '1'",
+  onDemandRun.env,
 );
 assert(
-  typeof uxRun.run === 'string' && uxRun.run.includes('tests/browser/ux-stress.spec.ts'),
-  'the ux-stress playwright test step runs tests/browser/ux-stress.spec.ts',
-  uxRun.run,
+  typeof onDemandRun.run === 'string' && onDemandSpecs.every((spec) => onDemandRun.run.includes(spec)),
+  `the on-demand-specs playwright test step runs ${onDemandSpecs.join(' and ')}`,
+  onDemandRun.run,
+);
+assert(
+  typeof onDemandRun.run === 'string' &&
+    onDemandRun.run.includes('--global-timeout=2400000') &&
+    onDemandJob['timeout-minutes'] > 40,
+  'the on-demand-specs run stops at 40 min, before its job timeout',
+  { run: onDemandRun.run, timeout: onDemandJob['timeout-minutes'] },
 );
 // Code, not comments: the comment above testIgnore also names PW_UX_STRESS.
 assert(
-  configText.includes("'**/ux-stress.spec.ts'"),
-  "playwright.config.ts has the pattern '**/ux-stress.spec.ts'",
+  configText.includes("['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']"),
+  "playwright.config.ts ignores ['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']",
   null,
 );
 assert(
@@ -175,7 +310,7 @@ assert(
   null,
 );
 
-console.log('## Wiring of on, jobs.changes, jobs.browser-shards, jobs.browsers and jobs.ux-stress');
+console.log('## Wiring of on, concurrency and the jobs of ci.yml');
 console.log();
 for (const label of passed) console.log(`- ok: ${label}`);
 for (const label of failures) console.log(`- WIRING FAILED: ${label}`);
@@ -194,7 +329,53 @@ fs.writeFileSync(path.join(work, 'gate.sh'), gate.run);
 fs.writeFileSync(path.join(work, 'gate.env'), envLines(gate.env));
 fs.writeFileSync(path.join(work, 'changes.sh'), filter.run);
 fs.writeFileSync(path.join(work, 'changes.env'), envLines(filter.env));
+fs.writeFileSync(path.join(work, 'wiring-count'), String(passed.length));
 NODE
+wiring_count="$(cat "$work/wiring-count")"
+
+# (l) Behaviour of testIgnore: list the tests as a CI run would. --list loads
+# the config and the spec files but runs no test.
+echo "## Playwright --list with CI=1"
+echo
+list_start=$SECONDS
+# list_tests <file> <extra env assignment or ''> <playwright args...>: lists the
+# tests with CI=1 from the repository root, without the caller's PW_UX_STRESS.
+list_tests() {
+  local file="$1" extra_env="$2"
+  shift 2
+  if ! (cd "$root" && env -u PW_UX_STRESS -u PW_BLOB CI=1 ${extra_env:+"$extra_env"} \
+    pnpm exec playwright test --list --reporter=list "$@") > "$file" 2>&1; then
+    cat "$file" >&2
+    echo "LIST FAILED: playwright test --list exited non-zero" >&2
+    exit 1
+  fi
+  if ! grep -q '^Total: ' "$file"; then
+    cat "$file" >&2
+    echo "LIST FAILED: no 'Total:' line in the listing" >&2
+    exit 1
+  fi
+}
+list_tests "$work/list-ci.txt" ''
+if grep -Eq 'ux-stress\.spec\.ts|spectra-review\.spec\.ts' "$work/list-ci.txt"; then
+  echo "LIST FAILED: an on-demand spec is listed with CI=1 and no PW_UX_STRESS" >&2
+  exit 1
+fi
+list_ci_total="$(grep '^Total: ' "$work/list-ci.txt")"
+echo "- ok: CI=1: neither ux-stress.spec.ts nor spectra-review.spec.ts is listed ($list_ci_total)"
+list_tests "$work/list-on-demand.txt" PW_UX_STRESS=1 \
+  --project=chromium tests/browser/ux-stress.spec.ts tests/browser/spectra-review.spec.ts
+for spec in ux-stress.spec.ts spectra-review.spec.ts; do
+  if ! grep -q "$spec" "$work/list-on-demand.txt"; then
+    echo "LIST FAILED: $spec is not listed with CI=1 PW_UX_STRESS=1" >&2
+    exit 1
+  fi
+done
+list_on_demand_total="$(grep '^Total: ' "$work/list-on-demand.txt")"
+echo "- ok: CI=1 PW_UX_STRESS=1, chromium, both files: both are listed ($list_on_demand_total)"
+list_seconds=$((SECONDS - list_start))
+echo
+echo "LIST: both listings as expected in $list_seconds s"
+echo
 
 # Test values keyed by the expression the workflow maps to each env name.
 declare -A test_values
@@ -388,7 +569,11 @@ scenario ".prettierignore" true .prettierignore
 scenario ".gitignore" true .gitignore
 scenario "visual baseline" true tests/browser/a.spec.ts-snapshots/b.png
 scenario "source file name with a space" true 'src/a b.ts'
+# true is the conservative result git's quoting gives today, not a requirement:
+# a script that read the unquoted path and returned false would also be safe.
 scenario "non-ASCII name under docs (quoted by git)" true 'docs/é.md'
+scenario "index.html at the root" true index.html
+scenario "logo.png at the root" true logo.png
 
 # Deletions and moves.
 # (The SHA is assigned first so that a failing helper stops the script.)
@@ -415,6 +600,8 @@ check "push, docs only" push '' "$base_sha" "$docs_sha" true docs/a.md
 check "pull request into main, docs only" pull_request main "$base_sha" "$docs_sha" true docs/a.md
 check "empty diff" pull_request develop "$base_sha" "$base_sha" true
 check "missing SHAs" pull_request develop '' '' true
+check "base SHA set, head SHA missing" pull_request develop "$base_sha" '' true
+check "base SHA missing, head SHA set" pull_request develop '' "$docs_sha" true docs/a.md
 check "unknown base SHA (git diff fails)" pull_request develop \
   0000000000000000000000000000000000000000 "$docs_sha" true docs/a.md
 
@@ -438,4 +625,4 @@ check "unrelated roots (no merge base)" pull_request develop "$base_sha" "$unrel
   docs/a.md
 echo
 
-echo "SUMMARY: gate $gate_cases/$gate_cases cases as expected; change detection $changes_cases/$changes_cases scenarios as expected"
+echo "SUMMARY: wiring $wiring_count/$wiring_count assertions hold; listing as expected in $list_seconds s (CI=1: $list_ci_total; CI=1 PW_UX_STRESS=1: $list_on_demand_total); gate $gate_cases/$gate_cases cases as expected; change detection $changes_cases/$changes_cases scenarios as expected"

@@ -15,10 +15,12 @@ permissions:
   contents: read
 
 # A new push to a pull request cancels the run still in progress for it.
-# Runs for pushes to main and develop are not cancelled once started; a
-# queued push run can be replaced by a newer one.
+# Other runs are grouped by event and ref: runs for pushes to main and develop
+# are not cancelled once started, and a queued push run can be replaced only by
+# a newer push run. A manual dispatch has its own group, so it never replaces
+# a pending push run.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -267,17 +269,20 @@ jobs:
               ;;
           esac
 
-  # The SPECTRA stress spec (tests/browser/ux-stress.spec.ts), on demand only.
-  # playwright.config.ts ignores it on CI unless PW_UX_STRESS=1, so no shard
-  # runs it, and it is not a required check: `browsers` does not need this job.
-  # Trigger it from the Actions tab (CI > Run workflow) or with
-  # `gh workflow run ci.yml --ref <branch>`. A manual dispatch also runs the
+  # The two heavy specs, on demand only: tests/browser/ux-stress.spec.ts and
+  # the SPECTRA review spec tests/browser/spectra-review.spec.ts.
+  # playwright.config.ts ignores both on CI unless PW_UX_STRESS=1, so no shard
+  # runs them, and this is not a required check: `browsers` does not need this
+  # job. Trigger it from the Actions tab (CI > Run workflow) or with
+  # `gh workflow run ci.yml --ref <branch>`; GitHub accepts a dispatch only
+  # once this file is on the default branch. A manual dispatch also runs the
   # other jobs: `changes` emits rendered=true for any event that is not
-  # pull_request, so the shards and the gate run too.
-  ux-stress:
+  # pull_request, so the shards and the gate run too. The SPECTRA spec attaches
+  # its metrics and JPEGs to the tests, so they are inside playwright-report/.
+  on-demand-specs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -291,14 +296,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Run the ux-stress spec
+      - name: Run the on-demand specs
         env:
           PW_UX_STRESS: '1'
-        run: pnpm exec playwright test --project=chromium tests/browser/ux-stress.spec.ts
+        run: pnpm exec playwright test --project=chromium --global-timeout=2400000 tests/browser/ux-stress.spec.ts tests/browser/spectra-review.spec.ts
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
-          name: ux-stress-report
+          name: on-demand-specs-report
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore

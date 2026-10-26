@@ -83,17 +83,18 @@ Decision: both arrays pass `--global-timeout=1500000` (25 min). The CLI flag ove
 so Playwright stops 5 min before the check timeout and prints its summary whether `CI` is set or
 not. The checks do not depend on `CI` being unset.
 
-### `CI` in the lab and `ux-stress.spec.ts`
+### `CI` in the lab and the on-demand specs
 
-When `CI` is set, `playwright.config.ts` ignores `tests/browser/ux-stress.spec.ts` unless
-`PW_UX_STRESS=1` (see `ux-stress-on-demand.md`).
+When `CI` is set, `playwright.config.ts` ignores `tests/browser/ux-stress.spec.ts` and
+`tests/browser/spectra-review.spec.ts` unless `PW_UX_STRESS=1` (`testIgnore`, lines 13-18; see
+`on-demand-specs.md`). One flag covers both files.
 
-- The targeted check starts with `env PW_UX_STRESS=1`, so a task that names
-  `tests/browser/ux-stress.spec.ts` in `<spec files>` runs it whether `CI` is set or not. For other
-  spec files the variable changes nothing.
-- The change-level check has no `PW_UX_STRESS`. With `CI` set it skips `ux-stress.spec.ts`, as the
-  required CI jobs do; without `CI` it runs it. To run the stress spec in the lab, use the targeted
-  check with that file.
+- The targeted check starts with `env PW_UX_STRESS=1`, so a task that names either file in
+  `<spec files>` runs it whether `CI` is set or not. For other spec files the variable changes
+  nothing.
+- The change-level check has no `PW_UX_STRESS`. With `CI` set it skips both files, as the required
+  CI jobs do; without `CI` it runs both. To run either spec in the lab, use the targeted check with
+  that file.
 
 `test-results/` and `playwright-report/` are gitignored, so the checks leave no tracked
 files.
@@ -101,7 +102,7 @@ files.
 ## Font and snapshot caveat
 
 The `-linux` baselines come from GitHub runners (`playwright.config.ts`: the suffix on line 3,
-the `snapshotPathTemplate` on line 20).
+the `snapshotPathTemplate` on line 23).
 Lab fonts may differ. So the lab checks pass `--ignore-snapshots`. Visual baselines stay
 CI-only until one lab run shows they match.
 
@@ -132,8 +133,8 @@ Do this on the first run after the image is built.
    "Executable doesn't exist" error.
 4. Run the full change-level check. Record the wall time and the peak memory.
 5. Compare the pass and skip counts with the latest CI Chromium result. They should match. If the
-   lab does not set `CI`, leave out the `ux-stress.spec.ts` tests before comparing: CI no longer
-   runs them in the shards.
+   lab does not set `CI`, leave out the `ux-stress.spec.ts` and `spectra-review.spec.ts` tests
+   before comparing: CI no longer runs either of them in the shards.
 6. Update the memory and disk estimates in this file with the measured values.
 
 If a step fails, stop and report. Do not register the checks until step 4 passes.

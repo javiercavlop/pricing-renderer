@@ -10,9 +10,12 @@ const ciReporter: ReporterDescription[] = isBlobRun
   ? [['blob'], ['github']]
   : [['html', { open: 'never' }], ['github']];
 const reporter = process.env.CI ? ciReporter : 'list';
-// The SPECTRA stress spec is on demand on CI: only the manual ux-stress job sets PW_UX_STRESS=1.
+// The two heavy specs (ux-stress and the SPECTRA review) are on demand on CI: one flag,
+// PW_UX_STRESS=1, set only by the manual on-demand-specs job of ci.yml, runs both.
 const testIgnore =
-  process.env.CI && process.env.PW_UX_STRESS !== '1' ? '**/ux-stress.spec.ts' : undefined;
+  process.env.CI && process.env.PW_UX_STRESS !== '1'
+    ? ['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']
+    : undefined;
 
 export default defineConfig({
   testDir: './tests/browser',

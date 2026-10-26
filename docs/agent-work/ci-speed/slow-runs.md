@@ -26,18 +26,20 @@ The intake listed three hypotheses (H1 to H3).
 
 From the current `playwright.config.ts`:
 
-- `trace` is `on-first-retry` on CI (line 39). Traces are no longer kept for every failure.
-- `globalTimeout` (line 34) takes its value from line 8:
+- `trace` is `on-first-retry` on CI (line 42). Traces are no longer kept for every failure.
+- `globalTimeout` (line 37) takes its value from line 8:
   - 15 min on the shard jobs of `ci.yml`, which set `PW_BLOB=1` (`isBlobRun`, line 6). Those jobs
     have a 25 min job timeout (`timeout-minutes: 25`), so Playwright stops first.
   - 30 min on every other CI run, including the browser step of the release job in
-    `release.yml`, which runs `pnpm test:browser` without `PW_BLOB`, and the on-demand `ux-stress`
-    job of `ci.yml` (40 min job timeout).
+    `release.yml`, which runs `pnpm test:browser` without `PW_BLOB`.
+  - 40 min in the on-demand `on-demand-specs` job of `ci.yml`, whose run step passes
+    `--global-timeout=2400000` (50 min job timeout).
   - No limit outside CI.
-- `maxFailures` is 20 on CI (line 35).
-- `retries` is 2 (line 32) and `workers` is 2 (line 30) on CI.
-- On CI, `ux-stress.spec.ts` is ignored unless `PW_UX_STRESS=1` (`testIgnore`, lines 13-15 and 19), so
-  the shard jobs and the release job no longer run it. See `ux-stress-on-demand.md`.
+- `maxFailures` is 20 on CI (line 38).
+- `retries` is 2 (line 35) and `workers` is 2 (line 33) on CI.
+- On CI, `ux-stress.spec.ts` and `spectra-review.spec.ts` are ignored unless `PW_UX_STRESS=1`
+  (`testIgnore`, lines 13-18 and 22), so the shard jobs and the release job no longer run them. See
+  `on-demand-specs.md`.
 
 With these limits, one Playwright run stops after 15 min at most in a shard job and after 30 min
 at most in any other CI run. The release job had no such limit before.
