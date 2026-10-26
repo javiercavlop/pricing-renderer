@@ -3,7 +3,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
-// Shared by spectra-grid.spec.ts and spectra-text.spec.ts. The logic follows collectMetrics in
+// Shared by spectra-grid.spec.ts, spectra-text.spec.ts, spectra-addon-marker.spec.ts and
+// spectra-review.spec.ts (revealAllRows). The logic follows collectMetrics in
 // spectra-review.spec.ts (a spec file is never imported). This module imports @playwright/test, so
 // vitest cannot load it.
 
@@ -91,6 +92,32 @@ export async function applyPricing(
   // The demo page uses smooth scrolling; jump instantly so later reads see the final position.
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   return state;
+}
+
+// Opens every comparison group and every "show more" button until nothing is left to reveal.
+// Resolves true when nothing is left, false after 100 rounds. The differences-only filter is not
+// touched.
+export async function revealAllRows(page: Page): Promise<boolean> {
+  return page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      updateComplete: Promise<unknown>;
+    };
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const scope = '[data-pr-part="comparison"]';
+    const pending = () => [
+      ...renderer.querySelectorAll<HTMLButtonElement>(
+        `${scope} button[aria-expanded="false"], ${scope} button.pr-button--quiet`,
+      ),
+    ];
+    for (let round = 0; round < 100; round += 1) {
+      const buttons = pending();
+      if (buttons.length === 0) return true;
+      for (const button of buttons) button.click();
+      await renderer.updateComplete;
+      await nextFrame();
+    }
+    return false;
+  });
 }
 
 export type PlanGridMetrics = {

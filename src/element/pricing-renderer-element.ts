@@ -84,6 +84,8 @@ export function renderAfterPlans(state: RenderState, wide = true): TemplateResul
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const breakdownToggleSelector = '[data-pr-part="breakdown-toggle"]';
+const comparisonRowSelector = '[data-pr-part="comparison-row"]';
+const addOnCardSelector = '[data-pr-part="add-on-card"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
 
@@ -801,10 +803,23 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   };
 
-  private _revealGroup = (groupId: string): void => {
+  // [impl->req~reveal-focus-comparison~1] focus moves to the first row the reveal adds
+  private _revealGroup = (groupId: string, origin?: HTMLElement): void => {
+    const container = origin?.closest('tbody, .pr-comparison-group') ?? undefined;
+    const before = container?.querySelectorAll(comparisonRowSelector).length ?? 0;
     this._revealedGroups = new Set([...this._revealedGroups, groupId]);
     this.requestUpdate();
+    if (!container) return;
+    void this.updateComplete.then(() => {
+      const rows = container.querySelectorAll<HTMLElement>(comparisonRowSelector);
+      if (rows.length > before) this._focusRevealed(rows[before]!);
+    });
   };
+
+  private _focusRevealed(target: HTMLElement): void {
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus();
+  }
 
   // [impl->req~summary-breakdown-stays-open~1] no selection change resets the open state
   private _toggleBreakdown = (): void => {
@@ -878,9 +893,16 @@ export class PricingRendererElement extends LitElement {
       this._addOnSearch = value;
       this.requestUpdate();
     },
+    // [impl->req~reveal-focus-addons~1] focus moves to the first add-on card the reveal adds
     revealAddOns: () => {
+      const shown = (): HTMLElement[] => [...this.querySelectorAll<HTMLElement>(addOnCardSelector)];
+      const before = new Set(shown().map((card) => card.dataset.addOnId));
       this._addOnsRevealed = true;
       this.requestUpdate();
+      void this.updateComplete.then(() => {
+        const added = shown().find((card) => !before.has(card.dataset.addOnId));
+        if (added) this._focusRevealed(added);
+      });
     },
     confirmAddOnChange: this._confirmAddOnChange,
     cancelAddOnChange: this._cancelAddOnChange,

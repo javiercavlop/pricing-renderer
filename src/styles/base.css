@@ -26,6 +26,13 @@
     outline-offset: 3px;
   }
 
+  /* [impl->req~reveal-focus-visible~1] rows and cards take focus after "show more" */
+  pricing-renderer[data-pr-root]
+    :where([data-pr-part='comparison-row'], [data-pr-part='add-on-card']):focus-visible {
+    outline: 2px solid var(--pr-color-focus);
+    outline-offset: 3px;
+  }
+
   pricing-renderer[data-pr-root] :where(a) {
     color: var(--pr-color-link);
     text-underline-offset: 0.18em;
