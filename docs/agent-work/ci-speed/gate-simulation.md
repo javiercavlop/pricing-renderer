@@ -86,14 +86,22 @@ the broken assertion:
   `browser-shards`, in any order; the gate step env is exactly
   `NEEDS_CHANGES: ${{ needs.changes.result }}`, `RENDERED: ${{ needs.changes.outputs.rendered }}`
   and `NEEDS_SHARDS: ${{ needs.browser-shards.result }}`; the gate step has `shell: bash` and no
-  `if`; `jobs.browsers` has no `name`, so the check keeps the name `browsers`.
+  `if`; `jobs.browsers` has no `name`, so the check keeps the name `browsers`, and no `strategy`.
+- Job names: the displayed name (`name`, or the job id without one) of every job is unique, and
+  only `jobs.browsers` is displayed as `browsers`.
 - Change detection: `jobs.changes.outputs.rendered` is `${{ steps.filter.outputs.rendered }}`; the
   filter step has `shell: bash` and maps `EVENT_NAME`, `BASE_REF`, `BASE_SHA` and `HEAD_SHA` to
   `github.event_name`, `github.base_ref`, `github.event.pull_request.base.sha` and
   `github.event.pull_request.head.sha`; the checkout of `changes` has `fetch-depth: 0` and
   `persist-credentials: false`.
 - Shards: `jobs.browser-shards.if` is `needs.changes.outputs.rendered == 'true'`, and its `needs`
-  is `changes`. The step named `Run browser tests` runs exactly `pnpm exec playwright test ${ARGS}`.
+  is `changes`. The step named `Run browser tests` runs exactly `pnpm exec playwright test ${ARGS}`;
+  its env is exactly `ARGS: ${{ matrix.args }}` and `PW_BLOB: '1'`; it has no `if`, `shell`,
+  `working-directory` or `continue-on-error`. No step of `browser-shards` other than the
+  `actions/upload-artifact` step has an `if`. The `args` of every matrix entry is only
+  space-separated tokens `--project=chromium|firefox|webkit` and `--shard=k/N`, so no
+  `--update-snapshots`, `--grep-invert`, `--list`, `--pass-with-no-tests` or test path can enter a
+  shard.
 - Shard coverage: for every project in the `projects` array of `playwright.config.ts`, the matrix
   entries that name it in their `args` either are a single entry without `--shard`, or carry
   `--shard=k/N` for exactly k = 1..N with one N. The `install` of every entry names every project
@@ -102,18 +110,25 @@ the broken assertion:
   on any of their steps; no `run:` script in those jobs contains `|| true`.
 - No `run:` script of any job contains `${{`.
 - Triggers and runners: `on` contains `workflow_dispatch`; `on.pull_request.branches` and
-  `on.push.branches` are `[main, develop]`; `concurrency.group` is the string above and
-  `cancel-in-progress` is `${{ github.event_name == 'pull_request' }}`; every job has a numeric
-  `timeout-minutes`; no `runs-on` label starts with `self-hosted`; the `browser-shards` timeout
-  exceeds the 15 min `PW_BLOB` `globalTimeout` of the config.
+  `on.push.branches` are `[main, develop]`, and `branches` is the only key of each;
+  `concurrency.group` is the string above and `cancel-in-progress` is
+  `${{ github.event_name == 'pull_request' }}`; every job has a numeric `timeout-minutes` of at
+  most 30 (`browser-shards` at most 25, `on-demand-specs` at most 50); every job has
+  `runs-on: ubuntu-latest`; the `browser-shards` timeout exceeds the 15 min `PW_BLOB`
+  `globalTimeout` of the config.
+- Checkouts: every `actions/checkout` step of `changes`, `browser-shards`, `merge-report` and
+  `on-demand-specs` sets `persist-credentials: false`.
+- Release path: `package.json` `scripts['test:browser']` is `playwright test`, and
+  `.github/workflows/release.yml` (read only) mentions neither `PW_UX_STRESS` nor `ux-stress` nor
+  `spectra-review`, so the release job skips both on-demand specs.
 - On-demand specs: `jobs.on-demand-specs.if` is `github.event_name == 'workflow_dispatch'`, and it
   has no `needs`; `jobs.browsers.needs` does not include it (also implied by the exact `needs`
   check, stated on its own so the reason is visible in the output); the JSON of
   `jobs.browser-shards`, of each of its steps and of the workflow-level `env` contains none of
   `PW_UX_STRESS`, `ux-stress` or `spectra-review`; no job other than `on-demand-specs` mentions
   `PW_UX_STRESS`, and neither does the workflow `env`; the on-demand run step sets
-  `PW_UX_STRESS: '1'`, names both spec files and passes `--global-timeout=2400000`, and its job
-  timeout exceeds 40 min.
+  `PW_UX_STRESS: '1'`, names both spec files and passes `--project=chromium` and
+  `--global-timeout=2400000`, and its job timeout exceeds 40 min.
 - The text of `playwright.config.ts` contains `['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']`,
   the condition `process.env.PW_UX_STRESS !== '1'` and a `testIgnore,` line that passes it to
   `defineConfig`. These match code, not the comment above `testIgnore`. They are text checks; the
@@ -122,21 +137,44 @@ the broken assertion:
 After the wiring, the script runs `CI=1 pnpm exec playwright test --list --reporter=list` from the
 repository root (without the caller's `PW_UX_STRESS` and `PW_BLOB`) and fails if
 `ux-stress.spec.ts` or `spectra-review.spec.ts` is listed. It then lists with
-`CI=1 PW_UX_STRESS=1 --project=chromium` and the two files, and fails unless both are listed. Each
-listing must end with a `Total:` line. The two listings took 2 s in the run below. Checks 3 and 4
-of the task test the same behaviour on their own.
+`CI=1 PW_UX_STRESS=1 --project=chromium` and the two files, and fails unless both are listed. A
+third listing runs without `CI` (and without `PW_UX_STRESS` and `PW_BLOB`) on `--project=chromium`
+and fails unless both files are listed there. The flagged listing must then hold exactly the
+chromium tests of the two files that the listing without `CI` holds: its `Total:` line says
+`in 2 files`, its count equals the number of test lines (`<file>:<line>:<column>`) of the two files
+in the listing without `CI`, and every test line it holds belongs to one of the two files. Each
+listing must have a `Total:` line. The three listings took 3 s in the run below.
 
 The script collects every failed wiring assertion and exits 1; removing the asserted entry fails
 the matching assertion.
 
 ### Mutations
 
-Not run. The task that added these assertions had no shell: it could run only its registered
-checks, which execute the script against the repository files. The mutations below are the
-procedure to run by hand in a copy under `$TMPDIR` (copy `.github/workflows/ci.yml`,
-`playwright.config.ts`, `package.json`, `tests/browser/` and this directory with their relative
-paths, and add a symlink to the repository's `node_modules`, which provides `yaml` and
-`@playwright/test`), with the expected result of each:
+Not run. The tasks that added these assertions (rounds 2 and 3) had no shell: they could run only
+their registered checks, which execute the script against the repository files. The mutations
+below are the procedure to run by hand in a full copy of the repository, never in the working
+tree.
+
+The copy must hold everything the listing loads: the specs read files outside
+`tests/browser/` (`tests/browser/helpers/spectra.ts` reads `../../fixtures/spectra/`, and
+`ux-stress.spec.ts` imports `../fixtures/stress/build.js`), and the wiring reads `package.json` and
+`.github/workflows/release.yml`. From the repository root, with the branch under review checked
+out and committed:
+
+```bash
+git worktree add --detach "$TMPDIR/ci-copy" HEAD
+ln -s "$PWD/node_modules" "$TMPDIR/ci-copy/node_modules"
+cd "$TMPDIR/ci-copy"
+# apply one mutation, then:
+bash docs/agent-work/ci-speed/simulate-ci.sh; echo "exit $?"
+git checkout -- . # undo the mutation before the next one
+# when done, from the repository root:
+git worktree remove --force "$TMPDIR/ci-copy"
+```
+
+The symlinked `node_modules` provides `yaml` and `@playwright/test`. Without a mutation the copy
+gives the same result as the repository (exit 0, the counts of the output below). Each wiring
+mutation stops the script before the listing, with the expected result:
 
 - Delete `workflow_dispatch:` from `on:`. Expected: `WIRING FAILED: on contains workflow_dispatch`
   and exit 1.
@@ -146,11 +184,25 @@ paths, and add a symlink to the repository's `node_modules`, which provides `yam
 - Add `continue-on-error: true` to `browser-shards`. Expected: a `WIRING FAILED:` line for "no
   continue-on-error on jobs changes, browser-shards, browsers or their steps", and exit 1.
 - Add `PW_UX_STRESS: '1'` to the env of the `Run browser tests` step. Expected: `WIRING FAILED:`
-  lines for the `browser-shards` mention and for "only jobs.on-demand-specs sets PW_UX_STRESS", and
-  exit 1.
+  lines for the `browser-shards` mention, for "only jobs.on-demand-specs sets PW_UX_STRESS" and for
+  "the shard step 'Run browser tests' env is exactly ARGS: ${{ matrix.args }} and PW_BLOB: '1'",
+  and exit 1.
 - In `playwright.config.ts`, change `!== '1'` to `=== '1'`. Expected: `WIRING FAILED:` for
   "playwright.config.ts tests process.env.PW_UX_STRESS !== '1'"; with that assertion removed, the
   listing fails with `LIST FAILED: an on-demand spec is listed with CI=1 and no PW_UX_STRESS`.
+- Add `if: false` (or `if: matrix.id != 'chromium-2'`) to the `Run browser tests` step. Expected:
+  `WIRING FAILED:` lines for "the shard step 'Run browser tests' has no if, shell,
+  working-directory or continue-on-error" and "no step of browser-shards other than the artifact
+  upload has an if", and exit 1.
+- Replace `ARGS: ${{ matrix.args }}` with `ARGS: --project=chromium --shard=1/2`, or delete
+  `PW_BLOB: '1'`. Expected: `WIRING FAILED:` for "the shard step 'Run browser tests' env is exactly
+  ARGS: ${{ matrix.args }} and PW_BLOB: '1'", and exit 1.
+- Append ` --update-snapshots` to the `args` of `chromium 1/2`. Expected: `WIRING FAILED:` for
+  "every browser-shards matrix args is only space-separated --project=chromium|firefox|webkit and
+  --shard=k/N tokens", and exit 1.
+- Set `timeout-minutes: 60` on `quality`. Expected: `WIRING FAILED:` for "every job
+  timeout-minutes is at most 30 (browser-shards at most 25, on-demand-specs at most 50)", and
+  exit 1.
 
 The scripts then get their environment from the parsed `env:` maps: the simulation keys its test
 values by expression (for example `${{ needs.browser-shards.result }}`) and passes each one under
@@ -158,8 +210,8 @@ the env name the workflow maps it to. A renamed or swapped env entry therefore f
 
 ## Simulation output
 
-Run with `bash docs/agent-work/ci-speed/simulate-ci.sh` (registered check 5 of the task that
-applied the round-2 findings). The scripts run as `bash --noprofile --norc -eo pipefail`, which is
+Run with `bash docs/agent-work/ci-speed/simulate-ci.sh` (registered check 2 of the task that
+applied the round-3 findings). The scripts run as `bash --noprofile --norc -eo pipefail`, which is
 how GitHub runs `shell: bash` steps, with a clean environment that holds only `PATH`, `HOME`, the
 `GIT_CONFIG_*` isolation variables, `GITHUB_OUTPUT` (change detection only) and the step's env. git
 ignores the caller's global and system config (`GIT_CONFIG_GLOBAL=/dev/null`,
@@ -170,14 +222,15 @@ exit. Its base commit holds `src/element/x.ts`, `src/x.ts`, `docs/a.md`, `tests/
 and `examples/vanilla/index.html`, so the deletions and moves are real. The SHAs in the two
 `fatal:` rows come from that temporary repository and change on every run.
 
-The script prints Markdown tables. They are kept verbatim in a text block below. Check 5 shows
+The script prints Markdown tables. They are kept verbatim in a text block below. Check 2 shows
 only the end of the output. The lines from the gate row `| skipped | false | skipped |` to the
 `SUMMARY` line are copied from that run. The lines above them contain no SHA or timestamp: the
 wiring labels are fixed strings in the script, printed in the order of the assertions, and the
 check exited 0, which the script does only when every assertion holds. The `SUMMARY` line states
-the wiring count (40/40), the two `Total:` lines and the listing time (2 s) of that run. The lines
-above the copied part were reconstructed from that deterministic output and the `SUMMARY` line,
-not copied from the check log.
+the wiring count (54/54), the three `Total:` lines and the listing time (3 s) of that run. The
+count 143 in the last listing line equals the flagged `Total:` line, as the script requires
+before it prints that line. The lines above the copied part were reconstructed from that
+deterministic output and the `SUMMARY` line, not copied from the check log.
 
 ```text
 ## Wiring of on, concurrency and the jobs of ci.yml
@@ -202,14 +255,24 @@ not copied from the check log.
 - ok: the gate step has no if
 - ok: jobs.browsers has no name (the check is named browsers)
 - ok: the shard step 'Run browser tests' runs exactly pnpm exec playwright test ${ARGS}
+- ok: the shard step 'Run browser tests' env is exactly ARGS: ${{ matrix.args }} and PW_BLOB: '1'
+- ok: the shard step 'Run browser tests' has no if, shell, working-directory or continue-on-error
+- ok: no step of browser-shards other than the artifact upload has an if
+- ok: every browser-shards matrix args is only space-separated --project=chromium|firefox|webkit and --shard=k/N tokens
 - ok: the jobs.changes checkout has fetch-depth 0 and persist-credentials false
 - ok: on contains workflow_dispatch
 - ok: on.pull_request.branches is [main, develop]
 - ok: on.push.branches is [main, develop]
+- ok: on.pull_request has exactly the key branches
+- ok: on.push has exactly the key branches
+- ok: the displayed name (name or id) of every job is unique
+- ok: only jobs.browsers is displayed as 'browsers'
+- ok: jobs.browsers has no strategy
 - ok: concurrency.group keys pull requests by number and other runs by event and ref
 - ok: concurrency.cancel-in-progress is true only for pull_request
 - ok: every job has a numeric timeout-minutes
-- ok: no job runs on a self-hosted runner
+- ok: every job timeout-minutes is at most 30 (browser-shards at most 25, on-demand-specs at most 50)
+- ok: every job runs-on is 'ubuntu-latest'
 - ok: jobs.browser-shards timeout-minutes exceeds the 15 min PW_BLOB globalTimeout
 - ok: jobs.on-demand-specs.if is github.event_name == 'workflow_dispatch'
 - ok: jobs.on-demand-specs has no needs
@@ -219,18 +282,24 @@ not copied from the check log.
 - ok: the on-demand-specs playwright test step sets env PW_UX_STRESS '1'
 - ok: the on-demand-specs playwright test step runs tests/browser/ux-stress.spec.ts and tests/browser/spectra-review.spec.ts
 - ok: the on-demand-specs run stops at 40 min, before its job timeout
+- ok: the on-demand-specs playwright test step passes --project=chromium
+- ok: every checkout of changes, browser-shards, merge-report, on-demand-specs has persist-credentials false
+- ok: package.json scripts['test:browser'] is 'playwright test'
+- ok: release.yml exists and mentions neither PW_UX_STRESS nor ux-stress nor spectra-review
 - ok: playwright.config.ts ignores ['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']
 - ok: playwright.config.ts tests process.env.PW_UX_STRESS !== '1'
 - ok: playwright.config.ts passes testIgnore to defineConfig
 
-WIRING: 40/40 assertions hold
+WIRING: 54/54 assertions hold
 
 ## Playwright --list with CI=1
 
 - ok: CI=1: neither ux-stress.spec.ts nor spectra-review.spec.ts is listed (Total: 1125 tests in 8 files)
 - ok: CI=1 PW_UX_STRESS=1, chromium, both files: both are listed (Total: 143 tests in 2 files)
+- ok: no CI, chromium: both are listed (Total: 518 tests in 10 files)
+- ok: CI=1 PW_UX_STRESS=1 lists exactly the 143 chromium tests of the two files that the listing without CI holds
 
-LIST: both listings as expected in 2 s
+LIST: the three listings as expected in 3 s
 
 ## Gate: jobs.browsers.steps[0].run
 
@@ -333,11 +402,11 @@ LIST: both listings as expected in 2 s
 | missing SHAs | pull_request | develop | (none) | true | true | rendered=true: base or head SHA missing |
 | base SHA set, head SHA missing | pull_request | develop | (none) | true | true | rendered=true: base or head SHA missing |
 | base SHA missing, head SHA set | pull_request | develop | docs/a.md | true | true | rendered=true: base or head SHA missing |
-| unknown base SHA (git diff fails) | pull_request | develop | docs/a.md | true | true | fatal: Invalid symmetric difference expression 0000000000000000000000000000000000000000...d57341433e29b8ceb0db6ab636bb2ae216c5584f rendered=true: git diff failed |
+| unknown base SHA (git diff fails) | pull_request | develop | docs/a.md | true | true | fatal: Invalid symmetric difference expression 0000000000000000000000000000000000000000...e00b3cb8df8374faf620c62c83e7bcb81d3b953a rendered=true: git diff failed |
 | diverged: base advanced with src/element/y.ts, PR changes docs/a.md | pull_request | develop | docs/a.md | false | false | rendered=false: only docs, changesets, specs and unit tests changed |
-| unrelated roots (no merge base) | pull_request | develop | docs/a.md | true | true | fatal: b6b2e9feef2ca57051cda20d83edd395fd580cf6...c611e97c70d4bf48362d51a98caa4acd28ffa2c4: no merge base rendered=true: git diff failed |
+| unrelated roots (no merge base) | pull_request | develop | docs/a.md | true | true | fatal: 4fe6dc18434dba5afbcc058279acc4ae2f8f2b23...604835792865b3193f68c840831cde0ec7d2a4d0: no merge base rendered=true: git diff failed |
 
-SUMMARY: wiring 40/40 assertions hold; listing as expected in 2 s (CI=1: Total: 1125 tests in 8 files; CI=1 PW_UX_STRESS=1: Total: 143 tests in 2 files); gate 48/48 cases as expected; change detection 47/47 scenarios as expected
+SUMMARY: wiring 54/54 assertions hold; listing as expected in 3 s (CI=1: Total: 1125 tests in 8 files; CI=1 PW_UX_STRESS=1: Total: 143 tests in 2 files; no CI, chromium: Total: 518 tests in 10 files); gate 48/48 cases as expected; change detection 47/47 scenarios as expected
 ```
 
 ## What the simulation does not cover

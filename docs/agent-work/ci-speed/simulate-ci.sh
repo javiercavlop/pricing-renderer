@@ -3,10 +3,12 @@
 #   (w) asserts the job wiring around them (on, concurrency, needs, if, outputs,
 #       env, shell, matrix, timeouts) and that the on-demand-specs job stays out
 #       of the shards and the gate;
-#   (l) lists the Playwright tests with CI=1, with and without PW_UX_STRESS=1;
+#   (l) lists the Playwright tests with CI=1, with and without PW_UX_STRESS=1,
+#       and without CI;
 #   (a) the `browsers` gate script for every combination of job results;
 #   (b) the `changes` detection script against a temporary git repository.
 # Exits non-zero on the first wrong outcome. Writes only under $TMPDIR.
+# Requires: bash >= 4, git >= 2.32, installed node_modules (pnpm install).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -187,6 +189,46 @@ assert(
   "the shard step 'Run browser tests' runs exactly pnpm exec playwright test ${ARGS}",
   shardRun.map((step) => step.run),
 );
+const runStep = shardRun[0] ?? {};
+assert(
+  isDeepStrictEqual(runStep.env, { ARGS: '${{ matrix.args }}', PW_BLOB: '1' }),
+  "the shard step 'Run browser tests' env is exactly ARGS: ${{ matrix.args }} and PW_BLOB: '1'",
+  runStep.env,
+);
+const runStepExtras = ['if', 'shell', 'working-directory', 'continue-on-error'].filter(
+  (key) => key in runStep,
+);
+assert(
+  runStepExtras.length === 0,
+  "the shard step 'Run browser tests' has no if, shell, working-directory or continue-on-error",
+  runStepExtras,
+);
+const isUpload = (step) => String(step.uses ?? '').startsWith('actions/upload-artifact@');
+const shardStepIfs = [];
+(shardsJob.steps ?? []).forEach((step, index) => {
+  if ('if' in step && !isUpload(step)) shardStepIfs.push(`jobs.browser-shards.steps[${index}]`);
+});
+assert(
+  shardStepIfs.length === 0,
+  'no step of browser-shards other than the artifact upload has an if',
+  shardStepIfs,
+);
+// Only project and shard selectors: no --update-snapshots, --grep-invert,
+// --list, --pass-with-no-tests or test paths in a shard.
+const projectToken = /^--project=(chromium|firefox|webkit)$/;
+const shardToken = /^--shard=\d+\/\d+$/;
+const badArgs = include
+  .filter(
+    (entry) =>
+      typeof entry.args !== 'string' ||
+      !entry.args.split(' ').every((token) => projectToken.test(token) || shardToken.test(token)),
+  )
+  .map((entry) => ({ id: entry.id, args: entry.args }));
+assert(
+  include.length > 0 && badArgs.length === 0,
+  'every browser-shards matrix args is only space-separated --project=chromium|firefox|webkit and --shard=k/N tokens',
+  badArgs,
+);
 const checkout = (changesJob.steps ?? []).find((step) =>
   String(step.uses ?? '').startsWith('actions/checkout@'),
 );
@@ -210,6 +252,31 @@ assert(
   'on.push.branches is [main, develop]',
   on.push?.branches,
 );
+assert(
+  isDeepStrictEqual(Object.keys(on.pull_request ?? {}), ['branches']),
+  'on.pull_request has exactly the key branches',
+  on.pull_request,
+);
+assert(
+  isDeepStrictEqual(Object.keys(on.push ?? {}), ['branches']),
+  'on.push has exactly the key branches',
+  on.push,
+);
+// The required check is found by its displayed name.
+const displayNames = Object.entries(jobs).map(([jobId, job]) => [jobId, job.name ?? jobId]);
+const names = displayNames.map(([, name]) => name);
+assert(
+  new Set(names).size === names.length,
+  'the displayed name (name or id) of every job is unique',
+  names,
+);
+const namedBrowsers = displayNames.filter(([, name]) => name === 'browsers').map(([jobId]) => jobId);
+assert(
+  isDeepStrictEqual(namedBrowsers, ['browsers']),
+  "only jobs.browsers is displayed as 'browsers'",
+  namedBrowsers,
+);
+assert(!('strategy' in gateJob), 'jobs.browsers has no strategy', gateJob.strategy);
 const concurrencyGroup =
   "ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}";
 assert(
@@ -226,10 +293,24 @@ const noTimeout = Object.keys(jobs).filter(
   (jobId) => typeof jobs[jobId]['timeout-minutes'] !== 'number',
 );
 assert(noTimeout.length === 0, 'every job has a numeric timeout-minutes', noTimeout);
-const selfHosted = Object.keys(jobs).filter((jobId) =>
-  [jobs[jobId]['runs-on']].flat().some((label) => String(label).startsWith('self-hosted')),
+const timeoutLimits = { 'browser-shards': 25, 'on-demand-specs': 50 };
+const overLimit = Object.entries(jobs)
+  .filter(([jobId, job]) => {
+    const minutes = job['timeout-minutes'];
+    return !(typeof minutes === 'number' && minutes > 0 && minutes <= (timeoutLimits[jobId] ?? 30));
+  })
+  .map(([jobId, job]) => ({ jobId, timeout: job['timeout-minutes'] }));
+assert(
+  overLimit.length === 0,
+  'every job timeout-minutes is at most 30 (browser-shards at most 25, on-demand-specs at most 50)',
+  overLimit,
 );
-assert(selfHosted.length === 0, 'no job runs on a self-hosted runner', selfHosted);
+const notUbuntu = Object.keys(jobs).filter((jobId) => jobs[jobId]['runs-on'] !== 'ubuntu-latest');
+assert(
+  Object.keys(jobs).length > 0 && notUbuntu.length === 0,
+  "every job runs-on is 'ubuntu-latest'",
+  notUbuntu,
+);
 assert(
   configText.includes('(isBlobRun ? 15 : 30) * 60_000') && shardsJob['timeout-minutes'] > 15,
   'jobs.browser-shards timeout-minutes exceeds the 15 min PW_BLOB globalTimeout',
@@ -293,6 +374,43 @@ assert(
   'the on-demand-specs run stops at 40 min, before its job timeout',
   { run: onDemandRun.run, timeout: onDemandJob['timeout-minutes'] },
 );
+assert(
+  typeof onDemandRun.run === 'string' && onDemandRun.run.split(/\s+/).includes('--project=chromium'),
+  'the on-demand-specs playwright test step passes --project=chromium',
+  onDemandRun.run,
+);
+const credentialJobs = ['changes', 'browser-shards', 'merge-report', 'on-demand-specs'];
+const persisting = [];
+for (const jobId of credentialJobs) {
+  const checkouts = (jobs[jobId]?.steps ?? []).filter((step) =>
+    String(step.uses ?? '').startsWith('actions/checkout@'),
+  );
+  if (checkouts.length === 0) persisting.push(`jobs.${jobId}: no checkout`);
+  for (const step of checkouts) {
+    if (step.with?.['persist-credentials'] !== false) persisting.push(`jobs.${jobId}`);
+  }
+}
+assert(
+  persisting.length === 0,
+  `every checkout of ${credentialJobs.join(', ')} has persist-credentials false`,
+  persisting,
+);
+// The release job runs `pnpm test:browser` with CI set; it must stay a plain
+// `playwright test` without the on-demand flag or files.
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+assert(
+  packageJson.scripts?.['test:browser'] === 'playwright test',
+  "package.json scripts['test:browser'] is 'playwright test'",
+  packageJson.scripts?.['test:browser'],
+);
+const releasePath = path.join(root, '.github/workflows/release.yml');
+const releaseText = fs.existsSync(releasePath) ? fs.readFileSync(releasePath, 'utf8') : null;
+const releaseLeak = releaseText?.match(/PW_UX_STRESS|ux-stress|spectra-review/)?.[0] ?? null;
+assert(
+  releaseText !== null && releaseLeak === null,
+  'release.yml exists and mentions neither PW_UX_STRESS nor ux-stress nor spectra-review',
+  releaseText === null ? 'release.yml not found' : releaseLeak,
+);
 // Code, not comments: the comment above testIgnore also names PW_UX_STRESS.
 assert(
   configText.includes("['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']"),
@@ -338,12 +456,19 @@ wiring_count="$(cat "$work/wiring-count")"
 echo "## Playwright --list with CI=1"
 echo
 list_start=$SECONDS
-# list_tests <file> <extra env assignment or ''> <playwright args...>: lists the
-# tests with CI=1 from the repository root, without the caller's PW_UX_STRESS.
+# list_tests <file> <env assignments...> -- <playwright args...>: lists the
+# tests from the repository root with only the given CI, PW_UX_STRESS and
+# PW_BLOB values (the caller's are removed).
 list_tests() {
-  local file="$1" extra_env="$2"
-  shift 2
-  if ! (cd "$root" && env -u PW_UX_STRESS -u PW_BLOB CI=1 ${extra_env:+"$extra_env"} \
+  local file="$1"
+  shift
+  local env_list=()
+  while [ "$1" != -- ]; do
+    env_list+=("$1")
+    shift
+  done
+  shift
+  if ! (cd "$root" && env -u CI -u PW_UX_STRESS -u PW_BLOB ${env_list[@]+"${env_list[@]}"} \
     pnpm exec playwright test --list --reporter=list "$@") > "$file" 2>&1; then
     cat "$file" >&2
     echo "LIST FAILED: playwright test --list exited non-zero" >&2
@@ -355,14 +480,14 @@ list_tests() {
     exit 1
   fi
 }
-list_tests "$work/list-ci.txt" ''
+list_tests "$work/list-ci.txt" CI=1 --
 if grep -Eq 'ux-stress\.spec\.ts|spectra-review\.spec\.ts' "$work/list-ci.txt"; then
   echo "LIST FAILED: an on-demand spec is listed with CI=1 and no PW_UX_STRESS" >&2
   exit 1
 fi
 list_ci_total="$(grep '^Total: ' "$work/list-ci.txt")"
 echo "- ok: CI=1: neither ux-stress.spec.ts nor spectra-review.spec.ts is listed ($list_ci_total)"
-list_tests "$work/list-on-demand.txt" PW_UX_STRESS=1 \
+list_tests "$work/list-on-demand.txt" CI=1 PW_UX_STRESS=1 -- \
   --project=chromium tests/browser/ux-stress.spec.ts tests/browser/spectra-review.spec.ts
 for spec in ux-stress.spec.ts spectra-review.spec.ts; do
   if ! grep -q "$spec" "$work/list-on-demand.txt"; then
@@ -372,9 +497,33 @@ for spec in ux-stress.spec.ts spectra-review.spec.ts; do
 done
 list_on_demand_total="$(grep '^Total: ' "$work/list-on-demand.txt")"
 echo "- ok: CI=1 PW_UX_STRESS=1, chromium, both files: both are listed ($list_on_demand_total)"
+list_tests "$work/list-local.txt" -- --project=chromium
+for spec in ux-stress.spec.ts spectra-review.spec.ts; do
+  if ! grep -q "$spec" "$work/list-local.txt"; then
+    echo "LIST FAILED: $spec is not listed without CI (chromium)" >&2
+    exit 1
+  fi
+done
+list_local_total="$(grep '^Total: ' "$work/list-local.txt")"
+echo "- ok: no CI, chromium: both are listed ($list_local_total)"
+# A test line of the list reporter names its file as <file>:<line>:<column>.
+on_demand_line='(ux-stress|spectra-review)\.spec\.ts:[0-9]+:[0-9]+'
+local_on_demand_tests="$(grep -Ec "$on_demand_line" "$work/list-local.txt" || true)"
+on_demand_tests="$(grep -Ec "$on_demand_line" "$work/list-on-demand.txt" || true)"
+on_demand_any="$(grep -Ec '\.ts:[0-9]+:[0-9]+' "$work/list-on-demand.txt" || true)"
+read -r on_demand_count on_demand_files < <(sed -En \
+  's/^Total: ([0-9]+) tests? in ([0-9]+) files?$/\1 \2/p' "$work/list-on-demand.txt") || true
+if [ "${on_demand_files:-}" != 2 ] || [ "$local_on_demand_tests" -eq 0 ] ||
+  [ "${on_demand_count:-}" != "$local_on_demand_tests" ] ||
+  [ "$on_demand_tests" != "$local_on_demand_tests" ] || [ "$on_demand_any" != "$on_demand_tests" ]; then
+  echo "LIST FAILED: with CI=1 PW_UX_STRESS=1 the listing must hold exactly the $local_on_demand_tests chromium tests of the two files listed without CI (Total: ${on_demand_count:-?} tests in ${on_demand_files:-?} files, $on_demand_tests test lines of the two files, $on_demand_any test lines in all)" >&2
+  sed -n '1,20p' "$work/list-on-demand.txt" >&2
+  exit 1
+fi
+echo "- ok: CI=1 PW_UX_STRESS=1 lists exactly the $local_on_demand_tests chromium tests of the two files that the listing without CI holds"
 list_seconds=$((SECONDS - list_start))
 echo
-echo "LIST: both listings as expected in $list_seconds s"
+echo "LIST: the three listings as expected in $list_seconds s"
 echo
 
 # Test values keyed by the expression the workflow maps to each env name.
@@ -625,4 +774,4 @@ check "unrelated roots (no merge base)" pull_request develop "$base_sha" "$unrel
   docs/a.md
 echo
 
-echo "SUMMARY: wiring $wiring_count/$wiring_count assertions hold; listing as expected in $list_seconds s (CI=1: $list_ci_total; CI=1 PW_UX_STRESS=1: $list_on_demand_total); gate $gate_cases/$gate_cases cases as expected; change detection $changes_cases/$changes_cases scenarios as expected"
+echo "SUMMARY: wiring $wiring_count/$wiring_count assertions hold; listing as expected in $list_seconds s (CI=1: $list_ci_total; CI=1 PW_UX_STRESS=1: $list_on_demand_total; no CI, chromium: $list_local_total); gate $gate_cases/$gate_cases cases as expected; change detection $changes_cases/$changes_cases scenarios as expected"

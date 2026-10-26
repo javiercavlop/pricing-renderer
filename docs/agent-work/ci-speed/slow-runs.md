@@ -42,7 +42,9 @@ From the current `playwright.config.ts`:
   `on-demand-specs.md`.
 
 With these limits, one Playwright run stops after 15 min at most in a shard job and after 30 min
-at most in any other CI run. The release job had no such limit before.
+at most in any other CI run, except the manual `on-demand-specs` job (40 min). The release job had
+no such limit before. Its `publish` job in `release.yml` still has no `timeout-minutes`; that file
+is outside this change, so it is an owner followup.
 
 ## What is not known
 

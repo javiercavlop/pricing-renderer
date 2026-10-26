@@ -58,6 +58,12 @@ with `PW_UX_STRESS: '1'`, and uploads `playwright-report/` as the artifact `on-d
 HTML reporter. The CLI flag sets the global timeout to 40 min (the config default on CI is 30 min);
 the job timeout is 50 min, so Playwright stops and writes its report first.
 
+The dispatch run otherwise uses the CI values of `playwright.config.ts`: `maxFailures` 20 and
+`retries` 2. It therefore stops after 20 failed tests, and the report then holds only the tests
+run until that point. If a full measurement of every test is wanted, pass `--max-failures=0` by
+hand-editing the dispatch step only. That is an owner choice; this change does not alter `ci.yml`
+for it.
+
 ## Where the output goes
 
 `spectra-review.spec.ts` writes no file of its own. Each test:
@@ -76,15 +82,17 @@ The job therefore uploads `playwright-report/` only.
 A manual dispatch also runs every other job of `ci.yml`. `changes` emits `rendered=true` for any
 event that is not `pull_request`, so the browser shards, `merge-report` and the `browsers` gate run
 as well. The `on-demand-specs` job is not in `needs` of `browsers`, so its result never changes the
-gate. A dispatch has its own concurrency group (`ci-CI-workflow_dispatch-refs/heads/<branch>`), so it does not
-replace a pending push run.
+gate. A dispatch has its own concurrency group
+(`ci-CI-workflow_dispatch-refs/heads/<branch>`), so it does not replace a pending push run.
 
 ## How this is guarded
 
 `docs/agent-work/ci-speed/simulate-ci.sh` asserts the wiring: `workflow_dispatch` in `on`, the `if:`
 of `on-demand-specs`, no `needs` on it, `browsers` not needing it, no mention of `PW_UX_STRESS`,
 `ux-stress` or `spectra-review` anywhere in `browser-shards` or the workflow env, no job other than
-`on-demand-specs` setting `PW_UX_STRESS`, the `PW_UX_STRESS: '1'` env, both spec paths and the
-global timeout on its run step, and the `testIgnore` patterns, condition and `defineConfig` entry
-in `playwright.config.ts`. It also lists the tests with `CI=1`, with and without `PW_UX_STRESS=1`.
-See `gate-simulation.md`.
+`on-demand-specs` setting `PW_UX_STRESS`, the `PW_UX_STRESS: '1'` env, both spec paths,
+`--project=chromium` and the global timeout on its run step, no mention of the flag or the files in
+`release.yml`, and the `testIgnore` patterns, condition and `defineConfig` entry in
+`playwright.config.ts`. It also lists the tests with `CI=1`, with and without `PW_UX_STRESS=1`, and
+without `CI`, and checks that the flagged listing holds exactly the chromium tests of the two
+files. See `gate-simulation.md`.

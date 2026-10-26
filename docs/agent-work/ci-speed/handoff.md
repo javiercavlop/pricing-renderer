@@ -1,7 +1,7 @@
 # Handoff: ci-speed
 
 - Status: waiting-review · Updated: 2026-10-26
-- Branch / head: `change/ci-speed` / round-2 fixes on top of `1eb1dab` · PR: none yet. The
+- Branch / head: `change/ci-speed` / round-3 fixes on top of `e583f7c` · PR: none yet. The
   workflow file needs an owner push with a Workflows token.
 
 ## Goal
@@ -34,14 +34,20 @@ self-hosted runners.
     `PW_UX_STRESS: '1'`, `--global-timeout=2400000`, 50 min job timeout, artifact
     `on-demand-specs-report`.
 - Round-1 review: all findings dispositioned (`review-round1.md`).
-- Round-2 review: all findings dispositioned (`review-round2.md`); test review asked for changes,
-  now applied in `simulate-ci.sh`.
-- Simulation (`gate-simulation.md`): wiring 40/40, `--list` as expected in 2 s (CI=1: 1125 tests in
-  8 files; CI=1 PW_UX_STRESS=1: 143 tests in 2 files), gate 48/48, change detection 47/47.
-- Registered checks of the round-2 task: frozen install, prettier, eslint on the config, the two
-  `--list` checks and `simulate-ci.sh`; all passed.
-- Mutations of the simulation were not run (no shell in the task); the procedure is in
-  `gate-simulation.md`.
+- Round-2 review: all findings dispositioned (`review-round2.md`).
+- Round-3 review: reviewer approved (minor doc findings); test review asked for changes with one
+  major (R3-TST-001, the shard run step pinned only by its `run` string). All findings
+  dispositioned in `review-round3.md` and applied in `simulate-ci.sh` and the docs. The major was
+  fixed after round 3; no round-4 review has seen the fix. `ci.yml` and `playwright.config.ts` did
+  not change in round 3.
+- Simulation (`gate-simulation.md`): wiring 54/54, three `--list` runs as expected in 3 s (CI=1:
+  1125 tests in 8 files; CI=1 PW_UX_STRESS=1: 143 tests in 2 files; no CI, chromium: 518 tests in
+  10 files; the flagged listing holds exactly the 143 chromium tests of the two files), gate
+  48/48, change detection 47/47.
+- Registered checks of the round-3 task: frozen install, prettier and `simulate-ci.sh`; all
+  passed.
+- Mutations of the simulation were not run (no shell in the round-2 and round-3 tasks); the
+  full-copy procedure and expected results are in `gate-simulation.md`.
 
 ## Decisions
 
@@ -89,13 +95,17 @@ self-hosted runners.
 - Risk: a wrong gate lets an unverified PR merge. Mitigation: the simulation, and the failing-test
   proof on the PR before merge.
 - PR text must state: the release job has `globalTimeout` 30 min and `maxFailures` 20 and skips
-  both on-demand specs; recover a stopped publish by re-running it.
+  both on-demand specs; recover a stopped publish by re-running it; the dispatch job stops after
+  20 failed tests (`--max-failures=0` by hand only, owner choice).
+- Owner followup: the `publish` job of `release.yml` has no `timeout-minutes` (outside this
+  change, R3-TST-005).
+- Risk: the R3-TST-001 fix has no independent review round yet.
 
 ## Next three steps
 
 1. The owner pushes `.github/workflows/ci.yml` (with `playwright.config.ts` and the docs) on
    `change/ci-speed` with a Workflows token and opens the PR into `develop`, using the PR-text
-   reminders of `review-round2.md`.
+   reminders of `review-round2.md` and `review-round3.md`.
 2. The owner runs the proof procedure of `gate-simulation.md` ("Proof on the PR"): a failing test
    turns `browsers` red; the revert turns it green; a re-run does not conflict on artifacts; a
    separate docs-only PR keeps `browsers` green with the shards skipped.
@@ -106,6 +116,6 @@ self-hosted runners.
 
 - Files: `playwright.config.ts`, `.github/workflows/ci.yml`, `docs/agent-work/ci-speed/`
   (`intake.md`, `slow-runs.md`, `lab-chromium.md`, `on-demand-specs.md`, `gate-simulation.md`,
-  `simulate-ci.sh`, `review-round1.md`, `review-round2.md`).
+  `simulate-ci.sh`, `review-round1.md`, `review-round2.md`, `review-round3.md`).
 - CI: PR 55 `browsers` run `121594178028` (713 passed, 850 skipped). No run of the new `ci.yml`
   yet.
