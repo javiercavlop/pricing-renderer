@@ -12,7 +12,7 @@ import { parsePricingYaml } from '../../src/yaml/index.js';
 
 type FilterActions = RenderActions & {
   updateAddOnSearch?: (value: string) => void;
-  revealAddOns?: () => void;
+  revealAddOns?: (byKeyboard?: boolean) => void;
 };
 
 type FilterState = Omit<RenderState, 'actions'> & {
@@ -322,6 +322,23 @@ describe('cap of 8 cards', () => {
     const template = renderAddOns(stateFor(synthetic(), [], { actions }) as RenderState);
     handlerFor(template, '@click', 'button', 'pr-button--quiet').fn();
     expect(reveal.calls).toBe(1);
+  });
+
+  // [utest->req~reveal-focus-visible~1] a keyboard click has detail 0, a pointer click does not
+  it('tells revealAddOns whether the click came from the keyboard', () => {
+    const seen: Array<boolean | undefined> = [];
+    const actions: FilterActions = {
+      ...baseActions,
+      revealAddOns: (byKeyboard) => {
+        seen.push(byKeyboard);
+      },
+    };
+    const template = renderAddOns(stateFor(synthetic(), [], { actions }) as RenderState);
+    const click = handlerFor(template, '@click', 'button', 'pr-button--quiet').fn;
+    click({ detail: 0 });
+    click({ detail: 1 });
+    click();
+    expect(seen).toEqual([true, false, false]);
   });
 
   it('hands the typed text to updateAddOnSearch', () => {

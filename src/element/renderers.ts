@@ -44,12 +44,12 @@ export interface RenderActions {
   updateOnlyDifferences(value: boolean): void;
   toggleGroup(groupId: string): void;
   setAllGroups(expanded: boolean): void;
-  revealGroup(groupId: string, origin?: HTMLElement): void;
+  revealGroup(groupId: string, origin?: HTMLElement, byKeyboard?: boolean): void;
   confirmAddOnChange(): void;
   cancelAddOnChange(): void;
   toggleBreakdown(): void;
   updateAddOnSearch?(value: string): void;
-  revealAddOns?(): void;
+  revealAddOns?(byKeyboard?: boolean): void;
 }
 
 export interface RenderState {
@@ -735,7 +735,11 @@ function renderCompactComparison(
                           class="pr-button pr-button--quiet"
                           type="button"
                           @click=${(event: MouseEvent) =>
-                            actions.revealGroup(group.id, event.currentTarget as HTMLElement)}
+                            actions.revealGroup(
+                              group.id,
+                              event.currentTarget as HTMLElement,
+                              event.detail === 0,
+                            )}
                         >
                           ${t(viewModel, 'pricing.showRemaining', {
                             count: group.rows.length - rows.length,
@@ -825,7 +829,11 @@ function renderTableComparison(
                           class="pr-button pr-button--quiet"
                           type="button"
                           @click=${(event: MouseEvent) =>
-                            actions.revealGroup(group.id, event.currentTarget as HTMLElement)}
+                            actions.revealGroup(
+                              group.id,
+                              event.currentTarget as HTMLElement,
+                              event.detail === 0,
+                            )}
                         >
                           ${t(viewModel, 'pricing.showRemaining', {
                             count: group.rows.length - rows.length,
@@ -1192,7 +1200,7 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
         ? html`<button
             class="pr-button pr-button--quiet"
             type="button"
-            @click=${() => actions.revealAddOns?.()}
+            @click=${(event?: MouseEvent) => actions.revealAddOns?.(event?.detail === 0)}
           >
             ${t(viewModel, 'pricing.showRemaining', { count: hidden })}
           </button>`

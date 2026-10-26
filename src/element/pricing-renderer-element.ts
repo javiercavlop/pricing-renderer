@@ -804,7 +804,7 @@ export class PricingRendererElement extends LitElement {
   };
 
   // [impl->req~reveal-focus-comparison~1] focus moves to the first row the reveal adds
-  private _revealGroup = (groupId: string, origin?: HTMLElement): void => {
+  private _revealGroup = (groupId: string, origin?: HTMLElement, byKeyboard = false): void => {
     const container = origin?.closest('tbody, .pr-comparison-group') ?? undefined;
     const before = container?.querySelectorAll(comparisonRowSelector).length ?? 0;
     this._revealedGroups = new Set([...this._revealedGroups, groupId]);
@@ -812,17 +812,21 @@ export class PricingRendererElement extends LitElement {
     if (!container) return;
     void this.updateComplete.then(() => {
       const rows = container.querySelectorAll<HTMLElement>(comparisonRowSelector);
-      if (rows.length > before) this._focusRevealed(rows[before]!);
+      if (rows.length > before) this._focusRevealed(rows[before]!, byKeyboard);
     });
   };
 
-  private _focusRevealed(target: HTMLElement): void {
+  private _focusRevealed(target: HTMLElement, byKeyboard: boolean): void {
     if (!target.hasAttribute('tabindex')) {
       target.setAttribute('tabindex', '-1');
       // the attribute is only a focus aid for the reveal, so it goes away on blur
       target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
     }
-    target.focus();
+    // Firefox keeps the cause of the earlier mouse click on the removed button and then skips
+    // :focus-visible for a script focus, so a keyboard activation asks for it explicitly.
+    // lib.dom has no focusVisible member in FocusOptions yet.
+    if (byKeyboard) target.focus({ focusVisible: true } as FocusOptions & { focusVisible: boolean });
+    else target.focus();
   }
 
   // [impl->req~summary-breakdown-stays-open~1] no selection change resets the open state
@@ -898,14 +902,14 @@ export class PricingRendererElement extends LitElement {
       this.requestUpdate();
     },
     // [impl->req~reveal-focus-addons~1] focus moves to the first add-on card the reveal adds
-    revealAddOns: () => {
+    revealAddOns: (byKeyboard = false) => {
       const shown = (): HTMLElement[] => [...this.querySelectorAll<HTMLElement>(addOnCardSelector)];
       const before = new Set(shown().map((card) => card.dataset.addOnId));
       this._addOnsRevealed = true;
       this.requestUpdate();
       void this.updateComplete.then(() => {
         const added = shown().find((card) => !before.has(card.dataset.addOnId));
-        if (added) this._focusRevealed(added);
+        if (added) this._focusRevealed(added, byKeyboard);
       });
     },
     confirmAddOnChange: this._confirmAddOnChange,
