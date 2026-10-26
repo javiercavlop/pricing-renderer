@@ -55,14 +55,15 @@ case "$WF_ATTEMPT_TIMEOUT" in
 esac
 
 failed=0
-# Budget invariant: the step timeout must exceed the worst case of every
-# attempt (timeout + 15 s kill grace), the dpkg repair (60 s) and the sleeps.
-need=$(( WF_ATTEMPTS * (attempt_secs + 15) + 60 + 10 * (WF_ATTEMPTS - 1) ))
+# Budget invariant: the step timeout must exceed the worst case by 30 s: every
+# attempt (timeout + 15 s kill grace) plus, per retry, the pkill wait (5 s),
+# the dpkg repair (60 s) and the sleep (10 s).
+need=$(( WF_ATTEMPTS * (attempt_secs + 15) + (WF_ATTEMPTS - 1) * (5 + 60 + 10) ))
 have=$(( STEP_MINUTES * 60 ))
-if [ "$have" -gt "$need" ]; then
-  echo "PASS: budget ${need}s worst case < step timeout ${have}s (${WF_ATTEMPTS} attempts x ${WF_ATTEMPT_TIMEOUT})"
+if [ "$have" -ge $(( need + 30 )) ]; then
+  echo "PASS: budget ${need}s worst case + 30s <= step timeout ${have}s (${WF_ATTEMPTS} attempts x ${WF_ATTEMPT_TIMEOUT})"
 else
-  echo "FAIL: budget ${need}s worst case >= step timeout ${have}s"
+  echo "FAIL: budget ${need}s worst case + 30s > step timeout ${have}s"
   failed=1
 fi
 
@@ -71,8 +72,10 @@ mkdir "$work/bin"
 cat > "$work/bin/sudo" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$STUB_DIR/sudo.log"
+# Like the real pkill when nothing matches: the step must survive it under -e.
+[ "${1:-}" = pkill ] && exit 1
 if [ "${1:-}" = tee ]; then
-  cat > "$STUB_DIR/tee.in"
+  cat > "$STUB_DIR/tee.$(basename "$2")"
 else
   cat >> "$STUB_DIR/sudo.stdin"
 fi
@@ -130,7 +133,39 @@ run_case() {
   [ "$dpkg" = "$want_dpkg" ] || problems="$problems dpkg repairs $dpkg want $want_dpkg;"
   [ "$(head -n1 "$stub_dir/sudo.log")" = "tee /etc/apt/apt.conf.d/99ci-resilience" ] \
     || problems="$problems first sudo call is not the apt config tee;"
-  [ "$(cat "$stub_dir/tee.in" 2>/dev/null)" = "$expect_apt" ] || problems="$problems apt config content differs;"
+  [ "$(cat "$stub_dir/tee.99ci-resilience" 2>/dev/null)" = "$expect_apt" ] || problems="$problems apt config content differs;"
+
+  # Leftover root apt processes are stopped (TERM, then KILL) before each
+  # repair, never on a first-attempt success; the mirror switch happens from
+  # attempt 2 on, after the first repair.
+  local t k d term kill mirrors first_term first_kill first_dpkg first_mirror
+  term=$(grep -cx 'pkill -TERM -x apt-get' "$stub_dir/sudo.log" || true)
+  kill=$(grep -cx 'pkill -KILL -x apt-get' "$stub_dir/sudo.log" || true)
+  mirrors=$(grep -cx 'tee /etc/apt/apt-mirrors.txt' "$stub_dir/sudo.log" || true)
+  [ "$term" = "$want_dpkg" ] || problems="$problems pkill TERM apt-get $term want $want_dpkg;"
+  [ "$kill" = "$want_dpkg" ] || problems="$problems pkill KILL apt-get $kill want $want_dpkg;"
+  [ "$mirrors" = "$want_dpkg" ] || problems="$problems mirror switches $mirrors want $want_dpkg;"
+  if [ "$want_dpkg" -gt 0 ]; then
+    for p in apt dpkg; do
+      for s in TERM KILL; do
+        grep -qx "pkill -$s -x $p" "$stub_dir/sudo.log" || problems="$problems missing pkill -$s -x $p;"
+      done
+      t=$(grep -nx "pkill -TERM -x $p" "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+      k=$(grep -nx "pkill -KILL -x $p" "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+      d=$(grep -nx 'timeout 60s dpkg --configure -a' "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+      { [ "${t:-0}" -gt 0 ] && [ "${t:-0}" -lt "${k:-0}" ] && [ "${k:-0}" -lt "${d:-0}" ]; } \
+        || problems="$problems order for $p is not TERM, KILL, repair;"
+    done
+    first_term=$(grep -nx 'pkill -TERM -x apt-get' "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+    first_kill=$(grep -nx 'pkill -KILL -x apt-get' "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+    first_dpkg=$(grep -nx 'timeout 60s dpkg --configure -a' "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+    first_mirror=$(grep -nx 'tee /etc/apt/apt-mirrors.txt' "$stub_dir/sudo.log" | head -n1 | cut -d: -f1)
+    { [ "$first_term" -lt "$first_kill" ] && [ "$first_kill" -lt "$first_dpkg" ]; } \
+      || problems="$problems order is not TERM, KILL, dpkg repair;"
+    [ "$first_dpkg" -lt "$first_mirror" ] || problems="$problems mirror switched before the first retry;"
+    [ "$(cat "$stub_dir/tee.apt-mirrors.txt" 2>/dev/null)" = 'http://archive.ubuntu.com/ubuntu/' ] \
+      || problems="$problems mirror content differs;"
+  fi
   [ "$(cat "$stub_dir/pnpm.args" 2>/dev/null)" = "$expect_pnpm" ] || problems="$problems pnpm args differ;"
   if [ "$want_warn" -gt 0 ]; then
     grep -q "^::warning::.*exit code ${want_code} " "$stub_dir/out" || problems="$problems warning lacks exit code $want_code;"
@@ -145,13 +180,14 @@ run_case() {
   fi
 }
 
-# Repairs run once between attempts, so (ATTEMPTS - 1) times when every
-# attempt fails; the cases below assume the workflow's ATTEMPTS is 2.
-[ "$WF_ATTEMPTS" = 2 ] || { echo "FAIL: cases assume ATTEMPTS=2, workflow has $WF_ATTEMPTS"; exit 1; }
+# Cleanup, repair and mirror switch run once per retry: 0 when the first
+# attempt works, 1 for fail-once, (ATTEMPTS - 1) when every attempt fails.
+retries_all=$(( WF_ATTEMPTS - 1 ))
+[ "$retries_all" -ge 1 ] || { echo "FAIL: workflow ATTEMPTS must be at least 2"; exit 1; }
 
 run_case first-attempt-ok 0 ok - 0 0 5 0
 run_case fail-once-then-ok 0 fail-once - 1 0 5 1 1
-run_case always-fails 1 fail - 2 1 5 1 1
-run_case hangs-timeout-fires 1 hang 1s 2 1 10 1 124
+run_case always-fails 1 fail - "$WF_ATTEMPTS" 1 5 "$retries_all" 1
+run_case hangs-timeout-fires 1 hang 1s "$WF_ATTEMPTS" 1 15 "$retries_all" 124
 
 [ "$failed" = 0 ] && echo "ALL PASS" || { echo "SOME FAILED"; exit 1; }
