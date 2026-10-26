@@ -46,23 +46,23 @@ Webflow 1440 light `en` has no line. Two other runs of it exist: dark `en` 4.17 
 
 Old = `report.md:460-490`. New = this file. Same pricing, same viewport, light `en`.
 
-| Pricing    | 1440 old | 1440 new | 1024 old | 1024 new | 375 old | 375 new |
-| ---------- | -------- | -------- | -------- | -------- | ------- | ------- |
-| salesforce | 6.05     | 3.12     | 8.72     | 3.81     | 17.41   | 15.09   |
-| github     | 7.44     | 3.15     | 11.33    | 3.84     | 20.19   | 17      |
-| dropbox    | 4.73     | 3.28     | 6.29     | 3.75     | 17.79   | 17.79   |
-| figma      | 4.04     | 2.44     | 5.25     | 2.65     | 19.39   | 18.41   |
-| webflow    | 8.82     | not measured | 12.62 | 5.61    | 44.63   | 44.63   |
+| Pricing    | 1440 old | 1440 new     | 1024 old | 1024 new | 375 old | 375 new |
+| ---------- | -------- | ------------ | -------- | -------- | ------- | ------- |
+| salesforce | 6.05     | 3.12         | 8.72     | 3.81     | 17.41   | 15.09   |
+| github     | 7.44     | 3.15         | 11.33    | 3.84     | 20.19   | 17      |
+| dropbox    | 4.73     | 3.28         | 6.29     | 3.75     | 17.79   | 17.79   |
+| figma      | 4.04     | 2.44         | 5.25     | 2.65     | 19.39   | 18.41   |
+| webflow    | 8.82     | not measured | 12.62    | 5.61     | 44.63   | 44.63   |
 
 Webflow 1440, other runs only: dark `en` 4.17, light `es` 4.21 (old light `en` 8.82).
 
 Summary over the measured pairs only (not comparable with the phase 1 figures over 29 pricings):
 
-| Viewport | Measured pricings | Min  | Median | Max   | At most 3 | At most 5 | Phase 1 value for the same pricings |
-| -------- | ----------------- | ---- | ------ | ----- | --------- | --------- | ----------------------------------- |
-| 1440     | 4 of 37           | 2.44 | 3.135  | 3.28  | 1 of 4    | 4 of 4    | 4.04 to 7.44, 0 of 4 at most 3       |
-| 1024     | 5 of 37           | 2.65 | 3.81   | 5.61  | 1 of 5    | 5 of 5    | 5.25 to 12.62, 0 of 5 at most 3      |
-| 375      | 5 of 37           | 15.09 | 17.79 | 44.63 | 0 of 5    | 0 of 5    | 17.41 to 44.63, 0 of 5 at most 3     |
+| Viewport | Measured pricings | Min   | Median | Max   | At most 3 | At most 5 | Phase 1 value for the same pricings |
+| -------- | ----------------- | ----- | ------ | ----- | --------- | --------- | ----------------------------------- |
+| 1440     | 4 of 37           | 2.44  | 3.135  | 3.28  | 1 of 4    | 4 of 4    | 4.04 to 7.44, 0 of 4 at most 3      |
+| 1024     | 5 of 37           | 2.65  | 3.81   | 5.61  | 1 of 5    | 5 of 5    | 5.25 to 12.62, 0 of 5 at most 3     |
+| 375      | 5 of 37           | 15.09 | 17.79  | 44.63 | 0 of 5    | 0 of 5    | 17.41 to 44.63, 0 of 5 at most 3    |
 
 The phase 1 figures for all 29 pricings (1440: 2.4 to 8.82, median 4.85, 2 of 29 at most 3; 375: 3.95
 to 44.63, 0 of 29 at most 3; `INTENT.md` O1) cannot be compared with the table above. The new range
@@ -73,11 +73,11 @@ are not measured).
 
 Old = `report.md:525-533`. New = this file, light `en`. "visible" = CTA flag 1.
 
-| Viewport | Old, same pricings                                              | New, measured pricings                                  | Not measured |
-| -------- | --------------------------------------------------------------- | ------------------------------------------------------- | ------------ |
-| 1440     | visible: salesforce, github, dropbox, figma. Not: webflow        | visible: salesforce, github, dropbox, figma             | webflow (light `en`) |
-| 1024     | visible: salesforce, figma. Not: github, dropbox, webflow        | visible: salesforce, github, dropbox, figma. Not: webflow | none       |
-| 375      | visible: salesforce, dropbox, figma, github. Not: webflow        | visible: salesforce, github, dropbox, figma. Not: webflow | none       |
+| Viewport | Old, same pricings                                        | New, measured pricings                                    | Not measured         |
+| -------- | --------------------------------------------------------- | --------------------------------------------------------- | -------------------- |
+| 1440     | visible: salesforce, github, dropbox, figma. Not: webflow | visible: salesforce, github, dropbox, figma               | webflow (light `en`) |
+| 1024     | visible: salesforce, figma. Not: github, dropbox, webflow | visible: salesforce, github, dropbox, figma. Not: webflow | none                 |
+| 375      | visible: salesforce, dropbox, figma, github. Not: webflow | visible: salesforce, github, dropbox, figma. Not: webflow | none                 |
 
 Webflow 1440, other runs: dark `en` and light `es` both `fv=8/1/1`, CTA visible (old: not visible).
 
@@ -90,12 +90,12 @@ userguiding, wrike, zoom) are not measured, so the overall counts are unknown.
 
 Old = `report.md:506-518`. New = `cards=<n>/<per row>` of this file. 375 is one column.
 
-| Pricing    | Plans | 1440 new      | 1024 new           | Lone last card at 1440 / 1024 |
-| ---------- | ----- | ------------- | ------------------ | ----------------------------- |
-| salesforce | 3     | 3             | 3                  | no / no (old 1024: 2+1)       |
-| github     | 3     | 3             | 3                  | no / no (old 1024: 2+1)       |
-| dropbox    | 5     | 3+2           | 3+2                | no / no (old 1024: 2+2+1)     |
-| figma      | 6     | 3+3           | 3+3                | no / no                       |
+| Pricing    | Plans | 1440 new                                                 | 1024 new  | Lone last card at 1440 / 1024               |
+| ---------- | ----- | -------------------------------------------------------- | --------- | ------------------------------------------- |
+| salesforce | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                     |
+| github     | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                     |
+| dropbox    | 5     | 3+2                                                      | 3+2       | no / no (old 1024: 2+2+1)                   |
+| figma      | 6     | 3+3                                                      | 3+3       | no / no                                     |
 | webflow    | 15    | 4+4+4+3 (dark `en`, light `es`; light `en` not measured) | 3+3+3+3+3 | no / no (old 1024: ends with a single card) |
 
 - Lone last card in the measured pairs: 0 of 4 at 1440 (light `en`), 0 of 5 at 1024. The phase 1 count of
@@ -108,11 +108,11 @@ Old = `report.md:506-518`. New = `cards=<n>/<per row>` of this file. 375 is one 
 
 Old = `report.md:555-559`. New = `trunc=` and `breaks=` of this file.
 
-| Count                     | Old                                                            | New, measured runs                                                              |
-| ------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Truncated texts           | 0 in every record                                              | 0 in all 33 lines                                                               |
-| Awkward breaks, light `en` | salesforce, figma (375), github had one (`report.md:557-558`)   | 0 in all 14 light `en` lines (salesforce, github, figma, dropbox, webflow)      |
-| Awkward breaks, other runs | `es` adds 1 or 2 on okta, github, dropbox                       | github 1440 light `es`: 2. All other 18 non-light-`en` lines: 0                 |
+| Count                      | Old                                                           | New, measured runs                                                         |
+| -------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Truncated texts            | 0 in every record                                             | 0 in all 33 lines                                                          |
+| Awkward breaks, light `en` | salesforce, figma (375), github had one (`report.md:557-558`) | 0 in all 14 light `en` lines (salesforce, github, figma, dropbox, webflow) |
+| Awkward breaks, other runs | `es` adds 1 or 2 on okta, github, dropbox                     | github 1440 light `es`: 2. All other 18 non-light-`en` lines: 0            |
 
 Examples of the breaks are not in the summary line (`SPECTRA_TEXT` lines were not in the window used),
 so none are listed. The other pricings with a phase 1 break (mailchimp, microsoft365Business, zoom,
