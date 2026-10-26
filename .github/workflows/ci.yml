@@ -190,13 +190,19 @@ jobs:
             | sudo tee /etc/apt/apt.conf.d/99ci-resilience > /dev/null
           attempt=1
           while true; do
+            rc=0
             if timeout --kill-after=15s "${ATTEMPT_TIMEOUT}" pnpm exec playwright install --with-deps ${INSTALL}; then
               exit 0
+            else
+              rc=$?
             fi
-            echo "::warning::Browser install attempt ${attempt}/${ATTEMPTS} failed or timed out after ${ATTEMPT_TIMEOUT}"
+            echo "::warning::Browser install attempt ${attempt}/${ATTEMPTS} failed with exit code ${rc} (timeout ${ATTEMPT_TIMEOUT})"
             if [ "${attempt}" -ge "${ATTEMPTS}" ]; then
               echo "::error::Browser install failed after ${ATTEMPTS} attempts"
               exit 1
+            fi
+            if ! sudo timeout 60s dpkg --configure -a; then
+              echo "::warning::dpkg --configure -a failed"
             fi
             attempt=$((attempt + 1))
             sleep 10
