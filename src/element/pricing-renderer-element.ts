@@ -825,7 +825,8 @@ export class PricingRendererElement extends LitElement {
     // Firefox keeps the cause of the earlier mouse click on the removed button and then skips
     // :focus-visible for a script focus, so a keyboard activation asks for it explicitly.
     // lib.dom has no focusVisible member in FocusOptions yet.
-    if (byKeyboard) target.focus({ focusVisible: true } as FocusOptions & { focusVisible: boolean });
+    if (byKeyboard)
+      target.focus({ focusVisible: true } as FocusOptions & { focusVisible: boolean });
     else target.focus();
   }
 
