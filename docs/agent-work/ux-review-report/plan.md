@@ -1,1 +1,1 @@
-Done: report written and integrated. Next: push, open PR, CI (watch prettier format:check on docs/agent-work), one reviewer on the pushed head, review package, lead_ready.
+Done: report written, round-1 findings fixed, prettier applied (task d09ca6e integrated). Next: push, confirm CI green, round-2 reviewer on new head, set_review_package, lead_ready.

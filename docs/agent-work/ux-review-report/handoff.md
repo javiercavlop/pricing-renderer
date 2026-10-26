@@ -1,5 +1,5 @@
-Goal: UX review report only (docs/agent-work/ux-review/report.md), no src change.
-State: task 4457509ea73f4e52 integrated (head 10c7674 before checkpoint commit). Report has baseline from CI browsers job (check run 121647693964, SPECTRA_UX_SUMMARY), 7 targets T1-T7, findings P1-P8, 11 proposals UX-1..UX-11 (UX-4,5,6,8 NEEDS OWNER CRP; UX-1,2,10 test-only), order table, owner questions Q-A..Q-G.
-Decisions: loneLastCard artifact fix placed in UX-1; no Spanish plural rule and no add-on grouping proposed (reasons cited in report); thresholds are proposals as INTENT Q2/Q3 are undecided.
-Risks: tables hand-aligned for prettier, prettier not run (CI format:check may flag); file:line citations unverified by a reviewer yet.
-Next: push chore/ux-review-report, open PR to develop, reviewer on pushed head (citations and numbers vs this log), fix findings, set_review_package, lead_ready.
+Goal: UX review report only (docs/agent-work/ux-review/report.md), no src change. PR 56.
+State: round-1 review (62a7a7a1) found 1 blocker (format), 1 major, 6 minor, 6 nit; all fixed by task d09ca6ea (prettier write+check passed via checks), integrated at head 51cdc2d. UX-4,5,6,7,8,11 now NEEDS OWNER CRP. Baseline numbers matched the CI log (check run 121647693964).
+Decisions: UX-7 and UX-11 need CRP (amend approved item 6 R3; every table look changes). Q-E notes the difference from INTENT Q5. Hand-aligned tables ruled out; prettier by checks only.
+Next: push chore/ux-review-report, wait CI green, round-2 reviewer (low risk, one) on the pushed head, set_review_package, lead_ready.
+Risks: round-2 reviewer may find residual citation errors; CI format:check should now pass.
