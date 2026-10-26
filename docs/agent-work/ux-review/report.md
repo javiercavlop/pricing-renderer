@@ -27,8 +27,8 @@ Paths: `report.md` in `docs/agent-work/visual-review-spectra/` is called "the SP
   P7 unit plurals outside English, P8 measurement gaps.
 - `loneLastCard` is true at 375 only because the grid has one column: a measurement artifact, fixed
   in the metric (test-only), not in the renderer.
-- 11 proposals (UX-1 to UX-11): 3 are test-only (UX-1, UX-2, UX-10), 8 change the product; 4 need an
-  owner CRP (UX-4, UX-5, UX-6, UX-8).
+- 11 proposals (UX-1 to UX-11): 3 are test-only (UX-1, UX-2, UX-10), 8 change the product; 6 need an
+  owner CRP (UX-4, UX-5, UX-6, UX-7, UX-8, UX-11).
 - Not measured by the stress spec: unit plurals, add-on marker, descriptions, add-on card heights,
   the total near add-ons, text breaks, contrast on the stress fixtures (section 2.5).
 
@@ -82,8 +82,9 @@ Derived from the numbers above (arithmetic, not new measurements):
 - Document minus renderer is constant per width: 3.86, 3.87 and 3.86 viewports at 1440; 6.33, 6.34
   and 6.34 at 375. That is the demo page around the renderer, independent of the fixture, so the
   document height is not a usable target. The renderer height is.
-- In pixels: renderer 2,493 / 3,717 / 6,237 px at 1440 (okta, clickup, webflow) and 4,653 / 20,673 /
-  27,308 px at 375.
+- In pixels (viewport height x the rounded value, so each is "about", plus or minus 4.5 px): renderer
+  about 2,493 / 3,717 / 6,237 px at 1440 (okta, clickup, webflow, x 900) and about 4,653 / 20,674 /
+  27,308 px at 375 (x 812).
 
 ### 2.3 What the baseline is, and is not
 
@@ -141,7 +142,9 @@ Values in the first column are proposals. "Met" is relative to those values. Det
 - T5. At 1440 clickup `[3,2]` and webflow `[4,4,4,3]` are balanced. The 375 `true` is the artifact above.
   The column rules are in `src/styles/base.css:1298-1440` (table in
   `docs/agent-work/spectra-item8-grid/spec.md:61-80`); the stress shapes have 0, 4, 5, 6 and 15 plans,
-  none of the exempt counts (7 and 13).
+  none of the exempt counts (7 and 13). The whole 600 to 839 px band is exempt from the lone-card rule
+  (5 plans give 2+2+1 and 15 plans give 2x7+1, `spectra-item8-grid/spec.md:39,69,79`) and was not
+  measured; T5 is "Met at 1440" only.
 - T6. Cite as "measured by the SPECTRA contrast scan, real pricings, not the stress fixtures". The scan
   is `contrast()` in `tests/browser/spectra-review.spec.ts:352-365`: axe-core with only the
   `color-contrast` rule, scoped to `pricing-renderer`, run in the "spectra captures" test on the 8
@@ -166,7 +169,7 @@ Marked unmeasured (from code); each is closed by UX-1 or UX-2.
   item 7 spec requires equal height per grid row, at most 1 px, asserted on 6 real pricings at 3 widths
   (`tests/browser/spectra-addon-grid.spec.ts:16-18,99`); no value is recorded here. The okta stress
   fixture has no plans and no comparison, so its renderer height holds the hero, the add-on section
-  and the summary: 2,493 px at 1440 and 4,653 px at 375 is an upper bound for the whole add-on
+  and the summary: about 2,493 px at 1440 and about 4,653 px at 375 is an upper bound for the whole add-on
   section (8 cards, the cap, `renderers.ts:80`).
 - Add-on grouping with 14 to 18 add-ons.
 - Text breaks and truncation: `measureText` exists (`spectra.ts:287-373`) and the stress spec does not
@@ -205,8 +208,11 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   (`renderers.ts:718-728`, `base.css:741-756`), up to 30 rows per group (`renderers.ts:618`), with the row
   description in full (`renderers.ts:708`). Plans stack one per row (`base.css:262-268`): 5 and 15
   cards. Clickup (136 + 38 = 174 rows) and webflow (90 + 12 = 102 rows) get differences-only
-  automatically (`renderers.ts:104-116`). How the height splits between plans, comparison and
-  add-ons is not measured (UX-1).
+  automatically (`renderers.ts:104-116`). At load only the first comparison group is open
+  (`pricing-renderer-element.ts:414,428-430`; `renderers.ts:627-633`), and the webflow stress groups
+  are tagged with about 11 to 12 rows each (`tests/fixtures/stress/build.ts:74,214-223,359,385`); clickup
+  is a single untagged group. How the height splits between plans, comparison and add-ons is not
+  measured (UX-1), so no block is claimed to be the largest at 375.
 - Metric it moves: `rendererHeightInViewports` at 375 (T2b), and the expanded-state height.
 
 ### 3.2 P2: first viewport, CTA and price
@@ -237,7 +243,7 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   webflow first column is effective, so the table scrolls horizontally. About 5 plan columns are visible
   at once (computed, unmeasured). Nothing marks the selected plan's column: the header cell is
   `<th scope="col">${plan.name}</th>` (`renderers.ts:778`), so after scrolling the user cannot see which
-  column is theirs.
+  column is theirs (unmeasured (from code)).
 - Cards: webflow at 1440 shows 4 cards at renderer top and the CTA is cut (2.2).
 - Long texts: not measured on the stress fixtures (2.5). Older real-pricing data is clean (0 truncated,
   0 awkward breaks in 111 lines, `o1-remeasure.md:133-141`); `break-word` is in place
@@ -299,8 +305,9 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
 - Remaining, from code: (a) any non-English UI locale leaves the unit as written
   (`units.ts:60-64,93`); in the 375 `es` stress variant the English units therefore read singular, for
   example "250 user" for the `user` unit (`build.ts:235`) where the 1440 `en` variant reads
-  "250 users" (derived from the code, not printed by the spec); (b) irregular nouns and units ending in `s`
-  (`class`) are left as written; (c) units with a slash, an uppercase letter or a digit are
+  "250 users" (derived from the code, not printed by the spec); (b1) irregular lowercase nouns not ending
+  in `s` get a wrong regular English plural ("person" becomes "persons", `units.ts:3-8,82`);
+  (b2) only units ending in `s` (`class`) are left as written; (c) units with a slash, an uppercase letter or a digit are
   intentionally unchanged (`request/month`, `GB`).
 - Why not add Spanish rules: units are written in the language of the pricing, not of the UI
   (`units.ts:60-62`). A Spanish rule keyed on the UI locale would corrupt an English unit shown in an
@@ -325,7 +332,8 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   English, `i18n.ts:217`). Internal `pr-*` classes and markup nesting are not public
   (`docs/theming.md:95`, `README.md:405-407`).
 - "NEEDS OWNER CRP" marks a change to the public API or a large change of the default look, which needs
-  a change request to the owner before implementation (`INTENT.md:106-107`).
+  a change request to the owner before implementation: public API per `INTENT.md:106-107`, default look
+  per the SPECTRA report (`report.md:100-101`).
 - Visual baselines: the only `toHaveScreenshot` call is in `tests/browser/pricing-renderer.spec.ts`.
   A baseline moves only on purpose, through the registered update check, and is never accepted blind.
 - Target values are proposals (section 6).
@@ -336,7 +344,7 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   the `loneLastCard` artifact. The request listed the fix with the assertion proposal; it moves here
   because every later baseline needs the corrected flag, and UX-10 asserts it.
 - Change: in `ux-stress.spec.ts`, (a) print `grid.firstCtaBottom`, `grid.cardWidths` and
-  `grid.layoutBreakdown`, already collected (`spectra.ts:134-141,235-237`); (b) call `measureText`
+  `grid.layoutBreakdown`, already collected (`tests/browser/helpers/spectra.ts:127-141,228-237`); (b) call `measureText`
   (`spectra.ts:287-373`); (c) record the height of the plans, comparison, add-ons and summary sections
   (`[data-pr-part]` hooks, `docs/theming.md:84-89`) in viewports; (d) add the expanded height with
   `revealAllRows` at both widths (`spectra.ts:100-121`); (e) per add-on grid row the height spread
@@ -423,18 +431,21 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
 ### UX-5 Narrow plan cards with the highlights closed
 
 - Objective: shorten the stacked plan cards at narrow widths when there are many plans.
-- Change: when `state.compact` is true (container below 840 px, `renderers.ts:58`,
-  `pricing-renderer-element.ts:540-541`) and the pricing has 4 plans or more, render the plan card as
+- Change: when `state.compact` is true and the pricing has 4 plans or more, render the plan card as
   top block, price, CTA, then the inheritance line and the highlight list inside a closed
   `<details class="pr-plan-details">` whose summary is the existing `pricing.moreDetails`
-  (`i18n.ts:40,124`). At 840 px and above, and below 4 plans, the markup is unchanged, so the demo
-  pricing (3 plans) keeps its baselines. Accessibility: native disclosure, keyboard operable, state
+  (`i18n.ts:40,124`). `state.compact` (`renderers.ts:58`) is true below 840 px and also at any width
+  when `layout="compact"` is set (`pricing-renderer-element.ts:540`; `docs/api-reference.md:341`), so
+  the change applies in both cases. With `compact` false (a container of 840 px or more without
+  `layout="compact"`), and below 4 plans, the markup is unchanged, so the demo pricing (3 plans) keeps
+  its baselines. Accessibility: native disclosure, keyboard operable, state
   announced by the browser; the highlights are not exposed while closed, which removes information
   from the default reading (an owner decision). A click inside `details` or `summary` does not select
   the plan (`renderers.ts:132-138`).
 - Files: `src/element/renderers.ts`, `src/styles/base.css`, `tests/unit` (render test: compact with 4
-  plans has the details and the CTA before it; compact with 3 plans and 840 px or more match the old
-  markup, the way `req~addon-grid-no-look-change~1` is tested in `spectra-item7-addon-grid/spec.md:20-36`),
+  plans has the details and the CTA before it; compact with 3 plans, and a non-compact render (840 px
+  or more, no `layout="compact"`), match the old markup; a case for `layout="compact"` at a wide
+  container; the way `req~addon-grid-no-look-change~1` is tested in `spectra-item7-addon-grid/spec.md:20-36`),
   `tests/browser/ux-stress.spec.ts`.
 - Proof: unit render tests; stress summary heights and `ctaVisible` at 375.
 - Metric: T2b and T1b. Target: no number decided; compare against UX-1's section heights. Expected
@@ -446,18 +457,24 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
 
 ### UX-6 Narrow comparison: smaller initial row cap
 
-- Objective: cut the compact comparison, the likely largest block at 375, without a new layout.
-- Change: when `state.compact` is true the initial cap per group is 10 rows instead of 30
-  (`renderers.ts:618`, a constant becomes a function of `compact`). "Show N more" reveals the rest as
+- Objective: cut the compact comparison without a new layout. Whether it is the largest block at 375 is
+  not known until UX-1 measures the section heights.
+- Change: when `state.compact` is true (below 840 px, and at any width with `layout="compact"`,
+  `pricing-renderer-element.ts:540`; `docs/api-reference.md:341`) the initial cap per group is 10 rows
+  instead of 30 (`renderers.ts:618`, a constant becomes a function of `compact`). "Show N more" reveals the rest as
   today (`renderers.ts:732-749`), the counter keeps counting rendered rows
   (`renderers.ts:627-633`), search and differences-only are unchanged. Before building it, UX-1's
   `layout="table"` measurement at 375 decides between this and showing the scrolling table at narrow
   widths; if the table is much shorter and its sticky header and column work, the owner may prefer it.
 - Files: `src/element/renderers.ts`, `tests/unit/shorter-page.test.ts` (extend), stress spec.
 - Proof: unit test that a compact render of a 40-row group shows 10 rows and the button reads "Show 30
-  more", and that a table render still shows 30; browser: `comparisonRows` rendered at 375.
-- Metric: T2b. Target: set after UX-1; the rows rendered initially drop to a third, so the initial
-  comparison height should drop by about two thirds (linear in rows, from code, unmeasured).
+  more", and that a table render (`compact` false) still shows 30; browser: `comparisonRows` rendered
+  at 375.
+- Metric: T2b. Target: set after UX-1. Expected effect per fixture, from code and unmeasured: only the
+  first group is open at load, so the cap matters for the open group only. Webflow groups carry about 11
+  to 12 rows each, so a cap of 10 removes about 0 to 2 rows there. Clickup is one untagged group with
+  more than 30 rows, so 30 rows become 10, a third of the rows and about two thirds fewer (linear in
+  rows). "A third" holds only for a single untagged group with 30 rows or more.
 - Risk: medium (more clicks to see rows; the reveal helper clicks the button, `spectra.ts:100-121`).
   Size: about 90 lines. Depends on: UX-1.
 - PUBLIC API: no. DEFAULT LOOK: major at narrow widths. NEEDS OWNER CRP: yes.
@@ -478,8 +495,9 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   fixtures where every add-on is unrestricted (if UX-2 shows otherwise the spec numbers change).
 - Metric: misleading marker cells. Target: 0.
 - Risk: low. Size: about 120 lines. Depends on: UX-2 (go if the count is above 0).
-- PUBLIC API: no. DEFAULT LOOK: minor. NEEDS OWNER CRP: no (it amends the merged item 6 rule, so record the
-  spec delta).
+- PUBLIC API: no. DEFAULT LOOK: minor. NEEDS OWNER CRP: yes: it amends MUST R3 of the owner-approved
+  item 6 (`spectra-item6-addon-marker/spec.md:32-37`; SPECTRA report `report.md:118`), so record the spec
+  delta and ask the owner.
 
 ### UX-8 Add-on filter: only the selected plan
 
@@ -490,8 +508,8 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   elegido"). Off by default. When on, add-ons for which `addOnAvailability` is false are not rendered;
   selected add-ons are never hidden (as `renderers.ts:1159-1173`); the live counter
   (`renderers.ts:1189`) reports the new count. Hidden when no plan is selected. State lives in the
-  element and resets on a new load like `_addOnSearch`; the optional `RenderState` and `RenderActions`
-  fields follow the pattern of `renderers.ts:51-52,67-69`.
+  element and resets on a new load like `_addOnSearch`; the render-state fields follow the pattern of
+  `renderers.ts:51-52,67-69`.
 - Accessibility model: a native labelled checkbox in the existing toolbar, focus order search, checkbox,
   cards; the polite live region announces the new count; the empty state `addon-empty` is reused.
 - Files: `src/element/renderers.ts`, `src/element/pricing-renderer-element.ts`, `src/core/i18n.ts`
@@ -502,7 +520,8 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
 - Metric: disabled cards among the cards rendered at load (P5). Target: the option exists and the count
   is 0 when on; no default change.
 - Risk: low. Size: about 150 lines. Depends on: UX-1 (to measure).
-- PUBLIC API: yes (one i18n key; optional render-state fields). DEFAULT LOOK: minor (a checkbox only in
+- PUBLIC API: yes (one i18n key; the render-state types are not exported, `src/element/index.ts:1-13`).
+  DEFAULT LOOK: minor (a checkbox only in
   filter mode). NEEDS OWNER CRP: yes (new key; the owner may waive it as additive).
 
 ### UX-9 Filler descriptions for plans and add-ons
@@ -553,32 +572,33 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
   contrast of the tint checked by the SPECTRA scan.
 - Metric: a selected column is identifiable (new unit assertion). Target: true for every table render
   with a selected plan.
-- Risk: low. Size: about 90 lines. Depends on: nothing.
-- PUBLIC API: no (class, existing key). DEFAULT LOOK: minor (every table gets a marked column, because
-  the default selection is the first public plan, `resolve.ts:19-21`). NEEDS OWNER CRP: no, but it moves
-  every table baseline.
+- Risk: low. Size: about 90 lines. Depends on: UX-1 (its `visiblePlanColumns` proof).
+- PUBLIC API: no (class, existing key). DEFAULT LOOK: major (every table gets a marked column, because
+  the default selection is the first public plan, `resolve.ts:19-21`, and every table baseline moves).
+  NEEDS OWNER CRP: yes.
 
 ## 5. Suggested order
 
 Measure first (UX-1, UX-2), then the cheap changes, then the ones that need a CRP, with the assertion
-last. UX-3, UX-7, UX-9 and UX-11 can start without a CRP; UX-4, UX-5, UX-6 and UX-8 wait for the owner.
+last. UX-3 and UX-9 and the test-only UX-1, UX-2 and UX-10 can start without a CRP; UX-4, UX-5, UX-6,
+UX-7, UX-8 and UX-11 wait for the owner.
 Send one CRP per proposal with the default it proposes, as the SPECTRA report did.
 
-| Order | Proposal                                | Priority | Size       | Risk   | Owner CRP | Metric                        |
-| ----- | --------------------------------------- | -------- | ---------- | ------ | --------- | ----------------------------- |
-| 1     | UX-1 Browser measurement extension      | P8       | ~250 lines | Low    | No        | all unmeasured rows           |
-| 2     | UX-2 Unit-level counts                  | P8       | ~200 lines | Low    | No        | marker, filler, unit counts   |
-| 3     | UX-3 Narrow top compaction              | P2       | ~60 lines  | Low    | No        | T1b price                     |
-| 4     | UX-7 Availability-aware marker          | P4       | ~120 lines | Low    | No        | misleading marker cells       |
-| 5     | UX-9 Filler descriptions                | P6       | ~60 lines  | Low    | No        | filler descriptions           |
-| 6     | UX-11 Selected plan column              | P3       | ~90 lines  | Low    | No        | selected column identifiable  |
-| 7     | UX-5 Narrow plan cards, details closed  | P1       | ~180 lines | Medium | Yes       | T2b, T1b                      |
-| 8     | UX-6 Narrow comparison, smaller cap     | P1       | ~90 lines  | Medium | Yes       | T2b                           |
-| 9     | UX-4 CTA under the price from 840 px    | P2       | ~120 lines | Medium | Yes       | T1a                           |
-| 10    | UX-8 Add-on filter, selected plan only  | P5       | ~150 lines | Low    | Yes       | disabled cards at load        |
-| 11    | UX-10 Stress spec asserts the targets   | P8       | ~150 lines | Medium | No        | T1 to T6 asserted             |
+| Order | Proposal                               | Priority | Size       | Risk   | Owner CRP | Metric                       |
+| ----- | -------------------------------------- | -------- | ---------- | ------ | --------- | ---------------------------- |
+| 1     | UX-1 Browser measurement extension     | P8       | ~250 lines | Low    | No        | all unmeasured rows          |
+| 2     | UX-2 Unit-level counts                 | P8       | ~200 lines | Low    | No        | marker, filler, unit counts  |
+| 3     | UX-3 Narrow top compaction             | P2       | ~60 lines  | Low    | No        | T1b price                    |
+| 4     | UX-7 Availability-aware marker         | P4       | ~120 lines | Low    | Yes       | misleading marker cells      |
+| 5     | UX-9 Filler descriptions               | P6       | ~60 lines  | Low    | No        | filler descriptions          |
+| 6     | UX-11 Selected plan column             | P3       | ~90 lines  | Low    | Yes       | selected column identifiable |
+| 7     | UX-5 Narrow plan cards, details closed | P1       | ~180 lines | Medium | Yes       | T2b, T1b                     |
+| 8     | UX-6 Narrow comparison, smaller cap    | P1       | ~90 lines  | Medium | Yes       | T2b                          |
+| 9     | UX-4 CTA under the price from 840 px   | P2       | ~120 lines | Medium | Yes       | T1a                          |
+| 10    | UX-8 Add-on filter, selected plan only | P5       | ~150 lines | Low    | Yes       | disabled cards at load       |
+| 11    | UX-10 Stress spec asserts the targets  | P8       | ~150 lines | Medium | No        | T1 to T6 asserted            |
 
-Dependencies: UX-3 to UX-6 and UX-8 depend on UX-1 for their gate; UX-7 and UX-9 depend on UX-2;
+Dependencies: UX-3 to UX-6, UX-8 and UX-11 depend on UX-1 for their gate; UX-7 and UX-9 depend on UX-2;
 UX-10 depends on UX-1 and on every product proposal the owner accepts.
 
 ## 6. Limitations and open questions
@@ -611,7 +631,9 @@ Questions for the owner:
 - Q-D. Should a row some plans lack and an add-on gives also show the "Add-on" marker? Item 6 R6 says no
   (`spectra-item6-addon-marker/spec.md:42-44`); UX-7 keeps that.
 - Q-E. Spanish plurals (INTENT Q5): keep `unitLabels` as the only path, as this report recommends, or
-  add a rule keyed to the pricing's language, which the model does not carry today?
+  add a rule keyed to the pricing's language, which the model does not carry today? INTENT proposes a
+  different answer to Q5, a roadmap goal at low priority (`INTENT.md:137-138`); this report's
+  recommendation differs from it.
 - Q-F. May the stress spec assert in CI (UX-10), given its cost and flakiness risk, or stay a
   report-only job?
 - Q-G. A `plan-density` attribute was proposed in phase 1 (`report.md:345-348`) and excluded from item 8
