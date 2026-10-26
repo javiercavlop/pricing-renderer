@@ -15,11 +15,15 @@
   `121511930049` (success), head `57a25c29b416cd84b2341b26dd9b8913887bb87a`. This is the commit that PR
   53 merged into develop. Whether the tree of `5b75ae6` equals that head was not verified.
 - No lab run: the lab has no Playwright browsers. Nothing was estimated or inferred.
-- The tail holds 33 `SPECTRA_SUMMARY` lines, for 5 pricings only: webflow, salesforce, github, dropbox,
-  figma. The earlier lines of the job log cannot be read through `ci_log` (maximum 1500 lines).
-- The lines include dark and `es` runs. Only light + `en` is used for the tables, as in `report.md`
-  (`report.md:440-442`). Other runs are marked as such.
-- `xscreens=` (expanded-state height, PR 53) is `-` ("not measured") on all 33 lines, so the expanded
+- The tail holds 35 `SPECTRA_SUMMARY` lines, for 6 pricings: webflow, salesforce, github, dropbox, figma
+  and clickup. Clickup has one line only (375 light `es`), which is not light `en` and is not used in
+  the tables (see below). The earlier lines of the job log cannot be read through `ci_log` (maximum
+  1500 lines).
+- The tail also holds all 111 `SPECTRA_TEXT` lines (37 fixtures x 3 viewports). They are the only
+  signal in this file that covers all 37 pricings (see signal 4).
+- The summary lines include dark and `es` runs. Only light + `en` is used for the tables, as in
+  `report.md` (`report.md:440-442`). Other runs are marked as such.
+- `xscreens=` (expanded-state height, PR 53) is `-` ("not measured") on all 35 lines, so the expanded
   height has no value here.
 - Definitions are unchanged: `screens` = renderer height / viewport height, collapsed state; `fv` =
   plan cards visible / price visible / CTA visible, read with the renderer at the top of the viewport
@@ -36,8 +40,12 @@
 | webflow    | not measured | measured | measured |
 
 The other 32 pricings (alphabetical list is in `tests/fixtures/spectra/`) are not measured at any
-viewport. Of these, 24 had values in phase 1 (`report.md:460-490`) and 8 had none (box, buffer, canva,
-circleci, clockify, crowdcast, databox, deskera).
+viewport for signals 1 to 3. Of these, 24 had values in phase 1 (`report.md:460-490`) and 8 had none
+(box, buffer, canva, circleci, clockify, crowdcast, databox, deskera).
+
+Clickup 375 light `es` was missed in the first version of this file. Its line is: screens 14.75,
+cards 4/1+1+1+1, `fv=2/1/1` (CTA visible), trunc 0, breaks 0. It is `es`, so it is not in the tables,
+and clickup stays "not measured" in light `en`.
 
 Webflow 1440 light `en` has no line. Two other runs of it exist: dark `en` 4.17 screens and light `es`
 4.21 screens. They are shown separately and are not counted as measured.
@@ -58,16 +66,19 @@ Webflow 1440, other runs only: dark `en` 4.17, light `es` 4.21 (old light `en` 8
 
 Summary over the measured pairs only (not comparable with the phase 1 figures over 29 pricings):
 
-| Viewport | Measured pricings | Min   | Median | Max   | At most 3 | At most 5 | Phase 1 value for the same pricings |
-| -------- | ----------------- | ----- | ------ | ----- | --------- | --------- | ----------------------------------- |
-| 1440     | 4 of 37           | 2.44  | 3.135  | 3.28  | 1 of 4    | 4 of 4    | 4.04 to 7.44, 0 of 4 at most 3      |
-| 1024     | 5 of 37           | 2.65  | 3.81   | 5.61  | 1 of 5    | 5 of 5    | 5.25 to 12.62, 0 of 5 at most 3     |
-| 375      | 5 of 37           | 15.09 | 17.79  | 44.63 | 0 of 5    | 0 of 5    | 17.41 to 44.63, 0 of 5 at most 3    |
+| Viewport | Measured pricings | Min   | Median | Max   | At most 3 | At most 5 | Phase 1, same pricings: range, at most 3, at most 5 |
+| -------- | ----------------- | ----- | ------ | ----- | --------- | --------- | --------------------------------------------------- |
+| 1440     | 4 of 37           | 2.44  | 3.135  | 3.28  | 1 of 4    | 4 of 4    | 4.04 to 7.44; 0 of 4; 2 of 4                        |
+| 1024     | 5 of 37           | 2.65  | 3.81   | 5.61  | 1 of 5    | 4 of 5    | 5.25 to 12.62; 0 of 5; 0 of 5                       |
+| 375      | 5 of 37           | 15.09 | 17.79  | 44.63 | 0 of 5    | 0 of 5    | 17.41 to 44.63; 0 of 5; 0 of 5                      |
+
+At 1024 the pricing above 5 is webflow (5.61). The 1440 old "at most 5" are dropbox (4.73) and figma
+(4.04); salesforce (6.05) and github (7.44) were above 5.
 
 The phase 1 figures for all 29 pricings (1440: 2.4 to 8.82, median 4.85, 2 of 29 at most 3; 375: 3.95
-to 44.63, 0 of 29 at most 3; `INTENT.md` O1) cannot be compared with the table above. The new range
-and median are for 4 or 5 pricings that were among the taller ones in phase 1 (zenhub 2.4 and quip 2.46
-are not measured).
+to 44.63, 0 of 29 at most 3; `INTENT.md` O1) cannot be compared with the table above, which covers 4 or
+5 pricings. Zenhub (2.4) and quip (2.46) are not measured. Whether the measured pricings are
+representative of the 37 is not known.
 
 ## Signal 2: call to action in the first viewport (`fv`, third value)
 
@@ -79,7 +90,12 @@ Old = `report.md:525-533`. New = this file, light `en`. "visible" = CTA flag 1.
 | 1024     | visible: salesforce, figma. Not: github, dropbox, webflow | visible: salesforce, github, dropbox, figma. Not: webflow | none                 |
 | 375      | visible: salesforce, dropbox, figma, github. Not: webflow | visible: salesforce, github, dropbox, figma. Not: webflow | none                 |
 
+The old 375 list in `report.md:531-533` is "some `es` variants": the CTA was visible for those pricings
+in some `es` runs, not necessarily in light `en`. So the old 375 row is not a strict light `en`
+comparison, and the 375 row above cannot show a change from old to new for those four pricings.
+
 Webflow 1440, other runs: dark `en` and light `es` both `fv=8/1/1`, CTA visible (old: not visible).
+Clickup 375 light `es`: `fv=2/1/1`, CTA visible (old list: visible, `es` caveat applies).
 
 Pricings where the CTA is not visible, over the measured pairs: 1440 none of 4; 1024 webflow (1 of 5);
 375 webflow (1 of 5). The phase 1 count over all pricings was 8 at 1440 and 7 at 375 (`INTENT.md` O1).
@@ -110,13 +126,19 @@ Old = `report.md:555-559`. New = `trunc=` and `breaks=` of this file.
 
 | Count                      | Old                                                           | New, measured runs                                                         |
 | -------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Truncated texts            | 0 in every record                                             | 0 in all 33 lines                                                          |
+| Truncated texts            | 0 in every record                                             | 0 in all 35 summary lines                                                  |
 | Awkward breaks, light `en` | salesforce, figma (375), github had one (`report.md:557-558`) | 0 in all 14 light `en` lines (salesforce, github, figma, dropbox, webflow) |
-| Awkward breaks, other runs | `es` adds 1 or 2 on okta, github, dropbox                     | github 1440 light `es`: 2. All other 18 non-light-`en` lines: 0            |
+| Awkward breaks, other runs | `es` adds 1 or 2 on okta, github, dropbox                     | github 1440 light `es`: 2. All other 20 non-light-`en` lines: 0            |
 
-Examples of the breaks are not in the summary line (`SPECTRA_TEXT` lines were not in the window used),
-so none are listed. The other pricings with a phase 1 break (mailchimp, microsoft365Business, zoom,
-okta) are not measured.
+The `SPECTRA_TEXT` lines are in the window: 111 lines, 37 fixtures x 3 viewports (1440x900, 1024x768,
+375x812), every fixture present. In all 111, `awkwardBreaks.count` is 0 and `truncatedTexts.count`
+is 0, with empty `examples`, and `cappedAtWordLimit` is false. This is the only signal here that covers
+all 37 pricings, and it is clean. It includes the pricings with a phase 1 break that are absent from
+the summary lines (mailchimp, zoom, okta). Phase 1 also listed microsoft365Business, which is not one
+of the 37 fixtures in these lines; whether it is a fixture was not checked. The `SPECTRA_TEXT` lines do
+not carry the run label (theme, locale) in the part read; I assumed they belong to the light `en`
+runs and did not verify it. The only non-zero count in the window is the 2 breaks of github 1440
+light `es` in a summary line. Since the `SPECTRA_TEXT` lines have no example, no break text is listed.
 
 ## Supporting evidence from the gating specs
 
