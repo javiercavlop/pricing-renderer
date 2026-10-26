@@ -1,0 +1,1 @@
+Done: S0-S2, Q6 (both heavy specs on demand), review rounds 1-3. Remaining: push chore/ci-speed, open PR into develop, set review package, lead_ready naming .github/workflows/ci.yml as the only workflow file needing the owner's token; owner runs gate proof on the PR.

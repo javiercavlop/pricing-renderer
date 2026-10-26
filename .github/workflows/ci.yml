@@ -9,13 +9,24 @@ on:
     branches:
       - main
       - develop
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# A new push to a pull request cancels the run still in progress for it.
+# Other runs are grouped by event and ref: runs for pushes to main and develop
+# are not cancelled once started, and a queued push run can be replaced only by
+# a newer push run. A manual dispatch has its own group, so it never replaces
+# a pending push run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version:
@@ -47,6 +58,7 @@ jobs:
     # failing the workflow; the step is still shown as failed in the run
     # summary. Promote it to a blocking check once advisories are triaged.
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     continue-on-error: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -60,10 +72,101 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level high
 
-  browsers:
+  changes:
+    # Decides whether the browser suite must run. Only pull requests into
+    # develop whose diff touches nothing but docs, changesets, specs, unit
+    # tests, root Markdown, LICENSE and the Dependabot config skip it; every
+    # other case (pushes, pull requests into main, an unreadable or empty
+    # diff) runs it.
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rendered: ${{ steps.filter.outputs.rendered }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: filter
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -u
+          emit() {
+            echo "rendered=$1" >> "$GITHUB_OUTPUT"
+            echo "rendered=$1: $2"
+            exit 0
+          }
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            emit true "event is $EVENT_NAME, not pull_request"
+          fi
+          if [ "$BASE_REF" = "main" ]; then
+            emit true "pull request into main"
+          fi
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            emit true "base or head SHA missing"
+          fi
+          # --no-renames lists both paths of a moved file, so moving a
+          # file out of a rendered path into docs/ still runs the browsers.
+          if ! files="$(git diff --no-renames --name-only "$BASE_SHA...$HEAD_SHA")"; then
+            emit true "git diff failed"
+          fi
+          if [ -z "$files" ]; then
+            emit true "empty diff"
+          fi
+          # Rendering inputs must never live under an allowlisted path
+          # below. In a case pattern `*` also matches `/`, so Markdown is
+          # allowed only at the repository root: any other nested file
+          # outside the allowlisted directories runs the browsers.
+          while IFS= read -r file; do
+            case "$file" in
+              examples/*)
+                emit true "$file is part of an example"
+                ;;
+              docs/* | .changeset/* | openspec/* | tests/unit/* | LICENSE | .github/dependabot.yml) ;;
+              */*)
+                emit true "$file can change rendered output"
+                ;;
+              *.md) ;;
+              *)
+                emit true "$file can change rendered output"
+                ;;
+            esac
+          done <<< "$files"
+          emit false "only docs, changesets, specs and unit tests changed"
+
+  browser-shards:
+    needs: changes
+    if: needs.changes.outputs.rendered == 'true'
+    name: browsers (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every project in playwright.config.ts must appear in the args of a
+        # shard, or its tests never run on pull requests.
+        include:
+          - id: chromium-1
+            name: chromium 1/2
+            args: --project=chromium --shard=1/2
+            install: chromium
+          - id: chromium-2
+            name: chromium 2/2
+            args: --project=chromium --shard=2/2
+            install: chromium
+          - id: firefox-webkit
+            name: firefox+webkit
+            args: --project=firefox --project=webkit
+            install: firefox webkit
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 10.19.0
@@ -72,12 +175,136 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
-      - run: pnpm test:browser
+      - name: Install browsers
+        env:
+          INSTALL: ${{ matrix.install }}
+        run: pnpm exec playwright install --with-deps ${INSTALL}
+      - name: Run browser tests
+        env:
+          ARGS: ${{ matrix.args }}
+          PW_BLOB: '1'
+        run: pnpm exec playwright test ${ARGS}
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: blob-report-${{ matrix.id }}
+          path: blob-report/
+          retention-days: 7
+          if-no-files-found: ignore
+          overwrite: true
+
+  merge-report:
+    # Builds one HTML report from the shard blobs. It never decides the
+    # outcome of the run: continue-on-error keeps a failure here advisory.
+    needs: browser-shards
+    if: ${{ !cancelled() && needs.browser-shards.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - run: pnpm exec playwright merge-reports --reporter html ./all-blob-reports
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+          if-no-files-found: ignore
+          overwrite: true
+
+  browsers:
+    # The required status check. It always runs and passes only when the
+    # change detection succeeded and either every shard passed or the shards
+    # were skipped because nothing rendered changed.
+    needs:
+      - changes
+      - browser-shards
+    # always(), never !cancelled(): GitHub counts a skipped required check as
+    # passed, so this job must run and fail itself, even on a cancelled run.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        env:
+          NEEDS_CHANGES: ${{ needs.changes.result }}
+          RENDERED: ${{ needs.changes.outputs.rendered }}
+          NEEDS_SHARDS: ${{ needs.browser-shards.result }}
+        run: |
+          if [ "$NEEDS_CHANGES" != "success" ]; then
+            echo "FAIL: changes job result is $NEEDS_CHANGES"
+            exit 1
+          fi
+          case "$NEEDS_SHARDS" in
+            success)
+              echo "PASS: every browser shard passed"
+              ;;
+            skipped)
+              if [ "$RENDERED" = "false" ]; then
+                echo "PASS: no rendered change, browser shards skipped"
+              else
+                echo "FAIL: browser shards skipped but rendered is '$RENDERED'"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "FAIL: browser shards result is $NEEDS_SHARDS"
+              exit 1
+              ;;
+          esac
+
+  # The two heavy specs, on demand only: tests/browser/ux-stress.spec.ts and
+  # the SPECTRA review spec tests/browser/spectra-review.spec.ts.
+  # playwright.config.ts ignores both on CI unless PW_UX_STRESS=1, so no shard
+  # runs them, and this is not a required check: `browsers` does not need this
+  # job. Trigger it from the Actions tab (CI > Run workflow) or with
+  # `gh workflow run ci.yml --ref <branch>`; GitHub accepts a dispatch only
+  # once this file is on the default branch. A manual dispatch also runs the
+  # other jobs: `changes` emits rendered=true for any event that is not
+  # pull_request, so the shards and the gate run too. The SPECTRA spec attaches
+  # its metrics and JPEGs to the tests, so they are inside playwright-report/.
+  on-demand-specs:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the on-demand specs
+        env:
+          PW_UX_STRESS: '1'
+        run: pnpm exec playwright test --project=chromium --global-timeout=2400000 tests/browser/ux-stress.spec.ts tests/browser/spectra-review.spec.ts
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: on-demand-specs-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+          overwrite: true
