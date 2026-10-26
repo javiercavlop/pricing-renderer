@@ -99,20 +99,20 @@ Clickup 375 light `es`: `fv=2/1/1`, CTA visible (old list: visible, `es` caveat 
 
 Pricings where the CTA is not visible, over the measured pairs: 1440 none of 4; 1024 webflow (1 of 5);
 375 webflow (1 of 5). The phase 1 count over all pricings was 8 at 1440 and 7 at 375 (`INTENT.md` O1).
-The pricings that were failing in phase 1 other than webflow (shopify, tableau, trello, trustmary,
+The pricings that were failing in phase 1 at 1440 other than webflow (shopify, tableau, trello, trustmary,
 userguiding, wrike, zoom) are not measured, so the overall counts are unknown.
 
 ## Signal 3: plan cards per row (`planCardsPerRow`) and lone last card
 
 Old = `report.md:506-518`. New = `cards=<n>/<per row>` of this file. 375 is one column.
 
-| Pricing    | Plans | 1440 new                                                 | 1024 new  | Lone last card at 1440 / 1024               |
-| ---------- | ----- | -------------------------------------------------------- | --------- | ------------------------------------------- |
-| salesforce | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                     |
-| github     | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                     |
-| dropbox    | 5     | 3+2                                                      | 3+2       | no / no (old 1024: 2+2+1)                   |
-| figma      | 6     | 3+3                                                      | 3+3       | no / no                                     |
-| webflow    | 15    | 4+4+4+3 (dark `en`, light `es`; light `en` not measured) | 3+3+3+3+3 | no / no (old 1024: ends with a single card) |
+| Pricing    | Plans | 1440 new                                                 | 1024 new  | Lone last card at 1440 / 1024                                          |
+| ---------- | ----- | -------------------------------------------------------- | --------- | ---------------------------------------------------------------------- |
+| salesforce | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                                                |
+| github     | 3     | 3                                                        | 3         | no / no (old 1024: 2+1)                                                |
+| dropbox    | 5     | 3+2                                                      | 3+2       | no / no (old 1024: 2+2+1)                                              |
+| figma      | 6     | 3+3                                                      | 3+3       | no / no                                                                |
+| webflow    | 15    | 4+4+4+3 (dark `en`, light `es`; light `en` not measured) | 3+3+3+3+3 | not measured (other runs: no) / no (old 1024: ends with a single card) |
 
 - Lone last card in the measured pairs: 0 of 4 at 1440 (light `en`), 0 of 5 at 1024. The phase 1 count of
   5 pricings with 3+1 at 1440 (`INTENT.md` O1) refers to pricings that are not measured here (slack,
@@ -134,10 +134,10 @@ The `SPECTRA_TEXT` lines are in the window: 111 lines, 37 fixtures x 3 viewports
 375x812), every fixture present. In all 111, `awkwardBreaks.count` is 0 and `truncatedTexts.count`
 is 0, with empty `examples`, and `cappedAtWordLimit` is false. This is the only signal here that covers
 all 37 pricings, and it is clean. It includes the pricings with a phase 1 break that are absent from
-the summary lines (mailchimp, zoom, okta). Phase 1 also listed microsoft365Business, which is not one
-of the 37 fixtures in these lines; whether it is a fixture was not checked. The `SPECTRA_TEXT` lines do
-not carry the run label (theme, locale) in the part read; I assumed they belong to the light `en`
-runs and did not verify it. The only non-zero count in the window is the 2 breaks of github 1440
+the summary lines (mailchimp, microsoft365Business, zoom, okta). The `SPECTRA_TEXT` lines do not carry
+the run label (theme, locale). They belong to the light `en` runs: `tests/browser/spectra-text.spec.ts:46`
+calls `applyPricing(page, readFixture(fixture.saas))` with no locale or theme, and
+`tests/browser/helpers/spectra.ts:49-50` defaults `locale = 'en'` and `theme = 'light'`. The only non-zero count in the window is the 2 breaks of github 1440
 light `es` in a summary line. Since the `SPECTRA_TEXT` lines have no example, no break text is listed.
 
 ## Supporting evidence from the gating specs
