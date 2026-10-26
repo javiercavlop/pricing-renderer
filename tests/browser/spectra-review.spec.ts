@@ -2,8 +2,11 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { revealAllRows } from './helpers/spectra.js';
 
 // All DOM metrics describe the collapsed default state: 30 rows per group, first group expanded.
+// The *Expanded fields (1440 and 375 only) are measured with every group open and every row
+// revealed, under the default differences-only filter.
 
 type Viewport = { width: number; height: number };
 type Metrics = Record<string, unknown>;
@@ -369,6 +372,7 @@ function summaryLine(metrics: Metrics): string {
     locale?: string;
     viewport?: Viewport;
     rendererHeightInViewports?: number;
+    rendererHeightInViewportsExpanded?: number;
     rendererTop?: number;
     planCardCount?: number;
     planCardsPerRow?: number[];
@@ -392,6 +396,8 @@ function summaryLine(metrics: Metrics): string {
     m.theme,
     m.locale,
     `screens=${m.rendererHeightInViewports}`,
+    // Every group open, every row revealed, default differences-only filter; '-' when not measured.
+    `xscreens=${m.rendererHeightInViewportsExpanded ?? '-'}`,
     `top=${m.rendererTop}`,
     `cards=${m.planCardCount}/${(m.planCardsPerRow ?? []).join('+')}`,
     `w=${m.planCardWidths?.min ?? '-'}`,
@@ -460,6 +466,38 @@ async function expectRendered(
   expect(Number(metrics.rendererHeight)).toBeGreaterThan(0);
 }
 
+const expandedViewports = [1440, 375];
+
+// Renderer height with every comparison group open and every row revealed. The differences-only
+// filter is left as the element renders it by default, so long pricings are measured with
+// differences only, not with every row. Report-only: a reveal that does not finish is reported in
+// expandedRevealComplete and never fails the test. Runs after collectMetrics, which is serialized
+// into the page and cannot call Playwright helpers.
+async function measureExpanded(page: Page, viewport: Viewport): Promise<Metrics> {
+  const revealComplete = await revealAllRows(page);
+  const measured = await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      updateComplete: Promise<unknown>;
+    };
+    await renderer.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return {
+      height: renderer.getBoundingClientRect().height,
+      rows: renderer.querySelectorAll('[data-pr-part="comparison-row"]').length,
+    };
+  });
+  // Same rounding as rendererHeightInViewports in collectMetrics.
+  const round = (value: number) => Math.round(value * 100) / 100;
+  return {
+    rendererHeightExpanded: round(measured.height),
+    rendererHeightInViewportsExpanded: round(measured.height / viewport.height),
+    comparisonRowsExpanded: measured.rows,
+    expandedRevealComplete: revealComplete,
+  };
+}
+
+// [utest->req~spectra-expanded-height~1] At 1440 and 375 the metrics also report the expanded
+// height (report-only, no assertion on it).
 test.describe('spectra metrics', () => {
   for (const fixture of fixtures) {
     for (const viewport of viewports) {
@@ -472,11 +510,15 @@ test.describe('spectra metrics', () => {
         const state = await applyPricing(page, readFixture(fixture.saas), 'en', 'light');
         const name = `${fixture.saas}-${viewport.width}-light-en`;
         const metrics = await page.evaluate(collectMetrics, viewport);
+        const expanded = expandedViewports.includes(viewport.width)
+          ? await measureExpanded(page, viewport)
+          : {};
         await report(testInfo, name, {
           fixture: fixture.saas,
           theme: 'light',
           locale: 'en',
           ...metrics,
+          ...expanded,
         });
         await expectRendered(page, state, metrics, fixture.saas);
         expectStickyHeader(metrics);

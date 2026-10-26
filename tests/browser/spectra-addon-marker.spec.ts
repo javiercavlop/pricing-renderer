@@ -4,6 +4,7 @@ import {
   openRenderer,
   planCount,
   readFixture,
+  revealAllRows,
   type Viewport,
 } from './helpers/spectra.js';
 
@@ -29,31 +30,6 @@ test.beforeEach(({ browserName }) => {
   test.skip(browserName !== 'chromium', 'The spectra checks run in chromium only.');
 });
 
-// Opens every comparison group and every "show more" button until nothing is left to reveal.
-async function revealAllRows(page: Page): Promise<void> {
-  const revealed = await page.evaluate(async () => {
-    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
-      updateComplete: Promise<unknown>;
-    };
-    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-    const scope = '[data-pr-part="comparison"]';
-    const pending = () => [
-      ...renderer.querySelectorAll<HTMLButtonElement>(
-        `${scope} button[aria-expanded="false"], ${scope} button.pr-button--quiet`,
-      ),
-    ];
-    for (let round = 0; round < 100; round += 1) {
-      const buttons = pending();
-      if (buttons.length === 0) return true;
-      for (const button of buttons) button.click();
-      await renderer.updateComplete;
-      await nextFrame();
-    }
-    return false;
-  });
-  expect(revealed, 'every comparison group and remaining row should be revealable').toBe(true);
-}
-
 async function openComparison(
   page: Page,
   viewport: Viewport,
@@ -68,7 +44,10 @@ async function openComparison(
     page.locator(compact ? '.pr-compact-comparison' : '.pr-comparison-table'),
     `the ${compact ? 'compact' : 'table'} comparison layout at ${viewport.width}px`,
   ).toHaveCount(1);
-  await revealAllRows(page);
+  expect(
+    await revealAllRows(page),
+    'every comparison group and remaining row should be revealable',
+  ).toBe(true);
 }
 
 type Contrast = { count: number; worst: number | null; failures: string[] };
