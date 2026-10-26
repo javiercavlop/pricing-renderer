@@ -1,6 +1,15 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 
 const visualSnapshotSuffix = process.platform === 'linux' ? '-linux' : '';
+
+// Shard jobs set PW_BLOB=1 so their reports can be merged later.
+const isBlobRun = Boolean(process.env.CI) && process.env.PW_BLOB === '1';
+// Shard jobs have a 25 minute job timeout, so the run must end before it.
+const globalTimeoutMs = process.env.CI ? (isBlobRun ? 15 : 30) * 60_000 : 0;
+const ciReporter: ReporterDescription[] = isBlobRun
+  ? [['blob'], ['github']]
+  : [['html', { open: 'never' }], ['github']];
+const reporter = process.env.CI ? ciReporter : 'list';
 
 export default defineConfig({
   testDir: './tests/browser',
@@ -18,9 +27,9 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   // On CI a run that goes wrong stops early instead of using the whole job budget.
-  globalTimeout: process.env.CI ? 30 * 60_000 : 0,
+  globalTimeout: globalTimeoutMs,
   maxFailures: process.env.CI ? 20 : 0,
-  reporter: process.env.CI ? [['html', { open: 'never' }], ['github']] : 'list',
+  reporter,
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
