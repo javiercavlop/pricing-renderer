@@ -12,10 +12,15 @@ import type {
   PricingPresentation,
   PricingSelection,
   PricingVisibility,
+  SelectionComparison,
 } from '../core/index.js';
 import {
+  PricingChangeReviewElement,
   PricingRendererElement,
+  definePricingChangeReview,
   type PricingActionEvent,
+  type PricingChangeBackEvent,
+  type PricingChangeConfirmEvent,
   type PricingDiagnosticEvent,
   type PricingReadyEvent,
   type PricingSelectionChangeEvent,
@@ -106,12 +111,56 @@ export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingR
 
 PricingRenderer.displayName = 'PricingRenderer';
 
-export { PricingRendererElement };
+const PricingChangeReviewBase = createComponent({
+  tagName: 'pricing-change-review',
+  elementClass: PricingChangeReviewElement,
+  react: React,
+  events: {
+    onConfirm: 'pricing-change-confirm' as EventName<PricingChangeConfirmEvent>,
+    onBack: 'pricing-change-back' as EventName<PricingChangeBackEvent>,
+  },
+});
+
+export interface PricingChangeReviewProps {
+  comparison?: SelectionComparison;
+  notices?: string[];
+  pending?: boolean;
+  error?: string;
+  locale?: string;
+  messages?: MessageCatalog;
+  confirmLabel?: string;
+  className?: string;
+  id?: string;
+  onConfirm?: (event: PricingChangeConfirmEvent) => void;
+  onBack?: (event: PricingChangeBackEvent) => void;
+}
+
+// [impl->req~review-react~1] [impl->req~review-react-registers~1]
+// The tag is registered when the component renders (a no-op without a registry), so a React host
+// needs no extra import and apps that never render the component never register the tag.
+export const PricingChangeReview = React.forwardRef<
+  PricingChangeReviewElement,
+  PricingChangeReviewProps
+>((props, ref) => {
+  definePricingChangeReview();
+  return React.createElement(PricingChangeReviewBase, {
+    ...props,
+    ref,
+  });
+});
+
+PricingChangeReview.displayName = 'PricingChangeReview';
+
+export { PricingChangeReviewElement, PricingRendererElement };
 // [impl->req~react-reexports-result-type~1]
 export type {
   ApplySelectionResult,
   PricingActionDetail,
   PricingActionEvent,
+  PricingChangeBackDetail,
+  PricingChangeBackEvent,
+  PricingChangeConfirmDetail,
+  PricingChangeConfirmEvent,
   PricingDiagnosticDetail,
   PricingDiagnosticEvent,
   PricingReadyDetail,

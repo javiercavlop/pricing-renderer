@@ -90,6 +90,8 @@ export const enUS: MessageCatalog = {
   'pricing.currentAddOn': 'Current',
   'pricing.reviewChangeCta': 'Review change ({total})',
   'pricing.pending': 'Processing…',
+  'pricing.reviewConfirm': 'Confirm change',
+  'pricing.reviewBack': 'Back',
 };
 
 export const esES: MessageCatalog = {
@@ -182,6 +184,8 @@ export const esES: MessageCatalog = {
   'pricing.currentAddOn': 'Actual',
   'pricing.reviewChangeCta': 'Revisar cambio ({total})',
   'pricing.pending': 'Procesando…',
+  'pricing.reviewConfirm': 'Confirmar cambio',
+  'pricing.reviewBack': 'Volver',
 };
 
 const registeredCatalogs = new Map<string, MessageCatalog>([

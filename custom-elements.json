@@ -225,6 +225,87 @@
           ]
         }
       ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "dist/element/change-review-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "PricingChangeReviewElement",
+          "customElement": true,
+          "tagName": "pricing-change-review",
+          "description": "The review of a subscription change: it shows the comparison of the customer's current subscription with the edit, and asks the host to confirm it. Registered by importing pricing-renderer/define-change-review.",
+          "members": [
+            {
+              "kind": "field",
+              "name": "comparison",
+              "type": { "text": "SelectionComparison | undefined" },
+              "description": "The result of compareSelections. Nothing is rendered while it is unset."
+            },
+            {
+              "kind": "field",
+              "name": "notices",
+              "type": { "text": "string[]" },
+              "description": "Notices from the host, rendered as text. Defaults to an empty list."
+            },
+            {
+              "kind": "field",
+              "name": "pending",
+              "type": { "text": "boolean" },
+              "attribute": "pending",
+              "description": "True while the host applies the change. Confirm ignores activations, and the attribute is reflected. Confirm sets it when pricing-change-confirm is not canceled."
+            },
+            {
+              "kind": "field",
+              "name": "error",
+              "type": { "text": "string | undefined" },
+              "attribute": "error",
+              "description": "A plain-text error message from the host, rendered as text."
+            },
+            {
+              "kind": "field",
+              "name": "locale",
+              "type": { "text": "string" },
+              "attribute": "locale"
+            },
+            {
+              "kind": "field",
+              "name": "messages",
+              "type": { "text": "MessageCatalog | undefined" }
+            },
+            {
+              "kind": "field",
+              "name": "confirmLabel",
+              "type": { "text": "string | undefined" },
+              "attribute": "confirm-label",
+              "description": "Replaces the text of the Confirm button (pricing.reviewConfirm)."
+            }
+          ],
+          "attributes": [
+            { "name": "pending", "fieldName": "pending", "type": { "text": "boolean" } },
+            { "name": "error", "fieldName": "error", "type": { "text": "string | undefined" } },
+            { "name": "locale", "fieldName": "locale", "type": { "text": "string" } },
+            {
+              "name": "confirm-label",
+              "fieldName": "confirmLabel",
+              "type": { "text": "string | undefined" }
+            }
+          ],
+          "events": [
+            {
+              "name": "pricing-change-confirm",
+              "type": { "text": "CustomEvent<PricingChangeConfirmDetail>" },
+              "description": "Fired when Confirm is activated while pending is false and the relation is not current. Cancelable. When it is not canceled, the element sets pending to true. The detail has a deep copy of the comparison."
+            },
+            {
+              "name": "pricing-change-back",
+              "type": { "text": "CustomEvent<PricingChangeBackDetail>" },
+              "description": "Fired when Back is activated. Cancelable, with no default action. The detail has a deep copy of the comparison."
+            }
+          ]
+        }
+      ]
     }
   ]
 }

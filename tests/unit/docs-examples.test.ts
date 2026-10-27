@@ -19,7 +19,7 @@
 //   <td><code>PR_XXX</code></td> cell per code; docs/vue.md has @name per
 //   event; the README events list has - `name` per event.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -48,13 +48,13 @@ const sourceFiles = ['src/core', 'src/yaml', 'src/element'].flatMap((dir) =>
 const sourceText = (files: string[]): string =>
   files.map((file) => readFileSync(file, 'utf8')).join('\n');
 
-const eventNames = new Set(
-  [
-    ...sourceText(listFiles('src/element', ['.ts'])).matchAll(
-      /new CustomEvent(?:<[^>(]*>)?\(\s*'([a-z-]+)'/g,
-    ),
-  ].map((m) => m[1]!),
-);
+// The events of <pricing-renderer>. <pricing-change-review> (src/element/change-review-*.ts) has
+// its own events, which are documented with its UI (add-subscription-change-flow, phase F5).
+const isRenderer = (file: string): boolean => !basename(file).startsWith('change-review-');
+const rendererFiles = listFiles('src/element', ['.ts']).filter(isRenderer);
+const eventPattern = /new CustomEvent(?:<[^>(]*>)?\(\s*'([a-z-]+)'/g;
+const eventMatches = sourceText(rendererFiles).matchAll(eventPattern);
+const eventNames = new Set([...eventMatches].map((m) => m[1]!));
 
 const diagnosticCodes = new Set(
   [...sourceText(sourceFiles).matchAll(/'(PR_[A-Z_]+)'/g)].map((m) => m[1]!),

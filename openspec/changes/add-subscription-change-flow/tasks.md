@@ -187,6 +187,15 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
     `tests/browser/change-review-data.spec.ts` (review page: events, the Confirm default action,
     guards, base parts, text-only rendering, light DOM).
   - Checks: `unit` and `browser` red before.
+  - Status: written. `tests/unit/change-review.test.ts` ran red before E1 (16 of 17 tests failed;
+    the 17th, `req~review-define-separate~1`, guards what already holds) and is green after it.
+    `tests/browser/change-review-data.spec.ts` (with `tests/browser/helpers/change-review.ts`) is
+    written, not run: the lab has no browser, so its red-before and green runs are left to the
+    `browser` check in CI. Unticked until then.
+  - Note: in node, the first import of lit sets `globalThis.customElements` to its own registry
+    shim, so the unit tests import lit first and stub the registry they need (none, or a recording
+    stub). `tests/unit/docs-examples.test.ts` now scans only the renderer's events; the review
+    events are documented with phase F5.
 - [ ] E1 Element, events and registration.
   - Files:
     - the new `src/element/change-review-element.ts`: properties, events, the Confirm default
@@ -203,7 +212,12 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
     - `examples/vanilla/src/main.ts`: import `pricing-renderer/define-change-review` for the
       review page.
   - Checks: `typecheck`, `lint`, `unit`, `browser`, `package`.
-- [ ] E2 React wrapper and manifest.
+  - Status: implemented. `typecheck`, `lint`, `unit` and `package` pass; `browser` is not run (no
+    browser in the lab), so the base-part scenarios are not confirmed in a real browser. Unticked
+    until the `browser` check passes in CI.
+  - Note: the `package:check` entrypoint `./define-change-review` is appended after `./space`, so
+    the string pinned by `tests/unit/space-adapter.test.ts` still matches.
+- [x] E2 React wrapper and manifest.
   - Files:
     - `src/react/index.ts`: `PricingChangeReview` with registration on render, and the event type
       re-exports. This is after C5.
