@@ -132,6 +132,29 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
   row below stays.
   Update 2026-10-27: the on-demand job now exists; see the first backlog row.
 
+## Release
+
+Owner decision of 2026-10-27, which replaces the postponement of Q6:
+
+- There is NO release of pricing-renderer until further notice. All work accumulates in `develop`.
+- The next version is ONE single release. It carries the 20 pending changesets plus everything
+  requested on 2026-10-27.
+- It goes out only when the owner says that the companion PRs to SPACE, SPHERE and the SPACE
+  clients (space-node-client, space-python-client, space-java-client, space-react-client) are
+  merged.
+- Until then: no release PR to main, no `changeset version`, no npm publish. New changesets stay
+  pending.
+
+## Phases
+
+Phase list from the owner's plan:
+
+- Phase 0, hygiene and fixes.
+- Phase 1, design-system integration and private pricings.
+- Phase 2, subscription-change flow.
+- Phase 3, React headless and composition.
+- Phase 4, reference integration with SPACE (later).
+
 ## Backlog
 
 Every entry is not verified, from earlier task followups.
@@ -147,7 +170,8 @@ Every entry is not verified, from earlier task followups.
   (`docs/audit-report.md:38-41`). Objective: O4.
 - Release workflow findings: global npm, and the publish job runs everything
   (`docs/audit-report.md:88-99`). Objective: O4.
-- Release the 17 pending changesets; `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). Postponed
-  by the owner (Q6): no release to main until the owner asks. Objective: O3.
+- Release the 20 pending changesets; `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). On hold by
+  owner decision of 2026-10-27 (see "Release"): no release until further notice; the single next
+  release also includes everything requested on 2026-10-27. Objective: O3.
 - Refresh the stale `docs/agent-work/spectra-grid-and-text/handoff.md`. Objective: O1.
 - Record the expanded-state values that PR #53 now measures (see the phase 2 row). Objective: O2.
