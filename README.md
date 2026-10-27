@@ -177,8 +177,9 @@ configurePricingRenderer({
 
 Every option is optional. The deterministic built-in defaults are English
 (`en-US`), `/pricing`, selectable plans/add-ons, visible CTAs, and editable
-variables. `pricingPath` is the canonical host-application route; the library
-exposes it but does not mutate or install routes in the host router. An
+variables. `pricingPath` is deprecated metadata kept for compatibility: the
+host router owns the route, and nothing in the renderer reads the value (it is
+only validated, stored and reflected as the `pricing-path` attribute). An
 individual element or React instance can override any value. With
 `variablesEnabled: false`, formulas use the iPricing variable defaults.
 
@@ -201,8 +202,9 @@ Render a public remote source:
 ></pricing-renderer>
 ```
 
-`locale` and `pricingPath` are initial host configuration. Set them globally,
-when the renderer is created, or through the equivalent properties/React props.
+`locale` is initial host configuration (`pricingPath` is deprecated and has no
+effect). Set it globally, when the renderer is created, or through the
+equivalent property/React prop.
 The library does not inject a language picker into production UI. The showcase
 picker only demonstrates that locale configuration can be changed reactively.
 

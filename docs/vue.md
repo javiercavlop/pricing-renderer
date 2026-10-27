@@ -67,7 +67,8 @@ Property only (no attribute exists), bind with `.prop`:
 String attributes, written as plain attributes:
 
 - `src`, `mode`, `layout`, `visibility`, `theme`, `locale`
-- `pricing-path` (property `pricingPath`) and `loading-label` (property
+- `pricing-path` (property `pricingPath`, deprecated metadata with no runtime
+  effect; the host router owns the route) and `loading-label` (property
   `loadingLabel`)
 
 Provide exactly one of `pricing`, `yaml` or `src`; otherwise the element reports

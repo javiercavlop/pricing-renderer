@@ -1,8 +1,8 @@
 # Theming
 
 The component uses light DOM so it can inherit host typography and participate
-in an application theme. Structural styles live in the
-`pricing-renderer.base` layer and default token values in
+in an application theme. Structural styles (`base.css`) live directly in the
+`pricing-renderer` layer, and default token values (`theme.css`) in its sublayer
 `pricing-renderer.theme`.
 
 ## Choose a strategy
@@ -131,6 +131,25 @@ badge names the state, so it is not communicated by color alone.
 
 Internal `pr-*` class names and markup nesting are not public contracts.
 
+## Summary end padding and the breakdown toggle
+
+The `summary` part reserves padding at its inline end (`padding-inline-end` of
+`var(--pr-space-4) + 24px + var(--pr-space-2)`) so the text does not run under the
+`breakdown-toggle`, which is positioned absolutely at the top inline-end corner and
+does not change the block size. No CSS variable controls this padding. The
+stylesheet's rule is layered, so an unlayered host rule on the stable part hook
+overrides it:
+
+```css
+pricing-renderer [data-pr-part='summary'] {
+  padding-inline-end: 4rem;
+}
+```
+
+If you move or resize `breakdown-toggle` (for example with its own
+`inset-inline-end`), keep the end padding at least as wide as the toggle plus its
+offset, or the summary text overlaps it.
+
 ## The review element
 
 `<pricing-change-review>` is its own element, not inside `pricing-renderer`, so it
@@ -227,7 +246,10 @@ or exclude renderer parts:
 }
 ```
 
-For predictable ordering, declare layers before imports:
+The library declares `@layer pricing-renderer` (structure) and
+`@layer pricing-renderer.theme` (tokens). For predictable ordering, declare
+layers before imports. Importing with `layer(pricing-renderer)` places the whole
+stylesheet, with its own layers, inside that layer, below `product-overrides`:
 
 ```css
 @layer reset, pricing-renderer, product-overrides;
