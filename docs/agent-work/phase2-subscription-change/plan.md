@@ -1,1 +1,1 @@
-Done: spec, mock, space, A compare, C current/CTA. In flight: ignore task, E. Next: F (review messages/templates/wiring/styles/docs), D docs/flow/examples, then push+PR+panel (high risk: reviewer, test-reviewer, security-auditor, arch-reviewer, ui-qa), ready.
+Done: spec, mock, space, A, C, E, F, D docs, review round-1 fixes (4 tasks), axe flake fix, docs nits. Next: push, CI, panel round 2 (reviewer, test-reviewer, arch-reviewer, ui-qa, security re-check of src/space + currentSelection), PR body, set_review_package, ready.
