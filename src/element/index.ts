@@ -11,6 +11,8 @@ export type {
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
 } from './events.js';
+// [impl->req~cta-event-types~1]
+export type { SelectionRelation } from '../core/index.js';
 
 declare global {
   interface HTMLElementTagNameMap {

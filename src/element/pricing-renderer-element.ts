@@ -1,6 +1,7 @@
 import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import {
   cloneValue,
+  compareSelections,
   createPricingViewModel,
   getPricingRendererConfig,
   mergePresentationOptions,
@@ -28,6 +29,8 @@ import {
   type ViewModelOptions,
 } from '../core/index.js';
 import { applySelectionInput } from '../core/apply-selection.js';
+import { summaryActionState, type SummaryActionState } from './cta.js';
+import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
 import {
   loadPricingFromUrl,
   parsePricingYaml,
@@ -59,6 +62,7 @@ import {
   resolveOnlyDifferences,
   toolbarThresholdOf,
   addOnFilterThresholdOf,
+  type ActionOrigin,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -108,6 +112,8 @@ export class PricingRendererElement extends LitElement {
     expressionOptions: { attribute: false },
     selection: { attribute: false },
     defaultSelection: { attribute: false },
+    currentSelection: { attribute: false },
+    pendingActionId: { type: String, attribute: 'pending-action-id' },
     presentation: { attribute: false },
     locale: { type: String },
     pricingPath: { type: String, attribute: 'pricing-path', reflect: true },
@@ -134,6 +140,8 @@ export class PricingRendererElement extends LitElement {
   declare expressionOptions?: ExpressionOptions;
   declare selection?: PricingSelection;
   declare defaultSelection?: Partial<PricingSelection>;
+  // [impl->req~cta-pending-property~1]
+  declare pendingActionId?: string;
   declare presentation?: PricingPresentation;
   declare locale: string;
   declare pricingPath: string;
@@ -156,6 +164,10 @@ export class PricingRendererElement extends LitElement {
   private _normalized?: NormalizedPricing;
   private _diagnostics: PricingDiagnostic[] = [];
   private _internalSelection?: PricingSelection;
+  private _currentSelection?: Partial<PricingSelection>;
+  // what the last current-selection diagnostics were computed for
+  private _diagnosedSelection?: Partial<PricingSelection>;
+  private _diagnosedPricing?: NormalizedPricing;
   private _compact = true;
   private _wide = false;
   private _search = '';
@@ -194,6 +206,18 @@ export class PricingRendererElement extends LitElement {
     this.theme = 'light';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
     this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
+  }
+
+  // [impl->req~current-selection-property~1] [impl->req~current-selection-detached~1]
+  // The element keeps a deep copy, so a later change of the host's object is not seen until the
+  // host sets the property again. It never becomes the selection in effect, so setting it emits
+  // no `pricing-selection-change` [impl->req~current-selection-keeps-selection~1].
+  get currentSelection(): Partial<PricingSelection> | undefined {
+    return this._currentSelection;
+  }
+
+  set currentSelection(value: Partial<PricingSelection> | undefined) {
+    this._currentSelection = cloneValue(value);
   }
 
   protected createRenderRoot(): HTMLElement | DocumentFragment {
@@ -246,6 +270,24 @@ export class PricingRendererElement extends LitElement {
     if (changed.has('layout')) {
       this._updateCompactLayout(this.getBoundingClientRect().width);
     }
+    this._reportCurrentSelection();
+  }
+
+  // [impl->req~current-selection-diagnostics~1]
+  // Once per change of the current selection or of the loaded pricing; not in the rendered list.
+  private _reportCurrentSelection(): void {
+    if (!this._isReady()) return;
+    if (
+      this._diagnosedSelection === this._currentSelection &&
+      this._diagnosedPricing === this._normalized
+    ) {
+      return;
+    }
+    this._diagnosedSelection = this._currentSelection;
+    this._diagnosedPricing = this._normalized;
+    this._dispatchSelectionDiagnostics(
+      currentSelectionDiagnostics(this._normalized!, this._currentSelection),
+    );
   }
 
   public async reload(): Promise<void> {
@@ -536,6 +578,20 @@ export class PricingRendererElement extends LitElement {
     );
   }
 
+  // [impl->req~cta-summary-action~1] the relation between the current side and the selection in
+  // effect, both on the loaded pricing
+  private _summaryAction(
+    viewModel: PricingViewModel,
+    pricing: NormalizedPricing,
+  ): SummaryActionState {
+    const { relation } = compareSelections({
+      before: { pricing, selection: this._currentSelection! },
+      after: { pricing, selection: viewModel.resolved.selection },
+      ...(this.expressionOptions ? { expression: this.expressionOptions } : {}),
+    });
+    return summaryActionState(viewModel, relation);
+  }
+
   private _updateCompactLayout(width: number): void {
     const next = this.layout === 'compact' ? true : this.layout === 'table' ? false : width < 840;
     const wide = width >= 840;
@@ -762,7 +818,10 @@ export class PricingRendererElement extends LitElement {
     planId?: string,
     href?: string,
     metadata?: Record<string, unknown>,
+    origin?: ActionOrigin,
   ): boolean => {
+    // [impl->req~cta-pending-no-event~1] a link CTA sees `false` and cancels its navigation
+    if (this.pendingActionId) return false;
     const current = this._viewModel();
     if (!current || !this._normalized) return false;
     // [impl->req~events-reconciled-selection~1]
@@ -777,6 +836,8 @@ export class PricingRendererElement extends LitElement {
       selection: reconciled,
       resolved: viewModel.resolved,
       ...(metadata ? { metadata } : {}),
+      // [impl->req~cta-event-relation~1] [impl->req~cta-summary-action-event~1]
+      ...(origin ? { relation: origin.relation, source: origin.source } : {}),
     };
     const event: PricingActionEvent = new CustomEvent('pricing-action', {
       detail,
@@ -978,6 +1039,8 @@ export class PricingRendererElement extends LitElement {
     // Without a toolbar the user cannot undo a filter, so the search text and the checkbox override
     // are ignored while it is hidden (the stored values are kept).
     const toolbarShown = comparisonRowTotal(viewModel) > toolbarThreshold;
+    // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
+    const current = deriveCurrentContext(this._normalized, this._currentSelection);
     const state: RenderState = {
       viewModel,
       selection: viewModel.resolved.selection,
@@ -998,6 +1061,11 @@ export class PricingRendererElement extends LitElement {
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),
       breakdownOpen: this._breakdownOpen,
       breakdownId: this._breakdownId,
+      ...(current ? { currentPlanId: current.planId, currentAddOnIds: current.addOnIds } : {}),
+      ...(this.pendingActionId ? { pendingActionId: this.pendingActionId } : {}),
+      ...(current && this.ctaEnabled
+        ? { summaryAction: this._summaryAction(viewModel, this._normalized) }
+        : {}),
       actions: this._actions,
     };
     const warnings = this._diagnostics.filter((item) => item.severity !== 'info');

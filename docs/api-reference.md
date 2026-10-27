@@ -417,6 +417,8 @@ Exports `PricingRendererElement` without registering it globally.
 | `expressionOptions`    | —                         | `ExpressionOptions`              | —                  |
 | `selection`            | —                         | `PricingSelection`               | uncontrolled       |
 | `defaultSelection`     | —                         | `Partial<PricingSelection>`      | schema defaults    |
+| `currentSelection`     | —                         | `Partial<PricingSelection>`      | —                  |
+| `pendingActionId`      | `pending-action-id`       | `string`                         | —                  |
 | `presentation`         | —                         | `PricingPresentation`            | merged defaults    |
 | `locale`               | `locale`                  | `string`                         | `"en-US"`          |
 | `pricingPath`          | `pricing-path`            | `string`                         | `"/pricing"`       |
@@ -570,6 +572,57 @@ pricing-renderer [data-pr-part='summary'] {
 
 There is no new property, attribute or event.
 
+### Current selection and pending actions
+
+`currentSelection` (type `Partial<PricingSelection> | undefined`, no attribute)
+marks what the customer already has. The element keeps a deep copy, never writes it
+into the selection in effect and emits no `pricing-selection-change`. While its
+`planId` is a plan id of the loaded pricing:
+
+- that plan's card has `data-current="true"` and the part `current-badge`; its CTA
+  is a disabled button with `data-relation="current"`;
+- each add-on card that the reconciled contract selects has `data-current="true"`
+  and the part `current-add-on-badge`;
+- every other plan CTA has `data-relation="upgrade"` or `"downgrade"` and the text
+  of `pricing.upgradeTo` or `pricing.downgradeTo` (or `pricing.contactSales` for a
+  plan without a price amount), by the declaration order of the plans in the
+  pricing, private plans included;
+- the summary has a `summary-action` button (action id `review-change`, or
+  `contact-sales` when the selection requires a quote), disabled while the
+  selection equals the current one, when `ctaEnabled` is true.
+
+An unknown `planId` marks nothing and keeps the default labels. Unknown plan and
+add-on ids are reported once per change in a `pricing-diagnostic` event with the
+codes `PR_CURRENT_SELECTION_UNKNOWN_PLAN` and `PR_CURRENT_SELECTION_UNKNOWN_ADDON`.
+See [Current selection and pending actions](./configuration.md#current-selection-and-pending-actions).
+
+`pendingActionId` (type `string | undefined`, attribute `pending-action-id`) is the
+action id of the CTA or summary action the host is working on. That control gets
+`aria-busy="true"`, `data-pending="true"` and a `cta-pending` child. Every plan CTA
+and the summary action gets `aria-disabled="true"` and ignores activation: no
+`pricing-action` is emitted and a link does not navigate.
+
+`PricingCta` has an optional `labels` field. Only string values are kept:
+
+```ts
+interface PricingCtaLabels {
+  upgrade?: string;
+  downgrade?: string;
+  current?: string;
+  contactSales?: string;
+}
+
+type SelectionRelation = 'current' | 'upgrade' | 'downgrade' | 'change';
+```
+
+`PricingCtaLabels` and `SelectionRelation` are exported from `pricing-renderer`;
+`SelectionRelation` is also re-exported from `pricing-renderer/element` and
+`pricing-renderer/react`. The `pricing-action` detail (`PricingActionDetail`) has
+the optional fields `relation?: SelectionRelation` and `source?: 'plan' | 'summary'`,
+present only while the current plan is known. Every `{planId}` in the `href` of a
+plan CTA is replaced with `encodeURIComponent` of the plan id before the link is
+checked and before it reaches the event.
+
 ### Methods
 
 ```ts
@@ -690,9 +743,13 @@ hand must add both. The element sets its ready state and selection before it
 dispatches the event, so `applySelection` called from a `pricing-ready` listener
 works.
 
+`pricing-action` also has the optional fields `relation` and `source` while
+`currentSelection` names a plan of the pricing, and the summary action emits it too.
+
 `pricing-diagnostic` fires with the diagnostics of a load and also after an
 `applySelection` call that returns diagnostics, including the error refusals
-`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`. Hosts that treat any
+`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`, and when `currentSelection`
+has ids the pricing does not define. Hosts that treat any
 error in `pricing-diagnostic` as a load failure must check the diagnostic code.
 
 `detail.selection` of `pricing-selection-change` and `pricing-action` is always
@@ -761,7 +818,9 @@ does not fire for that load; see
 [Preload the current subscription](preload-current-subscription.md) to apply
 at once from `resolvedState`.
 
-`ApplySelectionResult` is re-exported from this entry point.
+`ApplySelectionResult` and `SelectionRelation` are re-exported from this entry
+point. The props `currentSelection` and `pendingActionId` are passed to the
+element as properties.
 
 ## CSS entry points
 

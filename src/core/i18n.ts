@@ -83,6 +83,13 @@ export const enUS: MessageCatalog = {
   'pricing.noPlans': 'No plans are available.',
   'pricing.noComparison': 'There are no plans to compare.',
   'pricing.configurationUpdated': 'Pricing configuration updated.',
+  'pricing.currentPlanBadge': 'Your plan',
+  'pricing.currentPlanCta': 'Current plan',
+  'pricing.upgradeTo': 'Upgrade to {plan}',
+  'pricing.downgradeTo': 'Downgrade to {plan}',
+  'pricing.currentAddOn': 'Current',
+  'pricing.reviewChangeCta': 'Review change ({total})',
+  'pricing.pending': 'Processing…',
 };
 
 export const esES: MessageCatalog = {
@@ -168,6 +175,13 @@ export const esES: MessageCatalog = {
   'pricing.noPlans': 'No hay planes disponibles.',
   'pricing.noComparison': 'No hay planes que comparar.',
   'pricing.configurationUpdated': 'Configuración de precios actualizada.',
+  'pricing.currentPlanBadge': 'Tu plan',
+  'pricing.currentPlanCta': 'Plan actual',
+  'pricing.upgradeTo': 'Mejorar a {plan}',
+  'pricing.downgradeTo': 'Bajar a {plan}',
+  'pricing.currentAddOn': 'Actual',
+  'pricing.reviewChangeCta': 'Revisar cambio ({total})',
+  'pricing.pending': 'Procesando…',
 };
 
 const registeredCatalogs = new Map<string, MessageCatalog>([

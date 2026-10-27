@@ -9,7 +9,7 @@
 | -------------------------- | ---------------------------------------------------- | ---------- | -------------------------------------------------------------- |
 | `pricing-ready`            | A load that completes with a pricing value           | No         | `{ pricing, diagnostics, selection, resolved }`                |
 | `pricing-selection-change` | The user changed plan, billing, variables or add-ons | No         | `{ selection, resolved }`                                      |
-| `pricing-action`           | The user clicked a plan CTA                          | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
+| `pricing-action`           | The user clicked a plan CTA or the summary action    | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
 | `pricing-diagnostic`       | A load or applySelection returned diagnostics        | No         | `{ diagnostics }`                                              |
 
 Details that the table leaves out:
@@ -22,6 +22,9 @@ Details that the table leaves out:
   variable, add-on or add-on quantity, including a confirmed dialog. It is not
   emitted by `applySelection` or by a load.
 - `pricing-diagnostic` is never emitted with an empty list.
+- While `currentSelection` names a plan of the pricing, the `pricing-action` detail
+  also has `relation` and `source` (see below). The table shows the detail without
+  them, as it is when no current plan is known.
 
 The event types are exported from `pricing-renderer/element`:
 
@@ -66,7 +69,9 @@ A plan card shows a CTA when `ctaEnabled` is true (the default, see
 [Project and instance configuration](./configuration.md)). Clicking it emits
 `pricing-action`. The CTA is the entry of `presentation.ctas` whose `planId`
 matches the plan; a plan without one gets a default "choose plan" button. The
-event is emitted for every click, whether or not the CTA has a link.
+event is emitted for every click, whether or not the CTA has a link. While the
+host sets `currentSelection`, the summary action in the price summary emits it
+too (see "Relation and source").
 
 ```ts
 interface PricingActionDetail {
@@ -76,6 +81,8 @@ interface PricingActionDetail {
   selection: PricingSelection;
   resolved: ResolvedPricing;
   metadata?: UnknownRecord;
+  relation?: SelectionRelation; // 'current' | 'upgrade' | 'downgrade' | 'change'
+  source?: 'plan' | 'summary';
 }
 ```
 
@@ -93,6 +100,38 @@ interface PricingActionDetail {
   Always present.
 - `metadata`: the `metadata` of the configured CTA, passed through. Present only
   when the CTA has `metadata`.
+- `relation` and `source`: see "Relation and source" below. Absent unless the
+  current plan is known.
+
+`href` is the `href` after the `{planId}` expansion: every `{planId}` in the
+configured value is replaced with `encodeURIComponent` of the plan id before the
+link is checked, so `https://example.com/signup?plan={planId}` gives
+`https://example.com/signup?plan=growth` on the Growth card. An expanded value
+that is not safe renders the CTA as a button.
+
+### Relation and source
+
+While `currentSelection.planId` is a plan of the loaded pricing, the detail also
+has two fields:
+
+- `source`: `'plan'` for a plan CTA, `'summary'` for the summary action.
+- `relation`: for a plan CTA, how that plan relates to the current plan, by the
+  declaration order of the plans (`'upgrade'` for a later plan, `'downgrade'` for
+  an earlier one). For the summary action, the relation between the current
+  selection and the selection in effect (`'current'`, `'upgrade'`, `'downgrade'`
+  or `'change'`), and `planId` is the plan of the selection in effect.
+
+The summary action has the action id `review-change`, or `contact-sales` when
+the selection in effect requires a quote. It is disabled while the selection
+equals the current one, so no event is emitted then. Without a known current plan
+there is no summary action, and the detail of a plan CTA has no `relation` or
+`source` key.
+
+### While an action is pending
+
+While `pendingActionId` is set, activating a plan CTA or the summary action emits
+no `pricing-action`, and a link CTA does not navigate. Clear the property when
+the host work is done.
 
 ### Cancel the default navigation
 
@@ -165,7 +204,7 @@ interface PricingDiagnostic {
 }
 ```
 
-It is emitted in three cases:
+It is emitted in four cases:
 
 - **Load.** After each load (`pricing`, `yaml`, or `src` with or without
   `loadPricing`) that returns diagnostics: source problems, YAML parse
@@ -177,6 +216,11 @@ It is emitted in three cases:
 - **`applySelection`.** When the returned `diagnostics` is not empty, including a
   refused call. The same list is the `diagnostics` of the returned result. See
   [Preload the current subscription](./preload-current-subscription.md).
+- **`currentSelection`.** After an update that follows a change of
+  `currentSelection` or of the loaded pricing, when the current selection has a
+  plan id or add-on ids that the pricing does not define: one warning per id,
+  `PR_CURRENT_SELECTION_UNKNOWN_PLAN` or `PR_CURRENT_SELECTION_UNKNOWN_ADDON`. It
+  is emitted once per change, not on every render.
 
 The prices that fail to resolve while rendering (`resolved.diagnostics`) are not
 dispatched with this event; read them from `resolved`.
@@ -225,7 +269,8 @@ renderer.addEventListener('pricing-diagnostic', (event) => {
 When a reload fails and an earlier pricing was loaded, the element keeps showing
 the earlier pricing, so a load failure code does not always mean an empty page.
 The element also lists the diagnostics of the load that are not `info` in its own
-warnings disclosure; the diagnostics of `applySelection` are not added to it.
+warnings disclosure; the diagnostics of `applySelection` and of `currentSelection`
+are not added to it.
 
 ## Diagnostic code reference
 
@@ -275,6 +320,8 @@ The source is the stage that creates the diagnostic: **load** (`src` or
 <tr><td><code>PR_SELECTION_ADDON_REMOVED</code></td><td>info</td><td>applySelection</td><td>The plan does not allow the add-on, or it depends on an add-on that was removed, so it was deselected; <code>details.addOnId</code> has the id. Tell the customer if it matters.</td></tr>
 <tr><td><code>PR_SELECTION_NOT_READY</code></td><td>error</td><td>element</td><td><code>applySelection</code> was called before the pricing was ready; nothing was stored. Call it from <code>pricing-ready</code>.</td></tr>
 <tr><td><code>PR_SELECTION_CONTROLLED</code></td><td>error</td><td>element</td><td><code>applySelection</code> was called while the <code>selection</code> property is set; nothing was stored. Update the property instead.</td></tr>
+<tr><td><code>PR_CURRENT_SELECTION_UNKNOWN_PLAN</code></td><td>warning</td><td>element</td><td><code>currentSelection.planId</code> is not a plan of the loaded pricing (ids are case-sensitive), so no plan is marked as current and the CTAs keep their default labels. <code>path</code> is <code>currentSelection.planId</code>. The contract and the pricing version disagree: resolve it in the backend, not in the customer's screen.</td></tr>
+<tr><td><code>PR_CURRENT_SELECTION_UNKNOWN_ADDON</code></td><td>warning</td><td>element</td><td>An add-on id of <code>currentSelection</code> is not in the loaded pricing and is ignored. <code>path</code> is <code>currentSelection.addOns.&lt;id&gt;</code>. Expected when the contract uses an older version.</td></tr>
 <tr><td><code>PR_COMPARE_UNKNOWN_PLAN</code></td><td>warning</td><td>compareSelections</td><td>A side's plan id is not a plan of its pricing (ids are case-sensitive); the id is kept and that side requires a quote. <code>path</code> is <code>before.selection.planId</code> or <code>after.selection.planId</code>. Map the name to a valid id.</td></tr>
 <tr><td><code>PR_COMPARE_UNKNOWN_BILLING_PERIOD</code></td><td>warning</td><td>compareSelections</td><td>A side's billing period is not a billing period of its pricing; the id is kept and the multiplier is 1. <code>path</code> is <code>&lt;side&gt;.selection.billingPeriod</code>. Use an id from the pricing.</td></tr>
 <tr><td><code>PR_COMPARE_UNKNOWN_ADDON</code></td><td>warning</td><td>compareSelections</td><td>A side selects an add-on id that its pricing does not define, so the entry is dropped before pricing. <code>path</code> is <code>&lt;side&gt;.selection.addOns.&lt;id&gt;</code>. Expected when the contract uses an older version.</td></tr>

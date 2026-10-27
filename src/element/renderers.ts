@@ -6,7 +6,6 @@ import {
   formatCurrency,
   formatDate,
   getAtPath,
-  getPlanCta,
   getPlanHighlightSummary,
   humanizeIdentifier,
   isSafeLink,
@@ -14,18 +13,27 @@ import {
   translate,
   unwrapValue,
   type NormalizedAddOn,
+  type NormalizedPlan,
   type PriceBreakdownLine,
   type PricingComparisonGroup,
   type PricingComparisonRow,
   type PricingSelection,
   type PricingViewModel,
   type ResolvedPrice,
+  type SelectionRelation,
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
 import { isAddOnOnlyRow } from '../core/view-model.js';
 import { formatUnit } from '../core/units.js';
+import { isPendingActionId, planCtaView, type SummaryActionState } from './cta.js';
 import type { PendingAddOnChange } from './events.js';
+
+/** Set on a `pricing-action` detail only while the current plan is known. */
+export interface ActionOrigin {
+  relation: SelectionRelation;
+  source: 'plan' | 'summary';
+}
 
 export interface RenderActions {
   selectPlan(planId: string): void;
@@ -39,6 +47,7 @@ export interface RenderActions {
     planId?: string,
     href?: string,
     metadata?: Record<string, unknown>,
+    origin?: ActionOrigin,
   ): boolean;
   updateSearch(value: string): void;
   updateOnlyDifferences(value: boolean): void;
@@ -70,6 +79,12 @@ export interface RenderState {
   pendingAddOnChange?: PendingAddOnChange;
   breakdownOpen: boolean;
   breakdownId: string;
+  /** The current plan id, only when the loaded pricing defines it. */
+  currentPlanId?: string;
+  /** Add-ons of the reconciled current side; empty without a known current plan. */
+  currentAddOnIds?: ReadonlySet<string>;
+  pendingActionId?: string;
+  summaryAction?: SummaryActionState;
   actions: RenderActions;
 }
 
@@ -297,6 +312,64 @@ export function renderBilling(state: RenderState): TemplateResult | typeof nothi
   `;
 }
 
+// [impl->req~cta-pending-state~1] the pending text replaces the label of the busy control
+function renderCtaLabel(
+  viewModel: PricingViewModel,
+  label: string,
+  pending: boolean,
+): TemplateResult | string {
+  return pending
+    ? html`<span data-pr-part="cta-pending">${t(viewModel, 'pricing.pending')}</span>`
+    : label;
+}
+
+// [impl->req~current-selection-plan-cta~1] [impl->req~cta-pending-others~1]
+// [impl->req~cta-pending-no-event~1] [impl->req~cta-event-relation~1]
+function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult {
+  const { viewModel, actions } = state;
+  const cta = planCtaView(viewModel, plan, {
+    currentPlanId: state.currentPlanId,
+    pendingActionId: state.pendingActionId,
+  });
+  const variant = cta.kind === 'secondary' ? 'pr-button--secondary' : 'pr-button--primary';
+  const className = `pr-button ${variant}`;
+  const origin: ActionOrigin | undefined = cta.relation
+    ? { relation: cta.relation, source: 'plan' }
+    : undefined;
+  const content = renderCtaLabel(viewModel, cta.label, cta.pending);
+  const trigger = (): boolean =>
+    actions.triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
+  return cta.href
+    ? html`<a
+        class=${className}
+        data-pr-part="cta"
+        data-relation=${cta.relation ?? nothing}
+        data-pending=${cta.pending ? 'true' : nothing}
+        aria-busy=${cta.pending ? 'true' : nothing}
+        aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        href=${cta.href}
+        target=${cta.target ?? '_self'}
+        rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
+        @click=${(event: MouseEvent) => {
+          if (!trigger()) event.preventDefault();
+        }}
+        >${content}</a
+      >`
+    : html`<button
+        class=${className}
+        data-pr-part="cta"
+        data-relation=${cta.relation ?? nothing}
+        data-pending=${cta.pending ? 'true' : nothing}
+        aria-busy=${cta.pending ? 'true' : nothing}
+        aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        type="button"
+        ?disabled=${cta.disabled}
+        @click=${trigger}
+      >
+        ${content}
+      </button>`;
+}
+
 export function renderPlans(state: RenderState): TemplateResult {
   const { viewModel, selection, selectionEnabled, ctaEnabled, actions } = state;
   return html`
@@ -317,10 +390,9 @@ export function renderPlans(state: RenderState): TemplateResult {
             >
               ${viewModel.plans.map((plan) => {
                 const selected = selection.planId === plan.id;
-                const cta = getPlanCta(viewModel.presentation, plan.id);
+                const current = state.currentPlanId === plan.id;
                 const highlightSummary = getPlanHighlightSummary(viewModel, plan.id);
                 const featured = highlightSummary.badges.some((badge) => badge.emphasize);
-                const actionId = cta?.id ?? `choose-${plan.id}`;
                 return html`
                   <article
                     class="pr-plan-card ${selectionEnabled ? 'pr-selectable-card' : ''} ${
@@ -329,6 +401,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                     data-pr-part="plan-card"
                     data-plan-id=${plan.id}
                     data-selected=${String(selected)}
+                    data-current=${current ? 'true' : nothing}
                     @click=${(event: MouseEvent) =>
                       selectionEnabled
                         ? selectFromCard(event, () => actions.selectPlan(plan.id))
@@ -336,9 +409,20 @@ export function renderPlans(state: RenderState): TemplateResult {
                   >
                     <div class="pr-plan-card__top">
                       ${
-                        highlightSummary.badges.length > 0 || selectionEnabled
+                        highlightSummary.badges.length > 0 || selectionEnabled || current
                           ? html`<div class="pr-plan-card__status">
                               <div class="pr-plan-card__badges">
+                                ${
+                                  // [impl->req~current-selection-plan-mark~1]
+                                  current
+                                    ? html`<span
+                                        class="pr-badge"
+                                        data-pr-part="current-badge"
+                                        data-tone="success"
+                                        >${t(viewModel, 'pricing.currentPlanBadge')}</span
+                                      >`
+                                    : nothing
+                                }
                                 ${highlightSummary.badges.map(
                                   (badge) =>
                                     html`<span
@@ -419,43 +503,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                           </ul>`
                         : nothing
                     }
-                    ${
-                      !ctaEnabled
-                        ? nothing
-                        : cta?.href && isSafeLink(cta.href)
-                          ? html`<a
-                              class="pr-button ${
-                                cta.kind === 'secondary'
-                                  ? 'pr-button--secondary'
-                                  : 'pr-button--primary'
-                              }"
-                              data-pr-part="cta"
-                              href=${cta.href}
-                              target=${cta.target ?? '_self'}
-                              rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
-                              @click=${(event: MouseEvent) => {
-                                if (
-                                  !actions.triggerAction(actionId, plan.id, cta.href, cta.metadata)
-                                ) {
-                                  event.preventDefault();
-                                }
-                              }}
-                              >${cta.label}</a
-                            >`
-                          : html`<button
-                              class="pr-button ${
-                                cta?.kind === 'secondary'
-                                  ? 'pr-button--secondary'
-                                  : 'pr-button--primary'
-                              }"
-                              data-pr-part="cta"
-                              type="button"
-                              @click=${() =>
-                                actions.triggerAction(actionId, plan.id, cta?.href, cta?.metadata)}
-                            >
-                              ${cta?.label ?? t(viewModel, 'pricing.choosePlan', { plan: plan.name })}
-                            </button>`
-                    }
+                    ${ctaEnabled ? renderPlanCta(state, plan) : nothing}
                   </article>
                 `;
               })}
@@ -1051,6 +1099,7 @@ function renderAddOnCard(
     : (addOn.subscriptionConstraints?.minQuantity ?? 1);
   const available = addOnAvailability(addOn, selection.planId);
   const constraints = addOn.subscriptionConstraints;
+  const current = state.currentAddOnIds?.has(addOn.id) ?? false;
   return html`
     <article
       class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
@@ -1059,6 +1108,7 @@ function renderAddOnCard(
       data-pr-part="add-on-card"
       data-add-on-id=${addOn.id}
       data-selected=${String(selected)}
+      data-current=${current ? 'true' : nothing}
       @click=${(event: MouseEvent) =>
         selectionEnabled && available
           ? selectFromCard(event, () => actions.toggleAddOn(addOn.id, !selected))
@@ -1066,6 +1116,14 @@ function renderAddOnCard(
     >
       <div class="pr-addon-card__heading">
         <div>
+          ${
+            // [impl->req~current-selection-addons~1]
+            current
+              ? html`<span class="pr-badge" data-pr-part="current-add-on-badge" data-tone="success"
+                  >${t(viewModel, 'pricing.currentAddOn')}</span
+                >`
+              : nothing
+          }
           <h4>${addOn.name}</h4>
           ${addOn.description ? html`<p>${addOn.description}</p>` : nothing}
         </div>
@@ -1345,6 +1403,32 @@ function renderBreakdownPanel(state: RenderState): TemplateResult {
   `;
 }
 
+// [impl->req~cta-summary-action~1] [impl->req~cta-summary-action-current~1]
+// [impl->req~cta-summary-action-absent~1] [impl->req~cta-summary-action-event~1]
+// [impl->req~cta-pending-state~1] [impl->req~cta-pending-others~1]
+// Rendered outside the live region, so a change of label is not announced by the summary.
+function renderSummaryAction(state: RenderState): TemplateResult | typeof nothing {
+  const { viewModel, summaryAction, pendingActionId, selection, actions } = state;
+  if (!state.ctaEnabled || !summaryAction) return nothing;
+  const pending = isPendingActionId(pendingActionId, summaryAction.actionId);
+  const origin: ActionOrigin = { relation: summaryAction.relation, source: 'summary' };
+  const trigger = (): boolean =>
+    actions.triggerAction(summaryAction.actionId, selection.planId, undefined, undefined, origin);
+  return html`<button
+    class="pr-button pr-button--primary"
+    data-pr-part="summary-action"
+    data-relation=${summaryAction.relation}
+    data-pending=${pending ? 'true' : nothing}
+    aria-busy=${pending ? 'true' : nothing}
+    aria-disabled=${pendingActionId !== undefined ? 'true' : nothing}
+    type="button"
+    ?disabled=${summaryAction.disabled}
+    @click=${trigger}
+  >
+    ${renderCtaLabel(viewModel, summaryAction.label, pending)}
+  </button>`;
+}
+
 // [impl->req~summary-live-region~1] [impl->req~summary-breakdown-not-live~1]
 // [impl->req~summary-breakdown-toggle~1] [impl->req~summary-breakdown-activate~1]
 // [impl->req~summary-breakdown-unique-ids~1]
@@ -1368,6 +1452,7 @@ export function renderSummary(state: RenderState): TemplateResult {
             : nothing
         }
       </div>
+      ${renderSummaryAction(state)}
       <button
         class="pr-breakdown-toggle"
         data-pr-part="breakdown-toggle"

@@ -3,6 +3,7 @@ import type {
   PricingDiagnostic,
   PricingSelection,
   ResolvedPricing,
+  SelectionRelation,
   UnknownRecord,
 } from '../core/index.js';
 
@@ -26,6 +27,9 @@ export interface PricingActionDetail {
   selection: PricingSelection;
   resolved: ResolvedPricing;
   metadata?: UnknownRecord;
+  // [impl->req~cta-event-types~1] present only while the current plan is known
+  relation?: SelectionRelation;
+  source?: 'plan' | 'summary';
 }
 
 export interface PricingDiagnosticDetail {

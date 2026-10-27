@@ -231,9 +231,18 @@ export interface VariableControl {
   hidden?: boolean;
 }
 
+// [impl->req~cta-types~1] labels a CTA uses while the current plan is known
+export interface PricingCtaLabels {
+  upgrade?: string;
+  downgrade?: string;
+  current?: string;
+  contactSales?: string;
+}
+
 export interface PricingCta {
   id: string;
   label: string;
+  labels?: PricingCtaLabels;
   href?: string;
   target?: '_self' | '_blank';
   planId?: string;

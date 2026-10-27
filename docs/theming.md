@@ -86,11 +86,48 @@ Stable values:
 `comparison`, `comparison-toolbar`, `comparison-table`, `comparison-row`,
 `comparison-empty`, `add-ons`, `add-on-card`, `add-on-quantity`,
 `addon-toolbar`, `addon-empty`, `summary`, `breakdown`, `breakdown-line`,
-`breakdown-toggle`, `metadata`, and `diagnostics`.
+`breakdown-toggle`, `metadata`, `diagnostics`, `current-badge`,
+`current-add-on-badge`, `summary-action`, and `cta-pending`.
 
 `comparison-empty` is the "No matching items" line of the comparison,
 `addon-toolbar` is the add-on search toolbar, and `addon-empty` is the add-on
 empty line.
+
+## Current plan and pending hooks
+
+These hooks appear only when the host sets `currentSelection` or
+`pendingActionId` (see [Configuration](./configuration.md)). Without them the
+markup is the same as before.
+
+- `current-badge` is the "Your plan" badge of the current plan card, and
+  `current-add-on-badge` is the "Current" badge of a current add-on card.
+- `[data-current="true"]` is on the current plan card and on each current add-on
+  card. It is absent on every other card.
+- `[data-relation]` is on every plan CTA while the current plan is known. Its value
+  is `current`, `upgrade` or `downgrade`. The current plan's CTA is a `button` with
+  the `disabled` attribute.
+- `summary-action` is the button of the price summary that reviews the change. It
+  has `data-relation` too, and the `disabled` attribute while the selection equals
+  the current one.
+- `[aria-busy="true"][data-pending="true"]` is on the CTA or the summary action
+  whose action id is `pendingActionId`. It holds one `cta-pending` child with the
+  "Processing…" text. Every plan CTA and the summary action get
+  `aria-disabled="true"` while an action is pending, so style `[aria-disabled]`
+  to show that they do nothing.
+
+```css
+pricing-renderer [data-pr-part='plan-card'][data-current='true'] {
+  border-width: 2px;
+}
+
+pricing-renderer [data-pr-part='cta'][data-relation='upgrade'] {
+  font-weight: 800;
+}
+```
+
+The badges, the current-plan and pending states are in the light and dark themes,
+under `forced-colors: active` and `prefers-reduced-motion: reduce`. The text of the
+badge names the state, so it is not communicated by color alone.
 
 Internal `pr-*` class names and markup nesting are not public contracts.
 

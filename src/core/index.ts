@@ -76,6 +76,7 @@ export type {
   PricingComparisonGroup,
   PricingComparisonRow,
   PricingCta,
+  PricingCtaLabels,
   PricingBadgeTone,
   PricingDiagnostic,
   PricingHighlightKind,

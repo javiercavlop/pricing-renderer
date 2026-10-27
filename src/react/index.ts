@@ -61,6 +61,10 @@ type PricingInputProps =
 export interface PricingRendererSharedProps {
   selection?: PricingSelection;
   defaultSelection?: Partial<PricingSelection>;
+  // [impl->req~current-selection-react~1] The customer's contract; marks the current plan.
+  currentSelection?: Partial<PricingSelection>;
+  // [impl->req~cta-pending-react-manifest~1] Action id of the CTA whose host work is pending.
+  pendingActionId?: string;
   presentation?: PricingPresentation;
   normalizeOptions?: NormalizePricingOptions;
   expressionOptions?: ExpressionOptions;
@@ -115,4 +119,6 @@ export type {
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
 } from '../element/index.js';
+// [impl->req~cta-event-types~1]
+export type { SelectionRelation } from '../core/index.js';
 export type { PricingLoader, PricingRequestOptions } from '../yaml/index.js';

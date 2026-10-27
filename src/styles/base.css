@@ -183,6 +183,18 @@
     color: var(--pr-color-warning);
   }
 
+  /* [impl->req~current-selection-plan-mark~1] [impl->req~current-selection-addons~1]
+     The current plan and the current add-ons get a success-toned border and badge. The badge also
+     names the state in text, so colour is not the only cue. */
+  pricing-renderer[data-pr-root] .pr-plan-card[data-current='true'],
+  pricing-renderer[data-pr-root] .pr-addon-card[data-current='true'] {
+    border-color: color-mix(in srgb, var(--pr-color-success) 55%, var(--pr-color-border));
+  }
+
+  pricing-renderer[data-pr-root] .pr-addon-card__heading [data-pr-part='current-add-on-badge'] {
+    margin-block-end: var(--pr-space-2);
+  }
+
   pricing-renderer[data-pr-root] .pr-section,
   pricing-renderer[data-pr-root] .pr-configurator,
   pricing-renderer[data-pr-root] .pr-metadata {
@@ -547,6 +559,50 @@
 
   pricing-renderer[data-pr-root] .pr-button--quiet {
     padding-inline: 0.8rem;
+  }
+
+  /* [impl->req~current-selection-plan-cta~1] The current plan's CTA and a summary action without a
+     change are disabled controls, so they read as inactive in the light and dark themes. */
+  pricing-renderer[data-pr-root] .pr-button:disabled {
+    border-color: var(--pr-color-border);
+    background: var(--pr-color-surface-subtle);
+    color: var(--pr-color-muted);
+    cursor: default;
+  }
+
+  /* [impl->req~cta-pending-state~1] A pending host action keeps every CTA in place (aria-disabled,
+     not disabled, so focus stays) and marks the busy control with a spinner. */
+  pricing-renderer[data-pr-root] .pr-button[aria-disabled='true'] {
+    cursor: progress;
+  }
+
+  pricing-renderer[data-pr-root] .pr-button[data-pending='true'] {
+    gap: var(--pr-space-2);
+  }
+
+  pricing-renderer[data-pr-root] [data-pr-part='cta-pending']::before {
+    content: '';
+    display: inline-block;
+    box-sizing: border-box;
+    inline-size: 1em;
+    block-size: 1em;
+    margin-inline-end: var(--pr-space-2);
+    vertical-align: -0.125em;
+    border: 2px solid currentcolor;
+    border-inline-end-color: transparent;
+    border-radius: 50%;
+    animation: pr-spin 0.8s linear infinite;
+  }
+
+  @keyframes pr-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* [impl->req~cta-summary-action~1] The summary action takes its own row under the total. */
+  pricing-renderer[data-pr-root] .pr-summary > [data-pr-part='summary-action'] {
+    inline-size: 100%;
   }
 
   pricing-renderer[data-pr-root] .pr-configurator,
@@ -1465,6 +1521,17 @@
 
     pricing-renderer[data-pr-root] .pr-button--primary {
       border-color: ButtonText;
+    }
+
+    /* the current badge and the pending spinner keep system colours; the text names the state */
+    pricing-renderer[data-pr-root] .pr-plan-card[data-current='true'],
+    pricing-renderer[data-pr-root] .pr-addon-card[data-current='true'] {
+      border-color: CanvasText;
+    }
+
+    pricing-renderer[data-pr-root] .pr-button:disabled {
+      border-color: GrayText;
+      color: GrayText;
     }
   }
 

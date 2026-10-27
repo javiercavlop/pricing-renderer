@@ -85,28 +85,37 @@ Implementation:
 Tests (test-designer):
 
 - [ ] C0a Current-selection browser tests.
-  - Files: `tests/browser/current-selection.spec.ts`. Requirements: `req~current-selection-*`,
-    except the type, i18n and manifest ones.
+  - Files: `tests/browser/current-selection.spec.ts` (with the helper
+    `tests/browser/helpers/change-flow.ts`). Requirements: `req~current-selection-*`, except the
+    type, i18n and manifest ones.
   - Checks: `browser` red before.
+  - Status: written, not run. The lab has no browser, so the red-before and green runs are left to
+    the `browser` check in CI.
 - [ ] C0b Plan-CTA browser tests.
   - Files: `tests/browser/plan-cta.spec.ts` (demo page, PQ, PS). Requirements: `req~cta-*`,
     except the type, i18n and manifest ones.
   - Checks: `browser` red before.
-- [ ] C0c Unit tests for types, i18n and the manifest.
+  - Status: written, not run (same reason as C0a).
+- [x] C0c Unit tests for types, i18n and the manifest.
   - Files: `tests/unit/change-flow-element.test.ts`: property declarations, types through the
-    compiler API, i18n and manifest, for both capabilities.
+    compiler API, i18n and manifest, for both capabilities. It also covers the pure helpers of
+    `src/element/cta.ts` and `src/element/current-selection.ts`.
   - Checks: `unit` red before.
+  - Note: the tests were written together with the implementation, so there is no red-before
+    run. The compiler reports `element.currentSelection = 42` as TS2559 (a weak type has no
+    properties in common with a number), not TS2322 as the spec scenario says; the test asserts
+    TS2559 for `42` and TS2322 for `{ planId: 42 }`.
 
 Implementation:
 
-- [ ] C1 Messages and CTA labels.
+- [x] C1 Messages and CTA labels.
   - Files:
     - `src/core/types.ts`: `PricingCtaLabels` and `PricingCta.labels` (D5). This is after A1.
     - `src/core/index.ts`: the `PricingCtaLabels` type export. This is after A4.
     - `src/core/i18n.ts`: the 7 element keys in `enUS` and `esES`.
     - `src/core/view-model.ts`: `normalizeCtas` keeps string `labels`.
   - Checks: `typecheck`, `lint`, `unit`.
-- [ ] C2 CTA helpers.
+- [x] C2 CTA helpers.
   - Files: the new `src/element/cta.ts`:
     - CTA label by relation and quote state;
     - `{planId}` expansion with `isSafeLink`;
@@ -121,6 +130,8 @@ Implementation:
     - the CTA wiring through `cta.ts`;
     - the summary action in `renderSummary`.
   - Checks: `typecheck`, `lint`, `unit`, `browser` (no baseline change). Depends on C2.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
+    the lab), so the baselines are not confirmed unchanged.
 - [ ] C4 Element.
   - Files:
     - `src/element/pricing-renderer-element.ts`: the properties `currentSelection` and
@@ -129,6 +140,7 @@ Implementation:
     - `src/element/events.ts`: `relation?` and `source?`;
     - `src/element/index.ts`: the `SelectionRelation` re-export.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on C3.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run.
 - [ ] C5 React, manifest and styles.
   - Files:
     - `src/react/index.ts`: the props `currentSelection` and `pendingActionId` and the
@@ -137,6 +149,8 @@ Implementation:
     - `src/styles/base.css`: the current badges, the pending CTA and the summary action, in
       light and dark themes, with forced colors and reduced motion.
   - Checks: `typecheck`, `lint`, `unit`, `browser`, `package`. Depends on C4.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` and `package` are not run
+    (no browser in the lab, and `package` is not a registered check of this task).
 
 ## Phase D: documentation for phases A to C (after A4, B1 and C5)
 

@@ -40,6 +40,19 @@
             },
             {
               "kind": "field",
+              "name": "currentSelection",
+              "type": { "text": "Partial<PricingSelection> | undefined" },
+              "description": "The customer's current contract. Marks the current plan and add-ons, and labels the other plans' calls to action as upgrades or downgrades. It does not change the selection in effect and emits no pricing-selection-change. The element keeps a deep copy."
+            },
+            {
+              "kind": "field",
+              "name": "pendingActionId",
+              "type": { "text": "string | undefined" },
+              "attribute": "pending-action-id",
+              "description": "Action id of the call to action whose work the host is doing. That control shows a busy state, every plan call to action and the summary action get aria-disabled, and activating them dispatches no pricing-action."
+            },
+            {
+              "kind": "field",
               "name": "presentation",
               "type": { "text": "PricingPresentation" }
             },
@@ -143,6 +156,52 @@
               "description": "Validates the selection against the loaded pricing and replaces the internal selection. Omitted fields take the schema defaults. Emits no pricing-selection-change. Refused by result (applied: false) while the element is not ready or when the selection property is set."
             }
           ],
+          "attributes": [
+            { "name": "src", "fieldName": "src", "type": { "text": "string" } },
+            { "name": "locale", "fieldName": "locale", "type": { "text": "string" } },
+            { "name": "pricing-path", "fieldName": "pricingPath", "type": { "text": "string" } },
+            {
+              "name": "mode",
+              "fieldName": "mode",
+              "type": { "text": "\"commercial\" | \"catalog\"" }
+            },
+            {
+              "name": "layout",
+              "fieldName": "layout",
+              "type": { "text": "\"auto\" | \"compact\" | \"table\"" }
+            },
+            {
+              "name": "visibility",
+              "fieldName": "visibility",
+              "type": { "text": "\"public-only\" | \"all\"" }
+            },
+            {
+              "name": "theme",
+              "fieldName": "theme",
+              "type": { "text": "\"light\" | \"dark\" | \"auto\"" }
+            },
+            { "name": "loading-label", "fieldName": "loadingLabel", "type": { "text": "string" } },
+            {
+              "name": "only-differences",
+              "fieldName": "onlyDifferences",
+              "type": { "text": "boolean | undefined" }
+            },
+            {
+              "name": "toolbar-threshold",
+              "fieldName": "toolbarThreshold",
+              "type": { "text": "number" }
+            },
+            {
+              "name": "add-on-filter-threshold",
+              "fieldName": "addOnFilterThreshold",
+              "type": { "text": "number" }
+            },
+            {
+              "name": "pending-action-id",
+              "fieldName": "pendingActionId",
+              "type": { "text": "string | undefined" }
+            }
+          ],
           "events": [
             {
               "name": "pricing-ready",
@@ -153,11 +212,15 @@
               "name": "pricing-selection-change",
               "type": { "text": "CustomEvent<PricingSelectionChangeDetail>" }
             },
-            { "name": "pricing-action", "type": { "text": "CustomEvent<PricingActionDetail>" } },
+            {
+              "name": "pricing-action",
+              "type": { "text": "CustomEvent<PricingActionDetail>" },
+              "description": "Fired when a call to action is activated. While currentSelection names a plan of the pricing, the detail also has relation and source ('plan' or 'summary'). Cancelable; a canceled link does not navigate."
+            },
             {
               "name": "pricing-diagnostic",
               "type": { "text": "CustomEvent<PricingDiagnosticDetail>" },
-              "description": "Fired with the diagnostics of a load, and after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals. Check the diagnostic code before treating an error as a load failure."
+              "description": "Fired with the diagnostics of a load, after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals, and when currentSelection or the pricing changes and currentSelection has a plan or add-on id the pricing does not define (PR_CURRENT_SELECTION_UNKNOWN_PLAN, PR_CURRENT_SELECTION_UNKNOWN_ADDON). Check the diagnostic code before treating an error as a load failure."
             }
           ]
         }
