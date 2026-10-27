@@ -224,7 +224,7 @@ patch for fixes, minor for new public surface (items 6, 8, 11).
   scenarios from the facts above, D1-D14, and the revision note of `req~shorter-page-only-differences`.
   Items 6 and 9 are written after Q3/Q4; S0 can land in two passes.
 - Risk low (0, docs). Checks: `C-install`, `["pnpm", "exec", "prettier", "--check",
-  "docs/agent-work/phase0-hygiene/spec.md"]`. Depends on nothing.
+"docs/agent-work/phase0-hygiene/spec.md"]`. Depends on nothing.
 
 ### Wave A: start now (no file of the in-flight spectra-item9-tags S2)
 
@@ -250,7 +250,7 @@ patch for fixes, minor for new public surface (items 6, 8, 11).
 - P0-11 typed event map (after P0-12, shares `docs/events.md`). T owns
   `tests/unit/event-map-types.test.ts`: type-check snippets with the `typeCheckSnippet` helper
   pattern of `tests/unit/breakdown-types.test.ts:7-30`. `addEventListener('pricing-action', (e) =>
-  e.detail.actionId)` on `document.createElement('pricing-renderer')`, imported through `/define` and
+e.detail.actionId)` on `document.createElement('pricing-renderer')`, imported through `/define` and
   `/element`, has no diagnostics; a wrong detail field has one; red before on the diagnostics count.
   I owns `src/element/events.ts`, `docs/events.md`, `.changeset/phase0-typed-events.md` (minor).
   Budget 30/25. Risk medium (3: public types). Depends on Q1.

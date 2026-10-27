@@ -39,7 +39,7 @@ Tailwind and shadcn (external facts from lookup; confidence noted)
 
 - Tailwind v3.4.0 preflight is unlayered (it has no `@layer`; medium confidence). It contains
   `button, [type='button'], [type='reset'], [type='submit'] { background-color: transparent;
-  background-image: none; }` (source: raw `tailwindcss/v3.4.0/src/css/preflight.css`). The renderer's
+background-image: none; }` (source: raw `tailwindcss/v3.4.0/src/css/preflight.css`). The renderer's
   primary CTA sets `background: var(--pr-color-accent)` inside the layer (`base.css:535-539`), and the
   `<button>` form of the CTA is used when there is no safe `href` (`src/element/renderers.ts:445-457`).
   So in a Tailwind v3 host, the unlayered preflight wins: the button CTA becomes transparent, and its
@@ -49,7 +49,7 @@ Tailwind and shadcn (external facts from lookup; confidence noted)
 - Tailwind v4 `index.css` starts with `@layer theme, base, components, utilities;`, and preflight is
   in `base` (medium confidence; source: `tailwindcss/main/packages/tailwindcss/index.css`,
   `preflight.css`). So the order the owner asks for, `@layer theme, base, pricing-renderer, components,
-  utilities;` declared before `@import "tailwindcss"`, puts preflight below the renderer.
+utilities;` declared before `@import "tailwindcss"`, puts preflight below the renderer.
 - shadcn (Tailwind v4) variables: `--background`, `--foreground`, `--card`, `--card-foreground`,
   `--popover(-foreground)`, `--primary(-foreground)`, `--secondary(-foreground)`,
   `--muted(-foreground)`, `--accent(-foreground)`, `--destructive`, `--border`, `--input`, `--ring`,
@@ -227,7 +227,7 @@ Browser specs are written by T and run in CI only (`browsers` shards).
   toolbar, and `--pr-plan-columns` sets the columns). The unit test checks every D2-D6 site and
   fallback, the `@supports` guard, the split shared rules, and that `theme.css` declares none of the
   new tokens. Red-before argv: `["pnpm", "exec", "vitest", "run", "tests/unit/design-tokens.test.ts",
-  "tests/unit/plan-grid-columns.test.ts"]`.
+"tests/unit/plan-grid-columns.test.ts"]`.
 - I1 owns `src/styles/base.css` and `.changeset/design-tokens.md` (minor, "no visual change").
 - Risk **medium** (score 3: public API +3, because the tokens are a public contract per
   `docs/theming.md:26-63`). CI proof: the visual baselines are unchanged and no snapshot file is
@@ -245,7 +245,7 @@ Browser specs are written by T and run in CI only (`browsers` shards).
 ### S3: React `style` prop (item 8): T3 then I3
 
 - T3 owns `tests/unit/react-style-prop.test.ts` (new). It type-checks `style={{ '--pr-color-accent':
-  '#f00', color: 'red' }}` and `className` as valid and a non-object `style` as rejected, and
+'#f00', color: 'red' }}` and `className` as valid and a non-object `style` as rejected, and
   asserts with the `@lit/react` mock of `spectra-followups-react.test.ts:5-12` that `style` reaches
   `createComponent` unchanged.
 - I3 owns `src/react/index.ts` (a `style` prop typed as `React.CSSProperties` plus custom property
@@ -285,7 +285,7 @@ Browser specs are written by T and run in CI only (`browsers` shards).
   fix is an unlayered `pricing-renderer [data-pr-part='cta'][data-kind='primary']` rule (after S2),
   or `preflight: false` (to verify).
 - Content: Tailwind v3 (verify by lookup: preflight's heading reset `h1-h6 { font-size: inherit;
-  font-weight: inherit }`, and whether `@import 'tailwindcss/base' layer(...)` is honoured), Tailwind
+font-weight: inherit }`, and whether `@import 'tailwindcss/base' layer(...)` is honoured), Tailwind
   v4 order, CSS Modules (`:global(pricing-renderer)` plus `[data-pr-part]`/state attributes), mapping
   `--pr-*` to host variables, fonts (D6), dark mode (whatever is merged at its base), and fixed
   container breakpoints.
