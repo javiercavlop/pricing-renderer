@@ -49,8 +49,15 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
   - Objective: O1. State: done.
   - Evidence: PR #46, commit `6561348`, `.changeset/spectra-grid-plan-columns.md`.
 - Item 9, group by tags
-  - Objective: O1. State: dropped (owner, Q4, 2026-10-26).
-  - Evidence: no `spectra-item9*` folder; the report advised dropping it (`report.md:364-367`).
+  - Objective: O1. State: not started (owner reopened 2026-10-27); the earlier drop of 2026-10-26 no
+    longer stands.
+  - Owner decision of 2026-10-27: comparison groups follow the declared tags. A pricing with no tags
+    renders one comparison with no group headers. In a partly tagged pricing, the untagged features
+    and usage limits go into one final group, "Other features". A fully tagged pricing is unchanged.
+    The visual change is approved. The report's concern about grouping by name prefix
+    (`report.md:364-367`) does not apply, because the groups use only declared tags.
+  - Evidence: `docs/agent-work/spectra-item9-tags/`. The state becomes done, with the PR number,
+    after the merge.
 - Item 10, long text handling, no split words such as "Unlimited"
   - Objective: O1. State: done.
   - Evidence: PR #46, commit `6561348`, `.changeset/spectra-grid-plan-columns.md`.
@@ -116,7 +123,7 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
 - Q1: objectives O1-O4 accepted; the focus is the rest of SPECTRA phase 2.
 - Q2: page height at most 5 screens at 1440 px; no target at 375 px for now.
 - Q3: CTA in the first screen at 1440 and 375 px; no 1024 px target.
-- Q4: item 9 dropped.
+- Q4: item 9 dropped; on 2026-10-27 the owner reversed this and asked for the item (see item 9).
 - Q5: Spanish plurals were a low-priority objective (row 3a-es); on 2026-10-27 the owner made them
   a non-goal, closing the question.
 - Q6: the SPECTRA browser spec becomes on demand in CI; the release of the pending changesets is

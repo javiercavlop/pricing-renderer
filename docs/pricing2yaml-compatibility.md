@@ -28,6 +28,11 @@ The normalized/rendered subset covers:
   integrations, automation, expressions, and render flags;
 - usage-limit units, periods, tracking, linked features, defaults, and render
   flags;
+- the `tag` of features and usage limits, which drives the comparison groups:
+  a pricing without tags shows one group with no header, a partly tagged one
+  shows its tag groups and a final "Other features" group, and a fully tagged
+  one shows its tag groups (see "Comparison groups and tags" in the API
+  reference);
 - add-on availability, dependencies, exclusions, features, usage-limit values,
   usage-limit extensions, units, and subscription constraints;
 - fixed, textual, and expression-based prices;

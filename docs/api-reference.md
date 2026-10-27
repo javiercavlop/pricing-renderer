@@ -381,6 +381,39 @@ The texts come from the i18n keys `pricing.rowsShownOf` and
 `pricing.noMatches`. The key `pricing.rowsShown` stays in the catalogs but is
 no longer rendered.
 
+### Comparison groups and tags
+
+The comparison groups follow the `tag` declared on features and usage limits.
+Rows with `render: disabled` are not counted. A row is tagged only when its
+source object declares a non-blank `tag`; the defaults `General` and
+`Usage limits` that normalization writes into `tag` do not count.
+
+- No tags: one group with no header, holding the features and then the usage
+  limits. It is always expanded, keeps the 30-row cap and `Show N more`, and
+  the toolbar hides Expand all and Collapse all.
+- Partly tagged: one group per tag in order of first appearance, then one final
+  group `Other features` with the untagged features followed by the untagged
+  usage limits. There is no separate `Usage limits` group.
+- Fully tagged: the tag groups, unchanged.
+
+`PricingComparisonGroup` has an optional field
+`kind?: "tag" | "other-features" | "untagged"`. An absent value means `"tag"`,
+so groups built by hand keep their header. The ids `pr-other-features` and
+`pr-untagged` belong to the last two kinds; a declared tag with either text is
+not supported. A declared tag with the visible name of the group (for example
+`Other features`) stays a separate group.
+
+The name of the final group comes from the i18n key `pricing.otherFeatures`
+(`Other features`; Spanish `Otras características`). A group with no header
+uses `pricing.features` as its name. Hosts can override both keys with
+`messages`. The key `pricing.usageLimits` stays in the catalogs but no longer
+names a comparison group built by this rule.
+
+`NormalizedFeature.tag`, `NormalizedUsageLimit.tag` and
+`PricingComparisonRow.category` keep their values. The tag is read from the raw
+pricing, so a `NormalizedPricing` built by hand without `tag` on its raw
+objects counts as untagged.
+
 ### Add-on grid for long lists
 
 `add-on-filter-threshold` (property `addOnFilterThreshold`, default 13) sets
