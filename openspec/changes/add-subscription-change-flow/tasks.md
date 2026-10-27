@@ -62,7 +62,7 @@ Implementation:
   - Files: the new `src/core/compare-sides.ts` (internal: Decision 2 steps 1 to 5, unknown-id
     diagnostics, removal reasons).
   - Checks: `typecheck`, `lint`, `unit`. Depends on A1.
-- [ ] A4 `compareSelections`.
+- [x] A4 `compareSelections`.
   - Files: the new `src/core/compare.ts` (classification, version, price, relation, ordering,
     current usage, detaching) and `src/core/index.ts` (the function and the D1 type exports).
   - Checks: `typecheck`, `lint`, `unit` green for all `req~compare-*` ids, `spec`.
@@ -70,11 +70,11 @@ Implementation:
 
 ## Phase B: space-adapter (after D7; the tests use `compareSelections`, so after A4)
 
-- [ ] B0 (test-designer) Acceptance tests for `specs/space-adapter`.
+- [x] B0 (test-designer) Acceptance tests for `specs/space-adapter`.
   - Files: `tests/unit/space-adapter.test.ts`. `tests/unit/space-contract.test.ts` stays
     unchanged.
   - Checks: `unit` red before.
-- [ ] B1 The subpath.
+- [x] B1 The subpath.
   - Files: the new `src/space/index.ts` (with the moved `req~space-map-*` tags), the new
     `tsconfig.space.json`, `tsconfig.json`, `package.json` (`exports["./space"]`, the
     `package:check` entrypoints) and `examples/space-contract/map-contract.ts` (re-export only).
@@ -84,14 +84,14 @@ Implementation:
 
 Tests (test-designer):
 
-- [ ] C0a Current-selection browser tests.
+- [x] C0a Current-selection browser tests.
   - Files: `tests/browser/current-selection.spec.ts` (with the helper
     `tests/browser/helpers/change-flow.ts`). Requirements: `req~current-selection-*`, except the
     type, i18n and manifest ones.
   - Checks: `browser` red before.
   - Status: written, not run. The lab has no browser, so the red-before and green runs are left to
     the `browser` check in CI.
-- [ ] C0b Plan-CTA browser tests.
+- [x] C0b Plan-CTA browser tests.
   - Files: `tests/browser/plan-cta.spec.ts` (demo page, PQ, PS). Requirements: `req~cta-*`,
     except the type, i18n and manifest ones.
   - Checks: `browser` red before.
@@ -122,7 +122,7 @@ Implementation:
     - pending and disabled attributes;
     - the summary-action template.
   - Checks: `typecheck`, `lint`, `unit`. Depends on C1.
-- [ ] C3 Renderers.
+- [x] C3 Renderers.
   - Files: `src/element/renderers.ts`:
     - optional `RenderState` fields (current plan id, current add-on ids, plan relations,
       pending action id, summary action);
@@ -132,7 +132,7 @@ Implementation:
   - Checks: `typecheck`, `lint`, `unit`, `browser` (no baseline change). Depends on C2.
   - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
     the lab), so the baselines are not confirmed unchanged.
-- [ ] C4 Element.
+- [x] C4 Element.
   - Files:
     - `src/element/pricing-renderer-element.ts`: the properties `currentSelection` and
       `pendingActionId`, the current side, the diagnostics dispatch, the `pricing-action` detail
@@ -141,7 +141,7 @@ Implementation:
     - `src/element/index.ts`: the `SelectionRelation` re-export.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on C3.
   - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run.
-- [ ] C5 React, manifest and styles.
+- [x] C5 React, manifest and styles.
   - Files:
     - `src/react/index.ts`: the props `currentSelection` and `pendingActionId` and the
       `SelectionRelation` re-export;
@@ -181,7 +181,7 @@ Implementation:
 
 Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
 
-- [ ] E0 (test-designer) Tests for those 16 requirements.
+- [x] E0 (test-designer) Tests for those 16 requirements.
   - Files: `tests/unit/change-review.test.ts` (definition in node with the stub registry, React
     SSR and registration, types, manifest, package entries) and
     `tests/browser/change-review-data.spec.ts` (review page: events, the Confirm default action,
@@ -196,7 +196,7 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
     shim, so the unit tests import lit first and stub the registry they need (none, or a recording
     stub). `tests/unit/docs-examples.test.ts` now scans only the renderer's events; the review
     events are documented with phase F5.
-- [ ] E1 Element, events and registration.
+- [x] E1 Element, events and registration.
   - Files:
     - the new `src/element/change-review-element.ts`: properties, events, the Confirm default
       action, guards and the base parts only;
@@ -228,7 +228,7 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
 
 Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
 
-- [ ] F0 (test-designer) UI tests.
+- [x] F0 (test-designer) UI tests.
   - Files: `tests/browser/change-review-ui.spec.ts` (R_ENT, R_START, R_CUR, R_QUOTE, R_V12,
     axe, forced colors, focus, Spanish) and `tests/unit/change-review-i18n.test.ts` (the
     "Review" table).
@@ -257,14 +257,14 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     `[impl->...~1]` and `[utest->...~1]` tags in `src/` and `tests/` carry it and are outside the
     scope of the documentation task; bump it together with those tags if the owner wants the
     revision to follow the wording.
-- [ ] F3 Wiring and focus.
+- [x] F3 Wiring and focus.
   - Files: `src/element/change-review-element.ts`, which renders through
     `change-review-renderers.ts` and moves focus on `comparison` and `error`. This is after E1.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on F2.
   - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
     the lab), so the focus and rendering scenarios are not confirmed in a real browser. Unticked
     until the `browser` check passes in CI.
-- [ ] F4 Review styles.
+- [x] F4 Review styles.
   - Files: `src/styles/base.css`: review layout, dark theme, forced colors and reduced motion.
     This is after C5.
   - Checks: `browser`, `lint`. Depends on F3.
