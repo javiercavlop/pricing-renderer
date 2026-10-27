@@ -63,9 +63,52 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
   - Objective: O2. State: done (measurement delivered by PR #53).
   - Evidence: PR #53 (`xscreens`); proposed in `report.md:422`. Values are not recorded yet
     (`docs/agent-work/visual-review-spectra/o1-remeasure.md:26`).
+  - Next step: proposal P-20261027-2 (owner approved, intake in progress). The values come from
+    a run of the `on-demand-specs` job, which runs `spectra-review.spec.ts` (`ci.yml:299-302`).
 - Contrast guard (contrast stays at 0)
   - Objective: O2. State: done as a regression guard; not a ranked item (`report.md:126`).
   - Evidence: `report.md:88-89`.
+
+## UX review (PR 56)
+
+Source: `docs/agent-work/ux-review/report.md` (`ux-report.md` below), summary table at
+`ux-report.md:587-599`, dependencies at `:601-602`. No proposal has started. Owner CRP is needed
+for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 need none
+(`ux-report.md:582-584`). The report's thresholds predate the owner's Q2 and Q3 answers
+(`ux-report.md:617-621` against Q2 and Q3 below), and its questions Q-A to Q-G
+(`ux-report.md:623-640`) are open, except that Q2 already answers part of Q-A.
+
+- UX-1, stress spec: browser measurement extension (`ux-report.md:341`)
+  - Objective: O1. State: not started. Priority P8, about 250 lines, risk low. Owner CRP: no.
+- UX-2, unit-level counts on the stress fixtures and the 37 real pricings (`ux-report.md:373`)
+  - Objective: O1. State: not started. Priority P8, about 200 lines, risk low. Owner CRP: no.
+- UX-3, narrow top compaction (`ux-report.md:395`)
+  - Objective: O1. State: not started. Priority P2, about 60 lines, risk low. Owner CRP: no.
+    Depends on UX-1.
+- UX-4, CTA directly under the price, from 840 px (`ux-report.md:413`)
+  - Objective: O1. State: not started. Priority P2, about 120 lines, risk medium. Owner CRP: yes.
+    Depends on UX-1.
+- UX-5, narrow plan cards with the highlights closed (`ux-report.md:431`)
+  - Objective: O1. State: not started. Priority P1, about 180 lines, risk medium. Owner CRP: yes.
+    Depends on UX-1.
+- UX-6, narrow comparison, smaller initial row cap (`ux-report.md:458`)
+  - Objective: O1. State: not started. Priority P1, about 90 lines, risk medium. Owner CRP: yes.
+    Depends on UX-1.
+- UX-7, add-on marker aware of `availableFor` (`ux-report.md:482`)
+  - Objective: O1. State: not started. Priority P4, about 120 lines, risk low. Owner CRP: yes.
+    Depends on UX-2.
+- UX-8, add-on filter for the selected plan only (`ux-report.md:502`)
+  - Objective: O1. State: not started. Priority P5, about 150 lines, risk low. Owner CRP: yes.
+    Depends on UX-1.
+- UX-9, filler descriptions for plans and add-ons (`ux-report.md:527`)
+  - Objective: O1. State: not started. Priority P6, about 60 lines, risk low. Owner CRP: no.
+    Depends on UX-2.
+- UX-10, stress spec asserts the targets (`ux-report.md:540`)
+  - Objective: O1. State: not started. Priority P8, about 150 lines, risk medium. Owner CRP: no.
+    Depends on UX-1 and every product proposal the owner accepts.
+- UX-11, mark the selected plan's column in the table (`ux-report.md:558`)
+  - Objective: O1. State: not started. Priority P3, about 90 lines, risk low. Owner CRP: yes.
+    Depends on UX-1.
 
 ## Owner decisions (2026-10-26)
 
@@ -78,13 +121,17 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
   postponed and no release to main is prepared until the owner asks. The in-flight `ci-speed` change
   covers sharding and docs-only skips only (`docs/agent-work/ci-speed/intake.md`), so the backlog
   row below stays.
+  Update 2026-10-27: the on-demand job now exists; see the first backlog row.
 
 ## Backlog
 
 Every entry is not verified, from earlier task followups.
 
 - SPECTRA browser spec optional (on demand) in CI, because it runs on every PR and costs CI time
-  (`report.md:592-594`). Decided by the owner (Q6). Objective: O4.
+  (`report.md:592-594`). Decided by the owner (Q6). Objective: O4. State: done.
+  - Evidence: job `on-demand-specs`, `.github/workflows/ci.yml:282-311` (`if:` at `:283`), commit
+    `0dfff01`; merged, PR not verified. Design: `docs/agent-work/ci-speed/on-demand-specs.md`.
+  - A dispatch works only once `ci.yml` is on the default branch (`ci.yml:277-278`).
 - Make the `audit` job blocking; today it has `continue-on-error: true`
   (`docs/audit-report.md:72-75`). Objective: O4.
 - Replace `typescript 5.6.1-rc`, which comes in through `@arethetypeswrong/core`
