@@ -1581,4 +1581,415 @@
     margin: 0;
     font-size: var(--pr-font-size-sm);
   }
+
+  /* [impl->req~review-ui-structure~1] <pricing-change-review>, after the approved mock in
+     docs/agent-work/phase2-subscription-change/review-mock/. The review is its own element, so it
+     carries the tokens of theme.css (same names and values) and the same theme switches: the
+     theme attribute, an ancestor with data-theme, and theme="auto" with the system colour scheme.
+     The host overrides a token with an unlayered rule on pricing-change-review. */
+  pricing-change-review {
+    display: block;
+    container: change-review / inline-size;
+    min-inline-size: 0;
+    color-scheme: light;
+    --pr-font-size-xs: 0.75rem;
+    --pr-font-size-sm: 0.875rem;
+    --pr-font-size-lg: 1.125rem;
+    --pr-font-size-xl: 1.35rem;
+    --pr-font-size-2xl: 1.75rem;
+    --pr-space-1: 0.25rem;
+    --pr-space-2: 0.5rem;
+    --pr-space-3: 0.75rem;
+    --pr-space-4: 1rem;
+    --pr-space-5: 1.5rem;
+    --pr-radius-sm: 0.55rem;
+    --pr-radius-md: 0.85rem;
+    --pr-radius-lg: 1.25rem;
+    --pr-motion-fast: 160ms ease;
+    --pr-color-text: #171723;
+    --pr-color-muted: #626275;
+    --pr-color-surface: #ffffff;
+    --pr-color-surface-raised: #ffffff;
+    --pr-color-surface-subtle: #f5f5f8;
+    --pr-color-border: #dfdfe7;
+    --pr-color-border-strong: #b8b8c6;
+    --pr-color-accent: #6558e8;
+    --pr-color-on-accent: #ffffff;
+    --pr-color-link: #5145cd;
+    --pr-color-focus: #5145cd;
+    --pr-color-success: #087f5b;
+    --pr-color-warning: #9a5600;
+    --pr-color-warning-surface: #fff7e8;
+    --pr-shadow-sm: 0 1px 2px rgb(25 25 35 / 7%), 0 8px 30px rgb(25 25 35 / 4%);
+    color: var(--pr-color-text);
+    font: inherit;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+  }
+
+  pricing-change-review[theme='dark'],
+  [data-theme='dark'] pricing-change-review {
+    color-scheme: dark;
+    --pr-color-text: #f4f3fb;
+    --pr-color-muted: #aaa8ba;
+    --pr-color-surface: #181820;
+    --pr-color-surface-raised: #22222c;
+    --pr-color-surface-subtle: #202028;
+    --pr-color-border: #353541;
+    --pr-color-border-strong: #555463;
+    --pr-color-accent: #9b8cff;
+    --pr-color-on-accent: #14121f;
+    --pr-color-link: #b8adff;
+    --pr-color-focus: #b8adff;
+    --pr-color-success: #66d9ad;
+    --pr-color-warning: #ffc66d;
+    --pr-color-warning-surface: #302613;
+    --pr-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%), 0 8px 30px rgb(0 0 0 / 18%);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    pricing-change-review[theme='auto'] {
+      color-scheme: dark;
+      --pr-color-text: #f4f3fb;
+      --pr-color-muted: #aaa8ba;
+      --pr-color-surface: #181820;
+      --pr-color-surface-raised: #22222c;
+      --pr-color-surface-subtle: #202028;
+      --pr-color-border: #353541;
+      --pr-color-border-strong: #555463;
+      --pr-color-accent: #9b8cff;
+      --pr-color-on-accent: #14121f;
+      --pr-color-link: #b8adff;
+      --pr-color-focus: #b8adff;
+      --pr-color-success: #66d9ad;
+      --pr-color-warning: #ffc66d;
+      --pr-color-warning-surface: #302613;
+      --pr-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%), 0 8px 30px rgb(0 0 0 / 18%);
+    }
+  }
+
+  pricing-change-review,
+  pricing-change-review *,
+  pricing-change-review *::before,
+  pricing-change-review *::after {
+    box-sizing: border-box;
+  }
+
+  pricing-change-review :where(button) {
+    color: inherit;
+    font: inherit;
+  }
+
+  pricing-change-review :where(button, h2):focus-visible {
+    outline: 2px solid var(--pr-color-focus);
+    outline-offset: 3px;
+  }
+
+  pricing-change-review [data-pr-part='change-review'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-4);
+    min-inline-size: 0;
+    overflow-wrap: break-word;
+  }
+
+  pricing-change-review :where(h2, h3, p, ul, dl, dd) {
+    margin: 0;
+  }
+
+  pricing-change-review ul {
+    padding: 0;
+    list-style: none;
+  }
+
+  pricing-change-review .pr-cr-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pr-space-2) var(--pr-space-3);
+  }
+
+  pricing-change-review .pr-cr-header h2 {
+    font-size: var(--pr-font-size-2xl);
+    letter-spacing: -0.025em;
+  }
+
+  pricing-change-review [data-pr-part='change-review'] > section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-3);
+    min-inline-size: 0;
+    padding: var(--pr-space-4);
+    border: 1px solid var(--pr-color-border);
+    border-radius: var(--pr-radius-lg);
+    background: var(--pr-color-surface);
+    box-shadow: var(--pr-shadow-sm);
+  }
+
+  pricing-change-review [data-pr-part='change-review'] > section > h3 {
+    font-size: var(--pr-font-size-lg);
+    letter-spacing: -0.02em;
+  }
+
+  pricing-change-review [data-pr-part='change-row'] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--pr-space-1) var(--pr-space-3);
+    padding-block: var(--pr-space-2);
+  }
+
+  pricing-change-review [data-pr-part='change-row'] + [data-pr-part='change-row'] {
+    border-block-start: 1px solid var(--pr-color-border);
+  }
+
+  pricing-change-review .pr-cr-row__name {
+    flex: 1 1 10rem;
+    min-inline-size: 0;
+    font-weight: 650;
+  }
+
+  pricing-change-review .pr-cr-row__detail {
+    min-inline-size: 0;
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  pricing-change-review .pr-cr-row__reason {
+    flex-basis: 100%;
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+  }
+
+  pricing-change-review [data-pr-part='change-badge'] {
+    display: inline-flex;
+    align-items: center;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: 28px;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--pr-color-border);
+    border-radius: 999px;
+    background: var(--pr-color-surface-raised);
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-xs);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  pricing-change-review [data-pr-part='change-badge'][data-tone='accent'] {
+    border-color: color-mix(in srgb, var(--pr-color-accent) 45%, var(--pr-color-border));
+    background: color-mix(in srgb, var(--pr-color-accent) 11%, var(--pr-color-surface-raised));
+    color: var(--pr-color-link);
+  }
+
+  pricing-change-review [data-pr-part='change-badge'][data-tone='success'] {
+    border-color: color-mix(in srgb, var(--pr-color-success) 42%, var(--pr-color-border));
+    background: color-mix(in srgb, var(--pr-color-success) 10%, var(--pr-color-surface-raised));
+    /* the text is darkened (lightened in the dark theme) to keep 4.5:1 on the tinted background */
+    color: color-mix(in srgb, var(--pr-color-success) 78%, var(--pr-color-text));
+  }
+
+  pricing-change-review [data-pr-part='change-badge'][data-tone='warning'] {
+    border-color: color-mix(in srgb, var(--pr-color-warning) 42%, var(--pr-color-border));
+    background: var(--pr-color-warning-surface);
+    color: var(--pr-color-warning);
+  }
+
+  pricing-change-review .pr-cr-banner,
+  pricing-change-review .pr-cr-notice,
+  pricing-change-review .pr-cr-error {
+    padding: var(--pr-space-3) var(--pr-space-4);
+    border: 1px solid var(--pr-color-border);
+    border-radius: var(--pr-radius-md);
+    background: var(--pr-color-surface-subtle);
+  }
+
+  pricing-change-review .pr-cr-banner {
+    border-color: color-mix(in srgb, var(--pr-color-accent) 45%, var(--pr-color-border));
+    background: color-mix(in srgb, var(--pr-color-accent) 8%, var(--pr-color-surface));
+  }
+
+  pricing-change-review .pr-cr-notice + .pr-cr-notice {
+    margin-block-start: var(--pr-space-2);
+  }
+
+  pricing-change-review .pr-cr-error,
+  pricing-change-review .pr-cr-warning {
+    border-color: var(--pr-color-warning);
+    background: var(--pr-color-warning-surface);
+  }
+
+  pricing-change-review .pr-cr-warning {
+    flex-basis: 100%;
+    padding: var(--pr-space-2) var(--pr-space-3);
+    border: 1px solid var(--pr-color-warning);
+    border-radius: var(--pr-radius-sm);
+    color: var(--pr-color-warning);
+    font-weight: 650;
+  }
+
+  pricing-change-review .pr-cr-error strong {
+    display: block;
+  }
+
+  pricing-change-review .pr-cr-price {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--pr-space-3);
+  }
+
+  pricing-change-review .pr-cr-price > div {
+    min-inline-size: 0;
+  }
+
+  pricing-change-review .pr-cr-price dt {
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+  }
+
+  pricing-change-review .pr-cr-price dd {
+    font-size: var(--pr-font-size-xl);
+    font-weight: 790;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  pricing-change-review .pr-cr-price dd small {
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  pricing-change-review .pr-cr-note {
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+  }
+
+  pricing-change-review [data-pr-part='change-actions'] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--pr-space-3);
+  }
+
+  pricing-change-review .pr-cr-status {
+    margin-inline-end: auto;
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+  }
+
+  pricing-change-review .pr-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding: 0.65rem 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--pr-radius-md);
+    font-weight: 750;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--pr-motion-fast);
+  }
+
+  pricing-change-review .pr-button--primary {
+    border-color: var(--pr-color-accent);
+    background: var(--pr-color-accent);
+    color: var(--pr-color-on-accent);
+  }
+
+  pricing-change-review .pr-button--secondary {
+    border-color: var(--pr-color-border);
+    background: var(--pr-color-surface);
+    color: var(--pr-color-text);
+  }
+
+  /* Confirm while pending or with nothing to confirm is aria-disabled, so focus stays on it. */
+  pricing-change-review .pr-button[aria-disabled='true'] {
+    border-color: var(--pr-color-border);
+    background: var(--pr-color-surface-subtle);
+    color: var(--pr-color-muted);
+    cursor: not-allowed;
+  }
+
+  pricing-change-review .pr-button[aria-busy='true'] {
+    cursor: progress;
+  }
+
+  /* Wide: the price in columns (two or three) and roomier sections. */
+  @container change-review (min-width: 600px) {
+    pricing-change-review .pr-cr-price {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    pricing-change-review .pr-cr-price:where(:not(:has(> :nth-child(3)))) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    pricing-change-review [data-pr-part='change-review'] > section {
+      padding: var(--pr-space-5);
+    }
+  }
+
+  /* Narrow: the actions stay in view at the bottom of the container. */
+  @container change-review (max-width: 599.98px) {
+    pricing-change-review [data-pr-part='change-actions'] {
+      position: sticky;
+      z-index: 4;
+      inset-block-end: 0;
+      padding: var(--pr-space-3);
+      border: 1px solid var(--pr-color-border);
+      border-radius: var(--pr-radius-md);
+      background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
+      backdrop-filter: blur(16px);
+    }
+
+    pricing-change-review [data-pr-part='change-actions'] .pr-button {
+      flex: 1 1 8rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    pricing-change-review *,
+    pricing-change-review *::before,
+    pricing-change-review *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* [impl->req~review-ui-forced-colors~1] The root, every section and every button keep a visible
+     border of system colours. The changes are named in text, so no meaning is left to colour. */
+  @media (forced-colors: active) {
+    pricing-change-review [data-pr-part='change-review'] {
+      padding: var(--pr-space-3);
+      border: 1px solid CanvasText;
+    }
+
+    pricing-change-review [data-pr-part='change-review'] > section {
+      border: 1px solid CanvasText;
+    }
+
+    pricing-change-review [data-pr-part='change-actions'] {
+      background: Canvas;
+    }
+
+    pricing-change-review .pr-button {
+      border: 1px solid ButtonText;
+    }
+
+    pricing-change-review .pr-button[aria-disabled='true'] {
+      border-color: GrayText;
+      color: GrayText;
+    }
+  }
 }

@@ -233,22 +233,43 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     axe, forced colors, focus, Spanish) and `tests/unit/change-review-i18n.test.ts` (the
     "Review" table).
   - Checks: `unit` and `browser` red before.
-- [ ] F1 Review messages.
+  - Status: written. `tests/unit/change-review-i18n.test.ts` (the "Review" table in both
+    catalogs) ran red before F1: 34 of the 36 keys were missing. The pure helpers of F2 and the
+    text-only source scan are in `tests/unit/change-review-renderers.test.ts`, which failed on the
+    missing module before F2. `tests/browser/change-review-ui.spec.ts` (R_ENT, R_START, R_CUR,
+    R_QUOTE and R_V12 from `tests/browser/helpers/change-review.ts`; structure, the sections,
+    status, alert, focus, forced colors, axe, the mock's container widths, themes, text-only
+    names, Spanish) is written, not run: the lab has no browser, so its red-before and green runs
+    are left to the `browser` check in CI. Unticked until then.
+- [x] F1 Review messages.
   - Files: `src/core/i18n.ts`: the other 34 keys of the "Review" table, plus any text changes the
     CRP approved for all 36. This is after E1.
   - Checks: `typecheck`, `lint`, `unit`.
-- [ ] F2 Review templates.
+  - Note: the CRP changed none of the 36 texts.
+- [x] F2 Review templates.
   - Files: the new `src/element/change-review-renderers.ts`: sections, value formatting, the
     signed difference, status and alert regions.
   - Checks: `typecheck`, `lint`, `unit`. Depends on F1.
+  - Open gap: `req~review-ui-limits~1` names every id in `usageLimits.exceeded`, but an unchanged
+    limit that is already above the current usage is not listed, because the comparison carries
+    only its id (no name, unit or usage value) and `{usage}` cannot be filled. Closing it needs a
+    decision: carry that data in `compareSelections`, or limit the requirement to changed limits.
 - [ ] F3 Wiring and focus.
   - Files: `src/element/change-review-element.ts`, which renders through
     `change-review-renderers.ts` and moves focus on `comparison` and `error`. This is after E1.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on F2.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
+    the lab), so the focus and rendering scenarios are not confirmed in a real browser. Unticked
+    until the `browser` check passes in CI.
 - [ ] F4 Review styles.
   - Files: `src/styles/base.css`: review layout, dark theme, forced colors and reduced motion.
     This is after C5.
   - Checks: `browser`, `lint`. Depends on F3.
+  - Status: implemented after the approved mock. `lint` passes; `browser` is not run (no browser
+    in the lab), so the layout, the container widths, the themes and the forced colors are not
+    confirmed in a real browser. Unticked until the `browser` check passes in CI.
+  - Note: the review carries its own copy of the theme tokens, because `theme.css` declares them
+    for `pricing-renderer` only.
 - [ ] F5 Review documentation.
   - Files:
     - `docs/change-subscription-flow.md`: the review section;

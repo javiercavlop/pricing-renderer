@@ -4,6 +4,7 @@ import type { Locator, Page } from '@playwright/test';
 import { compareSelections } from '../../../src/core/index.js';
 import type { PricingSelection, SelectionComparison } from '../../../src/core/index.js';
 import { parsePricingYaml } from '../../../src/yaml/index.js';
+import { M2, QUOTE, V1, V2 } from '../../unit/helpers/compare-fixtures.js';
 
 // Shared by the review page specs. The comparisons are those of the "Definitions" of
 // openspec/changes/add-subscription-change-flow/design.md. They are computed here, in the test
@@ -44,6 +45,18 @@ export const R_START: SelectionComparison = compareSelections({
 export const R_CUR: SelectionComparison = compareSelections({
   before: side(contract),
   after: side(contract),
+});
+
+// Enterprise with a Compliance add-on: part of the price requires a quote.
+export const R_QUOTE: SelectionComparison = compareSelections({
+  before: side(contract),
+  after: side(QUOTE()),
+});
+
+// The same selection on the pricing version 1.0 and on 2.0 of the Mailer pricing.
+export const R_V12: SelectionComparison = compareSelections({
+  before: { pricing: V1, selection: M2() },
+  after: { pricing: V2, selection: M2() },
 });
 
 export type RecordedReviewEvent = {

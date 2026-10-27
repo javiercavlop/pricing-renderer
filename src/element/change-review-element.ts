@@ -1,8 +1,7 @@
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, nothing, type PropertyValues } from 'lit';
 import {
   cloneValue,
   getMessages,
-  translate,
   type MessageCatalog,
   type SelectionComparison,
 } from '../core/index.js';
@@ -10,10 +9,13 @@ import type {
   PricingChangeBackDetail,
   PricingChangeConfirmDetail,
 } from './change-review-events.js';
+import { renderChangeReview } from './change-review-renderers.js';
 
-// The review of a subscription change. This is the data contract: the properties, the events, the
-// Confirm default action, the guards and the base parts. The sections of the review (plan, price,
-// add-ons, features, usage limits) come with the review UI.
+// One per element, so that the ids of the headings stay unique when a page has several reviews.
+let instances = 0;
+
+// The review of a subscription change: the properties, the events, the Confirm default action and
+// the guards, and the review UI rendered by change-review-renderers.ts.
 export class PricingChangeReviewElement extends LitElement {
   // [impl->req~review-properties~1]
   static properties = {
@@ -33,6 +35,8 @@ export class PricingChangeReviewElement extends LitElement {
   declare locale: string;
   declare messages?: MessageCatalog;
   declare confirmLabel?: string;
+
+  private readonly _idPrefix = `pr-review-${++instances}`;
 
   constructor() {
     super();
@@ -76,61 +80,41 @@ export class PricingChangeReviewElement extends LitElement {
     );
   };
 
+  // [impl->req~review-ui-focus~1] [impl->req~review-ui-focus-error~1]
+  // A new comparison moves focus to the heading, so a screen reader starts at the review. A new
+  // error moves it to Confirm, which `pending = false` has enabled again, so the user can retry.
+  // The comparison wins when both change in one update.
+  protected updated(changed: PropertyValues): void {
+    if (!this.comparison) return;
+    if (changed.has('comparison')) {
+      this.querySelector<HTMLElement>('[data-pr-part="review-title"]')?.focus();
+    } else if (changed.has('error') && this._errorText() !== undefined) {
+      this.querySelector<HTMLElement>('[data-pr-part="review-confirm"]')?.focus();
+    }
+  }
+
+  private _errorText(): string | undefined {
+    return typeof this.error === 'string' && this.error !== '' ? this.error : undefined;
+  }
+
   // [impl->req~review-base-parts~1]
   protected render(): unknown {
     const comparison = this.comparison;
     if (!comparison) return nothing;
     // a removed locale attribute makes the property null
     const locale = typeof this.locale === 'string' && this.locale !== '' ? this.locale : 'en-US';
-    const messages = getMessages(locale, this.messages);
-    const notices = Array.isArray(this.notices) ? this.notices : [];
-    const error = typeof this.error === 'string' && this.error !== '' ? this.error : undefined;
-    const label = typeof this.confirmLabel === 'string' ? this.confirmLabel : '';
-    const blocked = this.pending || comparison.relation === 'current';
-    return [
-      this._renderNotices(notices),
-      this._renderError(error),
-      this._renderBack(translate(messages, 'pricing.reviewBack')),
-      this._renderConfirm(label || translate(messages, 'pricing.reviewConfirm'), blocked),
-    ];
-  }
-
-  // [impl->req~review-text-only~1] Notices and the error are bound as text (Lit text bindings),
-  // never as HTML.
-  private _renderNotices(notices: string[]): TemplateResult | typeof nothing {
-    if (notices.length === 0) return nothing;
-    const items = notices.map((notice) => html`<li>${notice}</li>`);
-    return html`<ul data-pr-part="review-notices">
-      ${items}
-    </ul>`;
-  }
-
-  private _renderError(error: string | undefined): TemplateResult | typeof nothing {
-    if (error === undefined) return nothing;
-    return html`<div data-pr-part="review-error">${error}</div>`;
-  }
-
-  private _renderBack(label: string): TemplateResult {
-    return html`<button
-      class="pr-button pr-button--secondary"
-      data-pr-part="review-back"
-      type="button"
-      @click=${this._back}
-    >
-      ${label}
-    </button>`;
-  }
-
-  // `aria-disabled` and not `disabled`, so that focus stays on the button.
-  private _renderConfirm(label: string, blocked: boolean): TemplateResult {
-    return html`<button
-      class="pr-button pr-button--primary"
-      data-pr-part="review-confirm"
-      aria-disabled=${blocked ? 'true' : nothing}
-      type="button"
-      @click=${this._confirm}
-    >
-      ${label}
-    </button>`;
+    return renderChangeReview({
+      comparison,
+      locale,
+      messages: getMessages(locale, this.messages),
+      notices: Array.isArray(this.notices) ? this.notices : [],
+      error: this._errorText(),
+      pending: this.pending,
+      blocked: this.pending || comparison.relation === 'current',
+      confirmLabel: typeof this.confirmLabel === 'string' ? this.confirmLabel : undefined,
+      idPrefix: this._idPrefix,
+      onConfirm: this._confirm,
+      onBack: this._back,
+    });
   }
 }
