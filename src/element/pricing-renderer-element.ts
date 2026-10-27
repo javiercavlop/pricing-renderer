@@ -32,6 +32,7 @@ import {
 import { applySelectionInput } from '../core/apply-selection.js';
 import { summaryActionState, type SummaryActionState } from './cta.js';
 import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
+import { inputChanged } from './same-input.js';
 import {
   loadPricingFromUrl,
   parsePricingYaml,
@@ -104,12 +105,15 @@ export const onlyDifferencesConverter = {
 
 export class PricingRendererElement extends LitElement {
   static properties = {
-    pricing: { attribute: false },
+    // [impl->req~element-input-structural-compare~1] a host that builds these objects in its render
+    // function does not reload on every render; call reload() to force a load. loadPricing, yaml
+    // and src keep the identity compare.
+    pricing: { attribute: false, hasChanged: inputChanged },
     yaml: { attribute: false },
     src: { type: String, reflect: true },
-    request: { attribute: false },
+    request: { attribute: false, hasChanged: inputChanged },
     loadPricing: { attribute: false },
-    normalizeOptions: { attribute: false },
+    normalizeOptions: { attribute: false, hasChanged: inputChanged },
     expressionOptions: { attribute: false },
     selection: { attribute: false },
     defaultSelection: { attribute: false },
@@ -236,6 +240,7 @@ export class PricingRendererElement extends LitElement {
     super.connectedCallback();
     this.setAttribute('data-pr-root', '');
     this.addEventListener('keydown', this._handleDialogKeyboard);
+    if (this.hasUpdated) this._resumeAfterReconnect();
   }
 
   disconnectedCallback(): void {
@@ -245,7 +250,19 @@ export class PricingRendererElement extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected firstUpdated(): void {
+  // [impl->req~element-reconnect-resumes~1]
+  // The disconnect stopped the observer and aborted the load in flight; an aborted load is dropped
+  // without a result, so a status still `loading` would never end. A ready or failed element keeps
+  // what it shows.
+  private _resumeAfterReconnect(): void {
+    this._observeSize();
+    if (this._status === 'loading') void this.reload();
+  }
+
+  // Observes the size of the element with a new observer and measures its width once.
+  private _observeSize(): void {
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = undefined;
     if (typeof ResizeObserver === 'function') {
       this._resizeObserver = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? this.getBoundingClientRect().width;
@@ -254,6 +271,10 @@ export class PricingRendererElement extends LitElement {
       this._resizeObserver.observe(this);
     }
     this._updateCompactLayout(this.getBoundingClientRect().width);
+  }
+
+  protected firstUpdated(): void {
+    this._observeSize();
     void this.reload();
     queueMicrotask(() => {
       this._reloadOnPropertyChange = true;
@@ -307,6 +328,11 @@ export class PricingRendererElement extends LitElement {
     ].filter(Boolean);
 
     if (sources.length !== 1) {
+      // [impl->req~reload-source-error-cancels-load~1] the load in flight must neither finish nor be
+      // applied after this error
+      this._abortController?.abort();
+      this._abortController = undefined;
+      this._loadSequence += 1;
       this._applyLoadResult({
         ok: false,
         diagnostics: [
