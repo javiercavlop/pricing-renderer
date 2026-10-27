@@ -28,17 +28,17 @@ Checks (the planner registers them; names are the commands):
 
 Tests (test-designer). Shared inline fixtures go in A0a and the later files import them.
 
-- [ ] A0a Plan, relation and add-on tests.
-  - Files: `tests/unit/compare-fixtures.ts` (V1, V2, V2U, F, the `Side` and `cmp` helpers) and
+- [x] A0a Plan, relation and add-on tests.
+  - Files: `tests/unit/helpers/compare-fixtures.ts` (V1, V2, V2U, F, the `Side` and `cmp` helpers) and
     `tests/unit/compare-addons.test.ts`. Requirements: `req~compare-plan~1`,
     `req~compare-relation-*`, `req~compare-addons-*` and `req~compare-selections-output~1`.
   - Checks: `unit` red before, `lint`.
-- [ ] A0b Effective values and usage tests.
+- [x] A0b Effective values and usage tests.
   - Files: `tests/unit/compare-values.test.ts`. Requirements: `req~compare-effective-*`,
     `req~compare-features~1`, `req~compare-limit-*`, `req~compare-limits~1` and
     `req~compare-current-usage*`.
   - Checks: `unit` red before, `lint`. After A0a.
-- [ ] A0c Price, version, diagnostics and contract tests.
+- [x] A0c Price, version, diagnostics and contract tests.
   - Files: `tests/unit/compare-contract.test.ts` and `tests/unit/compare-types.test.ts`
     (compiler API, as in `tests/unit/breakdown-types.test.ts`). Requirements:
     `req~compare-price-*`, `req~compare-version*`, `req~compare-item-presence~1`,
@@ -50,15 +50,15 @@ Tests (test-designer). Shared inline fixtures go in A0a and the later files impo
 
 Implementation:
 
-- [ ] A1 Types and the plan relation.
+- [x] A1 Types and the plan relation.
   - Files: `src/core/types.ts` (the Decision 1 types, `JsonValue` and `SelectionRelation`) and
     the new `src/core/plan-relation.ts` (internal `planRelation`).
   - Checks: `typecheck`, `lint`, `unit` (the existing tests stay green).
-- [ ] A2 Effective values.
+- [x] A2 Effective values.
   - Files: the new `src/core/compare-values.ts` (internal: `toComparedValue`, effective feature
     and limit values, capability, limit order, current-usage flag).
   - Checks: `typecheck`, `lint`, `unit`. Depends on A1.
-- [ ] A3 Sides and diagnostics.
+- [x] A3 Sides and diagnostics.
   - Files: the new `src/core/compare-sides.ts` (internal: Decision 2 steps 1 to 5, unknown-id
     diagnostics, removal reasons).
   - Checks: `typecheck`, `lint`, `unit`. Depends on A1.
@@ -227,8 +227,7 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     - `docs/api-reference.md`, `docs/i18n.md` and `docs/theming.md`: the element, the keys and
       the part hooks;
     - `.changeset/change-review-element.md`.
-
-    This is after D1a, D1b and D1d. If the diff exceeds 300 lines, split it per document.
+  - Order: after D1a, D1b and D1d. If the diff exceeds 300 lines, split it per document.
   - Checks: `unit`, `format`.
 
 ## Traceability checklist

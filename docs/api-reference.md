@@ -277,8 +277,95 @@ Example for acme with selection `CY` (Growth, 2 `extraStorage`, 1
 The breakdown reaches every `ResolvedPricing` the element provides (`resolvedState`,
 the `applySelection` result and the details of `pricing-ready`,
 `pricing-selection-change` and `pricing-action`) with no change to those types.
-To compare two selections, resolve both and diff the two breakdowns by line
-`id`; a dedicated comparison function is not part of the API.
+To compare two selections, use [`compareSelections`](#compareselections).
+
+### `compareSelections`
+
+```ts
+compareSelections(input: SelectionComparisonInput): SelectionComparison
+```
+
+Compares a contract (`before`) with an edit (`after`), each on its own normalized
+pricing, so the two sides may be two versions of the same pricing. It is pure,
+needs no DOM and never throws on unknown ids.
+
+```ts
+interface SelectionComparisonInput {
+  before: { pricing: NormalizedPricing; selection: Partial<PricingSelection> };
+  after: { pricing: NormalizedPricing; selection: Partial<PricingSelection> };
+  currentUsage?: Readonly<Record<string, number>>; // usage-limit id -> consumed
+  expression?: ExpressionOptions; // passed to resolvePricing on both sides
+}
+```
+
+The result is JSON-safe, shares no object with the input, and has these fields:
+
+- `relation`: `'current'`, `'upgrade'`, `'downgrade'` or `'change'`.
+- `version`: `before`, `after`, `changed` and the ids defined in only one version.
+- `plan`: `before` and `after` (`id`, `name` when known, `known`) and `changed`.
+- `addOns`: `added`, `removedByUser`, `removedByReconciliation`, `quantityChanged` and the
+  `unchanged` ids.
+- `features`: `gained`, `lost`, `changed` and the `unchanged` ids.
+- `usageLimits`: `changed`, the `unchanged` ids and the `exceeded` ids (consumption above the
+  new limit).
+- `price`: the `before` and `after` breakdowns, `billingPeriodChanged`, and `difference` or the
+  reason it is left out.
+- `selections`: the merged, quantity-normalized and reconciled selection of each side.
+- `diagnostics`: the warnings and info entries listed below.
+
+Rules to know:
+
+- Each side is merged with the schema defaults, so a side without `planId` gets the
+  first public plan. Pass the plan explicitly when you compare an add-ons-only contract.
+  A `planId` or `billingPeriod` that is not a string is ignored.
+- `relation` follows the declaration order of `after.pricing.plans`, not the price:
+  a later plan is an `'upgrade'` even when it costs less (`price.difference` shows the
+  price). The same plan with other add-ons, quantities, variables, billing period or
+  version is `'change'`, and so is a comparison that involves an unknown plan.
+  `'current'` needs the same version, plan, billing period, selected add-ons with
+  equal billed quantities and equal variables.
+- `addOns.removedByUser` holds add-ons that the edit does not select.
+  `removedByReconciliation` holds add-ons that the edit selects but the after pricing
+  removes, with `reason` `'unavailable-for-plan'`, `'dependency-removed'` or
+  `'not-in-version'`. Quantities are the billed quantities.
+- Feature and usage-limit values are `ComparedValue` objects tagged by `kind`
+  (`none`, `unlimited`, `boolean`, `number`, `text`, `json`). The value is the plan
+  value (or the definition default), replaced by each selected add-on's `features` or
+  `usageLimits` value and extended by `usageLimitsExtensions` times the billed quantity,
+  in add-on declaration order. `Infinity`, `null`, `'.inf'`, `'Infinity'` and
+  `'unlimited'` are limits without a bound (`null` is no value for a feature).
+- `usageLimits.changed[].delta` exists only when both values are numbers. A
+  `currentUsage` entry adds `currentUsage` to the matching change, and
+  `exceedsCurrentUsage: true` when the consumed amount is above the new limit.
+- `price.difference` is `after.subtotal - before.subtotal`. It is left out, with
+  `price.differenceOmitted` set to `'quote'` or `'currency'`, when either side
+  requires a quote or the currencies differ.
+
+Diagnostics, in this order: the before side, the after side, dropped add-ons, then
+current usage. The codes are also listed in [Events](./events.md):
+
+- `PR_COMPARE_UNKNOWN_PLAN` (`warning`, path `<side>.selection.planId`): the plan id is not in
+  the side's pricing. The id is kept.
+- `PR_COMPARE_UNKNOWN_BILLING_PERIOD` (`warning`, path `<side>.selection.billingPeriod`): the
+  billing period is not in the side's pricing. The id is kept.
+- `PR_COMPARE_UNKNOWN_ADDON` (`warning`, path `<side>.selection.addOns.<id>`): the add-on is
+  not in the side's pricing. The entry is dropped.
+- `PR_COMPARE_ADDON_DROPPED` (`info`, path `after.selection.addOns.<id>`): the edit selects an
+  add-on that the plan removes, and the contract did not have it.
+- `PR_COMPARE_UNKNOWN_USAGE_LIMIT` (`info`, path `currentUsage.<id>`): the id is not a usage
+  limit of either pricing. The entry is ignored.
+- `PR_COMPARE_INVALID_USAGE` (`warning`, path `currentUsage.<id>`): the value is not a finite
+  number of at least 0. The entry is ignored.
+
+`<side>` is `before` or `after`. Show these diagnostics to support staff, not to
+customers.
+
+The types `SelectionComparisonInput`, `SelectionComparisonSide`, `SelectionComparison`,
+`SelectionRelation`, `ComparedValue`, `ComparedPlan`, `ItemPresence`, `CatalogIds`,
+`VersionComparison`, `PlanComparison`, `AddOnComparison`, `AddOnChange`, `AddOnRemoval`,
+`AddOnRemovalReason`, `AddOnQuantityChange`, `FeatureComparison`, `FeatureChange`,
+`UsageLimitComparison`, `UsageLimitChange`, `PriceComparison` and `JsonValue` are
+exported next to the function.
 
 See the generated declarations for the complete normalized model and view-model
 shape.

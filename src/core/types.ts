@@ -375,3 +375,144 @@ export interface ExpressionEvaluation {
   value?: number;
   error?: string;
 }
+
+export type JsonValue =
+  null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+export interface SelectionComparisonSide {
+  pricing: NormalizedPricing;
+  selection: Partial<PricingSelection>;
+}
+
+export interface SelectionComparisonInput {
+  /** The contract, on its pricing version. */
+  before: SelectionComparisonSide;
+  /** The edit, on the same or a newer pricing version. */
+  after: SelectionComparisonSide;
+  /** Usage-limit id to consumed amount (SPACE usageLevels). */
+  currentUsage?: Readonly<Record<string, number>>;
+  /** Passed to `resolvePricing` on both sides. */
+  expression?: ExpressionOptions;
+}
+
+export type SelectionRelation = 'current' | 'upgrade' | 'downgrade' | 'change';
+export type ItemPresence = 'both' | 'before-only' | 'after-only';
+
+export type ComparedValue =
+  | { kind: 'none' }
+  | { kind: 'unlimited' }
+  | { kind: 'boolean'; value: boolean }
+  | { kind: 'number'; value: number }
+  | { kind: 'text'; value: string }
+  | { kind: 'json'; value: JsonValue };
+
+export interface ComparedPlan {
+  /** Absent when the side's merged selection has no plan id. */
+  id?: string;
+  /** Present only when the id is a plan id of that side's pricing. */
+  name?: string;
+  known: boolean;
+}
+
+export interface PlanComparison {
+  before: ComparedPlan;
+  after: ComparedPlan;
+  changed: boolean;
+}
+
+export interface CatalogIds {
+  plans: string[];
+  addOns: string[];
+  features: string[];
+  usageLimits: string[];
+}
+
+export interface VersionComparison {
+  before?: string;
+  after?: string;
+  changed: boolean;
+  onlyInBefore: CatalogIds;
+  onlyInAfter: CatalogIds;
+}
+
+export interface AddOnChange {
+  id: string;
+  name: string;
+  quantity: number;
+  presence: ItemPresence;
+}
+export type AddOnRemovalReason = 'unavailable-for-plan' | 'dependency-removed' | 'not-in-version';
+export interface AddOnRemoval extends AddOnChange {
+  reason: AddOnRemovalReason;
+}
+export interface AddOnQuantityChange {
+  id: string;
+  name: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
+export interface AddOnComparison {
+  added: AddOnChange[];
+  removedByUser: AddOnChange[];
+  removedByReconciliation: AddOnRemoval[];
+  quantityChanged: AddOnQuantityChange[];
+  unchanged: string[];
+}
+
+export interface FeatureChange {
+  id: string;
+  name: string;
+  before: ComparedValue;
+  after: ComparedValue;
+  presence: ItemPresence;
+}
+export interface FeatureComparison {
+  gained: FeatureChange[];
+  lost: FeatureChange[];
+  changed: FeatureChange[];
+  unchanged: string[];
+}
+
+export interface UsageLimitChange {
+  id: string;
+  name: string;
+  unit?: string;
+  before: ComparedValue;
+  after: ComparedValue;
+  /** `after - before`, only when both values are numbers. */
+  delta?: number;
+  direction: 'increased' | 'decreased' | 'changed';
+  presence: ItemPresence;
+  /** The valid `currentUsage` entry for this id. */
+  currentUsage?: number;
+  /** Present only when the consumed amount is above the new limit. */
+  exceedsCurrentUsage?: true;
+}
+export interface UsageLimitComparison {
+  changed: UsageLimitChange[];
+  unchanged: string[];
+  /** Ids flagged by the current usage, changed or not. */
+  exceeded: string[];
+}
+
+export interface PriceComparison {
+  before: PriceBreakdown;
+  after: PriceBreakdown;
+  billingPeriodChanged: boolean;
+  difference?: number;
+  differenceOmitted?: 'quote' | 'currency';
+}
+
+export interface SelectionComparison {
+  relation: SelectionRelation;
+  version: VersionComparison;
+  plan: PlanComparison;
+  addOns: AddOnComparison;
+  features: FeatureComparison;
+  usageLimits: UsageLimitComparison;
+  price: PriceComparison;
+  selections: { before: PricingSelection; after: PricingSelection };
+  diagnostics: PricingDiagnostic[];
+}
