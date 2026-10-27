@@ -82,7 +82,7 @@ test.describe('structure', () => {
 
   test('each section is labelled by its own h3, after the h2', async ({ page }) => {
     const review = await addReview(page, { comparison: R_START, notices: ['A notice'] });
-    const labelled = await review.locator(sections).evaluateAll((elements) =>
+    const labelled = await page.locator(sections).evaluateAll((elements) =>
       elements.map((element) => {
         const heading = element.querySelector(':scope > h3');
         return {
