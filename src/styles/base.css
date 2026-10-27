@@ -1760,6 +1760,10 @@
     font-weight: 650;
   }
 
+  pricing-change-review .pr-cr-error {
+    color: var(--pr-color-text);
+  }
+
   pricing-change-review .pr-cr-error strong {
     display: block;
   }

@@ -554,6 +554,11 @@ test.describe('accessibility', () => {
             requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
           ),
       );
+      // retry until the theme colours settle, so axe samples the final foreground
+      const text = theme === 'dark' ? 'rgb(244, 243, 251)' : 'rgb(23, 23, 35)';
+      await expect(review).toHaveCSS('color', text);
+      await expect(review.locator('.pr-cr-error')).toHaveCSS('color', text);
+      await expect(review.locator('.pr-cr-error strong')).toHaveCSS('color', text);
       expect(await seriousViolations(page)).toEqual([]);
     });
   }

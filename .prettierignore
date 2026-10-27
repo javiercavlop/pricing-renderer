@@ -12,3 +12,5 @@ tests/fixtures/spectra
 docs/agent-work/phase2-subscription-change/review-mock/
 # delta specs of an open change: requirement tables and ids are validated by openspec, not reformatted; remove this entry when the change is archived
 openspec/changes/add-subscription-change-flow/
+# generated plan, handoff and review notes of this change, not reformatted
+docs/agent-work/phase2-subscription-change/

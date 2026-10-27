@@ -6,7 +6,9 @@ describe('expandCtaHref in one pass', () => {
   // [utest->req~cta-href-template~1]
   it('does not expand a placeholder that the encoded plan id produces', () => {
     expect(expandCtaHref('/c/{planId}', '{planId}')).toBe('/c/%7BplanId%7D');
-    expect(expandCtaHref('/c/{planId}/{planId}', 'a{planId}')).toBe('/c/a%7BplanId%7D/a%7BplanId%7D');
+    expect(expandCtaHref('/c/{planId}/{planId}', 'a{planId}')).toBe(
+      '/c/a%7BplanId%7D/a%7BplanId%7D',
+    );
   });
 });
 
