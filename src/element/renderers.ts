@@ -79,6 +79,8 @@ export interface RenderState {
   pendingAddOnChange?: PendingAddOnChange;
   breakdownOpen: boolean;
   breakdownId: string;
+  /** Prefix of every id the renderers write, `pr-<n>` per element instance; absent means `pr`. */
+  idPrefix?: string;
   /** The current plan id, only when the loaded pricing defines it. */
   currentPlanId?: string;
   /** Add-ons of the reconciled current side; empty without a known current plan. */
@@ -86,6 +88,17 @@ export interface RenderState {
   pendingActionId?: string;
   summaryAction?: SummaryActionState;
   actions: RenderActions;
+}
+
+// [impl->req~element-instance-ids~1] ids are global in the light DOM, so every id carries the
+// instance prefix. The data part (a path, a group or add-on id) is sanitized.
+export function instanceId(
+  state: Pick<RenderState, 'idPrefix'>,
+  name: string,
+  data?: string,
+): string {
+  const base = `${state.idPrefix ?? 'pr'}-${name}`;
+  return data === undefined ? base : `${base}-${data.replace(/[^\w-]+/g, '-')}`;
 }
 
 export const DEFAULT_TOOLBAR_THRESHOLD = 40;
@@ -266,7 +279,7 @@ export function renderHeader(state: RenderState): TemplateResult {
   return html`
     <header class="pr-hero" data-pr-part="hero">
       <div class="pr-hero__eyebrow">${t(viewModel, 'pricing.title')}</div>
-      <h2 class="pr-hero__title" id="pr-title">${title}</h2>
+      <h2 class="pr-hero__title" id=${instanceId(state, 'title')}>${title}</h2>
       ${subtitle ? html`<p class="pr-hero__subtitle">${subtitle}</p>` : nothing}
       ${
         viewModel.pricing.metadata.tags.length
@@ -374,12 +387,13 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
 
 export function renderPlans(state: RenderState): TemplateResult {
   const { viewModel, selection, selectionEnabled, ctaEnabled, actions } = state;
+  const titleId = instanceId(state, 'plans-title');
   return html`
-    <section class="pr-section" aria-labelledby="pr-plans-title" data-pr-part="plans">
+    <section class="pr-section" aria-labelledby=${titleId} data-pr-part="plans">
       <div class="pr-section__heading">
         <div>
           <p class="pr-section__eyebrow">${t(viewModel, 'pricing.plans')}</p>
-          <h3 id="pr-plans-title">${t(viewModel, 'pricing.plans')}</h3>
+          <h3 id=${titleId}>${t(viewModel, 'pricing.plans')}</h3>
         </div>
       </div>
       ${
@@ -388,7 +402,7 @@ export function renderPlans(state: RenderState): TemplateResult {
           : html`<div
               class="pr-plan-grid"
               role=${selectionEnabled ? 'radiogroup' : nothing}
-              aria-labelledby=${selectionEnabled ? 'pr-plans-title' : nothing}
+              aria-labelledby=${selectionEnabled ? titleId : nothing}
             >
               ${viewModel.plans.map((plan) => {
                 const selected = selection.planId === plan.id;
@@ -522,7 +536,7 @@ function controlInput(
 ): TemplateResult {
   const { selection, actions } = state;
   const value = getAtPath(selection.variables, control.path);
-  const id = `pr-variable-${control.path.replace(/[^\w-]+/g, '-')}`;
+  const id = instanceId(state, 'variable', control.path);
   if (control.type === 'boolean') {
     return html`<label class="pr-switch" for=${id}>
       <input
@@ -607,17 +621,18 @@ function controlInput(
 export function renderVariables(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel, variablesEnabled, actions } = state;
   if (!variablesEnabled || viewModel.variableControls.length === 0) return nothing;
+  const titleId = instanceId(state, 'variables-title');
   return html`
-    <section class="pr-configurator" aria-labelledby="pr-variables-title" data-pr-part="variables">
+    <section class="pr-configurator" aria-labelledby=${titleId} data-pr-part="variables">
       <div class="pr-section__heading">
-        <h3 id="pr-variables-title">${t(viewModel, 'pricing.variables')}</h3>
+        <h3 id=${titleId}>${t(viewModel, 'pricing.variables')}</h3>
         <button class="pr-button pr-button--quiet" type="button" @click=${actions.resetVariables}>
           ${t(viewModel, 'pricing.reset')}
         </button>
       </div>
       <div class="pr-variable-grid">
         ${viewModel.variableControls.map((control) => {
-          const id = `pr-variable-${control.path.replace(/[^\w-]+/g, '-')}`;
+          const id = instanceId(state, 'variable', control.path);
           const invalid = viewModel.resolved.diagnostics.some((item) => {
             const planMatch = item.path?.match(/^plans\.([^.]+)\.price$/)?.[1];
             const addOnMatch = item.path?.match(/^addOns\.([^.]+)\.price$/)?.[1];
@@ -754,7 +769,7 @@ function renderCompactComparison(
                   <button
                     type="button"
                     aria-expanded=${expanded}
-                    aria-controls="pr-group-${group.id}"
+                    aria-controls="${instanceId(state, 'group', group.id)}"
                     @click=${() => actions.toggleGroup(group.id)}
                   >
                     <span>${group.name}</span
@@ -764,7 +779,7 @@ function renderCompactComparison(
           }
           ${
             expanded
-              ? html`<div id="pr-group-${group.id}">
+              ? html`<div id="${instanceId(state, 'group', group.id)}">
                   ${rows.map((row) => {
                     const addOnOnly = isAddOnOnlyRow(viewModel, row);
                     return html`
@@ -926,16 +941,13 @@ export function renderComparison(state: RenderState): TemplateResult | typeof no
   const { viewModel } = state;
   const groups = filterGroups(state);
   if (viewModel.comparisonGroups.length === 0) return nothing;
+  const titleId = instanceId(state, 'comparison-title');
   return html`
-    <section
-      class="pr-section pr-comparison"
-      aria-labelledby="pr-comparison-title"
-      data-pr-part="comparison"
-    >
+    <section class="pr-section pr-comparison" aria-labelledby=${titleId} data-pr-part="comparison">
       <div class="pr-section__heading">
         <div>
           <p class="pr-section__eyebrow">${t(viewModel, 'pricing.details')}</p>
-          <h3 id="pr-comparison-title">${t(viewModel, 'pricing.comparison')}</h3>
+          <h3 id=${titleId}>${t(viewModel, 'pricing.comparison')}</h3>
         </div>
       </div>
       ${
@@ -1102,6 +1114,7 @@ function renderAddOnCard(
   const available = addOnAvailability(addOn, selection.planId);
   const constraints = addOn.subscriptionConstraints;
   const current = state.currentAddOnIds?.has(addOn.id) ?? false;
+  const helpId = instanceId(state, 'addon-help', addOn.id);
   return html`
     <article
       class="pr-addon-card ${selectionEnabled && available ? 'pr-selectable-card' : ''} ${
@@ -1142,7 +1155,7 @@ function renderAddOnCard(
                   aria-label=${t(viewModel, selected ? 'pricing.removeAddOn' : 'pricing.addAddOn', {
                     addOn: addOn.name,
                   })}
-                  aria-describedby="pr-addon-help-${addOn.id}"
+                  aria-describedby="${helpId}"
                   @change=${(event: Event) =>
                     actions.toggleAddOn(
                       addOn.id,
@@ -1160,7 +1173,7 @@ function renderAddOnCard(
       <div class="pr-price pr-price--addon">
         ${renderPrice(viewModel, viewModel.resolved.addOnPrices[addOn.id], addOn.unit)}
       </div>
-      <div id="pr-addon-help-${addOn.id}" class="pr-addon-card__details">
+      <div id="${helpId}" class="pr-addon-card__details">
         ${
           !available
             ? html`<p class="pr-status">${t(viewModel, 'pricing.notAvailable')}</p>`
@@ -1297,12 +1310,13 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
   const dense = viewModel.addOns.length > ADDON_DENSE_THRESHOLD;
   // [impl->req~addon-grid-filter~1] [impl->req~addon-grid-threshold-attribute~1]
   const filtered = viewModel.addOns.length > addOnFilterThresholdOf(state.addOnFilterThreshold);
+  const titleId = instanceId(state, 'addons-title');
   return html`
-    <section class="pr-section" aria-labelledby="pr-addons-title" data-pr-part="add-ons">
+    <section class="pr-section" aria-labelledby=${titleId} data-pr-part="add-ons">
       <div class="pr-section__heading">
         <div>
           <p class="pr-section__eyebrow">${t(viewModel, 'pricing.addOns')}</p>
-          <h3 id="pr-addons-title">${t(viewModel, 'pricing.addOns')}</h3>
+          <h3 id=${titleId}>${t(viewModel, 'pricing.addOns')}</h3>
         </div>
       </div>
       <div class="pr-addon-layout">
@@ -1473,9 +1487,10 @@ export function renderCatalogMetadata(state: RenderState): TemplateResult | type
   const { viewModel } = state;
   if (viewModel.mode !== 'catalog') return nothing;
   const metadata = viewModel.pricing.metadata;
+  const titleId = instanceId(state, 'metadata-title');
   return html`
-    <section class="pr-metadata" aria-labelledby="pr-metadata-title" data-pr-part="metadata">
-      <h3 id="pr-metadata-title">${t(viewModel, 'pricing.details')}</h3>
+    <section class="pr-metadata" aria-labelledby=${titleId} data-pr-part="metadata">
+      <h3 id=${titleId}>${t(viewModel, 'pricing.details')}</h3>
       <dl>
         <div>
           <dt>${t(viewModel, 'pricing.version')}</dt>
@@ -1514,20 +1529,22 @@ export function renderPendingDialog(state: RenderState): TemplateResult | typeof
   const pending = state.pendingAddOnChange;
   if (!pending) return nothing;
   const { viewModel, actions } = state;
+  const titleId = instanceId(state, 'dialog-title');
+  const descriptionId = instanceId(state, 'dialog-description');
   return html`
     <div class="pr-dialog-backdrop">
       <div
         class="pr-dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="pr-dialog-title"
-        aria-describedby="pr-dialog-description"
+        aria-labelledby=${titleId}
+        aria-describedby=${descriptionId}
         @keydown=${(event: KeyboardEvent) => {
           if (event.key === 'Escape') actions.cancelAddOnChange();
         }}
       >
-        <h3 id="pr-dialog-title">${t(viewModel, 'pricing.confirmChanges')}</h3>
-        <p id="pr-dialog-description">${t(viewModel, 'pricing.confirmChangesDescription')}</p>
+        <h3 id=${titleId}>${t(viewModel, 'pricing.confirmChanges')}</h3>
+        <p id=${descriptionId}>${t(viewModel, 'pricing.confirmChangesDescription')}</p>
         ${
           pending.addIds.length
             ? html`<p>

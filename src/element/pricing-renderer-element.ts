@@ -64,6 +64,7 @@ import {
   resolveOnlyDifferences,
   toolbarThresholdOf,
   addOnFilterThresholdOf,
+  instanceId,
   type ActionOrigin,
   type RenderActions,
   type RenderState,
@@ -95,7 +96,7 @@ const addOnCardSelector = '[data-pr-part="add-on-card"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
 
-// [impl->req~shorter-page-only-differences~1] absent is automatic, `false` is off, anything else is on
+// [impl->req~shorter-page-only-differences~2] absent is automatic, `false` is off, anything else is on
 export const onlyDifferencesConverter = {
   fromAttribute(value: string | null): boolean | undefined {
     if (value === null) return undefined;
@@ -198,7 +199,10 @@ export class PricingRendererElement extends LitElement {
   private _previousFocus?: HTMLElement;
   private _breakdownOpen = false;
   // [impl->req~summary-breakdown-unique-ids~1] the element renders in light DOM, so ids are global
-  private readonly _breakdownId = `pr-breakdown-${++breakdownPanelCount}`;
+  private readonly _instanceNumber = ++breakdownPanelCount;
+  private readonly _breakdownId = `pr-breakdown-${this._instanceNumber}`;
+  // [impl->req~element-instance-ids~1] the prefix of every other id of this instance
+  private readonly _idPrefix = `pr-${this._instanceNumber}`;
 
   constructor() {
     super();
@@ -1015,11 +1019,10 @@ export class PricingRendererElement extends LitElement {
 
   protected render(): TemplateResult {
     if (this._status === 'loading' || this._status === 'idle') {
+      const loadingTitleId = `${this._idPrefix}-loading-title`;
       return html`
-        <section class="pr-shell pr-shell--loading" aria-labelledby="pr-loading-title">
-          <h2 id="pr-loading-title" class="pr-sr-only">
-            ${this.loadingLabel ?? 'Loading pricing'}
-          </h2>
+        <section class="pr-shell pr-shell--loading" aria-labelledby=${loadingTitleId}>
+          <h2 id=${loadingTitleId} class="pr-sr-only">${this.loadingLabel ?? 'Loading pricing'}</h2>
           <div class="pr-skeleton" role="status" aria-live="polite">
             <span>${this.loadingLabel ?? 'Loading pricing…'}</span>
             <div></div>
@@ -1073,6 +1076,11 @@ export class PricingRendererElement extends LitElement {
     // Without a toolbar the user cannot undo a filter, so the search text and the checkbox override
     // are ignored while it is hidden (the stored values are kept).
     const toolbarShown = comparisonRowTotal(viewModel) > toolbarThreshold;
+    // [impl->req~shorter-page-only-differences~2] a forced value is ignored without the toolbar,
+    // because no checkbox exists to undo it
+    const initialOnlyDifferences =
+      this._onlyDifferencesOverride ??
+      resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold);
     // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
     const current = deriveCurrentContext(this._normalized, this._currentSelection);
     const state: RenderState = {
@@ -1080,9 +1088,7 @@ export class PricingRendererElement extends LitElement {
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: toolbarShown ? this._search : '',
-      onlyDifferences:
-        (toolbarShown ? this._onlyDifferencesOverride : undefined) ??
-        resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold),
+      onlyDifferences: toolbarShown && initialOnlyDifferences,
       toolbarThreshold,
       selectionEnabled: this.selectionEnabled,
       ctaEnabled: this.ctaEnabled,
@@ -1095,6 +1101,7 @@ export class PricingRendererElement extends LitElement {
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),
       breakdownOpen: this._breakdownOpen,
       breakdownId: this._breakdownId,
+      idPrefix: this._idPrefix,
       ...(current ? { currentPlanId: current.planId, currentAddOnIds: current.addOnIds } : {}),
       ...(this.pendingActionId ? { pendingActionId: this.pendingActionId } : {}),
       ...(current && this.ctaEnabled
@@ -1104,7 +1111,7 @@ export class PricingRendererElement extends LitElement {
     };
     const warnings = this._diagnostics.filter((item) => item.severity !== 'info');
     return html`
-      <section class="pr-shell" aria-labelledby="pr-title">
+      <section class="pr-shell" aria-labelledby=${instanceId(state, 'title')}>
         <div
           class="pr-content"
           aria-hidden=${this._pendingAddOnChange ? 'true' : nothing}

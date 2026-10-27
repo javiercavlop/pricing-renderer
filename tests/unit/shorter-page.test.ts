@@ -248,7 +248,7 @@ describe('resolveOnlyDifferences', () => {
   });
 });
 
-// [utest->req~shorter-page-only-differences~1]
+// [utest->req~shorter-page-only-differences~2]
 describe('onlyDifferencesConverter', () => {
   it('maps the attribute to a tri-state value', async () => {
     const loaded: unknown = await import('../../src/element/pricing-renderer-element.js');
