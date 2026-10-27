@@ -162,8 +162,8 @@ test.describe('focus after Show N more', () => {
       page,
     }) => {
       await loadPricing(page, 'clickup', layout.viewport);
-      // clickup starts with only the differences, which leaves its first group (General, 136 rows)
-      // under the cap. With the filter off the group is expanded and shows 30 rows and "Show 106 more".
+      // clickup starts with only the differences, which leaves its single headerless group under
+      // the cap. With the filter off the group shows 30 rows and a "Show N more" button.
       await page.getByRole('checkbox', { name: 'Only differences' }).uncheck();
 
       const group = page.locator(layout.group).first();
