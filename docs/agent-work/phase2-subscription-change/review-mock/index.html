@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en-US" data-theme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mock: pricing change review</title>
+    <link rel="stylesheet" href="mock.css" />
+  </head>
+  <body>
+    <main class="mock-page">
+      <div class="mock-bar">
+        <h1>Mock: &lt;pricing-change-review&gt;</h1>
+        <fieldset class="mock-theme">
+          <legend>Theme</legend>
+          <div>
+            <button type="button" data-set-theme="auto" aria-pressed="true">Auto</button>
+            <button type="button" data-set-theme="light" aria-pressed="false">Light</button>
+            <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+          </div>
+        </fieldset>
+      </div>
+      <p class="mock-intro">
+        Static mock for owner review. Nothing here is wired. All prices, limits and versions are
+        illustrative and come from the acme scenario (EUR), not from a real quote. Drag the corner of
+        a dashed frame to change the component width (320, 375, 768 and 1200 px are the target
+        widths).
+      </p>
+
+      <section class="mock-state" aria-labelledby="s-default">
+        <h2 id="s-default">State: default (all sections)</h2>
+        <p>
+          Growth + 2 Extra Storage + Priority Success (monthly, 80 EUR) to Enterprise + 3 Extra
+          Storage + Compliance (Contact sales), yearly.
+        </p>
+        <div class="mock-frame">
+          <section data-pr-part="change-review" aria-labelledby="d-title">
+            <header class="pr-cr-header">
+              <h3 id="d-title">Review your change</h3>
+              <span data-pr-part="change-badge" data-tone="success">Upgrade</span>
+            </header>
+
+            <div class="pr-cr-banner" role="status">
+              <strong data-pr-part="change-badge" data-tone="accent">New pricing version</strong>
+              Prices changed from version v1 to v2 since you started. The review below uses v2.
+            </div>
+
+            <section data-pr-part="change-section" aria-labelledby="d-plan">
+              <h4 id="d-plan">Plan</h4>
+              <div data-pr-part="change-row">
+                <span class="pr-cr-row__name">Growth <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> Enterprise</span>
+                <span data-pr-part="change-badge" data-tone="accent">Changed</span>
+              </div>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-price">
+              <h4 id="d-price">Price</h4>
+              <dl class="pr-cr-price">
+                <div>
+                  <dt>Before</dt>
+                  <dd>80.00 EUR <small>/ month</small></dd>
+                </div>
+                <div>
+                  <dt>After</dt>
+                  <dd>Contact sales <small>(yearly)</small></dd>
+                </div>
+                <div>
+                  <dt>Difference</dt>
+                  <dd>Not computable <small>EUR / year</small></dd>
+                </div>
+              </dl>
+              <p class="pr-cr-note">
+                The new total needs a quote, so the difference cannot be computed. Compliance and
+                Enterprise are priced by sales.
+              </p>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-addons">
+              <h4 id="d-addons">Add-ons</h4>
+              <div class="pr-cr-group">
+                <h5>Added</h5>
+                <ul>
+                  <li data-pr-part="change-row">
+                    <span class="pr-cr-row__name">Compliance</span>
+                    <span class="pr-cr-row__detail">Contact sales</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="pr-cr-group">
+                <h5>Removed automatically</h5>
+                <ul>
+                  <li data-pr-part="change-row">
+                    <span class="pr-cr-row__name">Priority Success</span>
+                    <span data-pr-part="change-badge" data-tone="warning">Removed</span>
+                    <span class="pr-cr-row__reason">
+                      Reason: not available with Enterprise (support is included in the plan).
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div class="pr-cr-group">
+                <h5>Quantity changed</h5>
+                <ul>
+                  <li data-pr-part="change-row">
+                    <span class="pr-cr-row__name">Extra Storage</span>
+                    <span class="pr-cr-row__detail">2 <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> 3</span>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-features">
+              <h4 id="d-features">Features</h4>
+              <div class="pr-cr-group">
+                <h5>Gained</h5>
+                <ul>
+                  <li data-pr-part="change-row"><span class="pr-cr-row__name">Single sign-on</span></li>
+                  <li data-pr-part="change-row"><span class="pr-cr-row__name">Audit log</span></li>
+                </ul>
+              </div>
+              <div class="pr-cr-group">
+                <h5>Lost</h5>
+                <ul>
+                  <li data-pr-part="change-row"><span class="pr-cr-row__name">Self-serve invoices</span></li>
+                </ul>
+              </div>
+              <div class="pr-cr-group">
+                <h5>Changed</h5>
+                <ul>
+                  <li data-pr-part="change-row">
+                    <span class="pr-cr-row__name">Support hours</span>
+                    <span class="pr-cr-row__detail">Business hours <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> 24/7</span>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-limits">
+              <h4 id="d-limits">Usage limits</h4>
+              <table class="pr-cr-table">
+                <caption>
+                  Limit before and after the change, with your current usage
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Limit</th>
+                    <th scope="col">Before</th>
+                    <th scope="col">After</th>
+                    <th scope="col">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-pr-part="change-row">
+                    <th scope="row">API requests / month</th>
+                    <td data-label="Before">100,000</td>
+                    <td data-label="After">Unlimited</td>
+                    <td data-label="Change">
+                      <span data-pr-part="change-badge" data-tone="success">No limit</span>
+                    </td>
+                  </tr>
+                  <tr data-pr-part="change-row">
+                    <th scope="row">Projects</th>
+                    <td data-label="Before">20</td>
+                    <td data-label="After">10</td>
+                    <td data-label="Change">
+                      &minus;10
+                      <p class="pr-cr-warning" role="note">
+                        Warning: the new limit (10) is below your current usage (14).
+                      </p>
+                    </td>
+                  </tr>
+                  <tr data-pr-part="change-row">
+                    <th scope="row">Storage</th>
+                    <td data-label="Before">50 GB</td>
+                    <td data-label="After">150 GB</td>
+                    <td data-label="Change">+100 GB</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-unchanged">
+              <h4 id="d-unchanged">Unchanged</h4>
+              <details class="pr-cr-unchanged">
+                <summary>12 items stay the same</summary>
+                <ul>
+                  <li>Billing currency (EUR)</li>
+                  <li>Region</li>
+                  <li>Seats (5)</li>
+                  <li>Email notifications</li>
+                </ul>
+              </details>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="d-notices">
+              <h4 id="d-notices">Notices</h4>
+              <ul>
+                <li class="pr-cr-notice">
+                  The change takes effect at the end of the current billing period.
+                </li>
+                <li class="pr-cr-notice">
+                  Moving to yearly billing is invoiced once, after the sales quote is accepted.
+                </li>
+              </ul>
+            </section>
+
+            <div data-pr-part="change-actions">
+              <button type="button" class="pr-button pr-button--secondary">Back</button>
+              <button type="button" class="pr-button pr-button--primary">Confirm change</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mock-state" aria-labelledby="s-pending">
+        <h2 id="s-pending">State: pending</h2>
+        <p>The host is applying the change. Confirm is disabled and the component is busy.</p>
+        <div class="mock-frame mock-frame--narrow">
+          <section data-pr-part="change-review" aria-labelledby="p-title" aria-busy="true">
+            <header class="pr-cr-header">
+              <h3 id="p-title">Review your change</h3>
+              <span data-pr-part="change-badge" data-tone="success">Upgrade</span>
+            </header>
+
+            <section data-pr-part="change-section" aria-labelledby="p-plan">
+              <h4 id="p-plan">Plan</h4>
+              <div data-pr-part="change-row">
+                <span class="pr-cr-row__name">Growth <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> Enterprise</span>
+              </div>
+            </section>
+
+            <div data-pr-part="change-actions">
+              <p class="pr-cr-status" role="status">Applying change...</p>
+              <button type="button" class="pr-button pr-button--secondary">Back</button>
+              <button type="button" class="pr-button pr-button--primary" disabled aria-disabled="true">
+                Confirm change
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mock-state" aria-labelledby="s-error">
+        <h2 id="s-error">State: error</h2>
+        <p>The host rejected the change. The message is host-supplied.</p>
+        <div class="mock-frame">
+          <section data-pr-part="change-review" aria-labelledby="e-title">
+            <header class="pr-cr-header">
+              <h3 id="e-title">Review your change</h3>
+              <span data-pr-part="change-badge" data-tone="success">Upgrade</span>
+            </header>
+
+            <div class="pr-cr-error" role="alert">
+              <strong>We could not apply your change.</strong>
+              The payment provider is unavailable. Try again in a few minutes.
+              <p class="pr-cr-note">Your selection is preserved. Nothing was changed on your account.</p>
+            </div>
+
+            <section data-pr-part="change-section" aria-labelledby="e-plan">
+              <h4 id="e-plan">Plan</h4>
+              <div data-pr-part="change-row">
+                <span class="pr-cr-row__name">Growth <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> Enterprise</span>
+              </div>
+            </section>
+
+            <div data-pr-part="change-actions">
+              <button type="button" class="pr-button pr-button--secondary">Back</button>
+              <button type="button" class="pr-button pr-button--primary">Confirm change</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mock-state" aria-labelledby="s-empty">
+        <h2 id="s-empty">State: no changes</h2>
+        <p>The selection equals the current subscription. Confirm is disabled.</p>
+        <div class="mock-frame">
+          <section data-pr-part="change-review" aria-labelledby="n-title">
+            <header class="pr-cr-header">
+              <h3 id="n-title">Review your change</h3>
+              <span data-pr-part="change-badge">Change</span>
+            </header>
+
+            <p class="pr-cr-notice" role="status">Nothing changes</p>
+
+            <div data-pr-part="change-actions">
+              <button type="button" class="pr-button pr-button--secondary">Back</button>
+              <button type="button" class="pr-button pr-button--primary" disabled aria-disabled="true">
+                Confirm change
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mock-state" aria-labelledby="s-quote">
+        <h2 id="s-quote">State: price requires a quote</h2>
+        <p>
+          The new plan is Contact sales, so the total is not computable. Confirm may still be
+          allowed; that is an open question in the README.
+        </p>
+        <div class="mock-frame">
+          <section data-pr-part="change-review" aria-labelledby="q-title">
+            <header class="pr-cr-header">
+              <h3 id="q-title">Review your change</h3>
+              <span data-pr-part="change-badge" data-tone="success">Upgrade</span>
+            </header>
+
+            <section data-pr-part="change-section" aria-labelledby="q-plan">
+              <h4 id="q-plan">Plan</h4>
+              <div data-pr-part="change-row">
+                <span class="pr-cr-row__name">Growth <span class="pr-cr-arrow" aria-hidden="true">&rarr;</span><span class="pr-sr-only">to</span> Enterprise</span>
+              </div>
+            </section>
+
+            <section data-pr-part="change-section" aria-labelledby="q-price">
+              <h4 id="q-price">Price</h4>
+              <dl class="pr-cr-price">
+                <div>
+                  <dt>Before</dt>
+                  <dd>80.00 EUR <small>/ month</small></dd>
+                </div>
+                <div>
+                  <dt>After</dt>
+                  <dd>Contact sales</dd>
+                </div>
+                <div>
+                  <dt>Difference</dt>
+                  <dd>Not computable</dd>
+                </div>
+              </dl>
+              <p class="pr-cr-note">
+                A quote line is present, so the total cannot be computed here. Sales will confirm
+                the price.
+              </p>
+            </section>
+
+            <div data-pr-part="change-actions">
+              <button type="button" class="pr-button pr-button--secondary">Back</button>
+              <button type="button" class="pr-button pr-button--primary">Confirm change</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.querySelectorAll('[data-set-theme]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          document.documentElement.dataset.theme = button.dataset.setTheme;
+          document.querySelectorAll('[data-set-theme]').forEach(function (other) {
+            other.setAttribute('aria-pressed', String(other === button));
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
