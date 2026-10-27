@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { createPricingViewModel } from '../../src/core/index.js';
+import { createPricingViewModel, deepEqual } from '../../src/core/index.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
 interface Host {
@@ -154,7 +154,16 @@ describe('only-differences with a visible toolbar', () => {
     expect(/<input[^>]*type="checkbox"[^>]*>/.exec(toolbar)?.[0]).toMatch(/\.checked=true/);
     const unfiltered = await ready(yaml, false);
     const all = rowCount(flatten(unfiltered.render()));
-    expect(rowCount(text)).toBeGreaterThan(0);
-    expect(rowCount(text)).toBeLessThan(all);
+    // the rows that differ across the plans, from the view model
+    const rows = createPricingViewModel(parsePricingYaml(yaml).value!).comparisonGroups.flatMap(
+      (group) => group.rows,
+    );
+    const differing = rows.filter((row) =>
+      row.values.some((cell) => !deepEqual(cell.value, row.values[0]?.value)),
+    );
+    expect(all).toBe(rows.length);
+    expect(differing.length).toBeGreaterThan(0);
+    expect(differing.length).toBeLessThan(rows.length);
+    expect(rowCount(text)).toBe(differing.length);
   });
 });

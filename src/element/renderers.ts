@@ -306,7 +306,7 @@ export function renderBilling(state: RenderState): TemplateResult | typeof nothi
             <label class="pr-segmented__option">
               <input
                 type="radio"
-                name="pr-billing"
+                name=${instanceId(state, 'billing')}
                 value=${period.id}
                 .checked=${selection.billingPeriod === period.id}
                 @change=${() => actions.selectBilling(period.id)}
@@ -459,7 +459,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                                     >
                                       <input
                                         type="radio"
-                                        name="pr-plan"
+                                        name=${instanceId(state, 'plan')}
                                         value=${plan.id}
                                         aria-label=${t(viewModel, 'pricing.choosePlan', {
                                           plan: plan.name,
@@ -769,7 +769,7 @@ function renderCompactComparison(
                   <button
                     type="button"
                     aria-expanded=${expanded}
-                    aria-controls="${instanceId(state, 'group', group.id)}"
+                    aria-controls=${expanded ? instanceId(state, 'group', group.id) : nothing}
                     @click=${() => actions.toggleGroup(group.id)}
                   >
                     <span>${group.name}</span

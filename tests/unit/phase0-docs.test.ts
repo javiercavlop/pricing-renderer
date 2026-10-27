@@ -43,7 +43,7 @@ describe('pricingPath is documented as deprecated metadata', () => {
 
   it.each(pages)('%s says it has no runtime effect', (page) => {
     expect(prose(page)).toMatch(
-      /no (runtime )?effect|nothing in the (renderer|element) reads|has no effect/,
+      /`pricing-?[Pp]ath`[^.]{0,200}(no (runtime )?effect|nothing in the (renderer|element) reads)/,
     );
   });
 

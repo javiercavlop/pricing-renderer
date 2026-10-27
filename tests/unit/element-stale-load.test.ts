@@ -14,6 +14,9 @@ interface Host {
   reload(): Promise<void>;
   requestUpdate: () => void;
   dispatchEvent: (event: Event) => boolean;
+  // private state the load result sets
+  _status: string;
+  _diagnostics: { code: string }[];
 }
 
 const pricing = {
@@ -69,6 +72,8 @@ describe('reload() with a source error while a src load is pending', () => {
     await element.reload();
     expect(signals[0]!.aborted).toBe(true);
     expect(events).toContain('pricing-diagnostic');
+    expect(element._status).toBe('error');
+    expect(element._diagnostics[0]?.code).toBe('PR_SOURCE_MISSING');
 
     release();
     await first;
@@ -87,11 +92,14 @@ describe('reload() with a source error while a src load is pending', () => {
     element.pricing = pricing;
     await element.reload();
     expect(signals[0]!.aborted).toBe(true);
+    expect(element._status).toBe('error');
+    expect(element._diagnostics[0]?.code).toBe('PR_SOURCE_CONFLICT');
 
     release();
     await first;
     await flush();
     expect(events).not.toContain('pricing-ready');
+    expect(element._status).toBe('error');
   });
 
   it('still loads after the source error is fixed', async () => {

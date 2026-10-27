@@ -662,7 +662,9 @@ test.describe('spectra captures', () => {
       const viewport = viewports[0];
       await openRenderer(page, viewport);
       const state = await applyPricing(page, readFixture(saas), 'en', 'light');
-      const yearly = page.locator('pricing-renderer input[name="pr-billing"][value="annual"]');
+      const yearly = page.locator(
+        'pricing-renderer input[type="radio"][name$="-billing"][value="annual"]',
+      );
       await expect(yearly).toHaveCount(1);
       await yearly.evaluate((input: HTMLInputElement) => input.click());
       await expect(yearly).toBeChecked();

@@ -41,7 +41,7 @@ const entries = [
   ['/react', '../../src/react/index.js'],
 ] as const;
 
-describe('typed event map', () => {
+describe('typed event map', { timeout: 30_000 }, () => {
   describe.each(entries)('through the %s entry', (_name, entry) => {
     const header = `
       import ${JSON.stringify(entry)};

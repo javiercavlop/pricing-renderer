@@ -4,10 +4,17 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { nothing } from 'lit';
 import { describe, expect, it } from 'vitest';
 import { createPricingViewModel } from '../../src/core/index.js';
 import type { PricingViewModel } from '../../src/core/index.js';
-import { renderComparison, renderVariables } from '../../src/element/renderers.js';
+import {
+  renderAddOns,
+  renderBilling,
+  renderComparison,
+  renderPlans,
+  renderVariables,
+} from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
@@ -37,13 +44,19 @@ async function build(): Promise<Host> {
   return element;
 }
 
-// A ready element showing the acme pricing, every group open and the add-on dialog open, so every
-// id the element can render is in the output.
-async function ready(): Promise<Host> {
+// A loaded element showing the acme pricing with its default state: compact, one group open.
+async function loaded(): Promise<Host> {
   const element = await build();
   element.yaml = acmeYaml;
   await element.reload();
   element._compact = true;
+  return element;
+}
+
+// A ready element showing the acme pricing, every group open and the add-on dialog open, so every
+// id the element can render is in the output.
+async function ready(): Promise<Host> {
+  const element = await loaded();
   const groups = viewModelFromYaml(acmeYaml).comparisonGroups;
   element._expandedGroups = new Set(groups.map((group) => group.id));
   element._pendingAddOnChange = { addIds: ['extraStorage'], removeIds: [] };
@@ -51,16 +64,23 @@ async function ready(): Promise<Host> {
 }
 
 // Flattens a lit template (strings and values, nested templates and arrays) into plain text.
+// Values that carry no text (nothing, booleans, handlers, directives) are skipped; any other value
+// throws, so an unexpected shape cannot hide an id from the checks.
 function flatten(template: unknown): string {
   if (Array.isArray(template)) return template.map(flatten).join('');
   if (typeof template === 'string' || typeof template === 'number') return String(template);
-  if (typeof template === 'object' && template !== null && 'strings' in template) {
-    const { strings, values } = template as { strings: string[]; values: unknown[] };
-    return strings
-      .map((text, index) => text + (index < values.length ? flatten(values[index]) : ''))
-      .join('');
+  if (template === nothing || template === null || template === undefined) return '';
+  if (typeof template === 'boolean' || typeof template === 'function') return '';
+  if (typeof template === 'object') {
+    if ('strings' in template && 'values' in template) {
+      const { strings, values } = template as { strings: string[]; values: unknown[] };
+      return strings
+        .map((text, index) => text + (index < values.length ? flatten(values[index]) : ''))
+        .join('');
+    }
+    if ('_$litDirective$' in template) return '';
   }
-  return '';
+  throw new Error(`Cannot flatten ${String(template)}`);
 }
 
 // Quoted and unquoted attribute values: lit bindings flatten without quotes.
@@ -153,6 +173,29 @@ describe('two elements of the same pricing', () => {
     }
   });
 
+  it('resolve every reference with the groups in their default state', async () => {
+    for (const element of [await loaded(), await loaded()]) {
+      const text = flatten(element.render());
+      const present = new Set(ids(text));
+      const groupIds = ids(text).filter((id) => /^pr-\d+-group-/.test(id));
+      const total = viewModelFromYaml(acmeYaml).comparisonGroups.length;
+      expect(groupIds.length, 'only the first group is open').toBeLessThan(total);
+      for (const ref of references(text)) expect(present.has(ref), `${ref} resolves`).toBe(true);
+    }
+  });
+
+  it('give each element its own radio group names', async () => {
+    const names = async (): Promise<string[]> => {
+      const text = flatten((await loaded()).render());
+      return [...text.matchAll(/type="radio"\s+name=([^"\s>]+)/g)].map((match) => match[1]!);
+    };
+    const first = await names();
+    const second = await names();
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.every((name) => /^pr-\d+-(billing|plan)$/.test(name))).toBe(true);
+    expect(first.filter((name) => second.includes(name))).toEqual([]);
+  });
+
   it('use the instance prefix for the loading title', async () => {
     const first = await build();
     const second = await build();
@@ -184,9 +227,65 @@ describe('renderer output with an instance prefix', () => {
     );
     expect(viewModel.comparisonGroups.map((group) => group.id)).toContain('Core Features');
     const text = flatten(renderComparison(stateFor(viewModel, { idPrefix: 'pr-3' })));
-    expect(text).toContain('aria-controls="pr-3-group-Core-Features"');
+    expect(attributeValues(text, ['aria-controls'])).toContain('pr-3-group-Core-Features');
     expect(ids(text)).toContain('pr-3-group-Core-Features');
     for (const id of ids(text)) expect(id, 'no id has a space').not.toMatch(/\s/);
+  });
+
+  it('leaves aria-controls out while a headed group is collapsed', () => {
+    const viewModel = viewModelFromYaml(acmeYaml);
+    const [first, ...rest] = viewModel.comparisonGroups;
+    expect(rest.length).toBeGreaterThan(0);
+    const text = flatten(
+      renderComparison(
+        stateFor(viewModel, { idPrefix: 'pr-3', expandedGroups: new Set([first!.id]) }),
+      ),
+    );
+    const controls = attributeValues(text, ['aria-controls']);
+    expect(controls).toEqual([`pr-3-group-${first!.id}`]);
+    expect(ids(text)).toEqual(expect.arrayContaining(controls));
+    const collapsed = flatten(
+      renderComparison(stateFor(viewModel, { idPrefix: 'pr-3', expandedGroups: new Set() })),
+    );
+    expect(attributeValues(collapsed, ['aria-controls'])).toEqual([]);
+  });
+
+  it('names the radio groups with the instance prefix', () => {
+    const viewModel = viewModelFromYaml(acmeYaml);
+    const state = stateFor(viewModel, { idPrefix: 'pr-5' });
+    const radioNames = (text: string): string[] =>
+      [...text.matchAll(/type="radio"\s+name=([^"\s>]+)/g)].map((match) => match[1]!);
+    expect(radioNames(flatten(renderBilling(state)))).toEqual(['pr-5-billing', 'pr-5-billing']);
+    const plans = radioNames(flatten(renderPlans(state)));
+    expect(plans.length).toBe(viewModel.pricing.plans.length);
+    expect(new Set(plans)).toEqual(new Set(['pr-5-plan']));
+    const plain = radioNames(flatten(renderPlans(stateFor(viewModel))));
+    expect(new Set(plain)).toEqual(new Set(['pr-plan']));
+  });
+
+  it('sanitizes a variable path into the id', () => {
+    const base = viewModelFromYaml(acmeYaml);
+    const viewModel: PricingViewModel = {
+      ...base,
+      variableControls: [
+        ...base.variableControls,
+        { path: 'priceByRegion.eu price[0]', type: 'number', label: 'Regional price' },
+      ],
+    };
+    const text = flatten(renderVariables(stateFor(viewModel, { idPrefix: 'pr-7' })));
+    const found = ids(text).filter((id) => id !== 'pr-7-variables-title');
+    expect(found.length).toBeGreaterThan(1);
+    for (const id of found) expect(id, id).toMatch(/^pr-7-variable-[\w-]+$/);
+    expect(found).toContain('pr-7-variable-priceByRegion-eu-price-0-');
+  });
+
+  it('sanitizes an add-on id with spaces into the help id', () => {
+    const viewModel = viewModelFromYaml(acmeYaml.replaceAll('extraStorage', 'extra storage'));
+    const text = flatten(renderAddOns(stateFor(viewModel, { idPrefix: 'pr-9' })));
+    expect(ids(text)).toContain('pr-9-addon-help-extra-storage');
+    for (const id of ids(text)) expect(id, 'no id has a space').not.toMatch(/\s/);
+    const present = new Set(ids(text));
+    for (const ref of references(text)) expect(present.has(ref), ref).toBe(true);
   });
 
   it('prefixes the variable ids and their help ids', () => {

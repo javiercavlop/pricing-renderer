@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openRenderer } from './helpers/spectra.js';
 
 // Two renderers on one page must not share an id, and every ARIA reference must stay inside its own
@@ -40,10 +40,10 @@ async function openDialogs(page: Page): Promise<void> {
 test.beforeEach(async ({ page }) => {
   await openRenderer(page, { width: 1280, height: 800 });
   await addSecondRenderer(page);
-  await openDialogs(page);
 });
 
 test('no id appears twice in the document', async ({ page }) => {
+  await openDialogs(page);
   const duplicates = await page.evaluate(() => {
     const seen = new Map<string, number>();
     for (const element of document.querySelectorAll('[id]')) {
@@ -55,6 +55,7 @@ test('no id appears twice in the document', async ({ page }) => {
 });
 
 test('every ARIA reference stays inside its renderer', async ({ page }) => {
+  await openDialogs(page);
   const unresolved = await page.evaluate(() => {
     const result: string[] = [];
     for (const renderer of document.querySelectorAll('pricing-renderer')) {
@@ -74,7 +75,33 @@ test('every ARIA reference stays inside its renderer', async ({ page }) => {
   expect(unresolved).toEqual([]);
 });
 
+test('each renderer keeps its own plan selection', async ({ page }) => {
+  const selector = 'input[type="radio"][name$="-plan"]';
+  const first = page.locator(`pricing-renderer:not(#second) ${selector}`);
+  const second = page.locator(`#second ${selector}`);
+  const count = await first.count();
+  expect(count).toBeGreaterThan(1);
+  expect(await second.count()).toBe(count);
+
+  const groupNames = (locator: Locator): Promise<string[]> =>
+    locator.evaluateAll((nodes) => nodes.map((node) => (node as HTMLInputElement).name));
+  const firstNames = new Set(await groupNames(first));
+  const secondNames = new Set(await groupNames(second));
+  expect(firstNames.size).toBe(1);
+  expect(secondNames.size).toBe(1);
+  expect([...firstNames][0]).not.toBe([...secondNames][0]);
+
+  // the browser keeps one checked radio per name, so a pick in one renderer leaves the other alone
+  const checkedIndex = (locator: Locator): Promise<number> =>
+    locator.evaluateAll((nodes) => nodes.findIndex((node) => (node as HTMLInputElement).checked));
+  const before = await checkedIndex(second);
+  await first.nth(count - 1).check({ force: true });
+  await expect(first.nth(count - 1)).toBeChecked();
+  expect(await checkedIndex(second)).toBe(before);
+});
+
 test('each dialog is labelled by its own title', async ({ page }) => {
+  await openDialogs(page);
   const dialogs = page.locator('pricing-renderer .pr-dialog');
   await expect(dialogs).toHaveCount(2);
   const labels = await dialogs.evaluateAll((nodes) =>
