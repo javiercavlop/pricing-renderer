@@ -26,8 +26,9 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
   - Objective: O1. State: partly done; English only.
   - Evidence: `.changeset/plural-units.md:5-7`; merged, PR not verified.
 - Item 3a-es, Spanish plural rules
-  - Objective: O1. State: not started, low priority (owner, Q5, 2026-10-26). Spanish units are
-    shown as written.
+  - Objective: O1. State: non-goal (owner decision, 2026-10-27); the open question of Q5 is closed.
+    Units keep being written as in the pricing under non-English locales. To translate or
+    pluralize a unit, use `presentation.unitLabels` (item 3b, PR #49; `docs/i18n.md`, "Unit labels").
   - Evidence: `.changeset/plural-units.md:5-7` against `report.md:236`.
 - Item 3b, `presentation.unitLabels` override for exotic units
   - Objective: O1 (public API: O3). State: done.
@@ -116,7 +117,8 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
 - Q2: page height at most 5 screens at 1440 px; no target at 375 px for now.
 - Q3: CTA in the first screen at 1440 and 375 px; no 1024 px target.
 - Q4: item 9 dropped.
-- Q5: Spanish plurals are a low-priority objective (row 3a-es).
+- Q5: Spanish plurals were a low-priority objective (row 3a-es); on 2026-10-27 the owner made them
+  a non-goal, closing the question.
 - Q6: the SPECTRA browser spec becomes on demand in CI; the release of the pending changesets is
   postponed and no release to main is prepared until the owner asks. The in-flight `ci-speed` change
   covers sharding and docs-only skips only (`docs/agent-work/ci-speed/intake.md`), so the backlog
