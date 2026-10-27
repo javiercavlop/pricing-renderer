@@ -325,6 +325,8 @@ function renderCtaLabel(
 
 // [impl->req~current-selection-plan-cta~1] [impl->req~cta-pending-others~1]
 // [impl->req~cta-pending-no-event~1] [impl->req~cta-event-relation~1]
+// [impl->req~cta-pending-focus~1] aria-disabled replaces disabled while an action is pending, so
+// the control that became pending keeps the focus
 function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult {
   const { viewModel, actions } = state;
   const cta = planCtaView(viewModel, plan, {
@@ -1405,7 +1407,7 @@ function renderBreakdownPanel(state: RenderState): TemplateResult {
 
 // [impl->req~cta-summary-action~1] [impl->req~cta-summary-action-current~1]
 // [impl->req~cta-summary-action-absent~1] [impl->req~cta-summary-action-event~1]
-// [impl->req~cta-pending-state~1] [impl->req~cta-pending-others~1]
+// [impl->req~cta-pending-state~1] [impl->req~cta-pending-others~1] [impl->req~cta-pending-focus~1]
 // Rendered outside the live region, so a change of label is not announced by the summary.
 function renderSummaryAction(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel, summaryAction, pendingActionId, selection, actions } = state;

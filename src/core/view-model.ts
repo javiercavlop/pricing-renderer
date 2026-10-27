@@ -37,13 +37,14 @@ const highlightKinds = new Set(['feature', 'usage-limit']);
 const highlightModes = new Set(['auto', 'manual', 'hybrid']);
 const badgeTones = new Set(['accent', 'success', 'warning', 'neutral']);
 
-// [impl->req~cta-relation-labels-config~1] only string entries of the four known keys are kept
+// [impl->req~cta-relation-labels-config~1] only non-empty string entries of the four known keys
+// are kept, trimmed like cta.label
 function normalizeCtaLabels(input: unknown): PricingCtaLabels | undefined {
   if (!isRecord(input)) return undefined;
   const labels: PricingCtaLabels = {};
   for (const key of ['upgrade', 'downgrade', 'current', 'contactSales'] as const) {
-    const value = input[key];
-    if (typeof value === 'string') labels[key] = value;
+    const value = asString(input[key]);
+    if (value) labels[key] = value;
   }
   return Object.keys(labels).length > 0 ? labels : undefined;
 }

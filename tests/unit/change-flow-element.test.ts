@@ -117,7 +117,10 @@ describe('property declarations', () => {
   // [utest->req~current-selection-property~1]
   it('declares currentSelection without an attribute', async () => {
     const Element = await loadElement();
-    expect(Element.properties.currentSelection).toEqual({ attribute: false });
+    expect(Element.properties.currentSelection).toEqual({
+      attribute: false,
+      hasChanged: expect.any(Function),
+    });
   });
 
   // [utest->req~cta-pending-property~1]
@@ -143,6 +146,46 @@ describe('property declarations', () => {
     expect(element.currentSelection).toEqual(copy);
     element.currentSelection = undefined;
     expect(element.currentSelection).toBeUndefined();
+  });
+
+  // [utest->req~current-selection-detached~1]
+  it('returns a copy, so a change by the host does not alter what the element keeps', async () => {
+    const Element = await loadElement();
+    const element = new Element();
+    element.currentSelection = structuredClone(C);
+    const read = element.currentSelection as { planId: string; addOns: Record<string, unknown> };
+    read.planId = 'starter';
+    delete read.addOns.extraStorage;
+    expect(element.currentSelection).toEqual(C);
+    expect(element.currentSelection).not.toBe(element.currentSelection);
+  });
+
+  // [utest->req~current-selection-diagnostics~1]
+  it('keeps the stored copy when an equal value is set again', async () => {
+    const Element = await loadElement();
+    const element = new Element();
+    const stored = () => (element as unknown as { _currentSelection?: unknown })._currentSelection;
+    element.currentSelection = { planId: 'legacy' };
+    const first = stored();
+    expect(first).toEqual({ planId: 'legacy' });
+    element.currentSelection = { planId: 'legacy' };
+    expect(stored()).toBe(first);
+    element.currentSelection = { planId: 'legacy2' };
+    expect(stored()).not.toBe(first);
+    expect(stored()).toEqual({ planId: 'legacy2' });
+  });
+
+  // [utest->req~current-selection-diagnostics~1]
+  it('reports a change for Lit only when the value differs by content', async () => {
+    const Element = await loadElement();
+    const { hasChanged } = Element.properties.currentSelection as {
+      hasChanged: (value: unknown, previous: unknown) => boolean;
+    };
+    expect(hasChanged({ planId: 'legacy' }, { planId: 'legacy' })).toBe(false);
+    expect(hasChanged(undefined, undefined)).toBe(false);
+    expect(hasChanged({ planId: 'legacy2' }, { planId: 'legacy' })).toBe(true);
+    expect(hasChanged({ planId: 'legacy' }, undefined)).toBe(true);
+    expect(hasChanged(undefined, { planId: 'legacy' })).toBe(true);
   });
 });
 
@@ -192,7 +235,8 @@ describe('types through the compiler API', () => {
     const rejected = typeCheckSnippet(
       `${reactHeader}\nexport const bad = React.createElement(PricingRenderer, { yaml: source, currentSelection: 42 });`,
     );
-    expect(rejected.length).toBeGreaterThan(0);
+    // no overload of createElement accepts the props (TS2769)
+    expect(codes(rejected)).toEqual([2769]);
   });
 
   // [utest->req~cta-pending-react-manifest~1]
@@ -204,7 +248,7 @@ describe('types through the compiler API', () => {
     const rejected = typeCheckSnippet(
       `${reactHeader}\nexport const bad = React.createElement(PricingRenderer, { yaml: source, pendingActionId: 42 });`,
     );
-    expect(rejected.length).toBeGreaterThan(0);
+    expect(codes(rejected)).toEqual([2769]);
   });
 
   // [utest->req~cta-types~1]
@@ -225,7 +269,8 @@ describe('types through the compiler API', () => {
     const rejected = typeCheckSnippet(`${header}
       export const cta: PricingCta = { id: 'a', label: 'A', labels: { sidegrade: 'Across' } };
     `);
-    expect(rejected.length).toBeGreaterThan(0);
+    // an unknown key in an object literal is an excess property (TS2353)
+    expect(codes(rejected)).toEqual([2353]);
   });
 
   // [utest->req~cta-event-types~1]
@@ -337,7 +382,7 @@ describe('expandCtaHref', () => {
 describe('planCtaView', () => {
   const acme = loadAcme();
 
-  // [utest->req~current-selection-unknown-plan~1] [utest->req~cta-event-unchanged~1]
+  // [utest->req~cta-event-unchanged~1]
   it('keeps the 0.1.0 label and link without a current plan', () => {
     const viewModel = viewModelOf(acme);
     const starter = planCtaView(viewModel, planOf(viewModel, 'starter'), {});
@@ -387,6 +432,26 @@ describe('planCtaView', () => {
       'Downgrade to Starter',
     );
     expect(invalid.presentation.ctas?.[0]?.labels).toBeUndefined();
+  });
+
+  // [utest->req~cta-relation-labels-config~1]
+  it('ignores empty and whitespace-only labels and trims the others', () => {
+    const viewModel = viewModelOf(acme, undefined, [
+      {
+        id: 's',
+        label: 'S',
+        planId: 'starter',
+        labels: { downgrade: '', upgrade: '   ', current: '\n', contactSales: '\t' },
+      },
+      { id: 'g', label: 'G', planId: 'growth', labels: { current: '  Mine  ', downgrade: ' ' } },
+    ]);
+    expect(viewModel.presentation.ctas?.[0]?.labels).toBeUndefined();
+    expect(viewModel.presentation.ctas?.[1]?.labels).toEqual({ current: 'Mine' });
+    const context = { currentPlanId: 'growth' };
+    expect(planCtaView(viewModel, planOf(viewModel, 'starter'), context).label).toBe(
+      'Downgrade to Starter',
+    );
+    expect(planCtaView(viewModel, planOf(viewModel, 'growth'), context).label).toBe('Mine');
   });
 
   // [utest->req~cta-contact-sales~1]

@@ -3,6 +3,7 @@ import {
   cloneValue,
   compareSelections,
   createPricingViewModel,
+  deepEqual,
   getPricingRendererConfig,
   mergePresentationOptions,
   mergeSelection,
@@ -112,7 +113,11 @@ export class PricingRendererElement extends LitElement {
     expressionOptions: { attribute: false },
     selection: { attribute: false },
     defaultSelection: { attribute: false },
-    currentSelection: { attribute: false },
+    // the getter returns a copy, so the default identity check would see every set as a change
+    currentSelection: {
+      attribute: false,
+      hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
+    },
     pendingActionId: { type: String, attribute: 'pending-action-id' },
     presentation: { attribute: false },
     locale: { type: String },
@@ -210,13 +215,16 @@ export class PricingRendererElement extends LitElement {
 
   // [impl->req~current-selection-property~1] [impl->req~current-selection-detached~1]
   // The element keeps a deep copy, so a later change of the host's object is not seen until the
-  // host sets the property again. It never becomes the selection in effect, so setting it emits
-  // no `pricing-selection-change` [impl->req~current-selection-keeps-selection~1].
+  // host sets the property again, and the getter returns a copy, so a change of what it returns is
+  // not seen either. An equal value keeps the stored copy: a host that assigns its props on every
+  // render does not report the diagnostics again. It never becomes the selection in effect, so
+  // setting it emits no `pricing-selection-change` [impl->req~current-selection-keeps-selection~1].
   get currentSelection(): Partial<PricingSelection> | undefined {
-    return this._currentSelection;
+    return cloneValue(this._currentSelection);
   }
 
   set currentSelection(value: Partial<PricingSelection> | undefined) {
+    if (deepEqual(value, this._currentSelection)) return;
     this._currentSelection = cloneValue(value);
   }
 

@@ -1,11 +1,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { enUS, esES, type ComparedValue } from '../../src/core/index.js';
+import { enUS, esES, type ComparedValue, type SelectionComparison } from '../../src/core/index.js';
 import {
   formatComparedValue,
   formatSignedCurrency,
+  renderChangeReview,
+  type ReviewRenderState,
 } from '../../src/element/change-review-renderers.js';
+import { C, ENT, Side, acme, cmp } from './helpers/compare-fixtures.js';
 
 // The pure helpers of the review templates: value formatting through Intl for the element's
 // locale, and the signed difference. The templates themselves need a DOM and are covered by
@@ -69,6 +72,86 @@ describe('formatSignedCurrency', () => {
   // [utest->req~review-ui-price~1]
   it('falls back to a plain number for an invalid currency code', () => {
     expect(formatSignedCurrency(3, 'not a currency', 'en-US')).toBe('+3');
+  });
+});
+
+// The text of a template result: its static strings with its values, nested results and arrays
+// included. Enough to read what a template would render without a DOM.
+function textOf(value: unknown): string {
+  if (Array.isArray(value)) return value.map(textOf).join('');
+  if (value && typeof value === 'object' && 'strings' in value && 'values' in value) {
+    const { strings, values } = value as { strings: string[]; values: unknown[] };
+    return strings
+      .map((part, index) => part + (index < values.length ? textOf(values[index]) : ''))
+      .join('');
+  }
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+}
+
+function reviewText(comparison: SelectionComparison, locale = 'en-US'): string {
+  const state: ReviewRenderState = {
+    comparison,
+    locale,
+    messages: enUS,
+    notices: [],
+    pending: false,
+    blocked: false,
+    idPrefix: 'test',
+    onConfirm: () => undefined,
+    onBack: () => undefined,
+  };
+  return textOf(renderChangeReview(state));
+}
+
+const upgrade = (): SelectionComparison => cmp(Side(acme, C()), Side(acme, ENT()));
+
+describe('renderChangeReview', () => {
+  // [utest->req~review-ui-price~1]
+  it('renders the review for a locale that Intl rejects', () => {
+    const text = reviewText(upgrade(), '!!');
+    expect(text).toContain('80');
+    expect(text).toContain('75');
+    expect(text).toContain('review-price');
+  });
+
+  // [utest->req~review-ui-limits~1]
+  it('shows no limit row and no warning for a limit that is only unchanged and exceeded', () => {
+    const comparison = upgrade();
+    comparison.usageLimits = { changed: [], unchanged: ['storage'], exceeded: ['storage'] };
+    const text = reviewText(comparison);
+    expect(text).not.toContain('review-limits');
+    expect(text).not.toContain('above the new limit');
+  });
+
+  // [utest->req~review-ui-limits~1]
+  it('warns only for the changed limit that is exceeded', () => {
+    const comparison = upgrade();
+    const [storage] = comparison.usageLimits.changed;
+    comparison.usageLimits = {
+      changed: [
+        { ...storage!, currentUsage: 150, exceedsCurrentUsage: true },
+        { ...storage!, id: 'seats', name: 'Seats' },
+      ],
+      unchanged: [],
+      exceeded: ['storage'],
+    };
+    const text = reviewText(comparison);
+    expect(text).toContain('Storage');
+    expect(text).toContain('Seats');
+    expect(text.match(/above the new limit/g)).toHaveLength(1);
+  });
+
+  // [utest->req~review-ui-plan~1]
+  it('names a plan that is not in the pricing by its id', () => {
+    const comparison = upgrade();
+    comparison.plan = {
+      before: { id: 'legacy', known: false },
+      after: { id: 'legacy', known: false },
+      changed: false,
+    };
+    const text = reviewText(comparison);
+    expect(text).toContain('legacy');
+    expect(text).not.toContain('undefined');
   });
 });
 

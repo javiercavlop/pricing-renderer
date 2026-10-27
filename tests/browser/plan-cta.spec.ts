@@ -106,6 +106,24 @@ test('a pending action ignores activations, then CTAs work again', async ({ page
   expect(actions[0]?.detail.actionId).toBe('start-starter');
 });
 
+// [utest->req~cta-pending-no-event~1]
+test('the summary action ignores activations while an action is pending', async ({ page }) => {
+  await applyAndMarkContract(page);
+  await page.locator(radio('enterprise')).check({ force: true });
+  const action = summaryAction(page);
+  await expect(action).not.toHaveAttribute('aria-disabled', /.*/);
+  await recordActions(page, { cancel: true });
+  await setProps(page, { pendingActionId: 'review-change' });
+  await expect(action).toHaveAttribute('aria-disabled', 'true');
+  await action.click({ force: true });
+  expect(await recordedActions(page)).toEqual([]);
+  await setProps(page, { pendingActionId: undefined });
+  await action.click();
+  const actions = await recordedActions(page);
+  expect(actions).toHaveLength(1);
+  expect(actions[0]?.detail.actionId).toBe('review-change');
+});
+
 // [utest->req~cta-pending-focus~1]
 test('focus stays on the CTA that became pending', async ({ page }) => {
   await recordActions(page, { cancel: true, pendingFromAction: true });

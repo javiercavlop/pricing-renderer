@@ -154,6 +154,19 @@ test.describe('plan section', () => {
     await expect(plan).toContainText('Downgrade');
   });
 
+  test('a plan that is not in the pricing is named by its id', async ({ page }) => {
+    const edited = JSON.parse(JSON.stringify(R_ENT)) as SelectionComparison;
+    edited.plan = {
+      before: { id: 'legacy', known: false },
+      after: { id: 'legacy', known: false },
+      changed: false,
+    };
+    await addReview(page, { comparison: edited });
+    const plan = section(page, 'review-plan');
+    await expect(plan).toContainText('legacy');
+    await expect(plan).not.toContainText('undefined');
+  });
+
   test('the same plan is named once', async ({ page }) => {
     await addReview(page, { comparison: R_V12 });
     const text = (await section(page, 'review-plan').innerText()).replace(/\s+/g, ' ');
@@ -337,6 +350,29 @@ test.describe('limits section', () => {
     await expect(note).toHaveCount(1);
     await expect(note).toContainText('Your current usage');
   });
+
+  test('an exceeded limit that is only unchanged has no row and no warning', async ({ page }) => {
+    const edited = JSON.parse(JSON.stringify(R_ENT)) as SelectionComparison;
+    edited.usageLimits = { changed: [], unchanged: ['storage'], exceeded: ['storage'] };
+    await addReview(page, { comparison: edited });
+    await expect(section(page, 'review-limits')).toHaveCount(0);
+    await expect(page.locator('#review [role="note"]')).toHaveCount(0);
+    await expect(page.locator('#review')).not.toContainText('is above the new limit.');
+  });
+
+  test('only the changed limit that is exceeded has a warning', async ({ page }) => {
+    const edited = JSON.parse(JSON.stringify(R_START)) as SelectionComparison;
+    const storage = edited.usageLimits.changed[0]!;
+    const seats = { ...storage, id: 'seats', name: 'Seats' };
+    delete seats.currentUsage;
+    delete seats.exceedsCurrentUsage;
+    edited.usageLimits.changed = [storage, seats];
+    await addReview(page, { comparison: edited });
+    const rows = section(page, 'review-limits').locator('li');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.filter({ hasText: 'Storage' }).locator('[role="note"]')).toHaveCount(1);
+    await expect(rows.filter({ hasText: 'Seats' }).locator('[role="note"]')).toHaveCount(0);
+  });
 });
 
 // [utest->req~review-ui-unchanged~1]
@@ -447,7 +483,9 @@ test.describe('forced colors', () => {
           const style = getComputedStyle(target);
           return {
             part: target.getAttribute('data-pr-part'),
+            tag: target.tagName,
             style: style.borderTopStyle,
+            color: style.borderTopColor,
             width: Number.parseFloat(style.borderTopWidth),
           };
         },
@@ -457,6 +495,11 @@ test.describe('forced colors', () => {
     for (const border of borders) {
       expect(border.style, String(border.part)).not.toBe('none');
       expect(border.width, String(border.part)).toBeGreaterThanOrEqual(1);
+      // the browser's own button border passes the checks above; the forced-colors rules of the
+      // review must give the buttons a border colour that is not fully transparent
+      if (border.tag === 'BUTTON') {
+        expect(border.color, String(border.part)).not.toBe('rgba(0, 0, 0, 0)');
+      }
     }
   });
 
@@ -507,7 +550,6 @@ test.describe('accessibility', () => {
   }
 });
 
-// [utest->req~review-ui-structure~1]
 test.describe('layout of the approved mock', () => {
   const widths: [number, number][] = [
     [320, 1],
@@ -606,7 +648,6 @@ test('plan and add-on names are text, never markup', async ({ page }) => {
   await expect(review).toContainText('<img src=x onerror=alert(1)>');
   await expect(review).toContainText('Not available with <i>Starter</i>');
   await expect(review.locator('u, i, img, b, svg, s')).toHaveCount(0);
-  await page.waitForTimeout(100);
   expect(dialogs).toEqual([]);
 });
 
@@ -648,6 +689,15 @@ test.describe('Spanish review', () => {
     await expect(section(page, 'review-error')).toContainText('No se pudo aplicar el cambio.');
     await setReview(page, { comparison: R_CUR });
     await expect(review).toContainText('Tu selección es igual a tu suscripción actual.');
+  });
+
+  test('a locale that Intl rejects still renders the review', async ({ page }) => {
+    const review = await addReview(page, { comparison: R_ENT, locale: '!!' });
+    await expect(review.locator('h2')).toBeVisible();
+    const price = section(page, 'review-price');
+    await expect(price).toContainText('80');
+    await expect(price).toContainText('75');
+    await expect(section(page, 'review-limits')).toBeVisible();
   });
 
   test('the locale attribute switches the language', async ({ page }) => {

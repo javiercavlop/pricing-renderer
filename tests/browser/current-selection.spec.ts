@@ -7,6 +7,7 @@ import {
   markers,
   openDemo,
   planCta,
+  PQ,
   PV,
   recordDiagnostics,
   recordedDiagnostics,
@@ -222,6 +223,46 @@ test.describe('current selection diagnostics', () => {
       ['PR_CURRENT_SELECTION_UNKNOWN_ADDON', 'currentSelection.addOns.ghost', 'warning'],
     ]);
     expect(await renderedDiagnosticCount(page)).toBe(before);
+  });
+
+  // A React host assigns its props on every render, so an equal value must not report again.
+  test('an equal value set again gives no new event; a change of value or pricing does', async ({
+    page,
+  }) => {
+    await addRenderer(
+      page,
+      { pricing: PQ, currentSelection: { planId: 'legacy' } },
+      { diagnostics: true },
+    );
+    await expect.poll(async () => (await recordedDiagnostics(page)).length).toBe(1);
+    await setProps(page, { currentSelection: { planId: 'legacy' } }, '#extra');
+    await setProps(page, { currentSelection: { planId: 'legacy' } }, '#extra');
+    expect(await recordedDiagnostics(page)).toHaveLength(1);
+    await setProps(page, { currentSelection: { planId: 'legacy2' } }, '#extra');
+    await expect.poll(async () => (await recordedDiagnostics(page)).length).toBe(2);
+    await setProps(page, { pricing: PV }, '#extra');
+    await expect.poll(async () => (await recordedDiagnostics(page)).length).toBe(3);
+    const codes = (await recordedDiagnostics(page)).map((event) =>
+      event.diagnostics.map((item) => item.code),
+    );
+    expect(codes).toEqual(Array(3).fill(['PR_CURRENT_SELECTION_UNKNOWN_PLAN']));
+  });
+
+  test('the getter returns a copy: a change of it does not alter the marks', async ({ page }) => {
+    await setProps(page, { currentSelection: C });
+    await page.evaluate(async () => {
+      const element = document.querySelector('pricing-renderer') as HTMLElement & {
+        currentSelection: { planId: string };
+        requestUpdate: () => void;
+        updateComplete: Promise<unknown>;
+      };
+      element.currentSelection.planId = 'starter';
+      element.requestUpdate();
+      await element.updateComplete;
+    });
+    const growth = page.locator(`pricing-renderer ${planCard}[data-plan-id="growth"]`);
+    await expect(growth).toHaveAttribute('data-current', 'true');
+    await expect(page.locator(`pricing-renderer ${planCard}[data-current]`)).toHaveCount(1);
   });
 
   test('known ids give no event', async ({ page }) => {

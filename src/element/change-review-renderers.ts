@@ -196,11 +196,20 @@ function renderPlan(state: ReviewRenderState): TemplateResult {
   return reviewSection(state, 'review-plan', 'pricing.reviewPlan', body);
 }
 
+// formatCurrency throws for a locale that Intl rejects; a plain number is the fallback then.
+function formatSubtotal(amount: number, currency: string, locale: string): string {
+  try {
+    return formatCurrency(amount, currency, intlLocale(locale));
+  } catch {
+    return formatNumber(amount, locale, { maximumFractionDigits: amount % 1 === 0 ? 0 : 2 });
+  }
+}
+
 // A subtotal in its currency. A part that requires a quote is named, and a price that is only a
 // quote reads "Contact sales".
 function renderMoney(state: ReviewRenderState, price: PriceBreakdown): TemplateResult {
   const quote = price.requiresQuote;
-  let amount = formatCurrency(price.subtotal, price.currency, intlLocale(state.locale));
+  let amount = formatSubtotal(price.subtotal, price.currency, state.locale);
   if (quote && price.subtotal === 0) amount = t(state, 'pricing.contactSales');
   let partial: Content = nothing;
   if (quote && price.subtotal !== 0) {

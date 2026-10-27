@@ -198,7 +198,6 @@ test('notices and the error are text, never markup', async ({ page }) => {
   const error = review.locator('[data-pr-part="review-error"]');
   await expect(error).toContainText('<img src=x onerror=alert(1)>');
   await expect(error.locator('img')).toHaveCount(0);
-  await page.waitForTimeout(100);
   expect(dialogs).toEqual([]);
 });
 

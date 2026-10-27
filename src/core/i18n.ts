@@ -83,11 +83,13 @@ export const enUS: MessageCatalog = {
   'pricing.noPlans': 'No plans are available.',
   'pricing.noComparison': 'There are no plans to compare.',
   'pricing.configurationUpdated': 'Pricing configuration updated.',
+  // [impl->req~current-selection-i18n~1]
   'pricing.currentPlanBadge': 'Your plan',
   'pricing.currentPlanCta': 'Current plan',
   'pricing.upgradeTo': 'Upgrade to {plan}',
   'pricing.downgradeTo': 'Downgrade to {plan}',
   'pricing.currentAddOn': 'Current',
+  // [impl->req~cta-i18n~1]
   'pricing.reviewChangeCta': 'Review change ({total})',
   'pricing.pending': 'Processing…',
   'pricing.reviewConfirm': 'Confirm change',

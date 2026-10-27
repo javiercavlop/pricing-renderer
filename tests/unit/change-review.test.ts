@@ -260,7 +260,7 @@ describe('React wrapper', () => {
     const rejected = typeCheckSnippet(`${header}
       export const bad = React.createElement(PricingChangeReview, { pending: 'yes' });
     `);
-    expect(rejected.length).toBeGreaterThan(0);
+    expect(codes(rejected)).toEqual([2769]);
   });
 
   // [utest->req~review-react-registers~1]
