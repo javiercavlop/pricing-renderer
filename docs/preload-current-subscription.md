@@ -32,39 +32,36 @@ the one from `renderer.resolvedState?.selection.billingPeriod`.
 
 ## Map the contract to a selection
 
-The example `examples/space-contract/map-contract.ts` exports
-`selectionFromContract(contract, serviceKey)`. Its input type is structural, so
-nothing depends on SPACE, and the package exports no mapping function. Copy the
-file into your application and adapt it.
+The subpath `pricing-renderer/space` exports `selectionFromContract(contract, serviceKey)`.
+Its input type (`SpaceContractLike`) is structural, so nothing depends on SPACE.
+The subpath has no runtime imports, needs no DOM and makes no HTTP call.
 
 ```ts
-import type { PricingSelection } from 'pricing-renderer';
+import { selectionFromContract } from 'pricing-renderer/space';
 
-interface SpaceContract {
-  subscriptionPlans?: Record<string, string>;
-  subscriptionAddOns?: Record<string, Record<string, number>>;
-}
-
-export function selectionFromContract(
-  contract: SpaceContract,
-  serviceKey: string,
-): Partial<PricingSelection> {
-  const selection: Partial<PricingSelection> = {};
-  const planId = contract.subscriptionPlans?.[serviceKey];
-  if (planId !== undefined) selection.planId = planId;
-
-  const addOns: NonNullable<PricingSelection['addOns']> = {};
-  for (const [id, quantity] of Object.entries(contract.subscriptionAddOns?.[serviceKey] ?? {})) {
-    if (Number.isFinite(quantity) && quantity > 0) addOns[id] = { selected: true, quantity };
-  }
-  if (Object.keys(addOns).length > 0) selection.addOns = addOns;
-  return selection;
-}
+const selection = selectionFromContract(contract, 'acme');
 ```
 
-Only the entries of `serviceKey` are read. Add-ons with a quantity that is 0,
-negative or not finite are left out. A service that is not in the contract maps
-to `{}`. See the file in the repository for the tested version.
+Only the entries of `serviceKey` are read, and the key is matched exactly. SPACE
+lowercases service names when it creates a contract, so pass the lowercase key.
+Add-ons with a quantity that is 0, negative or not finite are left out. A service
+that is not in the contract maps to `{}`.
+
+The subpath has three more helpers:
+
+- `subscriptionFromSelection(serviceKey, version, selection)` returns the SPACE
+  novation body `{ contractedServices, subscriptionPlans, subscriptionAddOns }`
+  for one service. Pass a reconciled selection and the dotted version of the
+  pricing, for example `'2026.07'`. Add-ons that are not selected or have a
+  quantity that is not a finite number above 0 are left out.
+- `contractedVersion(contract, serviceKey)` returns the contracted version with
+  each `_` turned back into `.` (SPACE stores `2026_07`), or `undefined`.
+- `currentUsageFromContract(contract, serviceKey)` returns
+  `{ [limit]: consumed }` for the `usageLevels` entries whose `consumed` is a
+  finite number of at least 0.
+
+`examples/space-contract/map-contract.ts` re-exports `selectionFromContract`
+from the same module.
 
 ## Apply it when the pricing is ready
 
@@ -72,7 +69,7 @@ to `{}`. See the file in the repository for the tested version.
 `pricing-ready` listener:
 
 ```ts
-import { selectionFromContract } from './map-contract';
+import { selectionFromContract } from 'pricing-renderer/space';
 
 const renderer = document.querySelector('pricing-renderer');
 

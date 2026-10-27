@@ -277,8 +277,95 @@ Example for acme with selection `CY` (Growth, 2 `extraStorage`, 1
 The breakdown reaches every `ResolvedPricing` the element provides (`resolvedState`,
 the `applySelection` result and the details of `pricing-ready`,
 `pricing-selection-change` and `pricing-action`) with no change to those types.
-To compare two selections, resolve both and diff the two breakdowns by line
-`id`; a dedicated comparison function is not part of the API.
+To compare two selections, use [`compareSelections`](#compareselections).
+
+### `compareSelections`
+
+```ts
+compareSelections(input: SelectionComparisonInput): SelectionComparison
+```
+
+Compares a contract (`before`) with an edit (`after`), each on its own normalized
+pricing, so the two sides may be two versions of the same pricing. It is pure,
+needs no DOM and never throws on unknown ids.
+
+```ts
+interface SelectionComparisonInput {
+  before: { pricing: NormalizedPricing; selection: Partial<PricingSelection> };
+  after: { pricing: NormalizedPricing; selection: Partial<PricingSelection> };
+  currentUsage?: Readonly<Record<string, number>>; // usage-limit id -> consumed
+  expression?: ExpressionOptions; // passed to resolvePricing on both sides
+}
+```
+
+The result is JSON-safe, shares no object with the input, and has these fields:
+
+- `relation`: `'current'`, `'upgrade'`, `'downgrade'` or `'change'`.
+- `version`: `before`, `after`, `changed` and the ids defined in only one version.
+- `plan`: `before` and `after` (`id`, `name` when known, `known`) and `changed`.
+- `addOns`: `added`, `removedByUser`, `removedByReconciliation`, `quantityChanged` and the
+  `unchanged` ids.
+- `features`: `gained`, `lost`, `changed` and the `unchanged` ids.
+- `usageLimits`: `changed`, the `unchanged` ids and the `exceeded` ids (consumption above the
+  new limit).
+- `price`: the `before` and `after` breakdowns, `billingPeriodChanged`, and `difference` or the
+  reason it is left out.
+- `selections`: the merged, quantity-normalized and reconciled selection of each side.
+- `diagnostics`: the warnings and info entries listed below.
+
+Rules to know:
+
+- Each side is merged with the schema defaults, so a side without `planId` gets the
+  first public plan. Pass the plan explicitly when you compare an add-ons-only contract.
+  A `planId` or `billingPeriod` that is not a string is ignored.
+- `relation` follows the declaration order of `after.pricing.plans`, not the price:
+  a later plan is an `'upgrade'` even when it costs less (`price.difference` shows the
+  price). The same plan with other add-ons, quantities, variables, billing period or
+  version is `'change'`, and so is a comparison that involves an unknown plan.
+  `'current'` needs the same version, plan, billing period, selected add-ons with
+  equal billed quantities and equal variables.
+- `addOns.removedByUser` holds add-ons that the edit does not select.
+  `removedByReconciliation` holds add-ons that the edit selects but the after pricing
+  removes, with `reason` `'unavailable-for-plan'`, `'dependency-removed'` or
+  `'not-in-version'`. Quantities are the billed quantities.
+- Feature and usage-limit values are `ComparedValue` objects tagged by `kind`
+  (`none`, `unlimited`, `boolean`, `number`, `text`, `json`). The value is the plan
+  value (or the definition default), replaced by each selected add-on's `features` or
+  `usageLimits` value and extended by `usageLimitsExtensions` times the billed quantity,
+  in add-on declaration order. `Infinity`, `null`, `'.inf'`, `'Infinity'` and
+  `'unlimited'` are limits without a bound (`null` is no value for a feature).
+- `usageLimits.changed[].delta` exists only when both values are numbers. A
+  `currentUsage` entry adds `currentUsage` to the matching change, and
+  `exceedsCurrentUsage: true` when the consumed amount is above the new limit.
+- `price.difference` is `after.subtotal - before.subtotal`. It is left out, with
+  `price.differenceOmitted` set to `'quote'` or `'currency'`, when either side
+  requires a quote or the currencies differ.
+
+Diagnostics, in this order: the before side, the after side, dropped add-ons, then
+current usage. The codes are also listed in [Events](./events.md):
+
+- `PR_COMPARE_UNKNOWN_PLAN` (`warning`, path `<side>.selection.planId`): the plan id is not in
+  the side's pricing. The id is kept.
+- `PR_COMPARE_UNKNOWN_BILLING_PERIOD` (`warning`, path `<side>.selection.billingPeriod`): the
+  billing period is not in the side's pricing. The id is kept.
+- `PR_COMPARE_UNKNOWN_ADDON` (`warning`, path `<side>.selection.addOns.<id>`): the add-on is
+  not in the side's pricing. The entry is dropped.
+- `PR_COMPARE_ADDON_DROPPED` (`info`, path `after.selection.addOns.<id>`): the edit selects an
+  add-on that the plan removes, and the contract did not have it.
+- `PR_COMPARE_UNKNOWN_USAGE_LIMIT` (`info`, path `currentUsage.<id>`): the id is not a usage
+  limit of either pricing. The entry is ignored.
+- `PR_COMPARE_INVALID_USAGE` (`warning`, path `currentUsage.<id>`): the value is not a finite
+  number of at least 0. The entry is ignored.
+
+`<side>` is `before` or `after`. Show these diagnostics to support staff, not to
+customers.
+
+The types `SelectionComparisonInput`, `SelectionComparisonSide`, `SelectionComparison`,
+`SelectionRelation`, `ComparedValue`, `ComparedPlan`, `ItemPresence`, `CatalogIds`,
+`VersionComparison`, `PlanComparison`, `AddOnComparison`, `AddOnChange`, `AddOnRemoval`,
+`AddOnRemovalReason`, `AddOnQuantityChange`, `FeatureComparison`, `FeatureChange`,
+`UsageLimitComparison`, `UsageLimitChange`, `PriceComparison` and `JsonValue` are
+exported next to the function.
 
 See the generated declarations for the complete normalized model and view-model
 shape.
@@ -330,6 +417,8 @@ Exports `PricingRendererElement` without registering it globally.
 | `expressionOptions`    | —                         | `ExpressionOptions`              | —                  |
 | `selection`            | —                         | `PricingSelection`               | uncontrolled       |
 | `defaultSelection`     | —                         | `Partial<PricingSelection>`      | schema defaults    |
+| `currentSelection`     | —                         | `Partial<PricingSelection>`      | —                  |
+| `pendingActionId`      | `pending-action-id`       | `string`                         | —                  |
 | `presentation`         | —                         | `PricingPresentation`            | merged defaults    |
 | `locale`               | `locale`                  | `string`                         | `"en-US"`          |
 | `pricingPath`          | `pricing-path`            | `string`                         | `"/pricing"`       |
@@ -483,6 +572,57 @@ pricing-renderer [data-pr-part='summary'] {
 
 There is no new property, attribute or event.
 
+### Current selection and pending actions
+
+`currentSelection` (type `Partial<PricingSelection> | undefined`, no attribute)
+marks what the customer already has. The element keeps a deep copy, never writes it
+into the selection in effect and emits no `pricing-selection-change`. While its
+`planId` is a plan id of the loaded pricing:
+
+- that plan's card has `data-current="true"` and the part `current-badge`; its CTA
+  is a disabled button with `data-relation="current"`;
+- each add-on card that the reconciled contract selects has `data-current="true"`
+  and the part `current-add-on-badge`;
+- every other plan CTA has `data-relation="upgrade"` or `"downgrade"` and the text
+  of `pricing.upgradeTo` or `pricing.downgradeTo` (or `pricing.contactSales` for a
+  plan without a price amount), by the declaration order of the plans in the
+  pricing, private plans included;
+- the summary has a `summary-action` button (action id `review-change`, or
+  `contact-sales` when the selection requires a quote), disabled while the
+  selection equals the current one, when `ctaEnabled` is true.
+
+An unknown `planId` marks nothing and keeps the default labels. Unknown plan and
+add-on ids are reported once per change in a `pricing-diagnostic` event with the
+codes `PR_CURRENT_SELECTION_UNKNOWN_PLAN` and `PR_CURRENT_SELECTION_UNKNOWN_ADDON`.
+See [Current selection and pending actions](./configuration.md#current-selection-and-pending-actions).
+
+`pendingActionId` (type `string | undefined`, attribute `pending-action-id`) is the
+action id of the CTA or summary action the host is working on. That control gets
+`aria-busy="true"`, `data-pending="true"` and a `cta-pending` child. Every plan CTA
+and the summary action gets `aria-disabled="true"` and ignores activation: no
+`pricing-action` is emitted and a click does not navigate; middle click and open in a new tab are not blocked.
+
+`PricingCta` has an optional `labels` field. Only string values are kept:
+
+```ts
+interface PricingCtaLabels {
+  upgrade?: string;
+  downgrade?: string;
+  current?: string;
+  contactSales?: string;
+}
+
+type SelectionRelation = 'current' | 'upgrade' | 'downgrade' | 'change';
+```
+
+`PricingCtaLabels` and `SelectionRelation` are exported from `pricing-renderer`;
+`SelectionRelation` is also re-exported from `pricing-renderer/element` and
+`pricing-renderer/react`. The `pricing-action` detail (`PricingActionDetail`) has
+the optional fields `relation?: SelectionRelation` and `source?: 'plan' | 'summary'`,
+present only while the current plan is known. Every `{planId}` in the `href` of a
+plan CTA is replaced with `encodeURIComponent` of the plan id before the link is
+checked and before it reaches the event.
+
 ### Methods
 
 ```ts
@@ -603,9 +743,13 @@ hand must add both. The element sets its ready state and selection before it
 dispatches the event, so `applySelection` called from a `pricing-ready` listener
 works.
 
+`pricing-action` also has the optional fields `relation` and `source` while
+`currentSelection` names a plan of the pricing, and the summary action emits it too.
+
 `pricing-diagnostic` fires with the diagnostics of a load and also after an
 `applySelection` call that returns diagnostics, including the error refusals
-`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`. Hosts that treat any
+`PR_SELECTION_NOT_READY` and `PR_SELECTION_CONTROLLED`, and when `currentSelection`
+has ids the pricing does not define. Hosts that treat any
 error in `pricing-diagnostic` as a load failure must check the diagnostic code.
 
 `detail.selection` of `pricing-selection-change` and `pricing-action` is always
@@ -625,6 +769,125 @@ A pending plan change is a `PendingAddOnChange` with
 `{ addOnId: '', select: false, addIds: [], removeIds, planId }`. The optional
 `planId` field is set only for plan changes; add-on changes leave it undefined.
 
+### `pricing-change-review` element
+
+`pricing-renderer/element` also exports `PricingChangeReviewElement`, the class of
+`<pricing-change-review>`, with `PRICING_CHANGE_REVIEW_TAG` and
+`definePricingChangeReview()`. Importing them registers nothing; see
+[`pricing-renderer/define-change-review`](#pricing-rendererdefine-change-review).
+The element renders in the light DOM and takes a
+[`SelectionComparison`](#compareselections) that the host computed.
+
+| Property       | Attribute       | Type                  | Default   |
+| -------------- | --------------- | --------------------- | --------- |
+| `comparison`   | —               | `SelectionComparison` | —         |
+| `notices`      | —               | `string[]`            | `[]`      |
+| `pending`      | `pending`       | `boolean`             | `false`   |
+| `error`        | `error`         | `string`              | —         |
+| `locale`       | `locale`        | `string`              | `"en-US"` |
+| `messages`     | —               | `MessageCatalog`      | —         |
+| `confirmLabel` | `confirm-label` | `string`              | localized |
+
+`pending` is reflected. Notices and `error` are shown as text, never as HTML.
+Without a `comparison` the element renders nothing.
+
+What the element renders and how it behaves (the screen itself is described in
+[The review screen](./change-subscription-flow.md#the-review-screen)):
+
+- A `section` with `data-pr-part="change-review"`, labelled by an `h2`
+  (`review-title`, `tabindex="-1"`), then one section per kind of change, the
+  `notices`, the `error` and the Confirm and Back buttons. Sections without content
+  are left out. When `comparison.relation` is `'current'` the sections are replaced
+  by one "no changes" note and Confirm is `aria-disabled`.
+- The text comes from the `pricing.review*` keys of the catalog for `locale`;
+  `messages` overrides keys (see [Internationalization](./i18n.md)). An empty or
+  removed `locale` falls back to `en-US`. `confirmLabel` replaces only the text of
+  Confirm.
+- Names, notices, `error` and values are bound as text. The element never sets or
+  parses HTML from data.
+- A new `comparison` moves focus to the heading. A new non-empty `error` moves
+  focus to Confirm, unless `comparison` changed in the same update.
+- While `pending` is true, Confirm has `aria-disabled="true"` and `aria-busy="true"`
+  (it keeps focus) and a `role="status"` region reads "Applying your change…". An
+  `error` is shown in a `role="alert"` region.
+- The element is styled by `base.css`; its tokens and parts are in
+  [Theming](./theming.md#the-review-element). Importing a stylesheet is up to the
+  host, as for `<pricing-renderer>`.
+
+| Event                    | Detail                                | Cancelable |
+| ------------------------ | ------------------------------------- | ---------- |
+| `pricing-change-confirm` | `{ comparison: SelectionComparison }` | Yes        |
+| `pricing-change-back`    | `{ comparison: SelectionComparison }` | Yes        |
+
+Both events bubble and are composed, and `detail.comparison` is a detached deep
+copy. The types `PricingChangeConfirmDetail`, `PricingChangeBackDetail`,
+`PricingChangeConfirmEvent` and `PricingChangeBackEvent` are exported from
+`pricing-renderer/element`.
+
+- Confirm emits nothing while `pending` is true or `comparison.relation` is
+  `'current'`; its button then has `aria-disabled="true"`.
+- When no listener cancels `pricing-change-confirm`, the element sets
+  `pending = true` before the dispatch returns, so a second click cannot submit
+  twice. A host that manages `pending` itself calls `preventDefault()`.
+- `pricing-change-back` has no default action and never changes `pending`.
+
+See [Change a subscription](./change-subscription-flow.md) for the flow around it.
+
+## `pricing-renderer/space`
+
+Helpers for contracts of SPACE. The subpath has no runtime imports, needs no DOM
+and makes no HTTP call. Service keys are matched exactly: pass the lowercase key
+that SPACE stores.
+
+```ts
+selectionFromContract(contract: SpaceContractLike, serviceKey: string): Partial<PricingSelection>
+
+subscriptionFromSelection(
+  serviceKey: string,
+  version: string,
+  selection: SpaceSelectionLike,
+): SpaceSubscription
+
+contractedVersion(contract: SpaceContractLike, serviceKey: string): string | undefined
+
+currentUsageFromContract(contract: SpaceContractLike, serviceKey: string): Record<string, number>
+```
+
+```ts
+interface SpaceContractLike {
+  contractedServices?: Record<string, string>; // service -> pricing version
+  subscriptionPlans?: Record<string, string>; // service -> plan name
+  subscriptionAddOns?: Record<string, Record<string, number>>; // service -> add-on -> quantity
+  usageLevels?: Record<string, Record<string, { consumed?: number }>>;
+}
+
+interface SpaceSubscription {
+  contractedServices: Record<string, string>;
+  subscriptionPlans: Record<string, string>;
+  subscriptionAddOns: Record<string, Record<string, number>>;
+}
+
+interface SpaceSelectionLike {
+  planId?: string;
+  addOns?: Record<string, { selected: boolean; quantity: number }>;
+}
+```
+
+- `selectionFromContract` maps the plan and the add-ons with a quantity above 0 to
+  the input of `applySelection` and `compareSelections`. It never sets a billing
+  period.
+- `subscriptionFromSelection` builds the novation body of one service. Pass the
+  `selections.after` of a comparison and the dotted version of the after pricing.
+  `subscriptionPlans` is `{}` when the selection has no plan id. Only selected
+  add-ons with a finite quantity above 0 are listed.
+- `contractedVersion` turns each `_` of the stored version back into `.`.
+- `currentUsageFromContract` maps each `usageLevels` entry whose `consumed` is a
+  finite number of at least 0. The result is the `currentUsage` of
+  `compareSelections`.
+
+The input is never mutated. See
+[Preload the current subscription](./preload-current-subscription.md).
+
 ## `pricing-renderer/define`
 
 Exports:
@@ -638,6 +901,22 @@ PricingRendererElement
 Importing this entry registers `<pricing-renderer>` idempotently. If the tag has
 already been defined by another constructor, registration fails explicitly
 instead of silently using an incompatible implementation.
+
+## `pricing-renderer/define-change-review`
+
+A side-effect module. Importing it registers `<pricing-change-review>` when
+`customElements` exists, and does nothing on a server. `pricing-renderer/define`
+and `pricing-renderer/react` do not register this tag, so a page that uses the
+review element without React imports this entry:
+
+```ts
+import 'pricing-renderer/define';
+import 'pricing-renderer/define-change-review';
+```
+
+To register it yourself, call `definePricingChangeReview()` from
+`pricing-renderer/element`. It is a no-op without `customElements`, idempotent,
+and throws an error that names the tag when another constructor already holds it.
 
 ## `pricing-renderer/react`
 
@@ -674,7 +953,16 @@ does not fire for that load; see
 [Preload the current subscription](preload-current-subscription.md) to apply
 at once from `resolvedState`.
 
-`ApplySelectionResult` is re-exported from this entry point.
+`ApplySelectionResult` and `SelectionRelation` are re-exported from this entry
+point. The props `currentSelection` and `pendingActionId` are passed to the
+element as properties.
+
+`PricingChangeReview` renders `<pricing-change-review>` and registers the tag when
+it renders, so React hosts need no extra import. Its props are `comparison`,
+`notices`, `pending`, `error`, `locale`, `messages`, `confirmLabel`, `className`,
+`id`, `onConfirm` (`pricing-change-confirm`) and `onBack` (`pricing-change-back`).
+A ref to it is the element. `PricingChangeReviewElement` is re-exported from this
+entry.
 
 ## CSS entry points
 

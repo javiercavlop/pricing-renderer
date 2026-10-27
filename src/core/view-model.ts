@@ -7,6 +7,7 @@ import type {
   PricingComparisonGroup,
   PricingComparisonRow,
   PricingCta,
+  PricingCtaLabels,
   PricingHighlightReference,
   PricingPlanBadge,
   PricingPlanHighlightConfiguration,
@@ -36,6 +37,18 @@ const highlightKinds = new Set(['feature', 'usage-limit']);
 const highlightModes = new Set(['auto', 'manual', 'hybrid']);
 const badgeTones = new Set(['accent', 'success', 'warning', 'neutral']);
 
+// [impl->req~cta-relation-labels-config~1] only non-empty string entries of the four known keys
+// are kept, trimmed like cta.label
+function normalizeCtaLabels(input: unknown): PricingCtaLabels | undefined {
+  if (!isRecord(input)) return undefined;
+  const labels: PricingCtaLabels = {};
+  for (const key of ['upgrade', 'downgrade', 'current', 'contactSales'] as const) {
+    const value = asString(input[key]);
+    if (value) labels[key] = value;
+  }
+  return Object.keys(labels).length > 0 ? labels : undefined;
+}
+
 function normalizeCtas(input: unknown): PricingCta[] | undefined {
   if (!Array.isArray(input)) return undefined;
   const ctas = input
@@ -48,9 +61,11 @@ function normalizeCtas(input: unknown): PricingCta[] | undefined {
         value.target === '_blank' ? '_blank' : value.target === '_self' ? '_self' : undefined;
       const kind =
         value.kind === 'secondary' ? 'secondary' : value.kind === 'primary' ? 'primary' : undefined;
+      const labels = normalizeCtaLabels(value.labels);
       return {
         id,
         label,
+        ...(labels ? { labels } : {}),
         ...(asString(value.href) ? { href: asString(value.href) } : {}),
         ...(target ? { target } : {}),
         ...(asString(value.planId) ? { planId: asString(value.planId) } : {}),

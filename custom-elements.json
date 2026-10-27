@@ -40,6 +40,19 @@
             },
             {
               "kind": "field",
+              "name": "currentSelection",
+              "type": { "text": "Partial<PricingSelection> | undefined" },
+              "description": "The customer's current contract. Marks the current plan and add-ons, and labels the other plans' calls to action as upgrades or downgrades. It does not change the selection in effect and emits no pricing-selection-change. The element keeps a deep copy."
+            },
+            {
+              "kind": "field",
+              "name": "pendingActionId",
+              "type": { "text": "string | undefined" },
+              "attribute": "pending-action-id",
+              "description": "Action id of the call to action whose work the host is doing. That control shows a busy state, every plan call to action and the summary action get aria-disabled, and activating them dispatches no pricing-action."
+            },
+            {
+              "kind": "field",
               "name": "presentation",
               "type": { "text": "PricingPresentation" }
             },
@@ -143,6 +156,52 @@
               "description": "Validates the selection against the loaded pricing and replaces the internal selection. Omitted fields take the schema defaults. Emits no pricing-selection-change. Refused by result (applied: false) while the element is not ready or when the selection property is set."
             }
           ],
+          "attributes": [
+            { "name": "src", "fieldName": "src", "type": { "text": "string" } },
+            { "name": "locale", "fieldName": "locale", "type": { "text": "string" } },
+            { "name": "pricing-path", "fieldName": "pricingPath", "type": { "text": "string" } },
+            {
+              "name": "mode",
+              "fieldName": "mode",
+              "type": { "text": "\"commercial\" | \"catalog\"" }
+            },
+            {
+              "name": "layout",
+              "fieldName": "layout",
+              "type": { "text": "\"auto\" | \"compact\" | \"table\"" }
+            },
+            {
+              "name": "visibility",
+              "fieldName": "visibility",
+              "type": { "text": "\"public-only\" | \"all\"" }
+            },
+            {
+              "name": "theme",
+              "fieldName": "theme",
+              "type": { "text": "\"light\" | \"dark\" | \"auto\"" }
+            },
+            { "name": "loading-label", "fieldName": "loadingLabel", "type": { "text": "string" } },
+            {
+              "name": "only-differences",
+              "fieldName": "onlyDifferences",
+              "type": { "text": "boolean | undefined" }
+            },
+            {
+              "name": "toolbar-threshold",
+              "fieldName": "toolbarThreshold",
+              "type": { "text": "number" }
+            },
+            {
+              "name": "add-on-filter-threshold",
+              "fieldName": "addOnFilterThreshold",
+              "type": { "text": "number" }
+            },
+            {
+              "name": "pending-action-id",
+              "fieldName": "pendingActionId",
+              "type": { "text": "string | undefined" }
+            }
+          ],
           "events": [
             {
               "name": "pricing-ready",
@@ -153,11 +212,96 @@
               "name": "pricing-selection-change",
               "type": { "text": "CustomEvent<PricingSelectionChangeDetail>" }
             },
-            { "name": "pricing-action", "type": { "text": "CustomEvent<PricingActionDetail>" } },
+            {
+              "name": "pricing-action",
+              "type": { "text": "CustomEvent<PricingActionDetail>" },
+              "description": "Fired when a call to action is activated. While currentSelection names a plan of the pricing, the detail also has relation and source ('plan' or 'summary'). Cancelable; a canceled link does not navigate."
+            },
             {
               "name": "pricing-diagnostic",
               "type": { "text": "CustomEvent<PricingDiagnosticDetail>" },
-              "description": "Fired with the diagnostics of a load, and after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals. Check the diagnostic code before treating an error as a load failure."
+              "description": "Fired with the diagnostics of a load, after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals, and when currentSelection or the pricing changes and currentSelection has a plan or add-on id the pricing does not define (PR_CURRENT_SELECTION_UNKNOWN_PLAN, PR_CURRENT_SELECTION_UNKNOWN_ADDON). Check the diagnostic code before treating an error as a load failure."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "dist/element/change-review-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "PricingChangeReviewElement",
+          "customElement": true,
+          "tagName": "pricing-change-review",
+          "description": "The review of a subscription change: it shows the comparison of the customer's current subscription with the edit, and asks the host to confirm it. Registered by importing pricing-renderer/define-change-review.",
+          "members": [
+            {
+              "kind": "field",
+              "name": "comparison",
+              "type": { "text": "SelectionComparison | undefined" },
+              "description": "The result of compareSelections. Nothing is rendered while it is unset."
+            },
+            {
+              "kind": "field",
+              "name": "notices",
+              "type": { "text": "string[]" },
+              "description": "Notices from the host, rendered as text. Defaults to an empty list."
+            },
+            {
+              "kind": "field",
+              "name": "pending",
+              "type": { "text": "boolean" },
+              "attribute": "pending",
+              "description": "True while the host applies the change. Confirm ignores activations, and the attribute is reflected. Confirm sets it when pricing-change-confirm is not canceled."
+            },
+            {
+              "kind": "field",
+              "name": "error",
+              "type": { "text": "string | undefined" },
+              "attribute": "error",
+              "description": "A plain-text error message from the host, rendered as text."
+            },
+            {
+              "kind": "field",
+              "name": "locale",
+              "type": { "text": "string" },
+              "attribute": "locale"
+            },
+            {
+              "kind": "field",
+              "name": "messages",
+              "type": { "text": "MessageCatalog | undefined" }
+            },
+            {
+              "kind": "field",
+              "name": "confirmLabel",
+              "type": { "text": "string | undefined" },
+              "attribute": "confirm-label",
+              "description": "Replaces the text of the Confirm button (pricing.reviewConfirm)."
+            }
+          ],
+          "attributes": [
+            { "name": "pending", "fieldName": "pending", "type": { "text": "boolean" } },
+            { "name": "error", "fieldName": "error", "type": { "text": "string | undefined" } },
+            { "name": "locale", "fieldName": "locale", "type": { "text": "string" } },
+            {
+              "name": "confirm-label",
+              "fieldName": "confirmLabel",
+              "type": { "text": "string | undefined" }
+            }
+          ],
+          "events": [
+            {
+              "name": "pricing-change-confirm",
+              "type": { "text": "CustomEvent<PricingChangeConfirmDetail>" },
+              "description": "Fired when Confirm is activated while pending is false and the relation is not current. Cancelable. When it is not canceled, the element sets pending to true. The detail has a deep copy of the comparison."
+            },
+            {
+              "name": "pricing-change-back",
+              "type": { "text": "CustomEvent<PricingChangeBackDetail>" },
+              "description": "Fired when Back is activated. Cancelable, with no default action. The detail has a deep copy of the comparison."
             }
           ]
         }

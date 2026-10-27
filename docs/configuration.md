@@ -168,6 +168,99 @@ pricing on every read, so do not read it in a render loop. See
 [Preload the current subscription](./preload-current-subscription.md) for
 `applySelection` in a full flow.
 
+## Current selection and pending actions
+
+`currentSelection` tells the element what the customer already has. It is not the
+selection: `selection` and `applySelection` set what the editor shows, while
+`currentSelection` only marks and labels.
+
+```ts
+renderer.currentSelection = {
+  planId: 'growth',
+  addOns: { extraStorage: { selected: true, quantity: 2 } },
+};
+renderer.applySelection(renderer.currentSelection); // start the editor on the contract
+```
+
+- The element keeps a deep copy of the value. Changing your object later has no
+  effect until you set the property again.
+- It never becomes the selection in effect and emits no
+  `pricing-selection-change`. To start the editor on the contract, also call
+  `applySelection` with the same value, as in
+  [Preload the current subscription](./preload-current-subscription.md).
+- When `planId` is a plan of the loaded pricing, that plan's card gets
+  `data-current="true"` and a "Your plan" badge, and its CTA becomes a disabled
+  "Current plan" button. Add-ons that the reconciled contract still selects get a
+  "Current" badge. The other plans' CTAs read "Upgrade to {plan}" or "Downgrade to
+  {plan}", by the declaration order of the plans in the pricing (private plans
+  included, even when `visibility` hides their cards), or "Contact sales" when the
+  plan has no price amount.
+- While the current plan is known and `ctaEnabled` is true, the price summary also
+  has a button, `summary-action`: "Review change ({total})", or "Contact sales"
+  when the selection requires a quote. It is disabled while the selection equals
+  the current one. Its click emits `pricing-action` (see [Events](./events.md)).
+- An unknown `planId` marks nothing, keeps the default CTA labels and emits a
+  `pricing-diagnostic` with `PR_CURRENT_SELECTION_UNKNOWN_PLAN`. Unknown add-on ids
+  are ignored with `PR_CURRENT_SELECTION_UNKNOWN_ADDON`. Both are emitted once per
+  change of `currentSelection` or of the pricing, and are not listed in the
+  element's warnings.
+- Set it to `undefined` to remove every mark; the element then renders as before.
+
+`pendingActionId` (attribute `pending-action-id`) tells the element that the host
+is working on one action, for example after a `pricing-action` that it did not
+finish at once. While it is set:
+
+- the CTA or the summary action with that action id has `aria-busy="true"`,
+  `data-pending="true"` and a "Processing…" text;
+- every plan CTA and the summary action has `aria-disabled="true"`, and activating
+  one emits no `pricing-action` and does not follow a link. `aria-disabled` is used
+  so that keyboard focus stays on the control that was activated;
+- plan and add-on controls stay enabled. The host decides whether the edit may
+  continue.
+
+```ts
+renderer.addEventListener('pricing-action', (event) => {
+  event.preventDefault();
+  renderer.pendingActionId = (event as PricingActionEvent).detail.actionId;
+  void startChange().finally(() => {
+    renderer.pendingActionId = undefined;
+  });
+});
+```
+
+### CTA labels and links
+
+An entry of `presentation.ctas` can set `labels` for the states above. Only string
+values are kept:
+
+```ts
+renderer.presentation = {
+  ctas: [
+    {
+      id: 'start-starter',
+      label: 'Start with Starter',
+      planId: 'starter',
+      labels: {
+        upgrade: 'Move up to Starter',
+        downgrade: 'Move to Starter',
+        current: 'Your current plan',
+        contactSales: 'Talk to us',
+      },
+    },
+  ],
+};
+```
+
+`labels.current` replaces "Current plan", `labels.upgrade` and `labels.downgrade`
+replace "Upgrade to {plan}" and "Downgrade to {plan}", and `labels.contactSales`
+replaces "Contact sales" for a plan without a price amount. Without a known
+current plan, `label` is used as before.
+
+In the `href` of a plan CTA, every `{planId}` is replaced with
+`encodeURIComponent` of the plan's id before the link is checked, for example
+`https://example.com/signup?plan={planId}`. The `pricing-action` detail has the
+expanded value. An expanded link that is not safe renders the CTA as a button.
+
 ## Presentation precedence
 
 Presentation can be owned by three layers:

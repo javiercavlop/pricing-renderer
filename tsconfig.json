@@ -4,6 +4,7 @@
     { "path": "./tsconfig.core.json" },
     { "path": "./tsconfig.yaml.json" },
     { "path": "./tsconfig.element.json" },
-    { "path": "./tsconfig.react.json" }
+    { "path": "./tsconfig.react.json" },
+    { "path": "./tsconfig.space.json" }
   ]
 }

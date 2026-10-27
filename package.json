@@ -46,9 +46,17 @@
       "types": "./dist/element/define.d.ts",
       "default": "./dist/element/define.js"
     },
+    "./define-change-review": {
+      "types": "./dist/element/define-change-review.d.ts",
+      "default": "./dist/element/define-change-review.js"
+    },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
+    },
+    "./space": {
+      "types": "./dist/space/index.d.ts",
+      "default": "./dist/space/index.js"
     },
     "./base.css": "./dist/styles/base.css",
     "./theme.css": "./dist/styles/theme.css",
@@ -65,6 +73,7 @@
   ],
   "sideEffects": [
     "./dist/element/define.js",
+    "./dist/element/define-change-review.js",
     "./dist/react/index.js",
     "**/*.css"
   ],
@@ -129,7 +138,7 @@
     "demo": "pnpm build && pnpm --filter pricing-renderer-demo dev",
     "demo:react": "pnpm build && pnpm --filter pricing-renderer-react-demo dev",
     "demo:next": "pnpm build && pnpm --filter pricing-renderer-next-demo dev",
-    "package:check": "pnpm build && publint && attw --pack . --profile esm-only --entrypoints . ./yaml ./element ./define ./react",
+    "package:check": "pnpm build && publint && attw --pack . --profile esm-only --entrypoints . ./yaml ./element ./define ./react ./space ./define-change-review",
     "release:check": "node scripts/check-release-ready.mjs",
     "release:registry-check": "node scripts/check-npm-version-available.mjs",
     "prepack": "pnpm build",

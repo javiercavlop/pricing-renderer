@@ -11,6 +11,7 @@ import type {
   PricingRendererElement,
   PricingSelectionChangeEvent,
 } from 'pricing-renderer/element';
+import 'pricing-renderer/define-change-review';
 import 'pricing-renderer/styles.css';
 import pricingYaml from '../../../tests/fixtures/acme-pricing.yml?raw';
 import './page.css';
