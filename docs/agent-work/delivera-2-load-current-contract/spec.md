@@ -897,6 +897,7 @@ Needs: impl, utest
 ### Requirement: Mapping stays out of the package
 
 `req~space-map-not-exported~1`
+Superseded by ADR 0001 (`docs/adr/0001-space-adapter-subpath.md`).
 The package entry points `src/core/index.ts`, `src/yaml/index.ts`, `src/element/index.ts` and `src/react/index.ts` SHALL NOT export `selectionFromContract`.
 Needs: impl, utest
 
@@ -992,7 +993,7 @@ Unit tests (vitest, `tests/unit`, node environment, no DOM; fixtures parsed from
 - [ ] `[utest->req~space-map-addons-only~1]` unit, `tests/unit/space-contract.test.ts`
 - [ ] `[utest->req~space-map-result-keys~1]` unit, `tests/unit/space-contract.test.ts`
 - [ ] `[utest->req~space-map-no-mutation~1]` unit, `tests/unit/space-contract.test.ts`
-- [ ] `[utest->req~space-map-not-exported~1]` unit, `tests/unit/space-contract.test.ts`
+- [ ] `[utest->req~space-map-not-exported~1]` unit, `tests/unit/space-contract.test.ts` (superseded by ADR 0001, `docs/adr/0001-space-adapter-subpath.md`)
 
 Playwright tests (`tests/browser/pricing-renderer.spec.ts`, demo page with the acme fixture; vitest
 runs without a DOM):

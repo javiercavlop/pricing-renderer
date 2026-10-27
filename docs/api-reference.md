@@ -600,7 +600,7 @@ See [Current selection and pending actions](./configuration.md#current-selection
 action id of the CTA or summary action the host is working on. That control gets
 `aria-busy="true"`, `data-pending="true"` and a `cta-pending` child. Every plan CTA
 and the summary action gets `aria-disabled="true"` and ignores activation: no
-`pricing-action` is emitted and a link does not navigate.
+`pricing-action` is emitted and a click does not navigate; middle click and open in a new tab are not blocked.
 
 `PricingCta` has an optional `labels` field. Only string values are kept:
 
