@@ -542,9 +542,18 @@ test.describe('accessibility', () => {
 
   for (const theme of ['light', 'dark']) {
     test(`no serious violation in the ${theme} theme at 375 px`, async ({ page }) => {
+      // the reduced-motion rule of the review shortens every transition to 0.01ms, so axe never
+      // samples a button halfway between the light and the dark colours
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width: 375, height: 900 });
       const review = await addReview(page, { comparison: R_START, error: 'Timeout' });
       await review.evaluate((element, value) => element.setAttribute('theme', value), theme);
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
       expect(await seriousViolations(page)).toEqual([]);
     });
   }
