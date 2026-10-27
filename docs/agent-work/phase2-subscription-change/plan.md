@@ -1,1 +1,1 @@
-Done: spec, mock, space, A, C, E, F, D docs, review round-1 fixes (4 tasks), axe flake fix, docs nits. Next: push, CI, panel round 2 (reviewer, test-reviewer, arch-reviewer, ui-qa, security re-check of src/space + currentSelection), PR body, set_review_package, ready.
+Done: spec, mock, space, A, C, E, F, D docs, round-1 fixes, CI fixes, panel round 2 (all approve), docs fixes. Remaining: push, CI green, PR body, set_review_package, lead_ready.
