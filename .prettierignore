@@ -8,3 +8,7 @@ pnpm-lock.yaml
 examples/next/next-env.d.ts
 # SPECTRA fixtures: third-party data, not reformatted (see its README)
 tests/fixtures/spectra
+# static design artifact, the approved mock of the review screen, not shipped code
+docs/agent-work/phase2-subscription-change/review-mock/
+# delta specs of an open change: requirement tables and ids are validated by openspec, not reformatted; remove this entry when the change is archived
+openspec/changes/add-subscription-change-flow/
