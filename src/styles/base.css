@@ -1583,89 +1583,18 @@
   }
 
   /* [impl->req~review-ui-structure~1] <pricing-change-review>, after the approved mock in
-     docs/agent-work/phase2-subscription-change/review-mock/. The review is its own element, so it
-     carries the tokens of theme.css (same names and values) and the same theme switches: the
-     theme attribute, an ancestor with data-theme, and theme="auto" with the system colour scheme.
-     The host overrides a token with an unlayered rule on pricing-change-review. */
+     docs/agent-work/phase2-subscription-change/review-mock/. The review is its own element. Its tokens
+     and theme switches (theme attribute, data-theme ancestor, theme="auto") live in theme.css,
+     which must be loaded, as for the renderer. The host overrides a token with an unlayered rule
+     on pricing-change-review. */
   pricing-change-review {
     display: block;
     container: change-review / inline-size;
     min-inline-size: 0;
-    color-scheme: light;
-    --pr-font-size-xs: 0.75rem;
-    --pr-font-size-sm: 0.875rem;
-    --pr-font-size-lg: 1.125rem;
-    --pr-font-size-xl: 1.35rem;
-    --pr-font-size-2xl: 1.75rem;
-    --pr-space-1: 0.25rem;
-    --pr-space-2: 0.5rem;
-    --pr-space-3: 0.75rem;
-    --pr-space-4: 1rem;
-    --pr-space-5: 1.5rem;
-    --pr-radius-sm: 0.55rem;
-    --pr-radius-md: 0.85rem;
-    --pr-radius-lg: 1.25rem;
-    --pr-motion-fast: 160ms ease;
-    --pr-color-text: #171723;
-    --pr-color-muted: #626275;
-    --pr-color-surface: #ffffff;
-    --pr-color-surface-raised: #ffffff;
-    --pr-color-surface-subtle: #f5f5f8;
-    --pr-color-border: #dfdfe7;
-    --pr-color-border-strong: #b8b8c6;
-    --pr-color-accent: #6558e8;
-    --pr-color-on-accent: #ffffff;
-    --pr-color-link: #5145cd;
-    --pr-color-focus: #5145cd;
-    --pr-color-success: #087f5b;
-    --pr-color-warning: #9a5600;
-    --pr-color-warning-surface: #fff7e8;
-    --pr-shadow-sm: 0 1px 2px rgb(25 25 35 / 7%), 0 8px 30px rgb(25 25 35 / 4%);
     color: var(--pr-color-text);
     font: inherit;
     line-height: 1.5;
     text-rendering: optimizeLegibility;
-  }
-
-  pricing-change-review[theme='dark'],
-  [data-theme='dark'] pricing-change-review {
-    color-scheme: dark;
-    --pr-color-text: #f4f3fb;
-    --pr-color-muted: #aaa8ba;
-    --pr-color-surface: #181820;
-    --pr-color-surface-raised: #22222c;
-    --pr-color-surface-subtle: #202028;
-    --pr-color-border: #353541;
-    --pr-color-border-strong: #555463;
-    --pr-color-accent: #9b8cff;
-    --pr-color-on-accent: #14121f;
-    --pr-color-link: #b8adff;
-    --pr-color-focus: #b8adff;
-    --pr-color-success: #66d9ad;
-    --pr-color-warning: #ffc66d;
-    --pr-color-warning-surface: #302613;
-    --pr-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%), 0 8px 30px rgb(0 0 0 / 18%);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    pricing-change-review[theme='auto'] {
-      color-scheme: dark;
-      --pr-color-text: #f4f3fb;
-      --pr-color-muted: #aaa8ba;
-      --pr-color-surface: #181820;
-      --pr-color-surface-raised: #22222c;
-      --pr-color-surface-subtle: #202028;
-      --pr-color-border: #353541;
-      --pr-color-border-strong: #555463;
-      --pr-color-accent: #9b8cff;
-      --pr-color-on-accent: #14121f;
-      --pr-color-link: #b8adff;
-      --pr-color-focus: #b8adff;
-      --pr-color-success: #66d9ad;
-      --pr-color-warning: #ffc66d;
-      --pr-color-warning-surface: #302613;
-      --pr-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%), 0 8px 30px rgb(0 0 0 / 18%);
-    }
   }
 
   pricing-change-review,

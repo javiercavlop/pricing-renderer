@@ -1,5 +1,6 @@
 @layer pricing-renderer.theme {
-  pricing-renderer[data-pr-root] {
+  pricing-renderer[data-pr-root],
+  pricing-change-review {
     color-scheme: light;
     --pr-font-size-xs: 0.75rem;
     --pr-font-size-sm: 0.875rem;
@@ -41,7 +42,9 @@
   }
 
   pricing-renderer[data-pr-root][theme='dark'],
-  [data-theme='dark'] pricing-renderer[data-pr-root] {
+  [data-theme='dark'] pricing-renderer[data-pr-root],
+  pricing-change-review[theme='dark'],
+  [data-theme='dark'] pricing-change-review {
     color-scheme: dark;
     --pr-color-text: #f4f3fb;
     --pr-color-muted: #aaa8ba;
@@ -62,7 +65,8 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    pricing-renderer[data-pr-root][theme='auto'] {
+    pricing-renderer[data-pr-root][theme='auto'],
+    pricing-change-review[theme='auto'] {
       color-scheme: dark;
       --pr-color-text: #f4f3fb;
       --pr-color-muted: #aaa8ba;
@@ -79,6 +83,10 @@
       --pr-color-warning: #ffc66d;
       --pr-color-warning-surface: #302613;
       --pr-color-overlay: #050507;
+    }
+
+    pricing-change-review[theme='auto'] {
+      --pr-shadow-sm: 0 1px 2px rgb(0 0 0 / 28%), 0 8px 30px rgb(0 0 0 / 18%);
     }
   }
 }
