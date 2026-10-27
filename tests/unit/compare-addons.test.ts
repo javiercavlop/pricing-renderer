@@ -76,6 +76,30 @@ describe('compareSelections relation', () => {
     });
   });
 
+  // [utest->req~compare-relation-current~1]
+  it('is not current for the same plan and billing in another pricing version', () => {
+    const r = cmp(Side(V1, M2()), Side(V2, M2()));
+    expect(r.version.changed).toBe(true);
+    expect(r.plan.changed).toBe(false);
+    expect(r.relation).toBe('change');
+  });
+
+  // [utest->req~compare-relation-current~1]
+  it('is not current when the billed quantity of an add-on differs', () => {
+    const addOns = { extraStorage: addOn(3), prioritySuccess: addOn(1) };
+    const r = cmp(Side(acme, C()), Side(acme, { planId: 'growth', addOns }));
+    expect(r.addOns.quantityChanged).toHaveLength(1);
+    expect(r.relation).toBe('change');
+  });
+
+  // [utest->req~compare-relation-current~1]
+  it('is not current when one add-on is dropped', () => {
+    const dropped = { planId: 'growth', addOns: { extraStorage: addOn(2) } };
+    const r = cmp(Side(acme, C()), Side(acme, dropped));
+    expect(ids(r.addOns.removedByUser)).toEqual(['prioritySuccess']);
+    expect(r.relation).toBe('change');
+  });
+
   // [utest->req~compare-relation-plan-order~1]
   it('calls Growth to Enterprise an upgrade although it costs less', () => {
     const r = cmp(Side(acme, C()), Side(acme, ENT()));

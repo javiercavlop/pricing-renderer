@@ -18,6 +18,22 @@ export interface SpaceSelectionLike {
   addOns?: Record<string, { selected: boolean; quantity: number }>;
 }
 
+// Contract maps come from JSON, so keys such as "constructor", "toString" or "__proto__" are
+// data: they are read as own properties only and written with defineProperty.
+function ownValue<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+  if (!record || !Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return record[key];
+}
+
+function setOwn<T>(record: Record<string, T>, key: string, value: T): void {
+  Object.defineProperty(record, key, {
+    value,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
+}
+
 // Maps the plan and add-on quantities of one service of a SPACE contract to the input of
 // applySelection. SPACE contracts carry no billing period, so billingPeriod is never set.
 // [impl->req~space-select-from-contract~1]
@@ -30,14 +46,15 @@ export function selectionFromContract(
   serviceKey: string,
 ): Partial<PricingSelection> {
   const result: Partial<PricingSelection> = {};
-  const planId = contract.subscriptionPlans?.[serviceKey];
-  if (planId !== undefined) {
+  const planId = ownValue(contract.subscriptionPlans, serviceKey);
+  if (typeof planId === 'string') {
     result.planId = planId;
   }
   const addOns: PricingSelection['addOns'] = {};
-  for (const [name, quantity] of Object.entries(contract.subscriptionAddOns?.[serviceKey] ?? {})) {
+  const quantities = ownValue(contract.subscriptionAddOns, serviceKey);
+  for (const [name, quantity] of Object.entries(quantities ?? {})) {
     if (typeof quantity === 'number' && Number.isFinite(quantity) && quantity > 0) {
-      addOns[name] = { selected: true, quantity };
+      setOwn(addOns, name, { selected: true, quantity });
     }
   }
   if (Object.keys(addOns).length > 0) {
@@ -58,12 +75,12 @@ export function subscriptionFromSelection(
 ): SpaceSubscription {
   const plans: Record<string, string> = {};
   if (typeof selection.planId === 'string' && selection.planId !== '') {
-    plans[serviceKey] = selection.planId;
+    setOwn(plans, serviceKey, selection.planId);
   }
   const addOns: Record<string, number> = {};
   for (const [id, entry] of Object.entries(selection.addOns ?? {})) {
     if (entry?.selected === true && Number.isFinite(entry.quantity) && entry.quantity > 0) {
-      addOns[id] = entry.quantity;
+      setOwn(addOns, id, entry.quantity);
     }
   }
   return {
@@ -79,7 +96,7 @@ export function contractedVersion(
   contract: SpaceContractLike,
   serviceKey: string,
 ): string | undefined {
-  const stored = contract.contractedServices?.[serviceKey];
+  const stored = ownValue(contract.contractedServices, serviceKey);
   return typeof stored === 'string' ? stored.replaceAll('_', '.') : undefined;
 }
 
@@ -90,10 +107,11 @@ export function currentUsageFromContract(
   serviceKey: string,
 ): Record<string, number> {
   const usage: Record<string, number> = {};
-  for (const [name, level] of Object.entries(contract.usageLevels?.[serviceKey] ?? {})) {
-    const consumed = level?.consumed;
+  const levels = ownValue(contract.usageLevels, serviceKey);
+  for (const [name, level] of Object.entries(levels ?? {})) {
+    const consumed = ownValue(level, 'consumed');
     if (typeof consumed === 'number' && Number.isFinite(consumed) && consumed >= 0) {
-      usage[name] = consumed;
+      setOwn(usage, name, consumed);
     }
   }
   return usage;

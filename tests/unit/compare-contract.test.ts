@@ -64,6 +64,15 @@ describe('compareSelections price', () => {
   });
 
   // [utest->req~compare-price-difference-omitted~1]
+  it('names the quote when a quote is needed and the currencies differ', () => {
+    expect(V2U.metadata.currency).not.toBe(V1.metadata.currency);
+    const r = cmp(Side(V1, M2()), Side(V2U, { planId: 'ghost' }));
+    expect(r.price.after.requiresQuote).toBe(true);
+    expect('difference' in r.price).toBe(false);
+    expect(r.price.differenceOmitted).toBe('quote');
+  });
+
+  // [utest->req~compare-price-difference-omitted~1]
   it('leaves the difference out when the currencies differ', () => {
     const r = cmp(Side(V1, M2()), Side(V2U, M2()));
     expect('difference' in r.price).toBe(false);

@@ -113,6 +113,43 @@ describe('compareSelections feature classes', () => {
   });
 
   // [utest->req~compare-features~1]
+  it('treats number 0 and text empty as no capability', () => {
+    const zeroAndEmpty = makeF((raw) => {
+      const plans = raw.plans as RawPlans;
+      plans.base!.features = { sso: { value: 0 } };
+      plans.team!.features = { sso: { value: '' } };
+    });
+    const r = cmp(Side(zeroAndEmpty, { planId: 'base' }), Side(zeroAndEmpty, { planId: 'team' }));
+    expect(r.features.unchanged).toEqual(['sso']);
+    expect(r.features.gained).toEqual([]);
+    expect(r.features.lost).toEqual([]);
+    expect(r.features.changed).toEqual([]);
+    const teamSide = Side(zeroAndEmpty, { planId: 'team' });
+    const back = cmp(teamSide, Side(zeroAndEmpty, { planId: 'base' }));
+    expect(back.features.unchanged).toEqual(['sso']);
+  });
+
+  // [utest->req~compare-effective-features~1]
+  it('applies two add-ons that define the same feature in declaration order', () => {
+    const twoPacks = makeF((raw) => {
+      const addOns = raw.addOns as Record<string, Raw>;
+      addOns.ssoPlus = { price: 1, features: { sso: { value: 'plus' } } };
+    });
+    const selected = { ssoPlus: addOn(1), ssoPack: addOn(1) };
+    const r = cmp(
+      Side(twoPacks, { planId: 'base' }),
+      Side(twoPacks, { planId: 'base', addOns: selected }),
+    );
+    expect(r.features.gained).toHaveLength(1);
+    expect(r.features.gained[0]?.after).toStrictEqual({ kind: 'text', value: 'plus' });
+    const onlyFirst = cmp(
+      Side(twoPacks, { planId: 'base' }),
+      Side(twoPacks, { planId: 'base', addOns: { ssoPack: addOn(1) } }),
+    );
+    expect(onlyFirst.features.gained[0]?.after).toStrictEqual({ kind: 'boolean', value: true });
+  });
+
+  // [utest->req~compare-features~1]
   it('puts a feature with two different capable values in changed', () => {
     const text = makeF((raw) => {
       const plans = raw.plans as RawPlans;
@@ -296,6 +333,40 @@ describe('compareSelections usage-limit changes', () => {
   });
 });
 
+describe('compareSelections limit direction', () => {
+  // [utest->req~compare-limits~1]
+  it('orders unlimited above a number and a number above none', () => {
+    const toUnlimited = cmp(Side(F, { planId: 'base' }), Side(F, { planId: 'team' }));
+    expect(seats(toUnlimited)?.direction).toBe('increased');
+    const fromUnlimited = cmp(Side(F, { planId: 'team' }), Side(F, { planId: 'base' }));
+    expect(seats(fromUnlimited)).toMatchObject({
+      before: { kind: 'unlimited' },
+      after: { kind: 'number', value: 5 },
+      direction: 'decreased',
+    });
+    expect('delta' in seats(fromUnlimited)!).toBe(false);
+    const toNone = cmp(Side(F, { planId: 'base' }), Side(makeBare(), { planId: 'base' }));
+    expect(seats(toNone)).toMatchObject({
+      before: { kind: 'number', value: 5 },
+      after: { kind: 'none' },
+      direction: 'decreased',
+    });
+    expect('delta' in seats(toNone)!).toBe(false);
+  });
+
+  // [utest->req~compare-limits~1]
+  it('uses direction changed for a boolean or json value', () => {
+    for (const value of [true, { tier: 'gold' }]) {
+      const pricing = makeF((raw) => {
+        (raw.plans as RawPlans).team!.usageLimits = { seats: { value } };
+      });
+      const r = cmp(Side(pricing, { planId: 'base' }), Side(pricing, { planId: 'team' }));
+      expect(seats(r)?.direction).toBe('changed');
+      expect('delta' in seats(r)!).toBe(false);
+    }
+  });
+});
+
 describe('compareSelections current usage', () => {
   // [utest->req~compare-current-usage~1]
   it('flags a downgrade below consumption', () => {
@@ -307,6 +378,52 @@ describe('compareSelections current usage', () => {
   it('flags a new version below consumption', () => {
     const r = withCurrentUsage(Side(V1, M2()), Side(V2, M2()), { emails: 1900 });
     expect(r.usageLimits.exceeded).toEqual(['emails']);
+  });
+
+  // [utest->req~compare-current-usage~1] [utest->req~compare-current-usage-entry~1]
+  it('does not flag a consumed amount equal to the after limit', () => {
+    const r = withCurrentUsage(Side(acme, C()), Side(acme, START()), { storage: 10 });
+    expect(r.usageLimits.exceeded).toEqual([]);
+    expect(storage(r)?.currentUsage).toBe(10);
+    expect('exceedsCurrentUsage' in storage(r)!).toBe(false);
+  });
+
+  // [utest->req~compare-current-usage~1] [utest->req~compare-current-usage-entry~1]
+  it('flags a consumed amount one above the after limit', () => {
+    const r = withCurrentUsage(Side(acme, C()), Side(acme, START()), { storage: 11 });
+    expect(r.usageLimits.exceeded).toEqual(['storage']);
+    expect(storage(r)?.currentUsage).toBe(11);
+    expect(storage(r)?.exceedsCurrentUsage).toBe(true);
+  });
+
+  // [utest->req~compare-current-usage~1]
+  it('reads the usage of an id that only one of the two pricings defines', () => {
+    const withApi = makeF((raw) => {
+      (raw.usageLimits as Record<string, Raw>).api = {
+        valueType: 'NUMERIC',
+        defaultValue: 0,
+        unit: 'call',
+      };
+      (raw.plans as RawPlans).base!.usageLimits = { seats: { value: 5 }, api: { value: 100 } };
+    });
+    const withoutApi = Side(F, { planId: 'base' });
+    const apiSide = Side(withApi, { planId: 'base' });
+    const api = (r: SelectionComparison) =>
+      r.usageLimits.changed.find((entry) => entry.id === 'api');
+
+    const removed = withCurrentUsage(apiSide, withoutApi, { api: 5 });
+    expect(removed.usageLimits.exceeded).toEqual(['api']);
+    expect(api(removed)).toMatchObject({
+      presence: 'before-only',
+      after: { kind: 'none' },
+      currentUsage: 5,
+      exceedsCurrentUsage: true,
+    });
+    const fits = withCurrentUsage(withoutApi, apiSide, { api: 100 });
+    const tooMuch = withCurrentUsage(withoutApi, apiSide, { api: 101 });
+    expect(fits.usageLimits.exceeded).toEqual([]);
+    expect(tooMuch.usageLimits.exceeded).toEqual(['api']);
+    expect(api(fits)).toMatchObject({ presence: 'after-only', currentUsage: 100 });
   });
 
   // [utest->req~compare-current-usage~1]
