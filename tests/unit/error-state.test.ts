@@ -1,6 +1,7 @@
 // The element is built in the node environment (no DOM): its render() returns a lit template that
 // is flattened to text. The same flow in a real browser is covered by
 // tests/browser/element-error-state.spec.ts.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { PricingDiagnostic } from '../../src/core/index.js';
 
@@ -215,6 +216,21 @@ describe('error state: category by code', () => {
     expect(visibleText(html)).toContain('Fallo');
     expect(visibleText(html)).not.toContain(sentences['es-ES'].errorSource);
     expect(detailsOf(html)).toContain('Códigos');
+  });
+});
+
+// [utest->req~error-state-human-message~1]
+describe('error state: styles', () => {
+  it('removes the second box of the details inside the error box', () => {
+    const css = readFileSync(new URL('../../src/styles/base.css', import.meta.url), 'utf8');
+    const rule = new RegExp(
+      String.raw`pricing-renderer\[data-pr-root\] \.pr-error \.pr-diagnostics\s*\{([^}]*)\}`,
+    ).exec(css);
+    expect(rule).not.toBeNull();
+    const body = squash(rule?.[1] ?? '');
+    expect(body).toContain('padding: 0;');
+    expect(body).toContain('border: 0;');
+    expect(body).toContain('background: none;');
   });
 });
 
