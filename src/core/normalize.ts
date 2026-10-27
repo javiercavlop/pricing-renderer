@@ -24,6 +24,7 @@ import {
   humanizeIdentifier,
   isRecord,
   normalizeRenderMode,
+  unwrapValue,
 } from './utils.js';
 
 function diagnostic(
@@ -57,12 +58,15 @@ function normalizeSyntaxVersion(
     );
     return undefined;
   }
+  // [impl->req~version-major-upgrade-hint~1]
   if (match[1] !== '3') {
     diagnostics.push(
       diagnostic(
         'PR_VERSION_UNSUPPORTED_MAJOR',
         'error',
-        `Pricing2Yaml major version ${match[1]} is not supported.`,
+        Number(match[1]) < 3
+          ? `Pricing2Yaml major version ${match[1]} is not supported. Upgrade the pricing to 3.x on the server, for example with retrievePricingFromText from pricing4ts/server.`
+          : `Pricing2Yaml major version ${match[1]} is not supported yet.`,
         'syntaxVersion',
       ),
     );
@@ -356,6 +360,102 @@ function validateAddOnReferences(
   addOns.forEach((addOn) => visit(addOn.id, []));
 }
 
+// [impl->req~value-type-mismatch-diagnostic~1]
+const DIGIT_SEPARATOR_TEXT = /^-?\d{1,3}(_\d{3})+(\.\d+)?$/;
+
+function checkNumericValue(
+  value: unknown,
+  kind: 'feature' | 'usage limit',
+  id: string,
+  path: string,
+  diagnostics: PricingDiagnostic[],
+): void {
+  const unwrapped = unwrapValue(value);
+  if (typeof unwrapped !== 'string') {
+    return;
+  }
+  const hint = DIGIT_SEPARATOR_TEXT.test(unwrapped.trim())
+    ? ' It looks like a number with "_" digit separators, which YAML 1.1 reads as a number but YAML 1.2 reads as text. Write a plain number such as 10000, or .inf for unlimited.'
+    : ' Write a plain number, or .inf for unlimited.';
+  diagnostics.push(
+    diagnostic(
+      'PR_VALUE_TYPE_MISMATCH',
+      'warning',
+      `Value "${unwrapped}" of the NUMERIC ${kind} "${id}" is text, not a number.${hint}`,
+      path,
+    ),
+  );
+}
+
+function validateNumericValues(
+  features: NormalizedFeature[],
+  usageLimits: NormalizedUsageLimit[],
+  plans: NormalizedPlan[],
+  addOns: NormalizedAddOn[],
+  diagnostics: PricingDiagnostic[],
+): void {
+  const isNumeric = (valueType: string | undefined): boolean =>
+    valueType?.toUpperCase() === 'NUMERIC';
+  const numericFeatures = new Set(
+    features.filter((item) => isNumeric(item.valueType)).map((item) => item.id),
+  );
+  const numericLimits = new Set(
+    usageLimits.filter((item) => isNumeric(item.valueType)).map((item) => item.id),
+  );
+
+  for (const feature of features) {
+    if (numericFeatures.has(feature.id) && 'defaultValue' in feature) {
+      checkNumericValue(
+        feature.defaultValue,
+        'feature',
+        feature.id,
+        `features.${feature.id}.defaultValue`,
+        diagnostics,
+      );
+    }
+  }
+  for (const limit of usageLimits) {
+    if (numericLimits.has(limit.id) && 'defaultValue' in limit) {
+      checkNumericValue(
+        limit.defaultValue,
+        'usage limit',
+        limit.id,
+        `usageLimits.${limit.id}.defaultValue`,
+        diagnostics,
+      );
+    }
+  }
+
+  const checkMap = (
+    owner: string,
+    map: string,
+    values: Record<string, unknown>,
+    kind: 'feature' | 'usage limit',
+    numeric: Set<string>,
+  ): void => {
+    for (const [id, value] of Object.entries(values)) {
+      if (numeric.has(id)) {
+        checkNumericValue(value, kind, id, `${owner}.${map}.${id}`, diagnostics);
+      }
+    }
+  };
+  for (const plan of plans) {
+    checkMap(`plans.${plan.id}`, 'features', plan.features, 'feature', numericFeatures);
+    checkMap(`plans.${plan.id}`, 'usageLimits', plan.usageLimits, 'usage limit', numericLimits);
+  }
+  for (const addOn of addOns) {
+    checkMap(`addOns.${addOn.id}`, 'features', addOn.features, 'feature', numericFeatures);
+    checkMap(`addOns.${addOn.id}`, 'usageLimits', addOn.usageLimits, 'usage limit', numericLimits);
+    checkMap(
+      `addOns.${addOn.id}`,
+      'usageLimitsExtensions',
+      addOn.usageLimitsExtensions,
+      'usage limit',
+      numericLimits,
+    );
+  }
+}
+
 function normalizeTags(input: unknown): string[] {
   if (Array.isArray(input)) {
     return input.filter((tag): tag is string => typeof tag === 'string');
@@ -436,6 +536,10 @@ export function normalizePricing(
     );
   }
 
+  const features = normalizeFeatures(pricing.features);
+  const usageLimits = normalizeUsageLimits(pricing.usageLimits);
+  validateNumericValues(features, usageLimits, plans, addOns, diagnostics);
+
   const normalized: NormalizedPricing = {
     metadata: {
       syntaxVersion,
@@ -448,8 +552,8 @@ export function normalizePricing(
     },
     billing: normalizeBilling(pricing.billing, diagnostics),
     variables: normalizeValueMap(pricing.variables),
-    features: normalizeFeatures(pricing.features),
-    usageLimits: normalizeUsageLimits(pricing.usageLimits),
+    features,
+    usageLimits,
     plans,
     addOns,
     custom: asRecord(pricing.custom),

@@ -91,6 +91,17 @@ Important version codes:
 - `PR_VERSION_ADAPTED`
 - `PR_VERSION_ADAPTER_FAILED`
 
+`PR_VERSION_UNSUPPORTED_MAJOR` is an error. For a major below 3, upgrade the
+pricing to 3.x on the server, for example with `retrievePricingFromText` from
+`pricing4ts/server` (pricing4ts 0.10.3 or later; it is not a dependency of this
+package). A major above 3 is not supported yet.
+
+`PR_VALUE_TYPE_MISMATCH` is a warning for a `NUMERIC` feature or usage limit
+whose value is text (`defaultValue`, plan and add-on overrides, the
+`{ value: ... }` form, and add-on `usageLimitsExtensions`). The value is never
+converted. Text such as `10_000` is a number in YAML 1.1 and text in YAML 1.2;
+write a plain number or `.inf`.
+
 Parser and remote-loader codes are documented through tests and the generated
 declarations.
 

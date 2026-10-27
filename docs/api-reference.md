@@ -392,7 +392,10 @@ loadPricingFromUrl(
 - `headers`: a `HeadersInit` value or async token-producing function.
 - `credentials`: defaults to `"omit"`.
 - `timeoutMs`: defaults to 15 seconds.
-- `maxBytes`: defaults to 2 MiB.
+- `maxBytes`: defaults to 2 MiB. It also limits a string returned by a custom
+  `loadPricing`, measured in UTF-8 bytes (exactly `maxBytes` is accepted); a
+  larger string fails with `PR_SOURCE_TOO_LARGE`. An object returned by
+  `loadPricing` is not measured.
 - `fetch`: an injected fetch implementation.
 - `loadPricing`: a custom loader for OAuth, signed URLs, proxies, or SDKs.
 - `signal`: an external cancellation signal.

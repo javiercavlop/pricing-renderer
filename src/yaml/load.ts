@@ -69,11 +69,19 @@ export async function loadPricingFromUrl(
           ...(headers ? { headers } : {}),
         },
       });
-      return typeof loaded === 'string'
-        ? parsePricingYaml(loaded, {
-            ...(options.normalize ? { normalize: options.normalize } : {}),
-          })
-        : normalizePricing(loaded as IPricingLike, options.normalize);
+      if (typeof loaded !== 'string') {
+        return normalizePricing(loaded as IPricingLike, options.normalize);
+      }
+      // [impl->req~custom-loader-max-bytes~1]
+      if (new TextEncoder().encode(loaded).byteLength > maxBytes) {
+        return loadError(
+          'PR_SOURCE_TOO_LARGE',
+          'Pricing source exceeds the configured size limit.',
+        );
+      }
+      return parsePricingYaml(loaded, {
+        ...(options.normalize ? { normalize: options.normalize } : {}),
+      });
     }
 
     const fetchImplementation = options.fetch ?? globalThis.fetch;
