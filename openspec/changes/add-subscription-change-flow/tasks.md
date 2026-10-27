@@ -262,13 +262,13 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
   - Status: implemented. `typecheck`, `lint` and `unit` pass in the lab; `browser` (the focus and
     rendering scenarios) passed in CI on the pushed head.
 - [x] F4 Review styles.
-  - Files: `src/styles/base.css`: review layout, dark theme, forced colors and reduced motion.
-    This is after C5.
+  - Files: `src/styles/base.css`: review layout, forced colors and reduced motion;
+    `src/styles/theme.css`: review tokens and dark theme. This is after C5.
   - Checks: `browser`, `lint`. Depends on F3.
   - Status: implemented after the approved mock. `lint` passes in the lab; `browser` (the layout,
     the container widths, the themes and the forced colors) passed in CI on the pushed head.
-  - Note: the review carries its own copy of the theme tokens, because `theme.css` declares them
-    for `pricing-renderer` only.
+  - Note: the review tokens are defined in `src/styles/theme.css`, which declares them for both
+    `pricing-renderer` and `pricing-change-review`; `base.css` holds the structural rules only.
 - [x] F5 Review documentation.
   - Files:
     - `docs/change-subscription-flow.md`: the review section;

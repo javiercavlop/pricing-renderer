@@ -133,10 +133,17 @@ Internal `pr-*` class names and markup nesting are not public contracts.
 
 ## The review element
 
-`<pricing-change-review>` is its own element, so it carries its own copy of the
-tokens: the same names and default values as `theme.css`, set on
-`pricing-change-review` by `base.css`. Override them on the element or on an
-ancestor with an unlayered rule:
+`<pricing-change-review>` is its own element, not inside `pricing-renderer`, so it
+needs the tokens on itself. `theme.css` (part of `styles.css`) defines the same
+`--pr-*` tokens, with the same default values, for both `pricing-renderer` and
+`pricing-change-review`; `base.css` has structural rules only and sets no token
+values. With the custom-theme strategy (`base.css` plus your own stylesheet), the
+review has no tokens until you define them: declare the tokens listed below on
+`pricing-change-review` (or an ancestor), as well as on `pricing-renderer`.
+Without them the review loses its colors, sizes and spacing.
+
+With `styles.css`, override the defaults on the element or on an ancestor with an
+unlayered rule:
 
 ```css
 pricing-change-review {
