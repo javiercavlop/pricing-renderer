@@ -1,4 +1,4 @@
-Goal: Phase 0 hygiene (13 items + X1), one PR (fix/phase0-hygiene). All implementation tasks integrated on change/phase0-hygiene (head 1c957e1): spec, P0-A..H (all green, red_before proven for A,B,D,E,F; docs P0-G with phase0-docs test; CSS flatten P0-H). Browser specs (A, D, F) not run in lab; CI runs them.
-Next: push branch, open PR into develop, check CI, run review panel on pushed head (reviewer, test-reviewer, security-auditor, ui-qa; optional perf for same-input compare), fix findings, set_review_package, lead_ready.
-Decisions: Q1-Q5 per plan; instanceId lives in renderers.ts; errorMessageKey strips PR_ prefix to satisfy docs-examples test; CSS nested-box rule scoped to new element, no CRP.
-Risks: unrun browser specs; in-place mutation + shallow copy no longer reloads (documented, reload()).
+Goal: Phase 0 hygiene, PR 64 (fix/phase0-hygiene -> develop). Local head after integrating 79f661df (redo of 9de99662: radio names, aria-controls collapsed, test minors) and bd9b97ca (unlimited strings, .prettierignore). All 13 items + X1 implemented; round 1 fixes applied.
+Panel round 1: reviewer changes-requested (2 major, fixed: R1-REV-001 unlimited strings, R1-REV-002 prettier), test-reviewer/security/ui-qa approve.
+Deferred follow-ups (state in PR): R1-REV-005/UIQ-004 sanitizer non-injective ids; R1-REV-006/UIQ-003 aria-describedby variable help (pre-existing); UIQ-001 loading text announced twice; UIQ-005 empty loading-label.
+Next: push, wait full CI (quality 22/24, chromium/firefox/webkit browser shards incl. changed radio selectors), panel round 2 (reviewer, test-reviewer, security-auditor) on pushed head, set_review_package, lead_ready. Round 2 failures: escalate.
