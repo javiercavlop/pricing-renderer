@@ -224,7 +224,7 @@ finish at once. While it is set:
 ```ts
 renderer.addEventListener('pricing-action', (event) => {
   event.preventDefault();
-  renderer.pendingActionId = (event as PricingActionEvent).detail.actionId;
+  renderer.pendingActionId = event.detail.actionId;
   void startChange().finally(() => {
     renderer.pendingActionId = undefined;
   });

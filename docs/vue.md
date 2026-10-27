@@ -159,7 +159,17 @@ function onAction(event: PricingActionEvent) {
 The types are exported from `pricing-renderer/element`, together with the
 `PricingRendererElement` class. Vue's template type checker may type `@` handlers
 as `Event`; annotate the handler parameter as above, or cast inside the
-handler, when your tooling does so.
+handler, when your tooling does so. Imperative listeners need no cast:
+`pricing-renderer/define` and `pricing-renderer/element` declare the four events
+in the global `HTMLElementEventMap`, so
+`element.addEventListener('pricing-action', (event) => event.detail.actionId)`
+is typed.
+
+The element compares `pricing`, `request` and `normalizeOptions` by content, so an
+inline object in the template, such as `:request.prop="{ credentials: 'include' }"`,
+does not reload the element on each render. A new `loadPricing` function does, and
+so does a new `headers` function inside `request`: define them once, outside the
+template. Call `reload()` on the element to force a fetch.
 
 ## Load the current contract
 

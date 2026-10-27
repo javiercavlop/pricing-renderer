@@ -41,6 +41,14 @@ import type {
 } from 'pricing-renderer/element';
 ```
 
+The four `<pricing-renderer>` events are also declared in the global
+`HTMLElementEventMap`, by `pricing-renderer/define`, `pricing-renderer/element` and
+`pricing-renderer/react`. `addEventListener` called with one of these names
+therefore types `event` as the matching event type above, and the examples below
+need no cast. The types are needed only for a handler that you declare apart from
+the call, such as a Vue method. The map has no entry for the two review events,
+so cast those (see [Review events](#review-events)).
+
 ## Review events
 
 `pricing-change-confirm` and `pricing-change-back` come from
@@ -173,7 +181,7 @@ const renderer = document.querySelector('pricing-renderer')!;
 
 renderer.addEventListener('pricing-action', (event) => {
   event.preventDefault();
-  const { planId, selection } = (event as PricingActionEvent).detail;
+  const { planId, selection } = event.detail;
 
   const params = new URLSearchParams({
     plan: planId ?? selection.planId ?? '',
@@ -187,8 +195,9 @@ renderer.addEventListener('pricing-action', (event) => {
 ```
 
 Without `preventDefault()` the element does nothing else: the link is followed,
-or nothing happens for a button. `pricingPath` is configuration for the host
-app and has no effect on this event.
+or nothing happens for a button. `pricingPath` is deprecated metadata: it is kept
+for compatibility, has no runtime effect and has no effect on this event or on
+navigation. The host router owns the route.
 
 ### Read the price
 
@@ -197,7 +206,7 @@ host does not need to resolve the pricing again:
 
 ```ts
 renderer.addEventListener('pricing-action', (event) => {
-  const { resolved, planId } = (event as PricingActionEvent).detail;
+  const { resolved, planId } = event.detail;
 
   if (resolved.requiresQuote) {
     // at least one selected price has no amount: send the customer to sales
@@ -277,7 +286,7 @@ const loadFailures = new Set([
 ]);
 
 renderer.addEventListener('pricing-diagnostic', (event) => {
-  for (const diagnostic of (event as PricingDiagnosticEvent).detail.diagnostics) {
+  for (const diagnostic of event.detail.diagnostics) {
     if (loadFailures.has(diagnostic.code)) {
       showPricingUnavailable(diagnostic); // no pricing to show
     } else if (diagnostic.severity === 'error') {
@@ -294,6 +303,14 @@ the earlier pricing, so a load failure code does not always mean an empty page.
 The element also lists the diagnostics of the load that are not `info` in its own
 warnings disclosure; the diagnostics of `applySelection` and of `currentSelection`
 are not added to it.
+
+When the first load fails, the element shows an error state with a human sentence
+chosen by the category of the first error code (source, format, version or
+generic), not the codes. The codes stay in the `pricing-diagnostic` event of the
+load, and each diagnostic (code, message and path) is also listed in a closed
+`<details class="pr-diagnostics" data-pr-part="diagnostics">` inside the error
+state. See [Error state](./api-reference.md#error-state) for the categories and
+[Internationalization](./i18n.md#error-and-loading-keys) for the keys.
 
 ## Diagnostic code reference
 

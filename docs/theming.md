@@ -89,6 +89,9 @@ Stable values:
 `breakdown-toggle`, `metadata`, `diagnostics`, `current-badge`,
 `current-add-on-badge`, `summary-action`, and `cta-pending`.
 
+`diagnostics` is the closed `details` element that lists diagnostics: the warnings
+above the pricing and, in the error state, the codes behind the error sentence.
+
 `comparison-empty` is the "No matching items" line of the comparison,
 `addon-toolbar` is the add-on search toolbar, and `addon-empty` is the add-on
 empty line.
