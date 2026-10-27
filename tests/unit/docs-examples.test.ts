@@ -48,13 +48,16 @@ const sourceFiles = ['src/core', 'src/yaml', 'src/element'].flatMap((dir) =>
 const sourceText = (files: string[]): string =>
   files.map((file) => readFileSync(file, 'utf8')).join('\n');
 
-// The events of <pricing-renderer>. <pricing-change-review> (src/element/change-review-*.ts) has
-// its own events, which are documented with its UI (add-subscription-change-flow, phase F5).
+// Every event of src/element, including the two of <pricing-change-review>
+// (src/element/change-review-*.ts). docs/vue.md and the README events list describe
+// <pricing-renderer>, so they are checked against its events only.
 const isRenderer = (file: string): boolean => !basename(file).startsWith('change-review-');
-const rendererFiles = listFiles('src/element', ['.ts']).filter(isRenderer);
 const eventPattern = /new CustomEvent(?:<[^>(]*>)?\(\s*'([a-z-]+)'/g;
-const eventMatches = sourceText(rendererFiles).matchAll(eventPattern);
-const eventNames = new Set([...eventMatches].map((m) => m[1]!));
+const eventNamesOf = (files: string[]): Set<string> =>
+  new Set([...sourceText(files).matchAll(eventPattern)].map((m) => m[1]!));
+const elementFiles = listFiles('src/element', ['.ts']);
+const eventNames = eventNamesOf(elementFiles);
+const rendererEventNames = eventNamesOf(elementFiles.filter(isRenderer));
 
 const diagnosticCodes = new Set(
   [...sourceText(sourceFiles).matchAll(/'(PR_[A-Z_]+)'/g)].map((m) => m[1]!),
@@ -75,8 +78,18 @@ const docText = (rel: string): string => (existsSync(docPath(rel)) ? read(rel) :
 
 describe('documentation stays in sync with the code', () => {
   it('derives the real events and diagnostic codes from the source', () => {
-    expect([...eventNames].sort()).toEqual(
+    expect([...rendererEventNames].sort()).toEqual(
       ['pricing-action', 'pricing-diagnostic', 'pricing-ready', 'pricing-selection-change'].sort(),
+    );
+    expect([...eventNames].sort()).toEqual(
+      [
+        'pricing-action',
+        'pricing-change-back',
+        'pricing-change-confirm',
+        'pricing-diagnostic',
+        'pricing-ready',
+        'pricing-selection-change',
+      ].sort(),
     );
     expect(diagnosticCodes.size).toBeGreaterThanOrEqual(30);
     expect([...anyCodeTokens].sort()).toEqual([...diagnosticCodes].sort());
@@ -129,14 +142,14 @@ describe('documentation stays in sync with the code', () => {
 
     it('listens to every event name with a Vue listener', () => {
       const text = docText('docs/vue.md');
-      for (const name of eventNames) expect(text, name).toContain(`@${name}`);
+      for (const name of rendererEventNames) expect(text, name).toContain(`@${name}`);
     });
   });
 
   describe('README.md', () => {
     it('lists every event name in the public events list', () => {
       const text = docText('README.md');
-      for (const name of eventNames) expect(text, name).toContain(`- \`${name}\``);
+      for (const name of rendererEventNames) expect(text, name).toContain(`- \`${name}\``);
     });
   });
 

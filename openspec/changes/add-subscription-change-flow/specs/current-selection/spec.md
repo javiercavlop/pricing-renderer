@@ -12,9 +12,9 @@ Needs: impl, utest
 - **THEN** it deeply equals `{ attribute: false }`
 
 #### Scenario: Type through the compiler API
-- **GIVEN** a snippet that assigns `{ planId: 'growth' }` to `element.currentSelection` and one that assigns `42`
-- **WHEN** a unit test type-checks both snippets with the TypeScript compiler API
-- **THEN** the first reports no error and the second reports error TS2322
+- **GIVEN** a snippet that assigns `{ planId: 'growth' }` to `element.currentSelection`, one that assigns `42` and one that assigns `{ planId: 42 }`
+- **WHEN** a unit test type-checks the snippets with the TypeScript compiler API
+- **THEN** the first reports no error, the second reports error TS2559 (the type is a weak type, and a number has no property in common with it) and the third reports error TS2322
 
 ### Requirement: Current plan is marked
 `req~current-selection-plan-mark~1`

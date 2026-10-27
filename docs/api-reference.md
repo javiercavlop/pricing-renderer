@@ -791,6 +791,29 @@ The element renders in the light DOM and takes a
 `pending` is reflected. Notices and `error` are shown as text, never as HTML.
 Without a `comparison` the element renders nothing.
 
+What the element renders and how it behaves (the screen itself is described in
+[The review screen](./change-subscription-flow.md#the-review-screen)):
+
+- A `section` with `data-pr-part="change-review"`, labelled by an `h2`
+  (`review-title`, `tabindex="-1"`), then one section per kind of change, the
+  `notices`, the `error` and the Confirm and Back buttons. Sections without content
+  are left out. When `comparison.relation` is `'current'` the sections are replaced
+  by one "no changes" note and Confirm is `aria-disabled`.
+- The text comes from the `pricing.review*` keys of the catalog for `locale`;
+  `messages` overrides keys (see [Internationalization](./i18n.md)). An empty or
+  removed `locale` falls back to `en-US`. `confirmLabel` replaces only the text of
+  Confirm.
+- Names, notices, `error` and values are bound as text. The element never sets or
+  parses HTML from data.
+- A new `comparison` moves focus to the heading. A new non-empty `error` moves
+  focus to Confirm, unless `comparison` changed in the same update.
+- While `pending` is true, Confirm has `aria-disabled="true"` and `aria-busy="true"`
+  (it keeps focus) and a `role="status"` region reads "Applying your change…". An
+  `error` is shown in a `role="alert"` region.
+- The element is styled by `base.css`; its tokens and parts are in
+  [Theming](./theming.md#the-review-element). Importing a stylesheet is up to the
+  host, as for `<pricing-renderer>`.
+
 | Event                    | Detail                                | Cancelable |
 | ------------------------ | ------------------------------------- | ---------- |
 | `pricing-change-confirm` | `{ comparison: SelectionComparison }` | Yes        |

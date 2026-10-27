@@ -32,6 +32,88 @@ Pick one. All three start from the same comparison.
 
 Routes 2 and 3 differ only in who renders the comparison.
 
+## The review screen
+
+`<pricing-change-review>` shows one `SelectionComparison` to the customer. The
+properties, events and guards are in the
+[API reference](./api-reference.md#pricing-change-review-element).
+
+### States
+
+- **No comparison.** The element renders nothing.
+- **A comparison.** A heading ("Review your change"), one section per kind of
+  change, the notices, the error and the Confirm and Back buttons.
+- **Nothing to confirm** (`comparison.relation` is `'current'`). The sections are
+  replaced by one note, "Your selection is the same as your current subscription."
+  The notices, the error and the buttons stay. Confirm is `aria-disabled`.
+- **Pending.** Confirm is `aria-disabled` and `aria-busy`, and a status line reads
+  "Applying your change…".
+- **Error.** When `error` is a non-empty string, an alert with the title "The change
+  could not be applied." and your text is shown above the buttons.
+
+### Sections
+
+A section is left out when it has nothing to show. They appear in this order:
+
+1. **Plan.** The plan name, or "before → after" when the plan changed, and a badge
+   with the relation: "Upgrade", "Downgrade", "Change" or "No changes". When the
+   pricing version changed, a banner reads "Pricing version before → after".
+2. **Price.** "Current price" and "New price" as the subtotal in its currency and
+   billing period, and "Difference" with its sign (for example `+€2` or `-€5`) when
+   the comparison has one. When it has none, a note says why: part of the price
+   requires a quote, or the currencies differ. A price that is only a quote reads
+   "Contact sales"; a partial one adds "requires a quote". A change of billing
+   period gets a note.
+3. **Add-ons.** One row per add-on that is added ("Added"), removed by the customer
+   or removed by reconciliation ("Removed", with the reason: not available with the
+   new plan, requires an add-on that is removed, or not offered in the new
+   pricing), or whose quantity changed ("Quantity before → after"). A quantity above
+   1 is shown as "× n".
+4. **Features.** One row per feature that is gained, lost or changed, with a badge
+   and, for a change, "before → after". Values read "Included", "Not included" or
+   "Unlimited", a number formatted for the locale with its unit, or the text; an
+   array or an object is written as JSON.
+5. **Usage limits.** One row per changed limit with "before → after", the unit and
+   the signed difference when it is a number. When the new limit is below the
+   customer's current usage, the row adds a note: "Your current usage (150 GB) is
+   above the new limit." A limit that did not change is not listed here, even when
+   the usage is above it.
+6. **Unchanged.** One line with the number of add-ons, features and usage limits
+   that stay the same. It is left out when all three are 0.
+
+After the sections come the `notices` of the host, each as a line under "Before
+you confirm", then the error and the buttons.
+
+### Focus
+
+- When `comparison` is set or replaced, focus moves to the heading, so a screen
+  reader starts at the review.
+- When `error` becomes a non-empty text, focus moves to Confirm, so the customer
+  can retry once the host has set `pending` back to false. When `comparison` and
+  `error` change in the same update, the heading wins.
+- Confirm is `aria-disabled`, not `disabled`, so it keeps focus while the work is
+  pending.
+
+### Localization
+
+All text comes from the `pricing.review*` keys of the catalog for the element's
+`locale` (`en-US` and `es-ES` are built in), with the `messages` property on top.
+Numbers, currency and units use `Intl` for that locale, and `_` in a locale such as
+`es_ES` is read as `-`. `confirmLabel` replaces only the text of Confirm. The keys
+are listed in [Internationalization](./i18n.md#review-screen-keys).
+
+### Text only
+
+Plan, add-on and feature names, labels, values, `notices` and `error` are rendered
+as text. The element never sets or parses HTML from them, so a name that contains
+markup is shown as written. If you need links or formatting in a notice, build your
+own screen (route 3).
+
+### Look
+
+Layout, tokens, dark theme, forced colors and reduced motion are in
+[Theming](./theming.md#the-review-element).
+
 ## The pricing version the editor shows
 
 By default the editor shows the pricing version of the customer's contract. The

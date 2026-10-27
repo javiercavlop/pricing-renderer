@@ -1,16 +1,20 @@
 # Events
 
-`<pricing-renderer>` reports what happens through four DOM events. All four are
-`CustomEvent`s that bubble and are composed, so a listener on an ancestor, on
-`document` or outside a shadow root receives them. Only `pricing-action` is
-`cancelable`. The payload is always in `event.detail`.
+`<pricing-renderer>` reports what happens through four DOM events, and
+`<pricing-change-review>` adds two (see [Review events](#review-events)). All six
+are `CustomEvent`s that bubble and are composed, so a listener on an ancestor, on
+`document` or outside a shadow root receives them. `pricing-action`,
+`pricing-change-confirm` and `pricing-change-back` are `cancelable`; the others are
+not. The payload is always in `event.detail`.
 
-| Event                      | Emitted when                                         | Cancelable | `detail`                                                       |
-| -------------------------- | ---------------------------------------------------- | ---------- | -------------------------------------------------------------- |
-| `pricing-ready`            | A load that completes with a pricing value           | No         | `{ pricing, diagnostics, selection, resolved }`                |
-| `pricing-selection-change` | The user changed plan, billing, variables or add-ons | No         | `{ selection, resolved }`                                      |
-| `pricing-action`           | The user clicked a plan CTA or the summary action    | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
-| `pricing-diagnostic`       | A load or applySelection returned diagnostics        | No         | `{ diagnostics }`                                              |
+| Event                      | Emitted when                                            | Cancelable | `detail`                                                       |
+| -------------------------- | ------------------------------------------------------- | ---------- | -------------------------------------------------------------- |
+| `pricing-ready`            | A load that completes with a pricing value              | No         | `{ pricing, diagnostics, selection, resolved }`                |
+| `pricing-selection-change` | The user changed plan, billing, variables or add-ons    | No         | `{ selection, resolved }`                                      |
+| `pricing-action`           | The user clicked a plan CTA or the summary action       | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
+| `pricing-diagnostic`       | A load or applySelection returned diagnostics           | No         | `{ diagnostics }`                                              |
+| `pricing-change-confirm`   | The user activates Confirm in `<pricing-change-review>` | Yes        | `{ comparison: SelectionComparison }`                          |
+| `pricing-change-back`      | The user activates Back in `<pricing-change-review>`    | Yes        | `{ comparison: SelectionComparison }`                          |
 
 Details that the table leaves out:
 
@@ -39,14 +43,10 @@ import type {
 
 ## Review events
 
-`<pricing-change-review>` has two events of its own. Both are `CustomEvent`s that
-bubble, are composed and are `cancelable`. Properties, guards and default actions
-are in the [API reference](./api-reference.md#pricing-change-review-element).
-
-| Emitted by                | Event                    | Emitted when               | `detail`                              |
-| ------------------------- | ------------------------ | -------------------------- | ------------------------------------- |
-| `<pricing-change-review>` | `pricing-change-confirm` | The user activates Confirm | `{ comparison: SelectionComparison }` |
-| `<pricing-change-review>` | `pricing-change-back`    | The user activates Back    | `{ comparison: SelectionComparison }` |
+`pricing-change-confirm` and `pricing-change-back` come from
+`<pricing-change-review>`, not from `<pricing-renderer>`. Properties, guards and
+default actions are in the
+[API reference](./api-reference.md#pricing-change-review-element).
 
 - `detail.comparison` is a detached deep copy of the `comparison` property.
 - Confirm emits nothing while `pending` is true or the relation is `'current'`.

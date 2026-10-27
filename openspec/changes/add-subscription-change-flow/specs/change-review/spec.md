@@ -270,7 +270,7 @@ Needs: impl, utest
 
 ### Requirement: Limits section [pending CRP]
 `req~review-ui-limits~1`
-The element SHALL render in `review-limits` one item per changed usage limit, with its name and the before and after values, and the text of `pricing.reviewLimitExceeded` for each limit in `usageLimits.exceeded`.
+The element SHALL render in `review-limits` one item per changed usage limit, with its name and the before and after values, and the text of `pricing.reviewLimitExceeded` for each changed limit whose id is in `usageLimits.exceeded`. An unchanged limit that is already above the current usage is not listed in `review-limits`, because the comparison carries only its id.
 
 Needs: impl, utest
 

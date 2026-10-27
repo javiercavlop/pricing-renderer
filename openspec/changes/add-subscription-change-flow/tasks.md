@@ -154,22 +154,22 @@ Implementation:
 
 ## Phase D: documentation for phases A to C (after A4, B1 and C5)
 
-- [ ] D1a Host-flow guide.
+- [x] D1a Host-flow guide.
   - Files: the new `docs/change-subscription-flow.md`: the three host routes, D9 and the error and
     race guidance of design.md.
   - Checks: `unit` (`tests/unit/docs-examples.test.ts`), `format`.
-- [ ] D1b API reference.
+- [x] D1b API reference.
   - Files: `docs/api-reference.md`: `compareSelections`, its types and diagnostics, the element
     properties, `PricingCta.labels`, the event fields and `pricing-renderer/space`.
   - Checks: `unit`, `format`.
-- [ ] D1c Configuration and preload guides.
+- [x] D1c Configuration and preload guides.
   - Files:
     - `docs/configuration.md`: `currentSelection` versus `selection` and `applySelection`, and
       `pendingActionId`;
     - `docs/preload-current-subscription.md`: import from `pricing-renderer/space` and drop
       "copy the file".
   - Checks: `unit`, `format`.
-- [ ] D1d i18n and theming references, and the changeset.
+- [x] D1d i18n and theming references, and the changeset.
   - Files:
     - `docs/i18n.md`: the element keys;
     - `docs/theming.md`: the part hooks, `data-current` and `data-relation`;
@@ -250,10 +250,13 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
   - Files: the new `src/element/change-review-renderers.ts`: sections, value formatting, the
     signed difference, status and alert regions.
   - Checks: `typecheck`, `lint`, `unit`. Depends on F1.
-  - Open gap: `req~review-ui-limits~1` names every id in `usageLimits.exceeded`, but an unchanged
-    limit that is already above the current usage is not listed, because the comparison carries
-    only its id (no name, unit or usage value) and `{usage}` cannot be filled. Closing it needs a
-    decision: carry that data in `compareSelections`, or limit the requirement to changed limits.
+  - Gap, closed in F5: `req~review-ui-limits~1` named every id in `usageLimits.exceeded`, but an
+    unchanged limit that is already above the current usage is not listed, because the comparison
+    carries only its id (no name, unit or usage value) and `{usage}` cannot be filled. The
+    requirement now limits the exceeded text to changed limits. Its revision stays `~1`, because
+    `[impl->...~1]` and `[utest->...~1]` tags in `src/` and `tests/` carry it and are outside the
+    scope of the documentation task; bump it together with those tags if the owner wants the
+    revision to follow the wording.
 - [ ] F3 Wiring and focus.
   - Files: `src/element/change-review-element.ts`, which renders through
     `change-review-renderers.ts` and moves focus on `comparison` and `error`. This is after E1.
@@ -270,7 +273,7 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     confirmed in a real browser. Unticked until the `browser` check passes in CI.
   - Note: the review carries its own copy of the theme tokens, because `theme.css` declares them
     for `pricing-renderer` only.
-- [ ] F5 Review documentation.
+- [x] F5 Review documentation.
   - Files:
     - `docs/change-subscription-flow.md`: the review section;
     - `docs/api-reference.md`, `docs/i18n.md` and `docs/theming.md`: the element, the keys and
@@ -278,6 +281,12 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     - `.changeset/change-review-element.md`.
   - Order: after D1a, D1b and D1d. If the diff exceeds 300 lines, split it per document.
   - Checks: `unit`, `format`.
+  - Note: `tests/unit/docs-examples.test.ts` scans the events of every file of `src/element`
+    again, so `docs/events.md` has `pricing-change-confirm` and `pricing-change-back` in its main
+    table. `docs/vue.md` and the README events list describe `<pricing-renderer>`, so the test
+    checks them against its four events only. The review sections were written from
+    `src/element/change-review-*.ts`, the `pricing.review*` keys of `src/core/i18n.ts` and the
+    review block of `src/styles/base.css`.
 
 ## Traceability checklist
 

@@ -131,6 +131,82 @@ badge names the state, so it is not communicated by color alone.
 
 Internal `pr-*` class names and markup nesting are not public contracts.
 
+## The review element
+
+`<pricing-change-review>` is its own element, so it carries its own copy of the
+tokens: the same names and default values as `theme.css`, set on
+`pricing-change-review` by `base.css`. Override them on the element or on an
+ancestor with an unlayered rule:
+
+```css
+pricing-change-review {
+  --pr-color-accent: #0066ff;
+  --pr-color-on-accent: #fff;
+  --pr-radius-lg: 1rem;
+}
+```
+
+It reads these tokens: `--pr-color-text`, `--pr-color-muted`,
+`--pr-color-surface`, `--pr-color-surface-raised`, `--pr-color-surface-subtle`,
+`--pr-color-border`, `--pr-color-border-strong`, `--pr-color-accent`,
+`--pr-color-on-accent`, `--pr-color-link`, `--pr-color-focus`,
+`--pr-color-success`, `--pr-color-warning`, `--pr-color-warning-surface`,
+`--pr-font-size-xs` to `--pr-font-size-2xl`, `--pr-space-1` to `--pr-space-5`,
+`--pr-radius-sm`, `--pr-radius-md`, `--pr-radius-lg`, `--pr-shadow-sm` and
+`--pr-motion-fast`. Tokens that only the pricing grid uses
+(`--pr-shell-padding`, `--pr-space-section`, `--pr-color-overlay`) have no effect
+here.
+
+Color modes follow the renderer: `theme="light"` (default), `theme="dark"`,
+`theme="auto"` (the system color scheme), and an ancestor `[data-theme="dark"]`.
+
+Stable `data-pr-part` values:
+
+| Part                | Element                                                             |
+| ------------------- | ------------------------------------------------------------------- |
+| `change-review`     | The root section of the review                                      |
+| `review-title`      | The `h2` that receives focus when a new comparison arrives          |
+| `review-plan`       | The plan section                                                    |
+| `review-price`      | The price section                                                   |
+| `review-add-ons`    | The add-ons section                                                 |
+| `review-features`   | The features section                                                |
+| `review-limits`     | The usage limits section                                            |
+| `review-unchanged`  | The summary of what stays the same                                  |
+| `review-notices`    | The section with the host's `notices`                               |
+| `review-no-changes` | The note shown when the relation is `current`                       |
+| `review-error`      | The alert region with the host's `error`                            |
+| `change-row`        | One row: a plan line, an add-on, a feature or a limit               |
+| `change-badge`      | A badge in a row; `[data-tone]` is `success`, `warning` or `accent` |
+| `change-actions`    | The bar with the status text and the buttons                        |
+| `review-status`     | The `role="status"` text, filled while `pending`                    |
+| `review-back`       | The Back button                                                     |
+| `review-confirm`    | The Confirm button                                                  |
+
+States you can style:
+
+- `[data-pr-part='review-confirm'][aria-disabled='true']` is Confirm while `pending`
+  is true or the relation is `current`. It stays focusable, so style it to show
+  that it does nothing.
+- `[data-pr-part='review-confirm'][aria-busy='true']` is Confirm while `pending`.
+- `[data-tone]` on `change-badge`: `success` for an upgrade, an added add-on and a
+  gained feature; `warning` for a downgrade, a removed add-on and a lost feature;
+  `accent` for a plain change and a changed feature. The relation `current` has no
+  tone. Every badge has text, so the state is not communicated by color alone.
+
+```css
+pricing-change-review [data-pr-part='change-badge'][data-tone='warning'] {
+  font-weight: 800;
+}
+```
+
+Layout follows the width of the element (a container query at 600px): the price
+is in columns when wide, and the actions bar sticks to the bottom of the container
+when narrow. Under `forced-colors: active` the root, each section and each button
+keep a visible border of system colors, and a disabled Confirm uses `GrayText`.
+Under `prefers-reduced-motion: reduce` transitions, animations and smooth scrolling
+are turned off. Focus on the buttons and the title shows an outline of
+`--pr-color-focus`.
+
 ## CSS layers and host resets
 
 Unlayered host styles outrank layered library styles. This is useful for a full
