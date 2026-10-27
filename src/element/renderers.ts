@@ -618,8 +618,13 @@ function visibleRows(state: RenderState, group: PricingComparisonGroup): Pricing
   return state.revealedGroups.has(group.id) ? group.rows : group.rows.slice(0, 30);
 }
 
+function isHeaderless(group: PricingComparisonGroup): boolean {
+  return group.kind === 'untagged';
+}
+
+// [impl->req~tag-groups-headerless-expanded~1] a group with no header cannot be toggled
 function isGroupExpanded(state: RenderState, group: PricingComparisonGroup): boolean {
-  return state.expandedGroups.has(group.id) || Boolean(state.search);
+  return isHeaderless(group) || state.expandedGroups.has(group.id) || Boolean(state.search);
 }
 
 // [impl->req~shorter-page-counter~1]
@@ -662,14 +667,19 @@ function renderComparisonToolbar(
         />
         <span>${t(viewModel, 'pricing.onlyDifferences')}</span>
       </label>
-      <div class="pr-toolbar-actions">
-        <button type="button" @click=${() => actions.setAllGroups(true)}>
-          ${t(viewModel, 'pricing.expandAll')}
-        </button>
-        <button type="button" @click=${() => actions.setAllGroups(false)}>
-          ${t(viewModel, 'pricing.collapseAll')}
-        </button>
-      </div>
+      ${
+        /* [impl->req~tag-groups-headerless-toolbar~1] */
+        viewModel.comparisonGroups.every(isHeaderless)
+          ? nothing
+          : html`<div class="pr-toolbar-actions">
+              <button type="button" @click=${() => actions.setAllGroups(true)}>
+                ${t(viewModel, 'pricing.expandAll')}
+              </button>
+              <button type="button" @click=${() => actions.setAllGroups(false)}>
+                ${t(viewModel, 'pricing.collapseAll')}
+              </button>
+            </div>`
+      }
       <span aria-live="polite">${t(viewModel, 'pricing.rowsShownOf', { shown, total })}</span>
     </div>
   `;
@@ -686,16 +696,22 @@ function renderCompactComparison(
       const rows = visibleRows(state, group);
       return html`
         <section class="pr-comparison-group">
-          <h4>
-            <button
-              type="button"
-              aria-expanded=${expanded}
-              aria-controls="pr-group-${group.id}"
-              @click=${() => actions.toggleGroup(group.id)}
-            >
-              <span>${group.name}</span><span aria-hidden="true">${expanded ? '−' : '+'}</span>
-            </button>
-          </h4>
+          ${
+            /* [impl->req~tag-groups-headerless~1] */
+            isHeaderless(group)
+              ? nothing
+              : html`<h4>
+                  <button
+                    type="button"
+                    aria-expanded=${expanded}
+                    aria-controls="pr-group-${group.id}"
+                    @click=${() => actions.toggleGroup(group.id)}
+                  >
+                    <span>${group.name}</span
+                    ><span aria-hidden="true">${expanded ? '−' : '+'}</span>
+                  </button>
+                </h4>`
+          }
           ${
             expanded
               ? html`<div id="pr-group-${group.id}">
@@ -783,18 +799,23 @@ function renderTableComparison(
           const rows = visibleRows(state, group);
           return html`
             <tbody>
-              <tr class="pr-category-row">
-                <th colspan=${viewModel.plans.length + 1}>
-                  <button
-                    type="button"
-                    aria-expanded=${expanded}
-                    @click=${() => actions.toggleGroup(group.id)}
-                  >
-                    <span>${group.name}</span
-                    ><span aria-hidden="true">${expanded ? '−' : '+'}</span>
-                  </button>
-                </th>
-              </tr>
+              ${
+                /* [impl->req~tag-groups-headerless~1] */
+                isHeaderless(group)
+                  ? nothing
+                  : html`<tr class="pr-category-row">
+                      <th colspan=${viewModel.plans.length + 1}>
+                        <button
+                          type="button"
+                          aria-expanded=${expanded}
+                          @click=${() => actions.toggleGroup(group.id)}
+                        >
+                          <span>${group.name}</span
+                          ><span aria-hidden="true">${expanded ? '−' : '+'}</span>
+                        </button>
+                      </th>
+                    </tr>`
+              }
               ${
                 expanded
                   ? rows.map((row) => {

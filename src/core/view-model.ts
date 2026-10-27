@@ -319,6 +319,7 @@ function createAutoVariableControls(pricing: NormalizedPricing): VariableControl
 function createComparisonGroups(
   pricing: NormalizedPricing,
   planIds: Set<string>,
+  messages: PricingViewModel['messages'],
 ): PricingComparisonGroup[] {
   const rows: PricingComparisonRow[] = [];
   for (const feature of pricing.features) {
@@ -364,17 +365,47 @@ function createComparisonGroups(
     });
   }
 
+  // [impl->req~tag-groups-declared~1] a tag is declared only when the source object carries one
+  const declared = (row: PricingComparisonRow): boolean => asString(row.raw.tag) !== undefined;
+  const tagged = rows.filter(declared);
+
+  // [impl->req~tag-groups-none~1] [impl->req~tag-groups-i18n~1]
+  if (rows.length > 0 && tagged.length === 0) {
+    return [
+      {
+        id: 'pr-untagged',
+        name: translate(messages, 'pricing.features'),
+        kind: 'untagged',
+        rows,
+      },
+    ];
+  }
+
+  // [impl->req~tag-groups-partial~1]
   const groups = new Map<string, PricingComparisonGroup>();
-  for (const row of rows) {
-    const id = row.category || 'General';
+  for (const row of tagged) {
+    const id = asString(row.raw.tag) ?? row.category;
     const existing = groups.get(id);
     if (existing) {
       existing.rows.push(row);
     } else {
-      groups.set(id, { id, name: id, rows: [row] });
+      groups.set(id, { id, name: id, kind: 'tag', rows: [row] });
     }
   }
-  return [...groups.values()];
+  const untagged = rows.filter((row) => !declared(row));
+  return [
+    ...groups.values(),
+    ...(untagged.length > 0
+      ? [
+          {
+            id: 'pr-other-features',
+            name: translate(messages, 'pricing.otherFeatures'),
+            kind: 'other-features' as const,
+            rows: untagged,
+          },
+        ]
+      : []),
+  ];
 }
 
 export function createPricingViewModel(
@@ -383,6 +414,7 @@ export function createPricingViewModel(
   options: ViewModelOptions = {},
 ): PricingViewModel {
   const visibility = options.visibility ?? 'public-only';
+  const messages = getMessages(options.locale, options.messages);
   const plans = pricing.plans.filter((plan) => visibility === 'all' || !plan.private);
   const addOns = pricing.addOns.filter((addOn) => visibility === 'all' || !addOn.private);
   const presentation = mergePresentation(pricing, options.presentation);
@@ -400,11 +432,15 @@ export function createPricingViewModel(
     }),
     plans,
     addOns,
-    comparisonGroups: createComparisonGroups(pricing, new Set(plans.map((plan) => plan.id))),
+    comparisonGroups: createComparisonGroups(
+      pricing,
+      new Set(plans.map((plan) => plan.id)),
+      messages,
+    ),
     variableControls: controls,
     presentation,
     locale: options.locale ?? 'en-US',
-    messages: getMessages(options.locale, options.messages),
+    messages,
     mode: options.mode ?? 'commercial',
     visibility,
   };

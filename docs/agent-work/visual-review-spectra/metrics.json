@@ -7,8 +7,8 @@
     "minRows": 15,
     "maxRows": 174,
     "over100Rows": 8,
-    "withOneGroup": 4,
-    "withTwoGroups": 30,
+    "withOneGroup": 34,
+    "withTwoGroups": 0,
     "withOneOrTwoGroups": 34,
     "orphanOn3Columns": 17,
     "orphanOn4Columns": 5,
@@ -22,20 +22,16 @@
       "rows": 60,
       "featureRows": 50,
       "usageLimitRows": 10,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 50
-        },
-        {
-          "id": "Usage limits",
-          "rows": 10
+          "id": "pr-untagged",
+          "rows": 60
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 50
+        "id": "pr-untagged",
+        "rows": 60
       },
       "identicalInAllPlans": 23,
       "rowsAfterDifferencesOnly": 37,
@@ -87,20 +83,16 @@
       "rows": 92,
       "featureRows": 76,
       "usageLimitRows": 16,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 76
-        },
-        {
-          "id": "Usage limits",
-          "rows": 16
+          "id": "pr-untagged",
+          "rows": 92
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 76
+        "id": "pr-untagged",
+        "rows": 92
       },
       "identicalInAllPlans": 39,
       "rowsAfterDifferencesOnly": 53,
@@ -152,20 +144,16 @@
       "rows": 106,
       "featureRows": 92,
       "usageLimitRows": 14,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 92
-        },
-        {
-          "id": "Usage limits",
-          "rows": 14
+          "id": "pr-untagged",
+          "rows": 106
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 92
+        "id": "pr-untagged",
+        "rows": 106
       },
       "identicalInAllPlans": 45,
       "rowsAfterDifferencesOnly": 61,
@@ -217,20 +205,16 @@
       "rows": 58,
       "featureRows": 49,
       "usageLimitRows": 9,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 49
-        },
-        {
-          "id": "Usage limits",
-          "rows": 9
+          "id": "pr-untagged",
+          "rows": 58
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 49
+        "id": "pr-untagged",
+        "rows": 58
       },
       "identicalInAllPlans": 30,
       "rowsAfterDifferencesOnly": 28,
@@ -282,20 +266,16 @@
       "rows": 174,
       "featureRows": 136,
       "usageLimitRows": 38,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 136
-        },
-        {
-          "id": "Usage limits",
-          "rows": 38
+          "id": "pr-untagged",
+          "rows": 174
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 136
+        "id": "pr-untagged",
+        "rows": 174
       },
       "identicalInAllPlans": 67,
       "rowsAfterDifferencesOnly": 107,
@@ -350,12 +330,12 @@
       "groups": 1,
       "groupRows": [
         {
-          "id": "General",
+          "id": "pr-untagged",
           "rows": 72
         }
       ],
       "longestGroup": {
-        "id": "General",
+        "id": "pr-untagged",
         "rows": 72
       },
       "identicalInAllPlans": 23,
@@ -402,20 +382,16 @@
       "rows": 22,
       "featureRows": 17,
       "usageLimitRows": 5,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 17
-        },
-        {
-          "id": "Usage limits",
-          "rows": 5
+          "id": "pr-untagged",
+          "rows": 22
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 17
+        "id": "pr-untagged",
+        "rows": 22
       },
       "identicalInAllPlans": 14,
       "rowsAfterDifferencesOnly": 8,
@@ -467,20 +443,16 @@
       "rows": 72,
       "featureRows": 64,
       "usageLimitRows": 8,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 64
-        },
-        {
-          "id": "Usage limits",
-          "rows": 8
+          "id": "pr-untagged",
+          "rows": 72
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 64
+        "id": "pr-untagged",
+        "rows": 72
       },
       "identicalInAllPlans": 30,
       "rowsAfterDifferencesOnly": 42,
@@ -535,12 +507,12 @@
       "groups": 1,
       "groupRows": [
         {
-          "id": "General",
+          "id": "pr-untagged",
           "rows": 100
         }
       ],
       "longestGroup": {
-        "id": "General",
+        "id": "pr-untagged",
         "rows": 100
       },
       "identicalInAllPlans": 87,
@@ -587,20 +559,16 @@
       "rows": 103,
       "featureRows": 86,
       "usageLimitRows": 17,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 86
-        },
-        {
-          "id": "Usage limits",
-          "rows": 17
+          "id": "pr-untagged",
+          "rows": 103
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 86
+        "id": "pr-untagged",
+        "rows": 103
       },
       "identicalInAllPlans": 50,
       "rowsAfterDifferencesOnly": 53,
@@ -652,20 +620,16 @@
       "rows": 39,
       "featureRows": 32,
       "usageLimitRows": 7,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 32
-        },
-        {
-          "id": "Usage limits",
-          "rows": 7
+          "id": "pr-untagged",
+          "rows": 39
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 32
+        "id": "pr-untagged",
+        "rows": 39
       },
       "identicalInAllPlans": 21,
       "rowsAfterDifferencesOnly": 18,
@@ -717,20 +681,16 @@
       "rows": 93,
       "featureRows": 91,
       "usageLimitRows": 2,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 91
-        },
-        {
-          "id": "Usage limits",
-          "rows": 2
+          "id": "pr-untagged",
+          "rows": 93
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 91
+        "id": "pr-untagged",
+        "rows": 93
       },
       "identicalInAllPlans": 30,
       "rowsAfterDifferencesOnly": 63,
@@ -776,20 +736,16 @@
       "rows": 90,
       "featureRows": 81,
       "usageLimitRows": 9,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 81
-        },
-        {
-          "id": "Usage limits",
-          "rows": 9
+          "id": "pr-untagged",
+          "rows": 90
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 81
+        "id": "pr-untagged",
+        "rows": 90
       },
       "identicalInAllPlans": 76,
       "rowsAfterDifferencesOnly": 14,
@@ -877,12 +833,12 @@
       "groups": 1,
       "groupRows": [
         {
-          "id": "General",
+          "id": "pr-untagged",
           "rows": 63
         }
       ],
       "longestGroup": {
-        "id": "General",
+        "id": "pr-untagged",
         "rows": 63
       },
       "identicalInAllPlans": 6,
@@ -929,20 +885,16 @@
       "rows": 66,
       "featureRows": 60,
       "usageLimitRows": 6,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 60
-        },
-        {
-          "id": "Usage limits",
-          "rows": 6
+          "id": "pr-untagged",
+          "rows": 66
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 60
+        "id": "pr-untagged",
+        "rows": 66
       },
       "identicalInAllPlans": 29,
       "rowsAfterDifferencesOnly": 37,
@@ -994,20 +946,16 @@
       "rows": 98,
       "featureRows": 90,
       "usageLimitRows": 8,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 90
-        },
-        {
-          "id": "Usage limits",
-          "rows": 8
+          "id": "pr-untagged",
+          "rows": 98
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 90
+        "id": "pr-untagged",
+        "rows": 98
       },
       "identicalInAllPlans": 56,
       "rowsAfterDifferencesOnly": 42,
@@ -1076,20 +1024,16 @@
       "rows": 64,
       "featureRows": 60,
       "usageLimitRows": 4,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 60
-        },
-        {
-          "id": "Usage limits",
-          "rows": 4
+          "id": "pr-untagged",
+          "rows": 64
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 60
+        "id": "pr-untagged",
+        "rows": 64
       },
       "identicalInAllPlans": 30,
       "rowsAfterDifferencesOnly": 34,
@@ -1140,20 +1084,16 @@
       "rows": 65,
       "featureRows": 58,
       "usageLimitRows": 7,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 58
-        },
-        {
-          "id": "Usage limits",
-          "rows": 7
+          "id": "pr-untagged",
+          "rows": 65
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 58
+        "id": "pr-untagged",
+        "rows": 65
       },
       "identicalInAllPlans": 32,
       "rowsAfterDifferencesOnly": 33,
@@ -1205,20 +1145,16 @@
       "rows": 141,
       "featureRows": 140,
       "usageLimitRows": 1,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 140
-        },
-        {
-          "id": "Usage limits",
-          "rows": 1
+          "id": "pr-untagged",
+          "rows": 141
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 140
+        "id": "pr-untagged",
+        "rows": 141
       },
       "identicalInAllPlans": 141,
       "rowsAfterDifferencesOnly": 0,
@@ -1406,20 +1342,16 @@
       "rows": 52,
       "featureRows": 48,
       "usageLimitRows": 4,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 48
-        },
-        {
-          "id": "Usage limits",
-          "rows": 4
+          "id": "pr-untagged",
+          "rows": 52
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 48
+        "id": "pr-untagged",
+        "rows": 52
       },
       "identicalInAllPlans": 33,
       "rowsAfterDifferencesOnly": 19,
@@ -1475,20 +1407,16 @@
       "rows": 18,
       "featureRows": 16,
       "usageLimitRows": 2,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 16
-        },
-        {
-          "id": "Usage limits",
-          "rows": 2
+          "id": "pr-untagged",
+          "rows": 18
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 16
+        "id": "pr-untagged",
+        "rows": 18
       },
       "identicalInAllPlans": 5,
       "rowsAfterDifferencesOnly": 13,
@@ -1537,20 +1465,16 @@
       "rows": 52,
       "featureRows": 41,
       "usageLimitRows": 11,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 41
-        },
-        {
-          "id": "Usage limits",
-          "rows": 11
+          "id": "pr-untagged",
+          "rows": 52
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 41
+        "id": "pr-untagged",
+        "rows": 52
       },
       "identicalInAllPlans": 29,
       "rowsAfterDifferencesOnly": 23,
@@ -1607,20 +1531,16 @@
       "rows": 112,
       "featureRows": 100,
       "usageLimitRows": 12,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 100
-        },
-        {
-          "id": "Usage limits",
-          "rows": 12
+          "id": "pr-untagged",
+          "rows": 112
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 100
+        "id": "pr-untagged",
+        "rows": 112
       },
       "identicalInAllPlans": 66,
       "rowsAfterDifferencesOnly": 46,
@@ -1687,20 +1607,16 @@
       "rows": 41,
       "featureRows": 34,
       "usageLimitRows": 7,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 34
-        },
-        {
-          "id": "Usage limits",
-          "rows": 7
+          "id": "pr-untagged",
+          "rows": 41
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 34
+        "id": "pr-untagged",
+        "rows": 41
       },
       "identicalInAllPlans": 27,
       "rowsAfterDifferencesOnly": 14,
@@ -1755,12 +1671,12 @@
       "groups": 1,
       "groupRows": [
         {
-          "id": "General",
+          "id": "pr-untagged",
           "rows": 15
         }
       ],
       "longestGroup": {
-        "id": "General",
+        "id": "pr-untagged",
         "rows": 15
       },
       "identicalInAllPlans": 7,
@@ -1807,20 +1723,16 @@
       "rows": 124,
       "featureRows": 111,
       "usageLimitRows": 13,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 111
-        },
-        {
-          "id": "Usage limits",
-          "rows": 13
+          "id": "pr-untagged",
+          "rows": 124
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 111
+        "id": "pr-untagged",
+        "rows": 124
       },
       "identicalInAllPlans": 87,
       "rowsAfterDifferencesOnly": 37,
@@ -1940,7 +1852,7 @@
           "rows": 9
         },
         {
-          "id": "Usage limits",
+          "id": "pr-other-features",
           "rows": 5
         }
       ],
@@ -1995,20 +1907,16 @@
       "rows": 51,
       "featureRows": 44,
       "usageLimitRows": 7,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 44
-        },
-        {
-          "id": "Usage limits",
-          "rows": 7
+          "id": "pr-untagged",
+          "rows": 51
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 44
+        "id": "pr-untagged",
+        "rows": 51
       },
       "identicalInAllPlans": 13,
       "rowsAfterDifferencesOnly": 38,
@@ -2060,20 +1968,16 @@
       "rows": 42,
       "featureRows": 41,
       "usageLimitRows": 1,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 41
-        },
-        {
-          "id": "Usage limits",
-          "rows": 1
+          "id": "pr-untagged",
+          "rows": 42
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 41
+        "id": "pr-untagged",
+        "rows": 42
       },
       "identicalInAllPlans": 19,
       "rowsAfterDifferencesOnly": 23,
@@ -2130,20 +2034,16 @@
       "rows": 46,
       "featureRows": 41,
       "usageLimitRows": 5,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 41
-        },
-        {
-          "id": "Usage limits",
-          "rows": 5
+          "id": "pr-untagged",
+          "rows": 46
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 41
+        "id": "pr-untagged",
+        "rows": 46
       },
       "identicalInAllPlans": 18,
       "rowsAfterDifferencesOnly": 28,
@@ -2193,20 +2093,16 @@
       "rows": 49,
       "featureRows": 44,
       "usageLimitRows": 5,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 44
-        },
-        {
-          "id": "Usage limits",
-          "rows": 5
+          "id": "pr-untagged",
+          "rows": 49
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 44
+        "id": "pr-untagged",
+        "rows": 49
       },
       "identicalInAllPlans": 28,
       "rowsAfterDifferencesOnly": 21,
@@ -2256,20 +2152,16 @@
       "rows": 68,
       "featureRows": 59,
       "usageLimitRows": 9,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 59
-        },
-        {
-          "id": "Usage limits",
-          "rows": 9
+          "id": "pr-untagged",
+          "rows": 68
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 59
+        "id": "pr-untagged",
+        "rows": 68
       },
       "identicalInAllPlans": 45,
       "rowsAfterDifferencesOnly": 23,
@@ -2321,20 +2213,16 @@
       "rows": 118,
       "featureRows": 94,
       "usageLimitRows": 24,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 94
-        },
-        {
-          "id": "Usage limits",
-          "rows": 24
+          "id": "pr-untagged",
+          "rows": 118
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 94
+        "id": "pr-untagged",
+        "rows": 118
       },
       "identicalInAllPlans": 3,
       "rowsAfterDifferencesOnly": 115,
@@ -2386,20 +2274,16 @@
       "rows": 86,
       "featureRows": 81,
       "usageLimitRows": 5,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 81
-        },
-        {
-          "id": "Usage limits",
-          "rows": 5
+          "id": "pr-untagged",
+          "rows": 86
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 81
+        "id": "pr-untagged",
+        "rows": 86
       },
       "identicalInAllPlans": 21,
       "rowsAfterDifferencesOnly": 65,
@@ -2451,20 +2335,16 @@
       "rows": 54,
       "featureRows": 51,
       "usageLimitRows": 3,
-      "groups": 2,
+      "groups": 1,
       "groupRows": [
         {
-          "id": "General",
-          "rows": 51
-        },
-        {
-          "id": "Usage limits",
-          "rows": 3
+          "id": "pr-untagged",
+          "rows": 54
         }
       ],
       "longestGroup": {
-        "id": "General",
-        "rows": 51
+        "id": "pr-untagged",
+        "rows": 54
       },
       "identicalInAllPlans": 15,
       "rowsAfterDifferencesOnly": 39,
@@ -2537,7 +2417,7 @@
           "rows": 5
         },
         {
-          "id": "Usage limits",
+          "id": "pr-other-features",
           "rows": 4
         }
       ],
@@ -2594,7 +2474,7 @@
       "rows": 151,
       "featureRows": 143,
       "usageLimitRows": 8,
-      "groups": 10,
+      "groups": 9,
       "groupRows": [
         {
           "id": "Core Features",
@@ -2602,10 +2482,6 @@
         },
         {
           "id": "Meetings",
-          "rows": 22
-        },
-        {
-          "id": "General",
           "rows": 22
         },
         {
@@ -2633,8 +2509,8 @@
           "rows": 8
         },
         {
-          "id": "Usage limits",
-          "rows": 8
+          "id": "pr-other-features",
+          "rows": 30
         }
       ],
       "longestGroup": {
@@ -2645,6 +2521,7 @@
       "rowsAfterDifferencesOnly": 87,
       "addOnOnlyRows": 13,
       "addOnOnlyRowIds": [
+        "zoomCustomerManagedKey",
         "callOutDialIn",
         "globalTollFreeDialIn",
         "localDialInForPremiumCountries",
@@ -2656,8 +2533,7 @@
         "zoomRevenueAccelerator",
         "zoomMesh",
         "zoomClipsPlus",
-        "zoomCompliantManager",
-        "zoomCustomerManagedKey"
+        "zoomCompliantManager"
       ],
       "unitPluralCandidates": 8,
       "unitPluralExamples": [

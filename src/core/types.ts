@@ -349,6 +349,11 @@ export interface PricingPlanHighlightSummary {
 export interface PricingComparisonGroup {
   id: string;
   name: string;
+  /**
+   * What the group holds. Absent means `'tag'`. An `'untagged'` group is the only group of a pricing
+   * that declares no tag, and it renders without a header.
+   */
+  kind?: 'tag' | 'other-features' | 'untagged';
   rows: PricingComparisonRow[];
 }
 
