@@ -1,8 +1,10 @@
 # Proposal: subscription change flow
 
-Change `add-subscription-change-flow`. Status: PROPOSED. Every public API addition below is pending
-the owner's decision (design.md, "Decisions pending"). No slice starts before the decision on its
-capability. The UI of `<pricing-change-review>` also waits for an owner CRP with a mock.
+Change `add-subscription-change-flow`. Status: owner decisions D1 to D9 approved
+(`crp-phase2-api-decisions`, answer id `own-27876d8d5ef5459e9bc6067536e2e5d4`; design.md, "Owner
+decisions"). The review screen mock was approved (`crp-phase2-review-screen-mock`, answer id
+`own-a7693b57b0b64826ba4b8b3c2a83fe2e`). UX-4, 5, 6, 7, 8 and 11 are not approved and not
+implemented.
 
 ## Why
 
@@ -90,8 +92,9 @@ own consumer, entry point and release risk, and each can be built and accepted a
 
 - Capabilities: the five above, all ADDED. No living spec exists yet (`openspec/specs/` is
   empty), so there is nothing to MODIFY. The earlier requirements under `docs/agent-work/delivera-*`
-  stay valid. `req~space-map-not-exported~1` still holds literally (its four entry points do not
-  export the function), but its intent is reversed by the new `./space` subpath (design.md, D7).
+  stay valid. `req~space-map-not-exported~1` is superseded (ADR 0001): it still holds literally
+  (its four entry points do not export the function), but its intent is reversed by the new
+  `./space` subpath (design.md, D7).
 - Code areas:
   - `src/core`: new `compare-sides.ts`, `compare.ts`, `compare-values.ts` and `plan-relation.ts`,
     plus types, index, i18n and view-model;
@@ -100,7 +103,7 @@ own consumer, entry point and release risk, and each can be built and accepted a
   - `src/react/index.ts`, new `src/space/index.ts`, `src/styles/base.css`;
   - `package.json`, `tsconfig.json`, new `tsconfig.space.json`, `custom-elements.json`;
   - `examples/space-contract/map-contract.ts`, docs, `.changeset`.
-- Public API (all additive, pending):
+- Public API (all additive, approved):
   - one core function and its types, and `PricingCta.labels`;
   - two element properties and optional `PricingActionDetail` fields;
   - a new custom element with its React wrapper and event types;

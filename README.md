@@ -143,16 +143,18 @@ Trusted Publisher.
 
 ## Package entry points
 
-| Import                        | Purpose                                                         |
-| ----------------------------- | --------------------------------------------------------------- |
-| `pricing-renderer`            | Types, normalization, resolution, expressions, i18n, view-model |
-| `pricing-renderer/yaml`       | YAML parsing and bounded remote loading                         |
-| `pricing-renderer/element`    | Web Component class without global registration                 |
-| `pricing-renderer/define`     | Register `<pricing-renderer>`                                   |
-| `pricing-renderer/react`      | Typed React 18/19 adapter                                       |
-| `pricing-renderer/base.css`   | Required structural and accessibility styles                    |
-| `pricing-renderer/theme.css`  | Default professional visual tokens                              |
-| `pricing-renderer/styles.css` | Base and theme combined                                         |
+| Import                                  | Purpose                                                         |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `pricing-renderer`                      | Types, normalization, resolution, expressions, i18n, view-model |
+| `pricing-renderer/yaml`                 | YAML parsing and bounded remote loading                         |
+| `pricing-renderer/element`              | Web Component class without global registration                 |
+| `pricing-renderer/define`               | Register `<pricing-renderer>`                                   |
+| `pricing-renderer/define-change-review` | Register `<pricing-change-review>`                              |
+| `pricing-renderer/react`                | Typed React 18/19 adapter                                       |
+| `pricing-renderer/space`                | SPACE helpers: selection, novation body, version, usage         |
+| `pricing-renderer/base.css`             | Required structural and accessibility styles                    |
+| `pricing-renderer/theme.css`            | Default professional visual tokens                              |
+| `pricing-renderer/styles.css`           | Base and theme combined                                         |
 
 ## Web Component
 

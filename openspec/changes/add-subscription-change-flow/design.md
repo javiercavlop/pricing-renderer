@@ -568,6 +568,8 @@ Review ([pending CRP] texts):
 
 ## Decision 7: `pricing-renderer/space`
 
+Recorded as [ADR 0001](../../../docs/adr/0001-space-adapter-subpath.md).
+
 - Files:
   - `src/space/index.ts`;
   - `tsconfig.space.json` (rootDir `src/space`, outDir `dist/space`, lib ES2021 without DOM,
@@ -738,10 +740,13 @@ re-export of `pricing-renderer/space`. `docs/preload-current-subscription.md` sw
 - A5: "the pricing is private" in the owner request means the current plan is a private plan
   hidden by `visibility: 'public-only'`.
 
-## Decisions pending (owner)
+## Owner decisions
 
-Each item is a public API addition or a semantic rule. The requirements of each item wait for
-the decision.
+D1 to D9 were approved by the owner (`crp-phase2-api-decisions`, answer id
+`own-27876d8d5ef5459e9bc6067536e2e5d4`), and the review screen mock was approved
+(`crp-phase2-review-screen-mock`, answer id `own-a7693b57b0b64826ba4b8b3c2a83fe2e`). The
+proposals UX-4, 5, 6, 7, 8 and 11 are not approved and not implemented. Each item below is a
+public API addition or a semantic rule.
 
 - D1, core API: `compareSelections(input)` and the exported types `SelectionComparisonInput`,
   `SelectionComparisonSide`, `SelectionComparison`, `SelectionRelation`, `ComparedValue`,

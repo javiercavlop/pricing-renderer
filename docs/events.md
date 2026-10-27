@@ -152,8 +152,9 @@ there is no summary action, and the detail of a plan CTA has no `relation` or
 ### While an action is pending
 
 While `pendingActionId` is set, activating a plan CTA or the summary action emits
-no `pricing-action`, and a link CTA does not navigate. Clear the property when
-the host work is done.
+no `pricing-action`, and a click on a link CTA does not navigate. A middle click or
+opening the link in a new tab is not blocked, so the server must be idempotent.
+Clear the property when the host work is done.
 
 ### Cancel the default navigation
 

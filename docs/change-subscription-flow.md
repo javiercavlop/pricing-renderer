@@ -129,6 +129,11 @@ that case:
 - use the normalized pricing of the contract's version as the `before` side and
   the offered one as the `after` side. `comparison.version` then reports the
   versions and the ids that exist in only one of them;
+- when the offered version lacks an add-on that the contract has, merge the
+  contract's add-on ids that the offered version lacks into the `after` selection
+  on the server. `compareSelections` reports an add-on as removed with the reason
+  `'not-in-version'` only when the `after` input selected it; otherwise it appears
+  in `removedByUser`, as if the customer had unchecked it;
 - `currentSelection` marks the current plan only when its id exists in the offered
   version. Otherwise the element reports `PR_CURRENT_SELECTION_UNKNOWN_PLAN` and
   marks nothing.
@@ -210,7 +215,12 @@ declare function loadPricing(version: string): NormalizedPricing | undefined;
 declare function readContract(
   userId: string,
 ): Promise<{ contract: SpaceContractLike; token: string }>;
-declare function novate(userId: string, body: unknown): Promise<unknown>;
+declare function offeredVersion(): string | undefined; // the version you offer now, if any
+declare function novate(
+  userId: string,
+  body: unknown,
+  guard: { expectedToken: string; idempotencyKey: string }, // compare-and-set on the token
+): Promise<unknown>;
 
 class Conflict extends Error {} // answer 409
 
@@ -220,7 +230,12 @@ async function compare(
   pricingVersion: string,
 ) {
   const { contract, token } = await readContract(userId);
-  const beforePricing = loadPricing(contractedVersion(contract, service) ?? '');
+  const contractVersion = contractedVersion(contract, service) ?? '';
+  // never trust the client's version: only the contract's own or the one you offer now
+  if (pricingVersion !== contractVersion && pricingVersion !== offeredVersion()) {
+    throw new Conflict('Unknown pricing version');
+  }
+  const beforePricing = loadPricing(contractVersion);
   const afterPricing = loadPricing(pricingVersion);
   if (!beforePricing || !afterPricing) throw new Conflict('Unknown pricing version');
   const comparison = compareSelections({
@@ -254,9 +269,19 @@ export async function apply(
   return novate(
     userId,
     subscriptionFromSelection(service, body.pricingVersion, comparison.selections.after),
+    { expectedToken: token, idempotencyKey: body.idempotencyKey },
   );
 }
 ```
+
+`userId` comes from the server session, never from the body. All three routes need
+session authentication, an ownership check on the contract and CSRF protection.
+`novate` applies the change only if the contract still has the token that `compare`
+read, and it stores the `idempotencyKey`, so a replay returns the first result. The
+token check in `apply` alone leaves a window between the read and the write.
+
+Bound the size of the request body, drop selection ids that the pricing does not
+define before `compareSelections`, and render `PR_COMPARE_*` diagnostics as text only.
 
 The browser side. The editor starts on the contract, the summary action asks for a
 preview, and the review element confirms it:
@@ -284,6 +309,7 @@ document.body.append(review);
 let current = await getJson('/subscription/current');
 let pricingVersion = ''; // metadata.version of the pricing the editor shows
 let latestPreview = 0;
+let idempotencyKey: string | undefined; // set by the first Confirm, cleared on success
 
 const loadContract = (): void => {
   const selection = selectionFromContract(current.contract, service);
@@ -309,6 +335,8 @@ const showPreview = async (notice?: string): Promise<void> => {
     });
     if (request !== latestPreview) return; // a newer preview replaced this one
     review.comparison = result.comparison as SelectionComparison;
+    review.pending = false; // a new comparison is a new change
+    idempotencyKey = undefined;
     review.notices = notice ? [notice, ...result.notices] : result.notices;
     review.error = undefined;
   } catch (error) {
@@ -331,16 +359,19 @@ renderer.addEventListener('pricing-action', (event) => {
 review.addEventListener('pricing-change-confirm', async (event) => {
   const { comparison } = (event as PricingChangeConfirmEvent).detail;
   // the element set `pending` itself, because the event was not canceled
+  idempotencyKey ??= crypto.randomUUID(); // one key per Confirm, kept for retries
   try {
     await postJson('/subscription/apply', {
       selection: comparison.selections.after,
       contractVersion: current.contractVersion,
       pricingVersion,
-      idempotencyKey: crypto.randomUUID(),
+      idempotencyKey,
     });
+    idempotencyKey = undefined; // the next Confirm is a new change
     current = await getJson('/subscription/current');
     loadContract();
     review.comparison = undefined;
+    review.pending = false;
   } catch (error) {
     review.pending = false;
     review.error = 'The change could not be applied.';
@@ -362,13 +393,19 @@ review.addEventListener('pricing-change-back', () => {
   mounted so that Back returns to the same edit.
 - **Double submit.** Without a canceled event, the review element sets `pending`
   before the dispatch returns, so a second click is ignored. Keep `pending` (or
-  `pendingActionId` on the renderer) set until the apply route answers, and send an
-  `idempotencyKey` per Confirm so that a retry after a timeout does not apply the
-  change twice. A host that manages `pending` itself calls `preventDefault()` on
+  `pendingActionId` on the renderer) set until the apply route answers, and send one
+  `idempotencyKey` per pending Confirm, kept until the apply succeeds and not
+  regenerated on a retry, so that a retry after a timeout does not apply the change
+  twice. A host that manages `pending` itself calls `preventDefault()` on
   `pricing-change-confirm`.
+- **Clear `pending` after success.** The element sets `pending = true` on Confirm and
+  never clears it. After a successful apply set `review.pending = false`, and do the
+  same when `showPreview` assigns a new comparison, so the next review starts with an
+  enabled Confirm. The sample does both and also drops the idempotency key then.
 - **Cancelable `pricing-action`.** Cancel it, set `pendingActionId` to its
   `actionId`, and clear the property when the work ends. While it is set every plan
-  CTA and the summary action ignore activation, and a link CTA does not navigate.
+  CTA and the summary action ignore activation, and a click on a link CTA does not navigate (a middle click or a
+  new tab is not blocked, so keep the server idempotent).
 - **Stale contract.** When the contract changed after route 1 (another tab, a
   billing job), the apply route answers 409. Fetch route 1 again, set
   `currentSelection` from the new contract, run the preview again with the

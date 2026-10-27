@@ -8,8 +8,8 @@ Rules for every slice:
   only in the stated order, after the earlier slice is merged.
 - Tests are written first by test-designer and fail before the implementation (red before).
 - Every requirement id is traced: `[impl->req~…~1]` in code, `[utest->req~…~1]` in tests.
-- No phase starts before the owner decision named in its heading (design.md, "Decisions pending").
-  Only phase F also waits for the CRP with a mock.
+- No phase starts before the owner decision named in its heading (design.md, "Owner decisions").
+  Only phase F also waits for the CRP with a mock. All of them are approved.
 - No feature flag is needed: all new behaviour is reached only through new functions, new
   subpaths, a new element or properties that are unset by default.
 
@@ -89,13 +89,13 @@ Tests (test-designer):
     `tests/browser/helpers/change-flow.ts`). Requirements: `req~current-selection-*`, except the
     type, i18n and manifest ones.
   - Checks: `browser` red before.
-  - Status: written, not run. The lab has no browser, so the red-before and green runs are left to
-    the `browser` check in CI.
+  - Status: written in the lab, which has no browser. The tests passed in CI on the pushed head
+    (`browser` check, all browsers).
 - [x] C0b Plan-CTA browser tests.
   - Files: `tests/browser/plan-cta.spec.ts` (demo page, PQ, PS). Requirements: `req~cta-*`,
     except the type, i18n and manifest ones.
   - Checks: `browser` red before.
-  - Status: written, not run (same reason as C0a).
+  - Status: written in the lab (no browser). The tests passed in CI on the pushed head.
 - [x] C0c Unit tests for types, i18n and the manifest.
   - Files: `tests/unit/change-flow-element.test.ts`: property declarations, types through the
     compiler API, i18n and manifest, for both capabilities. It also covers the pure helpers of
@@ -130,8 +130,8 @@ Implementation:
     - the CTA wiring through `cta.ts`;
     - the summary action in `renderSummary`.
   - Checks: `typecheck`, `lint`, `unit`, `browser` (no baseline change). Depends on C2.
-  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
-    the lab), so the baselines are not confirmed unchanged.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass in the lab; `browser` (the baselines
+    unchanged) passed in CI on the pushed head.
 - [x] C4 Element.
   - Files:
     - `src/element/pricing-renderer-element.ts`: the properties `currentSelection` and
@@ -140,7 +140,8 @@ Implementation:
     - `src/element/events.ts`: `relation?` and `source?`;
     - `src/element/index.ts`: the `SelectionRelation` re-export.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on C3.
-  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass in the lab; `browser` passed in CI
+    on the pushed head.
 - [x] C5 React, manifest and styles.
   - Files:
     - `src/react/index.ts`: the props `currentSelection` and `pendingActionId` and the
@@ -149,8 +150,8 @@ Implementation:
     - `src/styles/base.css`: the current badges, the pending CTA and the summary action, in
       light and dark themes, with forced colors and reduced motion.
   - Checks: `typecheck`, `lint`, `unit`, `browser`, `package`. Depends on C4.
-  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` and `package` are not run
-    (no browser in the lab, and `package` is not a registered check of this task).
+  - Status: implemented. `typecheck`, `lint` and `unit` pass in the lab; `browser` and `package`
+    passed in CI on the pushed head.
 
 ## Phase D: documentation for phases A to C (after A4, B1 and C5)
 
@@ -190,8 +191,7 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
   - Status: written. `tests/unit/change-review.test.ts` ran red before E1 (16 of 17 tests failed;
     the 17th, `req~review-define-separate~1`, guards what already holds) and is green after it.
     `tests/browser/change-review-data.spec.ts` (with `tests/browser/helpers/change-review.ts`) is
-    written, not run: the lab has no browser, so its red-before and green runs are left to the
-    `browser` check in CI. Unticked until then.
+    written in the lab (no browser) and passed in CI on the pushed head.
   - Note: in node, the first import of lit sets `globalThis.customElements` to its own registry
     shim, so the unit tests import lit first and stub the registry they need (none, or a recording
     stub). `tests/unit/docs-examples.test.ts` now scans only the renderer's events; the review
@@ -212,9 +212,8 @@ Requirements: the 16 `req~review-*` ids that are not marked `[pending CRP]`.
     - `examples/vanilla/src/main.ts`: import `pricing-renderer/define-change-review` for the
       review page.
   - Checks: `typecheck`, `lint`, `unit`, `browser`, `package`.
-  - Status: implemented. `typecheck`, `lint`, `unit` and `package` pass; `browser` is not run (no
-    browser in the lab), so the base-part scenarios are not confirmed in a real browser. Unticked
-    until the `browser` check passes in CI.
+  - Status: implemented. `typecheck`, `lint`, `unit` and `package` pass in the lab; `browser`
+    (the base-part scenarios) passed in CI on the pushed head.
   - Note: the `package:check` entrypoint `./define-change-review` is appended after `./space`, so
     the string pinned by `tests/unit/space-adapter.test.ts` still matches.
 - [x] E2 React wrapper and manifest.
@@ -239,8 +238,7 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
     missing module before F2. `tests/browser/change-review-ui.spec.ts` (R_ENT, R_START, R_CUR,
     R_QUOTE and R_V12 from `tests/browser/helpers/change-review.ts`; structure, the sections,
     status, alert, focus, forced colors, axe, the mock's container widths, themes, text-only
-    names, Spanish) is written, not run: the lab has no browser, so its red-before and green runs
-    are left to the `browser` check in CI. Unticked until then.
+    names, Spanish) was written in the lab (no browser) and passed in CI on the pushed head.
 - [x] F1 Review messages.
   - Files: `src/core/i18n.ts`: the other 34 keys of the "Review" table, plus any text changes the
     CRP approved for all 36. This is after E1.
@@ -261,16 +259,14 @@ Requirements: the 14 `req~review-*` ids marked `[pending CRP]`.
   - Files: `src/element/change-review-element.ts`, which renders through
     `change-review-renderers.ts` and moves focus on `comparison` and `error`. This is after E1.
   - Checks: `typecheck`, `lint`, `unit`, `browser`. Depends on F2.
-  - Status: implemented. `typecheck`, `lint` and `unit` pass; `browser` is not run (no browser in
-    the lab), so the focus and rendering scenarios are not confirmed in a real browser. Unticked
-    until the `browser` check passes in CI.
+  - Status: implemented. `typecheck`, `lint` and `unit` pass in the lab; `browser` (the focus and
+    rendering scenarios) passed in CI on the pushed head.
 - [x] F4 Review styles.
   - Files: `src/styles/base.css`: review layout, dark theme, forced colors and reduced motion.
     This is after C5.
   - Checks: `browser`, `lint`. Depends on F3.
-  - Status: implemented after the approved mock. `lint` passes; `browser` is not run (no browser
-    in the lab), so the layout, the container widths, the themes and the forced colors are not
-    confirmed in a real browser. Unticked until the `browser` check passes in CI.
+  - Status: implemented after the approved mock. `lint` passes in the lab; `browser` (the layout,
+    the container widths, the themes and the forced colors) passed in CI on the pushed head.
   - Note: the review carries its own copy of the theme tokens, because `theme.css` declares them
     for `pricing-renderer` only.
 - [x] F5 Review documentation.
