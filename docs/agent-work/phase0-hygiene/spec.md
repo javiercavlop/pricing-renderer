@@ -349,6 +349,10 @@ Test: `tests/unit/value-type-mismatch.test.ts`
   and `addOns.<add-on>.<map>.<id>`.
 - A string that matches `^-?\d{1,3}(_\d{3})+(\.\d+)?$` gets a message that mentions YAML 1.1 digit
   separators. It also suggests a plain number or `.inf`.
+- The documented unlimited strings `.inf`, `Infinity` and `unlimited` (the set `compare-values`
+  uses, matched exactly) are not mismatches and give no warning. JSON hosts cannot write Infinity,
+  so they use these strings. This does not apply to `usageLimitsExtensions`, where only a finite
+  number counts, so a text there still warns.
 - Nothing is coerced. The value stays the same string. `docs/events.md` lists the code.
 
 #### Scenario: Default and plan override
@@ -367,6 +371,13 @@ Test: `tests/unit/value-type-mismatch.test.ts`
   NUMERIC limit with `defaultValue: 10000`
 - **WHEN** they are normalized
 - **THEN** only the wrapped `'many'` gives a warning, and its message has no digit-separator hint
+
+#### Scenario: Documented unlimited strings
+
+- **GIVEN** NUMERIC usage limits with plan overrides `'unlimited'`, `{ value: 'Infinity' }` and
+  `'.inf'`, and another override `'many'`
+- **WHEN** they are normalized
+- **THEN** only `'many'` gives a `PR_VALUE_TYPE_MISMATCH` warning
 
 ### Requirement: Forced only-differences needs a visible toolbar
 

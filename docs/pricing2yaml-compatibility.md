@@ -100,7 +100,9 @@ package). A major above 3 is not supported yet.
 whose value is text (`defaultValue`, plan and add-on overrides, the
 `{ value: ... }` form, and add-on `usageLimitsExtensions`). The value is never
 converted. Text such as `10_000` is a number in YAML 1.1 and text in YAML 1.2;
-write a plain number or `.inf`.
+write a plain number or `.inf`. The documented unlimited strings `.inf`,
+`Infinity` and `unlimited` (used by JSON hosts) do not warn, except in
+`usageLimitsExtensions`.
 
 Parser and remote-loader codes are documented through tests and the generated
 declarations.

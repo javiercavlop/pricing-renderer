@@ -82,6 +82,44 @@ plans:
     expect(found[2]?.message).toContain('YAML 1.1');
   });
 
+  it('does not warn for the documented unlimited strings, but still for other text', () => {
+    const { found } = mismatches({
+      ...base,
+      features: { seats: { valueType: 'NUMERIC', defaultValue: 1 } },
+      usageLimits: {
+        calls: { valueType: 'NUMERIC', defaultValue: '.inf' },
+        api: { valueType: 'NUMERIC', defaultValue: 1 },
+        jobs: { valueType: 'NUMERIC', defaultValue: 1 },
+        more: { valueType: 'NUMERIC', defaultValue: 1 },
+      },
+      plans: {
+        PRO: {
+          price: 1,
+          features: { seats: 'unlimited' },
+          usageLimits: {
+            calls: 'unlimited',
+            api: { value: 'Infinity' },
+            jobs: '.inf',
+            more: 'many',
+          },
+        },
+      },
+      addOns: {
+        extra: {
+          price: 1,
+          features: { seats: { value: '.inf' } },
+          usageLimits: { api: 'unlimited' },
+          usageLimitsExtensions: { calls: '10_000', jobs: '.inf' },
+        },
+      },
+    });
+    expect(found.map((item) => item.path)).toEqual([
+      'plans.PRO.usageLimits.more',
+      'addOns.extra.usageLimitsExtensions.calls',
+      'addOns.extra.usageLimitsExtensions.jobs',
+    ]);
+  });
+
   it('does not warn for numbers, .inf, booleans, TEXT values or untyped ids', () => {
     const { found } = mismatches({
       ...base,

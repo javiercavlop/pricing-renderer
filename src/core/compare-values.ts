@@ -9,7 +9,7 @@ import { isRecord, unwrapValue } from './utils.js';
 
 export type ComparedValueKind = 'feature' | 'usage-limit';
 
-const UNLIMITED_TEXT = new Set(['.inf', 'Infinity', 'unlimited']);
+export const UNLIMITED_TEXT = new Set(['.inf', 'Infinity', 'unlimited']);
 
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key) && record[key] !== undefined;

@@ -1,3 +1,4 @@
+import { UNLIMITED_TEXT } from './compare-values.js';
 import { collectExpressionDependencies } from './expression.js';
 import type {
   IPricingLike,
@@ -369,9 +370,10 @@ function checkNumericValue(
   id: string,
   path: string,
   diagnostics: PricingDiagnostic[],
+  allowUnlimited = true,
 ): void {
   const unwrapped = unwrapValue(value);
-  if (typeof unwrapped !== 'string') {
+  if (typeof unwrapped !== 'string' || (allowUnlimited && UNLIMITED_TEXT.has(unwrapped))) {
     return;
   }
   const hint = DIGIT_SEPARATOR_TEXT.test(unwrapped.trim())
@@ -435,7 +437,15 @@ function validateNumericValues(
   ): void => {
     for (const [id, value] of Object.entries(values)) {
       if (numeric.has(id)) {
-        checkNumericValue(value, kind, id, `${owner}.${map}.${id}`, diagnostics);
+        // an extension is added to the limit and only a finite number counts, so a text never means unlimited
+        checkNumericValue(
+          value,
+          kind,
+          id,
+          `${owner}.${map}.${id}`,
+          diagnostics,
+          map !== 'usageLimitsExtensions',
+        );
       }
     }
   };
