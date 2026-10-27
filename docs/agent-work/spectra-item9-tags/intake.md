@@ -187,7 +187,7 @@ are disjoint.
   out-of-scope section (no tag ordering by `metadata.tags`, no grouping of add-ons, no change to
   normalize defaults), D10 and the owner's answer to Q1.
 - Risk: **low** (score 0, docs only). Check: `["pnpm", "exec", "prettier", "--check",
-  "docs/agent-work/spectra-item9-tags/spec.md"]` (after `["pnpm", "install", "--frozen-lockfile"]`).
+"docs/agent-work/spectra-item9-tags/spec.md"]` (after `["pnpm", "install", "--frozen-lockfile"]`).
 - Depends on: Q1 answered (or the coordinator records that D6 (a) is the default until the owner
   answers).
 
@@ -207,8 +207,8 @@ are disjoint.
 - Checks:
   - `["pnpm", "install", "--frozen-lockfile"]`
   - red-before (G3), timeout 300: `{"argv": ["pnpm", "exec", "vitest", "run",
-    "tests/unit/tag-groups.test.ts"], "type": "red_before", "expect_exit": [1], "expect_pattern":
-    "AssertionError|expected", "overlay": ["tests/unit/tag-groups.test.ts"]}`. At the base, clickup
+"tests/unit/tag-groups.test.ts"], "type": "red_before", "expect_exit": [1], "expect_pattern":
+"AssertionError|expected", "overlay": ["tests/unit/tag-groups.test.ts"]}`. At the base, clickup
     has two groups with headers (`General`, `Usage limits`), so the test fails by assertion. A missing
     `kind` field must fail by assertion too, never by a type error (vitest does not typecheck). The
     pattern must match the assertion style used.
@@ -244,8 +244,8 @@ are disjoint.
   - `["pnpm", "test"]` (must pass with S1's test, the acme assertions of `pricing.test.ts:173-177`
     and the regenerated `metrics.json`)
   - `["pnpm", "exec", "playwright", "test", "tests/browser/spectra-shorter-page.spec.ts",
-    "tests/browser/reveal-focus.spec.ts", "tests/browser/pricing-renderer.spec.ts",
-    "--project=chromium", "--reporter=line"]` (timeout 1500; height gates, focus after "Show N more" on
+"tests/browser/reveal-focus.spec.ts", "tests/browser/pricing-renderer.spec.ts",
+"--project=chromium", "--reporter=line"]` (timeout 1500; height gates, focus after "Show N more" on
     clickup, and the acme screenshot baselines unchanged)
   - `["pnpm", "format:check"]`
 - Depends on: S1 integrated and frozen (its test is the acceptance).
@@ -270,7 +270,7 @@ are disjoint.
     owner decision of 2026-10-27, as `docs/agent-work/prop-20261027-3/intake.md` D2 did for Q6.
 - Size: about 30-50 lines. Risk: **low** (score 0, docs only).
 - Checks: `["pnpm", "install", "--frozen-lockfile"]`, `["pnpm", "exec", "prettier", "--check",
-  "docs/api-reference.md", "docs/pricing2yaml-compatibility.md", "ROADMAP.md"]`.
+"docs/api-reference.md", "docs/pricing2yaml-compatibility.md", "ROADMAP.md"]`.
 - Depends on: S0. Runs in parallel with S1 and S2 (disjoint files). The roadmap state "in progress"
   is not in the state set at `ROADMAP.md:14`. If the steward keeps the set strict, it writes "not
   started (owner reopened 2026-10-27)" and the done update follows the merge.
@@ -293,19 +293,19 @@ equivalent, `ci.yml:142-160`) pass on the head.
 As in the earlier intakes (`docs/agent-work/prop-20261026-3/intake.md:199-220`): the skills I read
 define no G5 or G7, so the coordinator maps them.
 
-| Gate | S0 | S1 | S2 | S3 | S4 |
-|---|---|---|---|---|---|
-| G1 openspec validate | change level, needs `openspec/` or the docs convention | same | same | same | same |
-| G2 EPIC review | applies (six requirements) | N/A | N/A | N/A | N/A |
-| G3 red-before | N/A | applies (check above) | N/A | N/A | N/A |
-| G4 acceptance freeze | N/A | coordinator freezes `tag-groups.test.ts` after S1 | runs it frozen | N/A | N/A |
-| G6 trace | ids | `utest` tags | `impl` tags; trace passes at change level | N/A | N/A |
-| G8 mutation | N/A | N/A | applies if registered for `src/core` | N/A | N/A |
-| G9 deps and licence | N/A | N/A | N/A (no dependency) | N/A | N/A |
-| G10 secrets | if registered | if registered | if registered | if registered | if registered |
-| G11 review | one reviewer | test-reviewer | panel for medium risk plus a clean-context review; checks D1-D7, D9 and the `metrics.json` diff | one reviewer | N/A |
-| G12 ui-qa | N/A | N/A | applies: clickup, zoom, acme at 375 and 1440, light, dark, RTL, forced colors, keyboard | N/A | N/A |
-| G13 how-to-test | N/A | N/A | N/A | N/A | applies |
+| Gate                 | S0                                                     | S1                                                | S2                                                                                              | S3            | S4            |
+| -------------------- | ------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------- | ------------- |
+| G1 openspec validate | change level, needs `openspec/` or the docs convention | same                                              | same                                                                                            | same          | same          |
+| G2 EPIC review       | applies (six requirements)                             | N/A                                               | N/A                                                                                             | N/A           | N/A           |
+| G3 red-before        | N/A                                                    | applies (check above)                             | N/A                                                                                             | N/A           | N/A           |
+| G4 acceptance freeze | N/A                                                    | coordinator freezes `tag-groups.test.ts` after S1 | runs it frozen                                                                                  | N/A           | N/A           |
+| G6 trace             | ids                                                    | `utest` tags                                      | `impl` tags; trace passes at change level                                                       | N/A           | N/A           |
+| G8 mutation          | N/A                                                    | N/A                                               | applies if registered for `src/core`                                                            | N/A           | N/A           |
+| G9 deps and licence  | N/A                                                    | N/A                                               | N/A (no dependency)                                                                             | N/A           | N/A           |
+| G10 secrets          | if registered                                          | if registered                                     | if registered                                                                                   | if registered | if registered |
+| G11 review           | one reviewer                                           | test-reviewer                                     | panel for medium risk plus a clean-context review; checks D1-D7, D9 and the `metrics.json` diff | one reviewer  | N/A           |
+| G12 ui-qa            | N/A                                                    | N/A                                               | applies: clickup, zoom, acme at 375 and 1440, light, dark, RTL, forced colors, keyboard         | N/A           | N/A           |
+| G13 how-to-test      | N/A                                                    | N/A                                               | N/A                                                                                             | N/A           | applies       |
 
 ## Risks
 

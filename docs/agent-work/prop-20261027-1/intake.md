@@ -198,21 +198,21 @@ G1-G4, G6 and G8-G13 follow the factory skills I read (`factory:qa-checks` for G
 `factory:mrp-builder` for the review package). I found no definition for G5 or G7, as the earlier
 intakes did not (`docs/agent-work/prop-20261025-1/intake.md:134-145`).
 
-| Gate | S1 | S2-S5 |
-| --- | --- | --- |
-| G1 openspec validate --strict | change level, once the change exists | same |
-| G2 EPIC spec review | change level, if the change carries requirements | same |
-| G3 red-before | N/A, see D3 | N/A (no unit test) |
-| G4 acceptance freeze | N/A (no `acceptance/`) | N/A |
-| G5 | not defined in the skills I read; coordinator maps | same |
-| G6 trace | applies if requirement ids are assigned: `utest` tag in the unit test | N/A unless tagged |
-| G7 | not defined in the skills I read; coordinator maps | same |
-| G8 mutation | N/A | N/A |
-| G9 dependency and licence | N/A (no dependency) | N/A |
-| G10 secrets | applies if registered | same |
-| G11 review | one reviewer (low risk) | one reviewer |
-| G12 ui-qa | N/A (no UI change) | N/A |
-| G13 how-to-test | N/A with a how_to_review guide (D4) | same |
+| Gate                          | S1                                                                    | S2-S5              |
+| ----------------------------- | --------------------------------------------------------------------- | ------------------ |
+| G1 openspec validate --strict | change level, once the change exists                                  | same               |
+| G2 EPIC spec review           | change level, if the change carries requirements                      | same               |
+| G3 red-before                 | N/A, see D3                                                           | N/A (no unit test) |
+| G4 acceptance freeze          | N/A (no `acceptance/`)                                                | N/A                |
+| G5                            | not defined in the skills I read; coordinator maps                    | same               |
+| G6 trace                      | applies if requirement ids are assigned: `utest` tag in the unit test | N/A unless tagged  |
+| G7                            | not defined in the skills I read; coordinator maps                    | same               |
+| G8 mutation                   | N/A                                                                   | N/A                |
+| G9 dependency and licence     | N/A (no dependency)                                                   | N/A                |
+| G10 secrets                   | applies if registered                                                 | same               |
+| G11 review                    | one reviewer (low risk)                                               | one reviewer       |
+| G12 ui-qa                     | N/A (no UI change)                                                    | N/A                |
+| G13 how-to-test               | N/A with a how_to_review guide (D4)                                   | same               |
 
 ## Decisions taken in this intake (the owner can veto them in review)
 
