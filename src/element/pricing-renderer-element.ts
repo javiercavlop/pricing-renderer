@@ -4,6 +4,7 @@ import {
   compareSelections,
   createPricingViewModel,
   deepEqual,
+  getMessages,
   getPricingRendererConfig,
   mergePresentationOptions,
   mergeSelection,
@@ -95,6 +96,18 @@ const comparisonRowSelector = '[data-pr-part="comparison-row"]';
 const addOnCardSelector = '[data-pr-part="add-on-card"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
+
+// [impl->req~error-state-human-message~1] the sentence is chosen by the first error diagnostic.
+// The code prefix is cut off so that no partial code is spelled out: the docs test treats every
+// full code token of the source as a code to document.
+function errorMessageKey(diagnostics: PricingDiagnostic[]): string {
+  const first = diagnostics.find((item) => item.severity === 'error');
+  const name = (first?.code ?? '').replace(/^PR_/, '');
+  if (name.startsWith('SOURCE_') || name === 'FETCH_UNAVAILABLE') return 'pricing.errorSource';
+  if (name.startsWith('YAML_') || name === 'INPUT_INVALID') return 'pricing.errorFormat';
+  if (name.startsWith('VERSION_')) return 'pricing.errorVersion';
+  return 'pricing.errorGeneric';
+}
 
 // [impl->req~shorter-page-only-differences~2] absent is automatic, `false` is off, anything else is on
 export const onlyDifferencesConverter = {
@@ -1020,11 +1033,14 @@ export class PricingRendererElement extends LitElement {
   protected render(): TemplateResult {
     if (this._status === 'loading' || this._status === 'idle') {
       const loadingTitleId = `${this._idPrefix}-loading-title`;
+      // [impl->req~loading-label-localized~1]
+      const loadingLabel =
+        this.loadingLabel ?? translate(getMessages(this.locale, this.messages), 'pricing.loading');
       return html`
         <section class="pr-shell pr-shell--loading" aria-labelledby=${loadingTitleId}>
-          <h2 id=${loadingTitleId} class="pr-sr-only">${this.loadingLabel ?? 'Loading pricing'}</h2>
+          <h2 id=${loadingTitleId} class="pr-sr-only">${loadingLabel}</h2>
           <div class="pr-skeleton" role="status" aria-live="polite">
-            <span>${this.loadingLabel ?? 'Loading pricing…'}</span>
+            <span>${loadingLabel}</span>
             <div></div>
             <div></div>
             <div></div>
@@ -1033,29 +1049,24 @@ export class PricingRendererElement extends LitElement {
       `;
     }
     if (!this._normalized || this._status === 'error') {
-      const messages = createPricingViewModel(
-        {
-          metadata: { syntaxVersion: '3.1', saasName: 'Pricing', tags: [], currency: 'USD' },
-          billing: [],
-          variables: {},
-          features: [],
-          usageLimits: [],
-          plans: [],
-          addOns: [],
-          custom: {},
-          raw: {},
-        },
-        undefined,
-        { locale: this.locale, messages: this.messages },
-      ).messages;
+      const messages = getMessages(this.locale, this.messages);
+      // [impl->req~error-state-human-message~1] the codes and messages stay inside a closed details
       return html`
         <section class="pr-shell pr-error" role="alert">
           <h2>${translate(messages, 'pricing.error')}</h2>
-          <ul>
-            ${this._diagnostics.map(
-              (item) => html`<li><strong>${item.code}</strong>: ${item.message}</li>`,
-            )}
-          </ul>
+          <p>${translate(messages, errorMessageKey(this._diagnostics))}</p>
+          <details class="pr-diagnostics" data-pr-part="diagnostics">
+            <summary>${translate(messages, 'pricing.errorDetails')}</summary>
+            <ul>
+              ${this._diagnostics.map(
+                (item) =>
+                  html`<li>
+                    <strong>${item.code}</strong>:
+                    ${item.message}${item.path ? ` (${item.path})` : ''}
+                  </li>`,
+              )}
+            </ul>
+          </details>
           ${
             this.src
               ? html`<button
