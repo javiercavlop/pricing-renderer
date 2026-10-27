@@ -176,9 +176,57 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
+        timeout-minutes: 13
         env:
           INSTALL: ${{ matrix.install }}
-        run: pnpm exec playwright install --with-deps ${INSTALL}
+          ATTEMPTS: '3'
+          ATTEMPT_TIMEOUT: '3m'
+        run: |
+          # playwright runs apt through sudo, so the attempt timeout (running as
+          # the runner user) cannot signal it. Stop leftover root apt processes
+          # explicitly, or they keep the dpkg lock into the next attempt.
+          stop_apt() {
+            for sig in TERM KILL; do
+              for proc in apt-get apt dpkg; do
+                if sudo pkill -${sig} -x ${proc}; then
+                  echo "::notice::sent ${sig} to leftover ${proc}"
+                fi
+              done
+              if [ "${sig}" = TERM ]; then
+                sleep 5
+              fi
+            done
+          }
+          printf '%s\n' \
+            'Acquire::Retries "3";' \
+            'Acquire::http::Timeout "20";' \
+            'Acquire::https::Timeout "20";' \
+            'DPkg::Lock::Timeout "60";' \
+            | sudo tee /etc/apt/apt.conf.d/99ci-resilience > /dev/null
+          attempt=1
+          while true; do
+            if [ "${attempt}" -ge 2 ]; then
+              echo "::notice::Attempt ${attempt}: using archive.ubuntu.com instead of the mirror list"
+              printf '%s\n' 'http://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt > /dev/null
+            fi
+            rc=0
+            if timeout --kill-after=15s "${ATTEMPT_TIMEOUT}" pnpm exec playwright install --with-deps ${INSTALL}; then
+              exit 0
+            else
+              rc=$?
+            fi
+            echo "::warning::Browser install attempt ${attempt}/${ATTEMPTS} failed with exit code ${rc} (timeout ${ATTEMPT_TIMEOUT})"
+            if [ "${attempt}" -ge "${ATTEMPTS}" ]; then
+              echo "::error::Browser install failed after ${ATTEMPTS} attempts"
+              exit 1
+            fi
+            stop_apt
+            if ! sudo timeout 60s dpkg --configure -a; then
+              echo "::warning::dpkg --configure -a failed"
+            fi
+            attempt=$((attempt + 1))
+            sleep 10
+          done
       - name: Run browser tests
         env:
           ARGS: ${{ matrix.args }}
