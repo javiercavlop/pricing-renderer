@@ -769,6 +769,102 @@ A pending plan change is a `PendingAddOnChange` with
 `{ addOnId: '', select: false, addIds: [], removeIds, planId }`. The optional
 `planId` field is set only for plan changes; add-on changes leave it undefined.
 
+### `pricing-change-review` element
+
+`pricing-renderer/element` also exports `PricingChangeReviewElement`, the class of
+`<pricing-change-review>`, with `PRICING_CHANGE_REVIEW_TAG` and
+`definePricingChangeReview()`. Importing them registers nothing; see
+[`pricing-renderer/define-change-review`](#pricing-rendererdefine-change-review).
+The element renders in the light DOM and takes a
+[`SelectionComparison`](#compareselections) that the host computed.
+
+| Property       | Attribute       | Type                  | Default   |
+| -------------- | --------------- | --------------------- | --------- |
+| `comparison`   | —               | `SelectionComparison` | —         |
+| `notices`      | —               | `string[]`            | `[]`      |
+| `pending`      | `pending`       | `boolean`             | `false`   |
+| `error`        | `error`         | `string`              | —         |
+| `locale`       | `locale`        | `string`              | `"en-US"` |
+| `messages`     | —               | `MessageCatalog`      | —         |
+| `confirmLabel` | `confirm-label` | `string`              | localized |
+
+`pending` is reflected. Notices and `error` are shown as text, never as HTML.
+Without a `comparison` the element renders nothing.
+
+| Event                    | Detail                                | Cancelable |
+| ------------------------ | ------------------------------------- | ---------- |
+| `pricing-change-confirm` | `{ comparison: SelectionComparison }` | Yes        |
+| `pricing-change-back`    | `{ comparison: SelectionComparison }` | Yes        |
+
+Both events bubble and are composed, and `detail.comparison` is a detached deep
+copy. The types `PricingChangeConfirmDetail`, `PricingChangeBackDetail`,
+`PricingChangeConfirmEvent` and `PricingChangeBackEvent` are exported from
+`pricing-renderer/element`.
+
+- Confirm emits nothing while `pending` is true or `comparison.relation` is
+  `'current'`; its button then has `aria-disabled="true"`.
+- When no listener cancels `pricing-change-confirm`, the element sets
+  `pending = true` before the dispatch returns, so a second click cannot submit
+  twice. A host that manages `pending` itself calls `preventDefault()`.
+- `pricing-change-back` has no default action and never changes `pending`.
+
+See [Change a subscription](./change-subscription-flow.md) for the flow around it.
+
+## `pricing-renderer/space`
+
+Helpers for contracts of SPACE. The subpath has no runtime imports, needs no DOM
+and makes no HTTP call. Service keys are matched exactly: pass the lowercase key
+that SPACE stores.
+
+```ts
+selectionFromContract(contract: SpaceContractLike, serviceKey: string): Partial<PricingSelection>
+
+subscriptionFromSelection(
+  serviceKey: string,
+  version: string,
+  selection: SpaceSelectionLike,
+): SpaceSubscription
+
+contractedVersion(contract: SpaceContractLike, serviceKey: string): string | undefined
+
+currentUsageFromContract(contract: SpaceContractLike, serviceKey: string): Record<string, number>
+```
+
+```ts
+interface SpaceContractLike {
+  contractedServices?: Record<string, string>; // service -> pricing version
+  subscriptionPlans?: Record<string, string>; // service -> plan name
+  subscriptionAddOns?: Record<string, Record<string, number>>; // service -> add-on -> quantity
+  usageLevels?: Record<string, Record<string, { consumed?: number }>>;
+}
+
+interface SpaceSubscription {
+  contractedServices: Record<string, string>;
+  subscriptionPlans: Record<string, string>;
+  subscriptionAddOns: Record<string, Record<string, number>>;
+}
+
+interface SpaceSelectionLike {
+  planId?: string;
+  addOns?: Record<string, { selected: boolean; quantity: number }>;
+}
+```
+
+- `selectionFromContract` maps the plan and the add-ons with a quantity above 0 to
+  the input of `applySelection` and `compareSelections`. It never sets a billing
+  period.
+- `subscriptionFromSelection` builds the novation body of one service. Pass the
+  `selections.after` of a comparison and the dotted version of the after pricing.
+  `subscriptionPlans` is `{}` when the selection has no plan id. Only selected
+  add-ons with a finite quantity above 0 are listed.
+- `contractedVersion` turns each `_` of the stored version back into `.`.
+- `currentUsageFromContract` maps each `usageLevels` entry whose `consumed` is a
+  finite number of at least 0. The result is the `currentUsage` of
+  `compareSelections`.
+
+The input is never mutated. See
+[Preload the current subscription](./preload-current-subscription.md).
+
 ## `pricing-renderer/define`
 
 Exports:
@@ -782,6 +878,22 @@ PricingRendererElement
 Importing this entry registers `<pricing-renderer>` idempotently. If the tag has
 already been defined by another constructor, registration fails explicitly
 instead of silently using an incompatible implementation.
+
+## `pricing-renderer/define-change-review`
+
+A side-effect module. Importing it registers `<pricing-change-review>` when
+`customElements` exists, and does nothing on a server. `pricing-renderer/define`
+and `pricing-renderer/react` do not register this tag, so a page that uses the
+review element without React imports this entry:
+
+```ts
+import 'pricing-renderer/define';
+import 'pricing-renderer/define-change-review';
+```
+
+To register it yourself, call `definePricingChangeReview()` from
+`pricing-renderer/element`. It is a no-op without `customElements`, idempotent,
+and throws an error that names the tag when another constructor already holds it.
 
 ## `pricing-renderer/react`
 
@@ -821,6 +933,13 @@ at once from `resolvedState`.
 `ApplySelectionResult` and `SelectionRelation` are re-exported from this entry
 point. The props `currentSelection` and `pendingActionId` are passed to the
 element as properties.
+
+`PricingChangeReview` renders `<pricing-change-review>` and registers the tag when
+it renders, so React hosts need no extra import. Its props are `comparison`,
+`notices`, `pending`, `error`, `locale`, `messages`, `confirmLabel`, `className`,
+`id`, `onConfirm` (`pricing-change-confirm`) and `onBack` (`pricing-change-back`).
+A ref to it is the element. `PricingChangeReviewElement` is re-exported from this
+entry.
 
 ## CSS entry points
 

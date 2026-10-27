@@ -436,6 +436,8 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [Project and instance configuration](./docs/configuration.md)
 - [Events and diagnostics](./docs/events.md)
 - [Vue 3 and Vite](./docs/vue.md)
+- [Preload the current subscription](./docs/preload-current-subscription.md)
+- [Change a subscription](./docs/change-subscription-flow.md)
 - [Demo and release acceptance](./docs/demo.md)
 - [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)

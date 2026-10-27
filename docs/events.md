@@ -37,6 +37,28 @@ import type {
 } from 'pricing-renderer/element';
 ```
 
+## Review events
+
+`<pricing-change-review>` has two events of its own. Both are `CustomEvent`s that
+bubble, are composed and are `cancelable`. Properties, guards and default actions
+are in the [API reference](./api-reference.md#pricing-change-review-element).
+
+| Emitted by                | Event                    | Emitted when               | `detail`                              |
+| ------------------------- | ------------------------ | -------------------------- | ------------------------------------- |
+| `<pricing-change-review>` | `pricing-change-confirm` | The user activates Confirm | `{ comparison: SelectionComparison }` |
+| `<pricing-change-review>` | `pricing-change-back`    | The user activates Back    | `{ comparison: SelectionComparison }` |
+
+- `detail.comparison` is a detached deep copy of the `comparison` property.
+- Confirm emits nothing while `pending` is true or the relation is `'current'`.
+  When no listener calls `preventDefault()`, the element sets `pending` to true, so
+  a second click cannot submit twice. A host that manages `pending` itself cancels
+  the event.
+- Back has no default action and does not change `pending`.
+- The types are exported from `pricing-renderer/element`:
+  `PricingChangeConfirmEvent` and `PricingChangeBackEvent`.
+
+[Change a subscription](./change-subscription-flow.md) shows both in a full flow.
+
 ## `pricing-ready` and `pricing-selection-change`
 
 ```ts
