@@ -4,6 +4,7 @@ import {
   compareSelections,
   createPricingViewModel,
   deepEqual,
+  getMessages,
   getPricingRendererConfig,
   mergePresentationOptions,
   mergeSelection,
@@ -32,6 +33,7 @@ import {
 import { applySelectionInput } from '../core/apply-selection.js';
 import { summaryActionState, type SummaryActionState } from './cta.js';
 import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
+import { inputChanged } from './same-input.js';
 import {
   loadPricingFromUrl,
   parsePricingYaml,
@@ -63,6 +65,7 @@ import {
   resolveOnlyDifferences,
   toolbarThresholdOf,
   addOnFilterThresholdOf,
+  instanceId,
   type ActionOrigin,
   type RenderActions,
   type RenderState,
@@ -94,7 +97,19 @@ const addOnCardSelector = '[data-pr-part="add-on-card"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
 
-// [impl->req~shorter-page-only-differences~1] absent is automatic, `false` is off, anything else is on
+// [impl->req~error-state-human-message~1] the sentence is chosen by the first error diagnostic.
+// The code prefix is cut off so that no partial code is spelled out: the docs test treats every
+// full code token of the source as a code to document.
+function errorMessageKey(diagnostics: PricingDiagnostic[]): string {
+  const first = diagnostics.find((item) => item.severity === 'error');
+  const name = (first?.code ?? '').replace(/^PR_/, '');
+  if (name.startsWith('SOURCE_') || name === 'FETCH_UNAVAILABLE') return 'pricing.errorSource';
+  if (name.startsWith('YAML_') || name === 'INPUT_INVALID') return 'pricing.errorFormat';
+  if (name.startsWith('VERSION_')) return 'pricing.errorVersion';
+  return 'pricing.errorGeneric';
+}
+
+// [impl->req~shorter-page-only-differences~2] absent is automatic, `false` is off, anything else is on
 export const onlyDifferencesConverter = {
   fromAttribute(value: string | null): boolean | undefined {
     if (value === null) return undefined;
@@ -104,12 +119,15 @@ export const onlyDifferencesConverter = {
 
 export class PricingRendererElement extends LitElement {
   static properties = {
-    pricing: { attribute: false },
+    // [impl->req~element-input-structural-compare~1] a host that builds these objects in its render
+    // function does not reload on every render; call reload() to force a load. loadPricing, yaml
+    // and src keep the identity compare.
+    pricing: { attribute: false, hasChanged: inputChanged },
     yaml: { attribute: false },
     src: { type: String, reflect: true },
-    request: { attribute: false },
+    request: { attribute: false, hasChanged: inputChanged },
     loadPricing: { attribute: false },
-    normalizeOptions: { attribute: false },
+    normalizeOptions: { attribute: false, hasChanged: inputChanged },
     expressionOptions: { attribute: false },
     selection: { attribute: false },
     defaultSelection: { attribute: false },
@@ -194,7 +212,10 @@ export class PricingRendererElement extends LitElement {
   private _previousFocus?: HTMLElement;
   private _breakdownOpen = false;
   // [impl->req~summary-breakdown-unique-ids~1] the element renders in light DOM, so ids are global
-  private readonly _breakdownId = `pr-breakdown-${++breakdownPanelCount}`;
+  private readonly _instanceNumber = ++breakdownPanelCount;
+  private readonly _breakdownId = `pr-breakdown-${this._instanceNumber}`;
+  // [impl->req~element-instance-ids~1] the prefix of every other id of this instance
+  private readonly _idPrefix = `pr-${this._instanceNumber}`;
 
   constructor() {
     super();
@@ -236,6 +257,7 @@ export class PricingRendererElement extends LitElement {
     super.connectedCallback();
     this.setAttribute('data-pr-root', '');
     this.addEventListener('keydown', this._handleDialogKeyboard);
+    if (this.hasUpdated) this._resumeAfterReconnect();
   }
 
   disconnectedCallback(): void {
@@ -245,7 +267,19 @@ export class PricingRendererElement extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected firstUpdated(): void {
+  // [impl->req~element-reconnect-resumes~1]
+  // The disconnect stopped the observer and aborted the load in flight; an aborted load is dropped
+  // without a result, so a status still `loading` would never end. A ready or failed element keeps
+  // what it shows.
+  private _resumeAfterReconnect(): void {
+    this._observeSize();
+    if (this._status === 'loading') void this.reload();
+  }
+
+  // Observes the size of the element with a new observer and measures its width once.
+  private _observeSize(): void {
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = undefined;
     if (typeof ResizeObserver === 'function') {
       this._resizeObserver = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? this.getBoundingClientRect().width;
@@ -254,6 +288,10 @@ export class PricingRendererElement extends LitElement {
       this._resizeObserver.observe(this);
     }
     this._updateCompactLayout(this.getBoundingClientRect().width);
+  }
+
+  protected firstUpdated(): void {
+    this._observeSize();
     void this.reload();
     queueMicrotask(() => {
       this._reloadOnPropertyChange = true;
@@ -307,6 +345,11 @@ export class PricingRendererElement extends LitElement {
     ].filter(Boolean);
 
     if (sources.length !== 1) {
+      // [impl->req~reload-source-error-cancels-load~1] the load in flight must neither finish nor be
+      // applied after this error
+      this._abortController?.abort();
+      this._abortController = undefined;
+      this._loadSequence += 1;
       this._applyLoadResult({
         ok: false,
         diagnostics: [
@@ -989,13 +1032,15 @@ export class PricingRendererElement extends LitElement {
 
   protected render(): TemplateResult {
     if (this._status === 'loading' || this._status === 'idle') {
+      const loadingTitleId = `${this._idPrefix}-loading-title`;
+      // [impl->req~loading-label-localized~1]
+      const loadingLabel =
+        this.loadingLabel ?? translate(getMessages(this.locale, this.messages), 'pricing.loading');
       return html`
-        <section class="pr-shell pr-shell--loading" aria-labelledby="pr-loading-title">
-          <h2 id="pr-loading-title" class="pr-sr-only">
-            ${this.loadingLabel ?? 'Loading pricing'}
-          </h2>
+        <section class="pr-shell pr-shell--loading" aria-labelledby=${loadingTitleId}>
+          <h2 id=${loadingTitleId} class="pr-sr-only">${loadingLabel}</h2>
           <div class="pr-skeleton" role="status" aria-live="polite">
-            <span>${this.loadingLabel ?? 'Loading pricing…'}</span>
+            <span>${loadingLabel}</span>
             <div></div>
             <div></div>
             <div></div>
@@ -1004,29 +1049,24 @@ export class PricingRendererElement extends LitElement {
       `;
     }
     if (!this._normalized || this._status === 'error') {
-      const messages = createPricingViewModel(
-        {
-          metadata: { syntaxVersion: '3.1', saasName: 'Pricing', tags: [], currency: 'USD' },
-          billing: [],
-          variables: {},
-          features: [],
-          usageLimits: [],
-          plans: [],
-          addOns: [],
-          custom: {},
-          raw: {},
-        },
-        undefined,
-        { locale: this.locale, messages: this.messages },
-      ).messages;
+      const messages = getMessages(this.locale, this.messages);
+      // [impl->req~error-state-human-message~1] the codes and messages stay inside a closed details
       return html`
         <section class="pr-shell pr-error" role="alert">
           <h2>${translate(messages, 'pricing.error')}</h2>
-          <ul>
-            ${this._diagnostics.map(
-              (item) => html`<li><strong>${item.code}</strong>: ${item.message}</li>`,
-            )}
-          </ul>
+          <p>${translate(messages, errorMessageKey(this._diagnostics))}</p>
+          <details class="pr-diagnostics" data-pr-part="diagnostics">
+            <summary>${translate(messages, 'pricing.errorDetails')}</summary>
+            <ul>
+              ${this._diagnostics.map(
+                (item) =>
+                  html`<li>
+                    <strong>${item.code}</strong>:
+                    ${item.message}${item.path ? ` (${item.path})` : ''}
+                  </li>`,
+              )}
+            </ul>
+          </details>
           ${
             this.src
               ? html`<button
@@ -1047,6 +1087,11 @@ export class PricingRendererElement extends LitElement {
     // Without a toolbar the user cannot undo a filter, so the search text and the checkbox override
     // are ignored while it is hidden (the stored values are kept).
     const toolbarShown = comparisonRowTotal(viewModel) > toolbarThreshold;
+    // [impl->req~shorter-page-only-differences~2] a forced value is ignored without the toolbar,
+    // because no checkbox exists to undo it
+    const initialOnlyDifferences =
+      this._onlyDifferencesOverride ??
+      resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold);
     // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
     const current = deriveCurrentContext(this._normalized, this._currentSelection);
     const state: RenderState = {
@@ -1054,9 +1099,7 @@ export class PricingRendererElement extends LitElement {
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: toolbarShown ? this._search : '',
-      onlyDifferences:
-        (toolbarShown ? this._onlyDifferencesOverride : undefined) ??
-        resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold),
+      onlyDifferences: toolbarShown && initialOnlyDifferences,
       toolbarThreshold,
       selectionEnabled: this.selectionEnabled,
       ctaEnabled: this.ctaEnabled,
@@ -1069,6 +1112,7 @@ export class PricingRendererElement extends LitElement {
       ...(this._pendingAddOnChange ? { pendingAddOnChange: this._pendingAddOnChange } : {}),
       breakdownOpen: this._breakdownOpen,
       breakdownId: this._breakdownId,
+      idPrefix: this._idPrefix,
       ...(current ? { currentPlanId: current.planId, currentAddOnIds: current.addOnIds } : {}),
       ...(this.pendingActionId ? { pendingActionId: this.pendingActionId } : {}),
       ...(current && this.ctaEnabled
@@ -1078,7 +1122,7 @@ export class PricingRendererElement extends LitElement {
     };
     const warnings = this._diagnostics.filter((item) => item.severity !== 'info');
     return html`
-      <section class="pr-shell" aria-labelledby="pr-title">
+      <section class="pr-shell" aria-labelledby=${instanceId(state, 'title')}>
         <div
           class="pr-content"
           aria-hidden=${this._pendingAddOnChange ? 'true' : nothing}

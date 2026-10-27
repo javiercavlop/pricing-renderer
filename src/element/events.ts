@@ -58,6 +58,17 @@ export type PricingSelectionChangeEvent = CustomEvent<PricingSelectionChangeDeta
 export type PricingActionEvent = CustomEvent<PricingActionDetail>;
 export type PricingDiagnosticEvent = CustomEvent<PricingDiagnosticDetail>;
 
+// [impl->req~typed-event-map~1] Typed addEventListener for the four events of <pricing-renderer>.
+// Every entry (/define, /element, /react) reaches this module, so the augmentation travels with them.
+declare global {
+  interface HTMLElementEventMap {
+    'pricing-ready': PricingReadyEvent;
+    'pricing-selection-change': PricingSelectionChangeEvent;
+    'pricing-action': PricingActionEvent;
+    'pricing-diagnostic': PricingDiagnosticEvent;
+  }
+}
+
 export interface PendingAddOnChange {
   addOnId: string;
   select: boolean;

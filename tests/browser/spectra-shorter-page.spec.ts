@@ -135,7 +135,7 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(counter)).toHaveText('0 of 174 items');
   });
 
-  // [utest->req~shorter-page-only-differences~1]
+  // [utest->req~shorter-page-only-differences~2]
   test('notion starts unchecked and the empty attribute checks it', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'notion');
@@ -145,7 +145,7 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).toBeChecked();
   });
 
-  // [utest->req~shorter-page-only-differences~1]
+  // [utest->req~shorter-page-only-differences~2]
   test('only-differences="false" unchecks it on clickup', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -177,7 +177,7 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(toolbar)).toHaveCount(1);
   });
 
-  // [utest->req~shorter-page-only-differences~1]
+  // [utest->req~shorter-page-only-differences~2]
   test('the checkbox overrides the property until the next change', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -217,7 +217,7 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).not.toBeChecked();
   });
 
-  // [utest->req~shorter-page-only-differences~1]
+  // [utest->req~shorter-page-only-differences~2]
   test('a reload drops the checkbox override', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');

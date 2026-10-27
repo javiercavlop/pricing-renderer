@@ -4,3 +4,5 @@ Decisions: option A for examples/vue by owner decision 24-10-2026 16:20 (vue 3.5
 Next: push, wait CI (browsers job was slow), one reviewer on the final head, review package, lead_ready.
 Risks: examples/vue built but not run in a browser; Nuxt advice general.
 Owner follow-ups: compareSelections; docs/theming.md (data-pr-part hooks of the breakdown and padding); 'adds 0' note of the breakdown in the element; demo:vue script in root package.json; optional typed event map for pricing-* events (public API change); stale in-flight src load after PR_SOURCE_MISSING/CONFLICT reload (src/element/pricing-renderer-element.ts:207-228) can still emit pricing-ready.
+
+Update: the stale in-flight src load follow-up is fixed in phase0-hygiene (`req~reload-source-error-cancels-load~1`). The typed event map follow-up is done there too (`req~typed-event-map~1`), and so is the 'adds 0' note of the breakdown (`req~breakdown-kept-price-doc~1`).

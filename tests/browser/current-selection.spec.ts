@@ -123,7 +123,9 @@ test.describe('the user selection is not changed', () => {
   test('uncontrolled element on Starter', async ({ page }) => {
     await countEvents(page, 'pricing-selection-change');
     await setProps(page, { currentSelection: C });
-    const starterRadio = page.locator('pricing-renderer input[name="pr-plan"][value="starter"]');
+    const starterRadio = page.locator(
+      'pricing-renderer input[type="radio"][name$="-plan"][value="starter"]',
+    );
     await expect(starterRadio).toBeChecked();
     await expect(page.locator('pricing-renderer .pr-summary')).toContainText('€20');
     const planId = await page.evaluate(

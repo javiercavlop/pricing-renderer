@@ -33,8 +33,9 @@ flowchart LR
 | Styles       | CSS subpaths               | Structural base and optional visual theme                | Global resets         |
 
 The core initialization configuration defaults to `locale: "en-US"` and
-`pricingPath: "/pricing"`. The path is routing metadata for the integrating
-application; the library never mutates a router or assumes a framework.
+`pricingPath: "/pricing"`. `pricingPath` is deprecated metadata kept for
+compatibility: the host router owns the route, and nothing in the renderer reads
+the value. The library never mutates a router or assumes a framework.
 Per-instance values override project defaults, which is preferable for
 request-specific SSR configuration.
 

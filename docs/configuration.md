@@ -27,17 +27,20 @@ partial call.
 | Option             | Default      | Effect                                                       |
 | ------------------ | ------------ | ------------------------------------------------------------ |
 | `locale`           | `"en-US"`    | Selects library-owned messages and `Intl` formatting         |
-| `pricingPath`      | `"/pricing"` | Declares the canonical pricing pathname for the host app     |
+| `pricingPath`      | `"/pricing"` | Deprecated metadata, no runtime effect (see below)           |
 | `selectionEnabled` | `true`       | Enables plan/add-on controls and full-card pointer selection |
 | `ctaEnabled`       | `true`       | Renders configured plan CTAs                                 |
 | `variablesEnabled` | `true`       | Renders variable controls and applies interactive values     |
 | `presentation`     | `{}`         | Supplies project-wide highlights, badges, controls, and CTAs |
 
-`pricingPath` must be an absolute application pathname such as `/pricing` or
-`/account/plans`. It cannot contain a scheme, query, or fragment. The library
-does not install or mutate routes; the integrating router owns the page and can
-read this value through `getPricingRendererConfig()` or an element's
-`pricingPath` property.
+`pricingPath` is deprecated metadata kept for compatibility. The host router
+owns the route, and nothing in the renderer reads the value: it has no effect on
+rendering, links, events or navigation. The property, the `pricing-path`
+attribute and the configuration key stay, so existing code keeps working, but new
+code should not rely on them. The value is still validated and stored: it must be
+an absolute application pathname such as `/pricing` or `/account/plans`, without
+a scheme, query, or fragment, and it can be read through
+`getPricingRendererConfig()` or an element's `pricingPath` property.
 
 ## Per-instance overrides
 
@@ -77,7 +80,7 @@ renderer.presentation = {
 />
 ```
 
-`locale` and `pricing-path` also have HTML attributes. The three feature flags
+`locale` and the deprecated `pricing-path` also have HTML attributes. The three feature flags
 are JavaScript/React properties so `false` remains unambiguous.
 
 ## Disabled behavior
@@ -221,7 +224,7 @@ finish at once. While it is set:
 ```ts
 renderer.addEventListener('pricing-action', (event) => {
   event.preventDefault();
-  renderer.pendingActionId = (event as PricingActionEvent).detail.actionId;
+  renderer.pendingActionId = event.detail.actionId;
   void startChange().finally(() => {
     renderer.pendingActionId = undefined;
   });

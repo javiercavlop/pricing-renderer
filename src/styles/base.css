@@ -1253,6 +1253,12 @@
     background: var(--pr-color-warning-surface);
   }
 
+  pricing-renderer[data-pr-root] .pr-error .pr-diagnostics {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
   pricing-renderer[data-pr-root] .pr-diagnostics summary {
     font-weight: 750;
     cursor: pointer;

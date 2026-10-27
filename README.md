@@ -177,8 +177,9 @@ configurePricingRenderer({
 
 Every option is optional. The deterministic built-in defaults are English
 (`en-US`), `/pricing`, selectable plans/add-ons, visible CTAs, and editable
-variables. `pricingPath` is the canonical host-application route; the library
-exposes it but does not mutate or install routes in the host router. An
+variables. `pricingPath` is deprecated metadata kept for compatibility: the
+host router owns the route, and nothing in the renderer reads the value (it is
+only validated, stored and reflected as the `pricing-path` attribute). An
 individual element or React instance can override any value. With
 `variablesEnabled: false`, formulas use the iPricing variable defaults.
 
@@ -201,8 +202,9 @@ Render a public remote source:
 ></pricing-renderer>
 ```
 
-`locale` and `pricingPath` are initial host configuration. Set them globally,
-when the renderer is created, or through the equivalent properties/React props.
+`locale` is initial host configuration (`pricingPath` is deprecated and has no
+effect). Set it globally, when the renderer is created, or through the
+equivalent property/React prop.
 The library does not inject a language picker into production UI. The showcase
 picker only demonstrates that locale configuration can be changed reactively.
 
@@ -247,6 +249,15 @@ export function PricingPage({ pricing }: { pricing: Record<string, unknown> }) {
 The React entry is safe to import during SSR and is marked as a client
 component. Full pricing content appears after hydration; deep light-DOM SSR is
 not a v1 contract.
+
+The adapter assigns every prop on each render. The element compares `pricing`,
+`request` and `normalizeOptions` by content, so an inline `request` object with
+the same content does not reload. Functions, `Headers`, `AbortSignal` and other
+class instances are compared by identity, and so are `loadPricing`, `yaml` and
+`src`. Keep `loadPricing` and a `headers` function stable with `useCallback` or
+`useMemo`, or the element fetches again on every render. Call `reload()` on a ref
+to force a fetch, also after you changed an input object in place. The rules are
+in the [API reference](./docs/api-reference.md#when-a-property-starts-a-new-load).
 
 ## Vue 3
 
@@ -367,8 +378,9 @@ Public events:
 - `pricing-action`
 - `pricing-diagnostic`
 
-See the [events reference](./docs/events.md) for each payload and the
-diagnostic codes.
+`addEventListener` is typed for these four names through the global
+`HTMLElementEventMap`, so a listener needs no cast. See the
+[events reference](./docs/events.md) for each payload and the diagnostic codes.
 
 ## Private remote sources
 
@@ -389,6 +401,14 @@ renderer.request = {
 Use `loadPricing` for OAuth exchanges, signed URLs, proxies, or SDK clients. The
 built-in loader permits HTTP/HTTPS `GET` only, defaults to
 `credentials: "omit"`, honors cancellation, and never fetches during SSR.
+`request.maxBytes` (2 MiB by default) also limits a string that `loadPricing`
+returns, measured in UTF-8 bytes; a larger one fails with `PR_SOURCE_TOO_LARGE`.
+An object result is not measured.
+
+If the first load fails, the element shows a short sentence for the kind of
+failure (source, format, version or other) and a closed "Technical details"
+disclosure with the diagnostic codes. The codes are also in the `pricing-diagnostic`
+event. See [Error state](./docs/api-reference.md#error-state).
 
 ## Theming
 

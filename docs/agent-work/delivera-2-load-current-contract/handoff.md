@@ -1,1 +1,3 @@
 Panel round 1 (d1091dc): reviewer 45a1583e and test-reviewer 68851dc7 approve, 0 blocker/major. Later heads docs-only (guide wording fix d91fbc94, how-to-test guide 38ad123c; guide steps marked not verified => g13 fail). Pushing; then CI, set_review_package, lead_ready. Follow-up: reload() source-check failure path (pricing-renderer-element.ts ~199-215) should abort the in-flight load and bump _loadSequence (older root cause, not in this change).
+
+Update: this follow-up is fixed in phase0-hygiene (`req~reload-source-error-cancels-load~1`): the source-check branch of `reload()` now aborts the load in flight and bumps the load sequence.

@@ -20,7 +20,7 @@ import {
 
 const planCards = '[data-pr-part="plan-card"]';
 const radio = (planId: string, selector = 'pricing-renderer'): string =>
-  `${selector} input[name="pr-plan"][value="${planId}"]`;
+  `${selector} input[type="radio"][name$="-plan"][value="${planId}"]`;
 
 test.beforeEach(async ({ page }) => {
   await openDemo(page);

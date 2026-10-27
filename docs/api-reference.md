@@ -14,7 +14,9 @@ getPricingRendererConfig(): Readonly<PricingRendererConfig>
 ```
 
 `DEFAULT_PRICING_RENDERER_CONFIG` contains `locale: "en-US"`,
-`pricingPath: "/pricing"`, and enabled selection, CTAs, and variables. See
+`pricingPath: "/pricing"`, and enabled selection, CTAs, and variables.
+`pricingPath` is deprecated metadata: it is kept for compatibility, has no
+runtime effect, and the host router owns the route. See
 [Project and instance configuration](./configuration.md) for precedence and
 disabled behavior.
 
@@ -221,7 +223,17 @@ interface PriceBreakdown {
   right and equal to `planPrices[id].amount`, or to `addOnPrices[id].amount`
   when the billed quantity is not 0. An add-on with `minQuantity: 0` selected at
   quantity 0 has a line with `quantity` 0 and `amount` 0, so it adds 0 to the
-  subtotal, while `addOnPrices[id]` still prices it at quantity 1.
+  subtotal, while `addOnPrices[id]` still prices it at quantity 1. This is the
+  breakdown of `resolvePricing`. In `<pricing-renderer>` it differs for one
+  case: when the price expression of a line fails and the element keeps the
+  last valid price of that item, the line takes that price's `quantity`,
+  `unitAmount`, `billingMultiplier` and `amount` (and `requiresQuote` is
+  `false`), so it can add more than 0 to the subtotal even for an add-on with
+  `minQuantity: 0` selected at quantity 0, and its `quantity` can differ from
+  the billed quantity of the selection. The element then sets `subtotal` to the
+  sum of those line amounts, so `breakdown.subtotal` and `subtotal` stay equal.
+  Without a kept price, the line is the one `resolvePricing` returns, with the
+  rule above.
 - A label price (such as "Contact sales") has `requiresQuote: true` and the
   `label` text, without `unitAmount` and `amount`. A price expression that
   cannot be resolved has `requiresQuote: true` and none of the three, so hosts
@@ -392,7 +404,10 @@ loadPricingFromUrl(
 - `headers`: a `HeadersInit` value or async token-producing function.
 - `credentials`: defaults to `"omit"`.
 - `timeoutMs`: defaults to 15 seconds.
-- `maxBytes`: defaults to 2 MiB.
+- `maxBytes`: defaults to 2 MiB. It also limits a string returned by a custom
+  `loadPricing`, measured in UTF-8 bytes (exactly `maxBytes` is accepted); a
+  larger string fails with `PR_SOURCE_TOO_LARGE`. An object returned by
+  `loadPricing` is not measured.
 - `fetch`: an injected fetch implementation.
 - `loadPricing`: a custom loader for OAuth, signed URLs, proxies, or SDKs.
 - `signal`: an external cancellation signal.
@@ -438,6 +453,41 @@ Exports `PricingRendererElement` without registering it globally.
 Exactly one of `pricing`, `yaml`, or `src` is required. Sensitive request
 configuration is property-only.
 
+`pricingPath` (attribute `pricing-path`, and the configuration key of the same
+name) is deprecated metadata. It is kept for compatibility and has no runtime
+effect: nothing in the element reads it after construction, and it does not
+change rendering, links, events or navigation. The host router owns the route.
+
+`loadingLabel`, when set, is the text of the loading heading and status. Without
+it they use the `pricing.loading` message of the element's locale and `messages`.
+
+### When a property starts a new load
+
+Setting `pricing`, `yaml`, `src`, `request`, `loadPricing` or `normalizeOptions`
+after the first load starts a new load when the new value is a change. The
+compare differs by property:
+
+- `pricing`, `request` and `normalizeOptions` are compared by content. Arrays
+  and plain objects (prototype `Object.prototype` or `null`) are compared key by
+  key, so assigning an object with the same content, for example an inline
+  `request={{ credentials: 'omit' }}` that a React render builds again, is not a
+  change and does not reload. Primitives, functions, `Headers`, `AbortSignal`,
+  `Date` and every other class instance are compared by identity: a new
+  `headers` function, a new `Headers` object or a new `AbortSignal` is a change
+  even when it holds the same data. A structure nested deeper than 64 levels, or
+  a cyclic one, always counts as a change.
+- `loadPricing`, `yaml` and `src` are compared by identity (`===` for the
+  strings). A new `loadPricing` function is always a change, so in React keep it
+  stable with `useCallback` or `useMemo`; an inline arrow function reloads on
+  every render. The same holds for a `headers` function inside `request`.
+- `reload()` always loads, whatever the compare says. Use it to force a fetch,
+  for example after you changed a `pricing` object in place. An in-place change
+  is not seen by the compare, because the property still holds the same object.
+
+The compare is a behaviour change from earlier versions, which reloaded on any
+new object: a host that assigned an equal object to force a load must call
+`reload()` instead.
+
 ### Comparison toolbar and the shorter page
 
 The comparison toolbar (search, Only differences, expand all, collapse all
@@ -456,6 +506,19 @@ rows, at least 2 plans, and the toolbar is shown. Otherwise it is off, so
 small pricings (including the demo pricing) look as before. A click on the
 checkbox overrides the initial state until a new pricing loads or the
 property changes.
+
+The filter is off while the toolbar is hidden, whatever `only-differences` says.
+The checkbox lives in the toolbar, so without the toolbar a forced filter could
+not be undone and the page would show fewer rows than the pricing has. A pricing
+with at most `toolbarThreshold` comparison rows therefore shows every row, even
+with `only-differences` present or `onlyDifferences` set to `true`. The search
+text and a checkbox choice are ignored while the toolbar is hidden as well.
+Over the threshold nothing changes.
+
+Behaviour change: a host that set `only-differences` on a short comparison used
+to get a filtered table with no way to undo it. It now gets every row. To filter
+a short comparison, lower `toolbarThreshold` so the toolbar, and with it the
+checkbox, is shown.
 
 The counter reads `{shown} of {total} items` (Spanish:
 `{shown} de {total} elementos`). `shown` is the number of rows rendered
@@ -629,7 +692,17 @@ checked and before it reaches the event.
 reload(): Promise<void>
 ```
 
-Reloads the current source and aborts an obsolete remote request.
+Reloads the current source and aborts an obsolete remote request. It always
+loads, even when no input changed (see
+[When a property starts a new load](#when-a-property-starts-a-new-load)), so it
+is how a host forces a fetch, also after it changed an input object in place.
+When the element has zero or more than one source, `reload()` also cancels the
+load in flight: the aborted request gives no `pricing-ready` and its result is
+not applied after the `PR_SOURCE_MISSING` or `PR_SOURCE_CONFLICT` error.
+
+When the element is connected to a document again after its first update (for
+example when it is moved), it observes its size again and, if it was still
+loading, reloads. A ready or failed element keeps what it shows.
 
 ```ts
 applySelection(selection: Partial<PricingSelection>): ApplySelectionResult
@@ -736,6 +809,55 @@ All events bubble and are composed.
 
 Cancel `pricing-action` to keep navigation, checkout, or authentication under
 host control.
+
+The four events are declared in the global `HTMLElementEventMap` by
+`pricing-renderer/define`, `pricing-renderer/element` and
+`pricing-renderer/react`, so `addEventListener` on any element infers the event
+type from the name, with no cast:
+
+```ts
+const renderer = document.querySelector('pricing-renderer')!;
+renderer.addEventListener('pricing-action', (event) => {
+  console.info(event.detail.actionId); // event is PricingActionEvent
+});
+```
+
+`pricing-ready`, `pricing-selection-change`, `pricing-action` and
+`pricing-diagnostic` map to `PricingReadyEvent`, `PricingSelectionChangeEvent`,
+`PricingActionEvent` and `PricingDiagnosticEvent`. Only the types change;
+`pricing-action` stays cancelable. Because the map is global, another library
+that declares an event of the same name in `HTMLElementEventMap` clashes with it.
+The review events `pricing-change-confirm` and `pricing-change-back` are not in
+the map; cast the event to `PricingChangeConfirmEvent` or
+`PricingChangeBackEvent`.
+
+### Error state
+
+When the load fails and no pricing was loaded before, the element renders its
+error state instead of the pricing. It shows, outside any closed disclosure, only
+the heading `pricing.error`, one sentence for the category of the first
+diagnostic with severity `error`, and, when `src` is set, the `pricing.retry`
+button.
+
+The category comes from the code of that first error:
+
+- Source: a code that starts with `PR_SOURCE_`, or `PR_FETCH_UNAVAILABLE`. Key
+  `pricing.errorSource`: "The pricing source could not be loaded."
+- Format: a code that starts with `PR_YAML_`, or `PR_INPUT_INVALID`. Key
+  `pricing.errorFormat`: "The pricing file is not a valid Pricing2Yaml document."
+- Version: a code that starts with `PR_VERSION_`. Key `pricing.errorVersion`:
+  "This Pricing2Yaml version is not supported."
+- Generic: any other code, or no diagnostic with severity `error`. Key
+  `pricing.errorGeneric`: "The pricing data has errors."
+
+The codes and the raw messages are not in the visible sentence. Each diagnostic
+(`code`, message and, when it has one, `path`) is listed in a closed
+`<details class="pr-diagnostics" data-pr-part="diagnostics">` whose summary is
+`pricing.errorDetails` (`Technical details`). The codes are still in the
+`pricing-diagnostic` event of the load, so hosts that read the old visible
+`code: message` list must read the event or the `details` element instead. The
+texts are catalog keys (see [Internationalization](./i18n.md)), so `locale` and
+`messages` apply to them.
 
 `pricing-ready` carries `selection` and `resolved` as required fields, equal to
 `resolvedState` read in the listener. Code that builds a `PricingReadyDetail` by
@@ -931,6 +1053,22 @@ and mutually exclusive input props:
 
 React callbacks are `onReady`, `onSelectionChange`, `onAction`, and
 `onDiagnostic`. The module contains `"use client"` and supports React 18/19.
+
+The adapter assigns every prop to the element on each render. The element
+compares `pricing`, `request` and `normalizeOptions` by content, so an inline
+`request={{ credentials: 'include' }}` does not reload on each render. It
+compares `loadPricing`, `yaml` and `src` by identity, and functions inside
+`request` (such as `headers`) too, so memoize them:
+
+```tsx
+const loadPricing = useCallback<PricingLoader>(({ url, signal }) => fetchPricing(url, signal), []);
+const request = useMemo(() => ({ headers: getHeaders }), [getHeaders]);
+
+<PricingRenderer src={url} request={request} loadPricing={loadPricing} />;
+```
+
+Call `reload()` on a ref to force a fetch. See
+[When a property starts a new load](#when-a-property-starts-a-new-load).
 
 A ref to `PricingRenderer` is the element, so it gives `applySelection` and
 `resolvedState` without wrapper code:

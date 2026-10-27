@@ -288,12 +288,7 @@ preview, and the review element confirms it:
 
 ```ts
 import type { SelectionComparison } from 'pricing-renderer';
-import type {
-  PricingActionEvent,
-  PricingChangeConfirmEvent,
-  PricingReadyEvent,
-  PricingRendererElement,
-} from 'pricing-renderer/element';
+import type { PricingChangeConfirmEvent, PricingRendererElement } from 'pricing-renderer/element';
 import { selectionFromContract } from 'pricing-renderer/space';
 import 'pricing-renderer/define';
 import 'pricing-renderer/define-change-review';
@@ -319,7 +314,7 @@ const loadContract = (): void => {
 
 renderer.yaml = current.currentPricingYaml;
 renderer.addEventListener('pricing-ready', (event) => {
-  pricingVersion = (event as PricingReadyEvent).detail.pricing.metadata.version ?? '';
+  pricingVersion = event.detail.pricing.metadata.version ?? '';
   loadContract();
 });
 
@@ -348,7 +343,7 @@ const showPreview = async (notice?: string): Promise<void> => {
 
 renderer.addEventListener('pricing-action', (event) => {
   event.preventDefault(); // the host owns the next step
-  const { actionId } = (event as PricingActionEvent).detail;
+  const { actionId } = event.detail;
   if (actionId !== 'review-change') return;
   renderer.pendingActionId = actionId;
   void showPreview().finally(() => {
