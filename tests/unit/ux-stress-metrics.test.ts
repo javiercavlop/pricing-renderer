@@ -45,6 +45,21 @@ describe('UX stress metrics', () => {
       expect(loneLastCard(3, [3, 3])).toBe(false);
     });
 
+    it('is false with several columns and a single row of one card', async () => {
+      const loneLastCard = await load();
+      expect(loneLastCard(3, [1])).toBe(false);
+    });
+
+    it('is false when a one-card row is not the last row', async () => {
+      const loneLastCard = await load();
+      expect(loneLastCard(3, [1, 3])).toBe(false);
+    });
+
+    it('is false without a grid', async () => {
+      const loneLastCard = await load();
+      expect(loneLastCard(0, [1, 1])).toBe(false);
+    });
+
     it('is false for empty input', async () => {
       const loneLastCard = await load();
       expect(loneLastCard(3, [])).toBe(false);
