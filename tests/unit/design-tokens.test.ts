@@ -127,7 +127,7 @@ const single = rules.filter((rule) => rule.selectors.length === 1);
 
 // The values of a property in every renderer rule that lists the selector.
 function valuesAt(selector: string, property: string): string[] {
-  return withSelector(selector, rendererRules).flatMap((rule) => values(rule, property));
+  return withSelector(selector, rules).flatMap((rule) => values(rule, property));
 }
 
 describe('optional design tokens (phase 1a)', () => {
@@ -167,13 +167,15 @@ describe('optional design tokens (phase 1a)', () => {
   });
 
   // [utest->req~font-family-tokens~1]
-  it('sets the root font-family from --pr-font-family after font: inherit', () => {
-    const rootRule = only(root, single);
-    const names = rootRule.declarations.map(([name]) => name);
-    expect(names).toContain('font');
-    expect(values(rootRule, 'font')).toEqual(['inherit']);
-    expect(values(rootRule, 'font-family')).toEqual(['var(--pr-font-family)']);
-    expect(names.indexOf('font-family')).toBeGreaterThan(names.indexOf('font'));
+  it('sets the font-family of both roots from --pr-font-family after font: inherit', () => {
+    for (const selector of [root, 'pricing-change-review']) {
+      const rootRule = only(selector, single);
+      const names = rootRule.declarations.map(([name]) => name);
+      expect(names, `${selector} declarations`).toContain('font');
+      expect(values(rootRule, 'font')).toEqual(['inherit']);
+      expect(values(rootRule, 'font-family')).toEqual(['var(--pr-font-family)']);
+      expect(names.indexOf('font-family')).toBeGreaterThan(names.indexOf('font'));
+    }
   });
 
   // [utest->req~font-family-tokens~1]
@@ -188,15 +190,15 @@ describe('optional design tokens (phase 1a)', () => {
     for (const site of sites) {
       expect(valuesAt(site, 'font-family'), `font-family of ${site}`).toEqual([display]);
     }
-    const all = rendererRules.flatMap((rule) => values(rule, 'font-family'));
+    const all = rules.flatMap((rule) => values(rule, 'font-family'));
     expect(new Set(all)).toEqual(new Set([display, 'var(--pr-font-family)']));
     expect(all.some((value) => /inherit/.test(value))).toBe(false);
   });
 
   // [utest->req~font-weight-tokens~1]
-  it('has no bare numeric font-weight in the renderer rules', () => {
-    const weights = rendererRules.flatMap((rule) => values(rule, 'font-weight'));
-    expect(weights.length).toBeGreaterThan(20);
+  it('has no bare numeric font-weight in any rule of base.css', () => {
+    const weights = rules.flatMap((rule) => values(rule, 'font-weight'));
+    expect(weights).toHaveLength(37);
     expect(weights.filter((value) => /^\d+$/.test(value))).toEqual([]);
   });
 
@@ -213,7 +215,7 @@ describe('optional design tokens (phase 1a)', () => {
       800: 'heavy',
       900: 'heavy',
     };
-    const weights = rendererRules.flatMap((rule) => values(rule, 'font-weight'));
+    const weights = rules.flatMap((rule) => values(rule, 'font-weight'));
     const used = new Set<string>();
     const fallbacks: Record<string, number> = {};
     for (const weight of weights) {
@@ -225,28 +227,33 @@ describe('optional design tokens (phase 1a)', () => {
       fallbacks[match[2]] = (fallbacks[match[2]] ?? 0) + 1;
     }
     expect([...used].sort()).toEqual(['bold', 'heavy', 'medium', 'regular']);
-    // The literals of the stylesheet before the tokens (400 once, 500 once, 650 three times, 700
-    // four times, 750 eleven times, 780, 790, 800 twice, 900), plus the two headings that took the
-    // UA bold and now get 700.
+    // The literals of the stylesheet before the tokens, renderer and review rules together (400
+    // twice, 500 once, 650 five times, 700 five times, 750 twelve times, 780 once, 790 twice, 800
+    // twice, 900 once), plus the six heading rules that took the UA bold and now get 700 (section
+    // h3, plan h4, add-on h4, dialog h3, review h2 and review section h3).
     expect(fallbacks).toEqual({
-      '400': 1,
+      '400': 2,
       '500': 1,
-      '650': 3,
-      '700': 6,
-      '750': 11,
+      '650': 5,
+      '700': 11,
+      '750': 12,
       '780': 1,
-      '790': 1,
+      '790': 2,
       '800': 2,
       '900': 1,
     });
   });
 
   // [utest->req~font-weight-tokens~1]
-  it('gives the section h3 and the plan h4 an explicit bold weight', () => {
+  it('gives the six heading rules that took the user-agent bold an explicit bold weight', () => {
     const bold = 'var(--pr-font-weight-bold, 700)';
     for (const site of [
       `${root} :where(.pr-section__heading, .pr-configurator, .pr-metadata) h3`,
       `${root} .pr-plan-card__top h4`,
+      `${root} .pr-addon-card h4`,
+      `${root} .pr-dialog h3`,
+      'pricing-change-review .pr-cr-header h2',
+      "pricing-change-review [data-pr-part='change-review'] > section > h3",
     ]) {
       expect(valuesAt(site, 'font-weight'), `font-weight of ${site}`).toEqual([bold]);
     }
@@ -258,6 +265,10 @@ describe('optional design tokens (phase 1a)', () => {
     const review = only('pricing-change-review', single);
     expect(values(renderer, 'line-height')).toEqual(['var(--pr-line-height, 1.5)']);
     expect(values(review, 'line-height')).toEqual(['var(--pr-line-height, 1.5)']);
+    for (const rule of [renderer, review]) {
+      const names = rule.declarations.map(([name]) => name);
+      expect(names.indexOf('line-height')).toBeGreaterThan(names.indexOf('font'));
+    }
   });
 
   // [utest->req~sticky-top-token~1]
