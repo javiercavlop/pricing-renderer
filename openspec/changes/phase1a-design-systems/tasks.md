@@ -11,7 +11,8 @@ Rules for every slice:
 - Every requirement id is traced: `[impl->req~…~1]` in code or CSS comments, `[utest->req~…~1]` in
   tests. JSON files hold no tags; their requirements need `utest` only.
 - No feature flag: every addition is a new token, attribute, prop or file that is unset or unused by
-  default. The `.dark` selector is the only change visible without host action (CRP-B).
+  default. The `.dark` selector applies only with `theme="auto"` (CRP-B, option (b)), so no existing
+  host changes.
 - No release: one `minor` changeset per implementation slice.
 
 Checks (the planner registers them; names are the commands):
@@ -45,14 +46,13 @@ Checks (the planner registers them; names are the commands):
     hold already; their tests are green from the start and guard the behaviour.
 - [ ] T3 Theme-file tests.
   - Files: `tests/unit/host-dark-class.test.ts`, `tests/unit/tokens-shadcn.test.ts`,
-    `tests/unit/theme-minimal.test.ts`, `tests/browser/host-dark-class.spec.ts` (with screenshot
-    attachments at 1440 and 375 for CRP-B), `tests/browser/tokens-shadcn.spec.ts`,
+    `tests/unit/theme-minimal.test.ts`, `tests/browser/host-dark-class.spec.ts`,
+    `tests/browser/tokens-shadcn.spec.ts`,
     `tests/browser/theme-minimal.spec.ts` (all new).
   - Requirements: the eight `theme-files` ids.
   - Checks: `unit` red before, `lint`, `format`.
-- [ ] T4 Density tests (after CRP-C).
-  - Files: `tests/unit/density.test.ts` (new), `tests/browser/density.spec.ts` (new, with screenshot
-    attachments at 1440 and 375 for CRP-C).
+- [ ] T4 Density tests.
+  - Files: `tests/unit/density.test.ts` (new), `tests/browser/density.spec.ts` (new).
   - Requirements: the four `density` ids.
   - Checks: `unit` red before, `lint`, `format`.
 - [ ] T5 Docs and demo tests.
@@ -72,16 +72,17 @@ Checks (the planner registers them; names are the commands):
   - Files: `src/element/renderers.ts`, `src/react/index.ts`, `.changeset/state-attributes.md`,
     `.changeset/react-style-prop.md`.
   - Checks: `typecheck`, `lint`, `unit`, `format`, `browser`, `package`.
-- [ ] I3 Theme files (after T3; `.dark` after CRP-B, the overlay and minimal theme after CRP-A).
+- [ ] I3 Theme files (after T3 and CRP-A).
   - Files: `src/styles/theme.css`, `src/styles/tokens-shadcn.css` (new),
     `src/styles/theme-minimal.css` (new), `package.json` (the two exports only),
-    `.changeset/host-dark-class.md` ("visual change for hosts with a `.dark` ancestor"),
+    `.changeset/host-dark-class.md` (`.dark` applies only with `theme="auto"`; no visual change for
+    existing hosts),
     `.changeset/tokens-shadcn.md`, `.changeset/theme-minimal.md`.
   - Order inside the slice: `.dark` in `theme.css` first (the overlay's dark mode and the minimal
     theme's selector lists follow it), then `tokens-shadcn.css`, then `theme-minimal.css`. Split
-    into I3a/I3b/I3c if the diff exceeds 300 lines or CRP-B is still open.
+    into I3a/I3b/I3c if the diff exceeds 300 lines.
   - Checks: `typecheck`, `lint`, `unit`, `format`, `browser`, `package`.
-- [ ] I4 Density (after CRP-C, T4, I1 and I2).
+- [ ] I4 Density (after T4, I1 and I2).
   - Files: `src/element/pricing-renderer-element.ts`, `src/react/index.ts`, `src/styles/base.css`,
     `custom-elements.json`, `.changeset/density.md` (says compact changes spacing tokens only and the
     element writes no default `density` attribute).

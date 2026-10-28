@@ -189,15 +189,15 @@ the classes (`pr-*` and `is-*` classes are not a public contract, `docs/theming.
     /* … the mapping of req~tokens-shadcn-mapping~1 … */
   }
 
-  .dark pricing-renderer[data-pr-root],
-  .dark pricing-change-review {
+  .dark pricing-renderer[data-pr-root][theme='auto'],
+  .dark pricing-change-review[theme='auto'] {
     color-scheme: dark;
   }
 }
 ```
 
 Mapping on `pricing-renderer[data-pr-root], pricing-change-review` (with `color-scheme: light`;
-`color-scheme: dark` under `.dark`):
+`color-scheme: dark` under `.dark` with `theme="auto"`):
 
 - `--pr-color-accent`: `var(--primary)`
 - `--pr-color-on-accent`: `var(--primary-foreground)`
@@ -218,9 +218,10 @@ The order statement comes first (comments may precede it), so `shadcn` follows `
 the import order. The overlay wins over `theme.css` in every mode, works with `styles.css`, and
 keeps `theme.css` values for the tokens shadcn has no variable for (`success`, `warning`,
 `warning-surface`, `overlay`, shadows). Their dark values come from `theme.css` under `.dark`, so
-the overlay's dark mode depends on `req~host-dark-class~1`. With the overlay, the colour mode
-follows the host's `.dark` class (shadcn's convention); the element's `theme` attribute still
-switches the unmapped tokens only.
+the overlay's dark mode depends on `req~host-dark-class~2`. With the overlay and `theme="auto"`, the
+colour mode follows the host's `.dark` class (shadcn's convention; `auto` also follows the system
+dark scheme when the class is absent). With `theme="light"` or `theme="dark"` a `.dark` ancestor
+changes nothing (`req~tokens-shadcn-overlay~2`).
 
 shadcn values are used as full colours (shadcn for Tailwind v4). shadcn for Tailwind v3 (bare HSL
 channels) is out of scope: the guide shows a host rule such as
@@ -233,7 +234,7 @@ unmapped tokens); a mapping inside `theme.css` (changes every host).
 ## D9: `theme-minimal.css` replaces `theme.css`
 
 Used with `base.css` instead of `styles.css`. Same layer, same rules in the same order, same
-selector lists (including `.dark`, so it merges after `req~host-dark-class~1`) and the same
+selector lists (including `.dark`, so it merges after `req~host-dark-class~2`) and the same
 property set, so the parsing pattern of the contrast test in `tests/unit/addon-marker.test.ts`
 applies. Values: neutral grays (R = G = B) for text, surfaces, accent, link, focus and overlay;
 `currentColor` borders; every shadow `none`; success and warning keep a hue, because they carry
@@ -256,7 +257,7 @@ Compact overrides only spacing tokens, so compact is a spacing-only mode. Font-s
 changed by compact. Decision: deferred, to keep compact a spacing-only mode; a later change may add
 type sizes with its own owner decision.
 
-Compact values (**proposed**, CRP-C, subject to the owner):
+Compact values (accepted by the owner, CRP-C):
 
 Each line gives the comfortable value of `theme.css`, then the proposed compact value:
 
@@ -268,7 +269,6 @@ Each line gives the comfortable value of `theme.css`, then the proposed compact 
 - `--pr-space-section`: `clamp(3rem, 8cqi, 6rem)`, compact `clamp(2rem, 5cqi, 4rem)`
 - `--pr-shell-padding`: `clamp(1rem, 4cqi, 3rem)`, compact `clamp(0.75rem, 3cqi, 2rem)`
 
-If CRP-C changes a value, `req~density-compact-tokens~1` gets revision 2 and its tags follow.
 Rejected: the earlier name `plan-density` (`visual-review-spectra/report.md`), because the attribute
 tightens the whole renderer; compact rules in `theme.css` (a replacement theme would lose them).
 
@@ -334,8 +334,10 @@ renderer and utilities still win.
 
 - R1. Weight or font tokens declared by a theme collapse today's weights. Mitigation: D2, the unit
   test that no theme file declares them, the visual baselines.
-- R2. `.dark` is a generic class name: a host with an unrelated `.dark` wrapper turns the renderer
-  dark. CRP-B with screenshots.
+- R2. `.dark` is a generic class name: a host with an unrelated `.dark` wrapper and `theme="auto"`
+  turns the renderer dark. Mitigated by CRP-B option (b): only `theme="auto"` reacts, so no existing
+  host with the default or an explicit theme changes; a host with `auto` and an unrelated `.dark`
+  uses `theme="light"` (guide).
 - R3. The overlay depends on its order statement. The unit test asserts it is the first
   statement, the browser spec imports the overlay in both orders, and the guide says how to wrap
   imports in `layer(x)`.
@@ -343,7 +345,7 @@ renderer and utilities still win.
   transparent. Out of scope; the guide shows the `hsl(var(--x))` mapping.
 - R5. The `plan-grid-columns.test.ts` helper could weaken that guard. The expected values stay and
   the helper rejects other variable names; the reviewer checks it.
-- R6. No browser in the lab: visual proof and CRP screenshots come from CI artifacts.
+- R6. No browser in the lab: visual proof comes from CI artifacts.
 - R7. The Tailwind facts rest on medium-confidence lookups; `host-reset.spec.ts` proves the failure
   and the fix before the guide is published.
 - R8. The element writes no default `density` attribute, so existing host selectors such as
@@ -353,7 +355,7 @@ renderer and utilities still win.
 ## Migration
 
 Additive. No expand or contract steps. One changeset per implementation slice, all `minor`. The
-`.dark` changeset says "visual change for hosts that already have a `.dark` ancestor". No release.
+`.dark` changeset says it applies only with `theme="auto"`. No release.
 
 ## Owner decisions
 
@@ -364,17 +366,16 @@ with screenshots. Visual defaults do not change otherwise.
   display-font scope, `data-featured`, `data-available` (add-on cards only) and `data-kind`, the
   React `style` type, the exports `./tokens-shadcn.css` and `./theme-minimal.css`, and the D8
   mapping. Recommendation: accept as specified.
-- **CRP-B, `.dark` ancestor (visual change for existing hosts)**: (a) `.dark` forces dark always,
-  exactly like `[data-theme='dark']` today, including over `theme="light"` because `theme`
-  reflects a default; or (b) `.dark` only with `theme="auto"`, which changes no existing host but
-  ignores `.dark` on the default element. This change specifies (a) (`req~host-dark-class~1`), for
-  consistency with `[data-theme='dark']` and the shadcn convention. If the owner picks (b), the
-  requirement gets revision 2 with the selectors `.dark pricing-renderer[data-pr-root][theme='auto']`
-  and `.dark pricing-change-review[theme='auto']`. Screenshots at 1440 and 375 from the CI run of the
-  host-dark-class spec.
-- **CRP-C, density**: whether the attribute is wanted and the compact values of D10 (proposed,
-  subject to the owner; spacing tokens only). Screenshots at
-  1440 and 375 from the CI run of the density spec.
+- **CRP-B, `.dark` ancestor**: decided by the owner: option (b), `.dark` only with
+  `theme="auto"` (`req~host-dark-class~2`, `req~tokens-shadcn-overlay~2`), with the selectors
+  `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']`.
+  No existing host changes: with `theme="light"` (default) or an explicit `theme="dark"` a `.dark`
+  ancestor changes nothing, and `[data-theme='dark']` ancestors behave as before. Rejected, option
+  (a): `.dark` forces dark always, like `[data-theme='dark']`, including over `theme="light"`
+  because `theme` reflects a default. It was rejected because it changes every existing host that has
+  an unrelated `.dark` ancestor, which the owner rule does not allow without a visual change CRP.
+- **CRP-C, density**: accepted unchanged by the owner: the attribute and the compact values of D10
+  (spacing tokens only).
 
 ## Assumptions
 

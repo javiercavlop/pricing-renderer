@@ -222,8 +222,9 @@ It reads these tokens: `--pr-color-text`, `--pr-color-muted`,
 here.
 
 Color modes follow the renderer: `theme="light"` (default), `theme="dark"`,
-`theme="auto"` (the system color scheme), and an ancestor `[data-theme="dark"]` or
-`.dark`.
+`theme="auto"` (the system color scheme, and an ancestor `.dark`), and an ancestor
+`[data-theme="dark"]`. A `.dark` ancestor darkens the renderer only with
+`theme="auto"`.
 
 Stable `data-pr-part` values:
 
@@ -305,8 +306,10 @@ below `product-overrides`:
 
 Set `theme="light"`, `theme="dark"`, or `theme="auto"`. The default theme also
 responds to an ancestor `[data-theme="dark"]` and, with the same tokens, to an
-ancestor `.dark`. The `.dark` rule follows the host class: it is a visual change
-for a host that has an unrelated `.dark` ancestor. Every custom theme should test:
+ancestor `.dark` when the element has `theme="auto"`. With `theme="light"` or an
+explicit `theme="dark"` a `.dark` ancestor changes nothing. For a host that uses the
+`.dark` class, set `theme="auto"` (it also follows the system dark scheme). See
+[Dark mode](design-systems.md#dark-mode). Every custom theme should test:
 
 - WCAG AA contrast for text, controls, borders, and selected states.
 - `forced-colors: active`.

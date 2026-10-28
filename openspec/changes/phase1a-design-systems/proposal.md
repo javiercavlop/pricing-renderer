@@ -1,8 +1,9 @@
 # Proposal: fit the renderer into any design system (phase 1a)
 
-Change `phase1a-design-systems`. Status: draft. It waits for three owner decisions (design.md, "Owner
-decisions"): CRP-A for the public API additions, CRP-B for the host `.dark` class and CRP-C for
-density. Base: `develop` at `9cf7e21` (phase 0 and phase 2 merged).
+Change `phase1a-design-systems`. Status: draft. Owner decisions (design.md, "Owner decisions"):
+CRP-A for the public API additions, CRP-B for the host `.dark` class (decided: option (b), `.dark`
+only with `theme="auto"`) and CRP-C for density (accepted unchanged). Base: `develop` at `9cf7e21`
+(phase 0 and phase 2 merged).
 
 ## Why
 
@@ -36,7 +37,7 @@ Today a host product that uses Tailwind, CSS Modules or shadcn must:
 - **state-attributes**: `data-featured` on plan cards, `data-available` on add-on cards and
   `data-kind` on plan CTAs, next to the existing `data-current` and `data-selected` hooks.
 - **react-style-prop**: `style` (with `--*` custom properties) and `className` on `PricingRenderer`.
-- **theme-files**: `.dark` on an ancestor switches the default theme to dark; new exports
+- **theme-files**: `.dark` on an ancestor darkens an element with `theme="auto"`; new exports
   `pricing-renderer/tokens-shadcn.css` (an overlay that maps shadcn variables) and
   `pricing-renderer/theme-minimal.css` (a flat, neutral replacement for `theme.css`).
 - **density**: `density="comfortable|compact"` attribute, property and React prop; compact tightens
@@ -51,9 +52,9 @@ Each part has its own consumer, file set and owner decision, and each can merge 
 1. **design-tokens** changes only `src/styles/base.css` and must keep every visual baseline.
 2. **state-attributes** changes only the rendered markup (`src/element/renderers.ts`).
 3. **react-style-prop** changes only the React adapter types.
-4. **theme-files** adds or changes theme style sheets and package exports; the `.dark` part is a
-   visual change for some existing hosts (CRP-B).
-5. **density** is a new attribute across element, React, manifest and CSS, and waits for CRP-C.
+4. **theme-files** adds or changes theme style sheets and package exports; the `.dark` part applies
+   only with `theme="auto"` (CRP-B, option (b)), so no existing host changes.
+5. **density** is a new attribute across element, React, manifest and CSS (CRP-C accepted).
 6. **docs** describes the others and holds the proofs that are not tied to one code file (the
    Tailwind v3 host reset spec, the demo page).
 
@@ -69,8 +70,8 @@ Each part has its own consumer, file set and owner decision, and each can merge 
   `package.json` (two exports), `examples/vanilla` (a second page), docs and `.changeset`.
 - Public API (additive, CRP-A): twelve tokens, three data attributes, the `density` attribute,
   property and React prop, the React `style` prop type, two CSS subpath exports.
-- Visual defaults: unchanged with `styles.css`, except for hosts that already have a `.dark`
-  ancestor (CRP-B). The responsive visual tests run against the committed baselines.
+- Visual defaults: unchanged for every existing host with `styles.css`. The responsive visual tests
+  run against the committed baselines.
 - Risks: design.md, "Risks".
 
 ## Out of scope

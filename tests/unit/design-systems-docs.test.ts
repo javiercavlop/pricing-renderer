@@ -132,6 +132,12 @@ describe('docs/design-systems.md', () => {
     expect(section(guide(), 'Density')).toMatch(/no density attribute/);
   });
 
+  it('dark mode section says a .dark ancestor applies with theme="auto"', () => {
+    const text = squash(section(guide(), 'Dark mode'));
+    expect(text).toMatch(/`\.dark` ancestor, only when the element has `theme="auto"`/);
+    expect(text).toMatch(/`theme="light"`.*a `\.dark` ancestor changes nothing/);
+  });
+
   it('never sets a font family token to inherit', () => {
     expect(guide()).not.toMatch(/--pr-font-family(-display)?\s*:\s*inherit/);
   });

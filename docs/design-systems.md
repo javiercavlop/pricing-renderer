@@ -178,9 +178,11 @@ shadcn/ui theme (`--primary`, `--primary-foreground`, `--foreground`,
 The file uses the layer `pricing-renderer.shadcn`, declared after
 `pricing-renderer.theme`, so it wins over `theme.css` in either import order.
 Tokens that shadcn has no variable for (success, warning, warning surface,
-overlay and shadows) keep the values of `theme.css`. Dark mode follows the host
-`.dark` class, as in shadcn. If you wrap an import in `layer(x)`, wrap every
-renderer file the same way.
+overlay and shadows) keep the values of `theme.css`. For a host that switches
+dark mode with the `.dark` class, as shadcn and Tailwind do, set `theme="auto"`
+on the element so the class darkens it (`auto` also follows the system dark
+scheme when the class is absent). See [Dark mode](#dark-mode). If you wrap an
+import in `layer(x)`, wrap every renderer file the same way.
 
 The overlay expects the shadcn v4 variables, which hold complete colors such as
 `oklch(...)`. If your shadcn setup is v3, its variables are HSL channels, so
@@ -237,16 +239,25 @@ None of these is declared by `theme.css`; the previous values are the fallbacks.
 The renderer can be dark in four ways:
 
 - `theme="dark"` on the element (or the `theme` prop);
-- `theme="auto"`, which follows the system color scheme;
+- `theme="auto"`, which follows the system color scheme and also a `.dark`
+  ancestor;
 - a `[data-theme='dark']` ancestor;
-- a `.dark` ancestor.
+- a `.dark` ancestor, only when the element has `theme="auto"`.
 
 The `.dark` ancestor uses the same tokens as `[data-theme='dark']`. It follows the
-host class, which is the shadcn and Tailwind convention. This is a visual change
-for hosts that have an unrelated `.dark` ancestor: the renderer now turns dark
-there too. If that is not wanted, restate the light tokens on the renderer
-elements under that ancestor, with an unlayered rule (a rule on the ancestor
-itself does nothing):
+host class, which is the shadcn and Tailwind convention, but only for
+`theme="auto"`. With `theme="light"` (the default) or an explicit `theme="dark"` a
+`.dark` ancestor changes nothing, so existing hosts look the same. A
+`[data-theme='dark']` ancestor works as before.
+
+For a shadcn or Tailwind class-strategy host, set `theme="auto"`. Note that `auto`
+also follows the system dark scheme when the `.dark` class is absent.
+
+If a host has an unrelated `.dark` wrapper and uses `theme="auto"`, the simplest
+fix is to use `theme="light"` instead. For the rare case that needs `auto` and an
+unrelated `.dark` together, restate the light tokens on the renderer elements
+under that ancestor, with an unlayered rule (a rule on the ancestor itself does
+nothing):
 
 ```css
 .dark pricing-renderer,
@@ -276,9 +287,9 @@ The snippet restates the light values of the first rule of `theme.css`. With
 instead (its `.dark` selectors are the same).
 
 The opt-out rule is unlayered, so it beats every layered theme rule. Under a
-`.dark` ancestor it therefore also cancels `theme="dark"`, `theme="auto"` under a
-dark system color scheme and a nearer `[data-theme='dark']` ancestor. A host that
-uses `theme="auto"` would lose system dark mode there.
+`.dark` ancestor it therefore also cancels the system dark scheme for
+`theme="auto"`, `theme="dark"` and a nearer `[data-theme='dark']` ancestor. A host
+that uses this rule loses dark mode under that ancestor.
 
 With `tokens-shadcn.css`, colors come from the shadcn variables, so they change
 with the host theme.
