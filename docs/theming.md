@@ -62,8 +62,34 @@ Token groups:
   `--pr-shadow-lg`.
 - Motion: `--pr-motion-fast`.
 
-The host font is inherited. Set `font-family` on the element when a pricing-only
-typeface is required.
+Optional tokens. None is declared by `theme.css`; the default is the fallback
+written in `base.css`, so nothing changes until you set one:
+
+- Fonts: `--pr-font-family` (unset: the host font is inherited) and
+  `--pr-font-family-display` (hero title, section and plan headings, price amount;
+  default `--pr-font-family`).
+- Weights: `--pr-font-weight-regular` (400), `--pr-font-weight-medium` (500, 650),
+  `--pr-font-weight-bold` (700, 750, 780, 790) and `--pr-font-weight-heavy` (800,
+  900). A weight token sets every weight of its group to one value.
+- Text: `--pr-line-height` (1.5).
+- Sticky offset: `--pr-sticky-top` (`0px`). It offsets the comparison toolbar and,
+  from 840px, the add-on summary.
+- Comparison table: `--pr-table-max-height` (`80dvh`) and `--pr-table-min-width`
+  (`720px`).
+- Dialog: `--pr-z-dialog` (`1000`), the z-index of the dialog backdrop.
+- Plan grid: `--pr-plan-columns` (unset: the columns follow the plan count and the
+  container width). When set, it replaces the `grid-template-columns` of the plan
+  grid in every band.
+
+The container breakpoints (600, 840, 1040, 1200 and 1280px) are fixed.
+
+The host font is inherited. Set `--pr-font-family` when a pricing-only typeface is
+required. For Tailwind, CSS Modules, shadcn/ui and density, see
+[Design systems](./design-systems.md).
+
+Plan cards, add-on cards and plan calls to action also expose state attributes
+(`data-current`, `data-selected`, `data-featured`, `data-available`, `data-kind`);
+see [State attributes](./design-systems.md#state-attributes).
 
 ## Stable part hooks
 
@@ -187,7 +213,8 @@ It reads these tokens: `--pr-color-text`, `--pr-color-muted`,
 here.
 
 Color modes follow the renderer: `theme="light"` (default), `theme="dark"`,
-`theme="auto"` (the system color scheme), and an ancestor `[data-theme="dark"]`.
+`theme="auto"` (the system color scheme), and an ancestor `[data-theme="dark"]` or
+`.dark`.
 
 Stable `data-pr-part` values:
 
@@ -268,7 +295,9 @@ stylesheet, with its own layers, inside that layer, below `product-overrides`:
 ## Color modes
 
 Set `theme="light"`, `theme="dark"`, or `theme="auto"`. The default theme also
-responds to an ancestor `[data-theme="dark"]`. Every custom theme should test:
+responds to an ancestor `[data-theme="dark"]` and, with the same tokens, to an
+ancestor `.dark`. The `.dark` rule follows the host class: it is a visual change
+for a host that has an unrelated `.dark` ancestor. Every custom theme should test:
 
 - WCAG AA contrast for text, controls, borders, and selected states.
 - `forced-colors: active`.

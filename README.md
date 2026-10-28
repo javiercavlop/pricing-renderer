@@ -464,6 +464,7 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)
 - [Theming](./docs/theming.md)
+- [Design systems](./docs/design-systems.md)
 - [Internationalization](./docs/i18n.md)
 - [Pricing2Yaml compatibility](./docs/pricing2yaml-compatibility.md)
 - [Contributing](./CONTRIBUTING.md)
