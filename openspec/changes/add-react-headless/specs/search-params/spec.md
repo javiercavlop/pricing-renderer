@@ -242,9 +242,9 @@ Needs: impl, utest
 
 ### Requirement: Long unknown ids are cut in diagnostics
 
-`req~search-params-diagnostic-id-length~1`
-IF an entry names an unknown plan, billing period or add-on id longer than 64 characters, THEN `selectionFromSearchParams` SHALL put only the first 64 characters of that id in the `message` and `path` of its diagnostic.
-The whole id is still matched against the pricing; only the diagnostic text is cut, which amends the `applySelectionInput` result of `req~search-params-read~1` and `req~search-params-unknown-ids~1`.
+`req~search-params-diagnostic-id-length~2`
+IF an entry names an unknown plan, billing period or add-on id longer than 64 UTF-16 code units, THEN `selectionFromSearchParams` SHALL cut that id in the `message` and `path` of its diagnostic to its first 64 code units, or 63 when the 64th is a high surrogate.
+The whole id is matched against the pricing first; only the diagnostic is cut, amending `req~search-params-read~1` and `req~search-params-unknown-ids~1`.
 
 Needs: impl, utest
 
@@ -255,6 +255,20 @@ Needs: impl, utest
 - **THEN** the diagnostic codes are `PR_SELECTION_UNKNOWN_PLAN` and `PR_SELECTION_UNKNOWN_ADDON`, in that order
 - **AND** the plan diagnostic's `message` contains `'x'.repeat(64)` and does not contain `'x'.repeat(65)`
 - **AND** the add-on diagnostic's `path` is `'selection.addOns.' + 'y'.repeat(64)` and its `message` does not contain `'y'.repeat(65)`
+
+#### Scenario: Sixty-three characters and an emoji
+
+- **GIVEN** the acme fixture and the entries `[['addon', 'z'.repeat(63) + '😀tail'], ['addon', 'w'.repeat(64) + '😀']]`, the 64th code unit of the first id being the high surrogate `\uD83D`
+- **WHEN** `selectionFromSearchParams(acme, entries)` is called
+- **THEN** the diagnostic codes are `PR_SELECTION_UNKNOWN_ADDON` and `PR_SELECTION_UNKNOWN_ADDON`, with the paths `'selection.addOns.' + 'z'.repeat(63)` and `'selection.addOns.' + 'w'.repeat(64)`
+- **AND** neither diagnostic's `message` or `path` contains `'\uD83D'`
+
+#### Scenario: Long id matched in full
+
+- **GIVEN** the acme fixture normalized with two more add-ons, `'a'.repeat(64)` and `'b'.repeat(70)`, each `{ price: 1 }`, and the entries `[['plan', 'growth'], ['addon', 'a'.repeat(64) + 'c'], ['addon', 'b'.repeat(70)]]`
+- **WHEN** `selectionFromSearchParams(pricing, entries)` is called
+- **THEN** `selection.addOns` deeply equals `{ ['b'.repeat(70)]: { selected: true, quantity: 1 } }`
+- **AND** the only diagnostic has the code `PR_SELECTION_UNKNOWN_ADDON` and the path `'selection.addOns.' + 'a'.repeat(64)`, the cut text of the unknown 65-character id, which is not matched to the add-on `'a'.repeat(64)`
 
 ### Requirement: Unknown ids in search parameters
 

@@ -196,6 +196,18 @@ Needs: impl, utest
 - **WHEN** it stabilizes a view model whose `resolved.planPrices.starter` has kind `error`
 - **THEN** the returned `resolved.planPrices.starter` deeply equals the `amount` price above
 
+#### Scenario: Add-on price kept
+
+- **GIVEN** a stabilizer that stabilized a view model whose `resolved.addOnPrices.prioritySuccess` is `{ kind: 'amount', amount: 20, baseAmount: 25, billingMultiplier: 0.8, quantity: 1 }`, the price of the acme fixture with 5 seats, billing `yearly`
+- **WHEN** it stabilizes a view model whose `resolved.addOnPrices.prioritySuccess` is `{ kind: 'error', message: 'Expression could not be resolved.', quantity: 1 }`
+- **THEN** the returned `resolved.addOnPrices.prioritySuccess` deeply equals the `amount` price above
+
+#### Scenario: Add-on label price not replaced
+
+- **GIVEN** a stabilizer that stabilized a view model whose `resolved.addOnPrices.compliance` is `{ kind: 'amount', amount: 30, baseAmount: 30, billingMultiplier: 1, quantity: 1 }`
+- **WHEN** it stabilizes a view model whose `resolved.addOnPrices.compliance` is `{ kind: 'label', label: 'Contact sales', quantity: 1 }`, the price of the acme fixture, and whose breakdown has the `compliance` line `{ kind: 'addOn', id: 'compliance', name: 'Compliance', quantity: 1, billingMultiplier: 1, requiresQuote: true, label: 'Contact sales' }`
+- **THEN** the returned `resolved.addOnPrices.compliance` deeply equals the `label` price and the returned `compliance` line deeply equals the given line
+
 ### Requirement: Every stabilize call records valid prices
 
 `req~price-stabilizer-records~1`
@@ -218,9 +230,15 @@ Needs: impl, utest
 
 #### Scenario: Plan line takes the kept factors
 
-- **GIVEN** the stabilizer of the scenario "Plan price kept" and a view model whose breakdown plan line is `starter` with `amount` undefined
+- **GIVEN** the stabilizer of the scenario "Plan price kept" and a view model whose `resolved.planPrices.starter` is `{ kind: 'error', message: 'Expression could not be resolved.', quantity: 1 }` and whose breakdown plan line is `starter` with `amount` undefined
 - **WHEN** it is stabilized
 - **THEN** the plan line has `quantity: 1`, `unitAmount: 20`, `billingMultiplier: 1`, `amount: 20` and `requiresQuote: false`
+
+#### Scenario: Add-on line takes the kept factors
+
+- **GIVEN** the stabilizer of the scenario "Add-on price kept" and a view model whose `resolved.addOnPrices.prioritySuccess` is `{ kind: 'error', message: 'Expression could not be resolved.', quantity: 1 }` and whose `breakdown.addOns` is `[{ kind: 'addOn', id: 'prioritySuccess', name: 'Priority Success', quantity: 1, billingMultiplier: 0.8, requiresQuote: true }]`
+- **WHEN** it is stabilized
+- **THEN** the returned `breakdown.addOns` deeply equals `[{ kind: 'addOn', id: 'prioritySuccess', name: 'Priority Success', quantity: 1, unitAmount: 25, billingMultiplier: 0.8, amount: 20, requiresQuote: false }]`, with no `label` key
 
 ### Requirement: Subtotal folded from the stabilized lines
 
@@ -234,6 +252,18 @@ Needs: impl, utest
 - **GIVEN** a stabilized breakdown with a kept plan line of amount 20 and one add-on line of amount 5
 - **WHEN** `stabilize` returns
 - **THEN** `resolved.subtotal` and `resolved.breakdown.subtotal` are both 25
+
+#### Scenario: Missing plan line
+
+- **GIVEN** a new stabilizer and a view model whose `resolved.breakdown` has no `plan` line and the add-on lines of `extraStorage` with `amount` 5 and of `compliance` with `amount` undefined
+- **WHEN** it is stabilized
+- **THEN** `resolved.subtotal` and `resolved.breakdown.subtotal` are both 5
+
+#### Scenario: Plan line with no amount
+
+- **GIVEN** a new stabilizer, which holds no price, and a view model whose `resolved.planPrices.growth` is `{ kind: 'error', message: 'Expression could not be resolved.', quantity: 1 }`, whose breakdown plan line is `growth` with `amount` undefined and `requiresQuote` `true`, and whose only add-on line is `extraStorage` with `amount` 5
+- **WHEN** it is stabilized
+- **THEN** the returned `resolved.planPrices.growth` has kind `error`, the plan line keeps `amount` undefined and `requiresQuote` `true`, and `resolved.subtotal` and `resolved.breakdown.subtotal` are both 5
 
 ### Requirement: Reset forgets the kept prices
 

@@ -103,8 +103,8 @@ Needs: impl, utest
 
 ### Requirement: Unknown section tokens
 
-`req~hide-sections-unknown~1`
-IF the attribute `hide-sections` or the property `hideSections` holds a value that is not a `PricingSectionName`, THEN the element SHALL ignore that value, the attribute converter keeping only the known tokens in their order.
+`req~hide-sections-unknown~2`
+IF the attribute `hide-sections` or the property `hideSections` holds a value that is not a `PricingSectionName`, or the property holds a value that is not an array, THEN the element SHALL ignore that value, a property value that is not an array counting as `undefined` and the attribute converter keeping only the known tokens in their order.
 
 Needs: impl, utest
 
@@ -119,6 +119,12 @@ Needs: impl, utest
 - **GIVEN** a new element
 - **WHEN** the host sets `hideSections` to `['plans', 'footer']` from untyped code and the next update completes
 - **THEN** no `[data-pr-part="plans"]` exists and the other seven section parts exist
+
+#### Scenario: Property that is not an array
+
+- **GIVEN** a new element
+- **WHEN** the host sets `hideSections`, from untyped code, to `null`, then to `'hero'`, then to `1`, then to `{ 0: 'hero', length: 1 }`, each time followed by a completed update
+- **THEN** after each update each of the eight section parts of "Section parts" exists once, and no error is thrown or logged
 
 ### Requirement: React prop and manifest for hidden sections
 
