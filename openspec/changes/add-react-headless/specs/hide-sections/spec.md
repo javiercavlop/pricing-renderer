@@ -9,7 +9,7 @@ Needs: impl, utest
 
 #### Scenario: Attribute to property
 
-- **GIVEN** a new element: a `<pricing-renderer>` given `pricing` Acme (`tests/fixtures/acme-pricing.yml` normalized, presentation title `Simple pricing that scales with you`, with billing periods, variables, features and add-ons), `locale: 'en-US'`, `mode: 'catalog'` and the properties of the scenario, appended to `document.body`; every scenario of this capability uses "a new element" in this sense
+- **GIVEN** a new element: a `<pricing-renderer>` given `pricing` Acme (`tests/fixtures/acme-pricing.yml` normalized, presentation title `Simple pricing that scales with you`, with billing periods, variables, features and add-ons), `locale: 'en-US'`, `mode: 'catalog'` and the properties of the scenario, appended to `document.body` in a browser test; a unit test instead builds it in node without a document, runs its `reload()` with `requestUpdate` and `dispatchEvent` stubbed, and reads parts and text from the flattened `render()` output; every scenario of this capability uses "a new element" in this sense
 - **WHEN** the host calls `element.setAttribute('hide-sections', ' hero  addOns ')`
 - **THEN** `element.hideSections` is `['hero', 'addOns']`
 
@@ -18,6 +18,19 @@ Needs: impl, utest
 - **GIVEN** a new element without `hideSections`
 - **WHEN** it is ready
 - **THEN** each of the eight section parts of "Section parts" exists once
+
+### Requirement: Hide sections attribute converter
+
+`req~hide-sections-attribute-converter~1`
+The module `src/element/pricing-renderer-element.ts` SHALL export `hideSectionsConverter`, the converter of the `hide-sections` attribute, whose `fromAttribute(value)` returns `undefined` for `null` and otherwise the tokens of `value` separated by ASCII whitespace that are a `PricingSectionName`, in their order.
+
+Needs: impl, utest
+
+#### Scenario: Tokens to names
+
+- **GIVEN** `hideSectionsConverter` imported in node from `src/element/pricing-renderer-element.ts`
+- **WHEN** a unit test calls `fromAttribute` with `' hero  addOns '`, `'hero footer Plans addons'`, `'\tsummary\nplans'`, `''` and `null`
+- **THEN** the results are `['hero', 'addOns']`, `['hero']`, `['summary', 'plans']`, `[]` and `undefined`
 
 ### Requirement: Hidden sections render nothing
 
@@ -53,7 +66,7 @@ Needs: impl, utest
 
 #### Scenario: All sections hidden
 
-- **GIVEN** a new element with the attribute `hide-sections` `'hero metadata billing variables plans comparison addOns summary'`
+- **GIVEN** a new element with `hideSections` `['hero', 'metadata', 'billing', 'variables', 'plans', 'comparison', 'addOns', 'summary']`
 - **WHEN** it is ready
 - **THEN** `section.pr-shell` exists and none of the eight section parts exists
 
@@ -69,6 +82,12 @@ Needs: impl, utest
 WHILE `hideSections` includes `'hero'`, the element SHALL render inside `section.pr-shell` an `h2` with the class `pr-sr-only`, the id that the shell's `aria-labelledby` references and the text the hero title would show.
 
 Needs: impl, utest
+
+#### Scenario: Hidden title markup
+
+- **GIVEN** a `<pricing-renderer>` built in node without a document, with `pricing` Acme, `locale: 'en-US'`, `mode: 'catalog'`, a ready state and `hideSections` `['hero']`
+- **WHEN** a unit test flattens the template that `render()` returns
+- **THEN** the markup holds no `data-pr-part="hero"`, and one `h2` with the class `pr-sr-only`, the text `Simple pricing that scales with you` and an `id` equal to the `aria-labelledby` value of `section.pr-shell`
 
 #### Scenario: Hero hidden
 
@@ -104,13 +123,13 @@ Needs: impl, utest
 ### Requirement: React prop and manifest for hidden sections
 
 `req~hide-sections-react-manifest~1`
-The package SHALL export the type `PricingSectionName` and expose `hideSections` as an optional `readonly PricingSectionName[]` prop of `PricingRendererSharedProps` and as a field with the attribute `hide-sections` in the `PricingRendererElement` declaration of `custom-elements.json`.
+The package SHALL export the type `PricingSectionName` from the entries `pricing-renderer/element` and `pricing-renderer/react` and expose `hideSections` as an optional `readonly PricingSectionName[]` prop of `PricingRendererSharedProps` and as a field with the attribute `hide-sections` in the `PricingRendererElement` declaration of `custom-elements.json`.
 
 Needs: impl, utest
 
 #### Scenario: Prop type and manifest entry
 
-- **GIVEN** a snippet with `<PricingRenderer yaml={source} hideSections={['hero', 'comparison']} />`, a second snippet with `hideSections={['footer']}`, and `custom-elements.json` parsed as JSON
+- **GIVEN** a snippet that imports `PricingSectionName` from `src/react/index.ts` and, as `ElementSectionName`, from `src/element/index.ts`, declares `const names: readonly PricingSectionName[] = ['hero'] satisfies readonly ElementSectionName[]` and renders `<PricingRenderer yaml={source} hideSections={['hero', 'comparison']} />`, a second snippet with `hideSections={['footer']}`, and `custom-elements.json` parsed as JSON
 - **WHEN** a unit test type-checks both snippets and reads the `PricingRendererElement` declaration
 - **THEN** the first snippet has no error and the second has error TS2322
 - **AND** a member has `kind: 'field'` and `name: 'hideSections'`, and an attribute has `name: 'hide-sections'` and `fieldName: 'hideSections'`

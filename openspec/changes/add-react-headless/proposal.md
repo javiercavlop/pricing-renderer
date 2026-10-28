@@ -1,13 +1,13 @@
 # Proposal: React headless and composition (Phase 3)
 
 Change `add-react-headless`. Status: the owner accepted every recommendation of CRP-P3-A, CRP-P3-B,
-CRP-P3-C and CRP-P3-D (`docs/agent-work/phase3-react-headless/plan.md`, section 3). Planner intake:
-`docs/agent-work/phase3-react-headless/intake.md`; handoff: `handoff.md` in the same folder. Base
-`88f5141`; every `file:line` below is at that base.
+CRP-P3-C and CRP-P3-D (`docs/agent-work/phase3-react-headless/phase-plan.md`, section 3). Planner
+intake: `docs/agent-work/phase3-react-headless/intake.md`; handoff: `handoff.md` in the same folder.
+Base `88f5141`; every `file:line` below is at that base.
 
-This change has two spec parts. Part 1 (slice P3-S1) writes `selection-logic`, `search-params`,
-`react-hooks` and `react-provider`. Part 2 (slice P3-S2) writes `composition` and `hide-sections`
-in the same change. This proposal, design.md and tasks.md cover both parts.
+This change has two spec parts, both written and delivered in one spec PR. Part 1 (slice P3-S1)
+writes `selection-logic`, `search-params`, `react-hooks` and `react-provider`. Part 2 (slice P3-S2)
+writes `composition` and `hide-sections`. This proposal, design.md and tasks.md cover both parts.
 
 ## Why
 
@@ -66,8 +66,9 @@ Each one has its own entry point, consumer and risk, and can be built and accept
 ## Impact
 
 - Capabilities, all ADDED (no living spec exists under `openspec/specs/`):
-  - part 1, this slice: `selection-logic`, `search-params`, `react-hooks`, `react-provider`;
-  - part 2, slice P3-S2: `composition`, `hide-sections`.
+  - part 1, slice P3-S1: `selection-logic`, `search-params`, `react-hooks`, `react-provider`;
+  - part 2, slice P3-S2: `composition`, `hide-sections`;
+  - both parts are in the same spec PR (size waiver in tasks.md, "Rules for every slice").
 - Superseded requirement: `req~apply-input-internal~1`
   (`docs/agent-work/delivera-2-load-current-contract/spec.md:62-64`), replaced by
   `req~apply-input-exported~1`; its test at `tests/unit/apply-selection.test.ts:69-73` is flipped
@@ -77,14 +78,17 @@ Each one has its own entry point, consumer and risk, and can be built and accept
   (`pricing-renderer-element.ts`, `events.ts`, `renderers.ts`), `src/react` (new `headless.ts`,
   `provider.ts`, `use-pricing-source.ts`, `selection-store.ts`, `use-pricing-selection.ts`,
   `use-renderer-state.ts`, `slots.ts`; `index.ts`), `package.json` (export `./react/headless` and
-  the `package:check` entry list), `custom-elements.json`, `examples/react`, `examples/next`, docs,
-  one changeset per code slice.
+  the `package:check` entry list), `custom-elements.json`, `examples/react`, `examples/next`, a
+  React harness page in `examples/vanilla` for the browser tests, docs, one changeset per code slice
+  (exceptions in tasks.md).
 - Public API, all additive: the functions and types above, one subpath, one provider, three hooks,
   element properties `slots` and `hideSections` with the attribute `hide-sections`, the method
   `triggerPlanAction`, the event `pricing-slots-change`, new parts, new React props.
 - Dependencies: no new peer dependency (`createPortal` comes from `react-dom`, already an optional
   peer, `package.json:82-93`). CRP-P3-D (a): `react-router` in the private React example only,
-  which changes `pnpm-lock.yaml`.
+  which changes `pnpm-lock.yaml`. P3-12b adds `react` and `react-dom`, already root dev
+  dependencies, as dev dependencies of the private vanilla demo (an importer entry of the lockfile,
+  no new package).
 - Behaviour for existing hosts: none. Without the provider, the new subpath, `slots` or
   `hideSections`, the element and the wrapper behave as in 0.1.0.
 - Risks: design.md, "Risks".
@@ -92,8 +96,9 @@ Each one has its own entry point, consumer and risk, and can be built and accept
 ## Out of scope
 
 - A DOM test environment (CRP-P3-D (b)); a followup if review finds the hooks under-tested.
-- A React 18 type or build check in CI (followup, plan section 7).
-- A browser harness for the React example (followup, plan section 7).
+- A React 18 type or build check in CI (followup, phase-plan.md section 7).
+- A browser harness for the React example app (followup, phase-plan.md section 7). The render-prop
+  portals get a smaller harness page in the vanilla demo instead (tasks.md, P3-12b).
 - Server rendering of the element, and render props on the server: the custom nodes appear after
   hydration (design.md, D9).
 - A release: every slice adds a pending changeset only (`ROADMAP.md:137-148`).

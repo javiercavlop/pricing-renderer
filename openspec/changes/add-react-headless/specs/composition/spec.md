@@ -9,7 +9,7 @@ Needs: impl, utest
 
 #### Scenario: Attribute is not read
 
-- **GIVEN** a new element: a `<pricing-renderer>` given `pricing` Acme (`tests/fixtures/acme-pricing.yml` normalized, plans `starter`, `growth`, `enterprise`), `locale: 'en-US'` and the properties of the scenario, appended to `document.body`; every scenario of this capability uses "a new element" in this sense
+- **GIVEN** a new element: a `<pricing-renderer>` given `pricing` Acme (`tests/fixtures/acme-pricing.yml` normalized, plans `starter`, `growth`, `enterprise`), `locale: 'en-US'` and the properties of the scenario, appended to `document.body` in a browser test; a unit test instead builds it in node without a document, runs its `reload()` with `requestUpdate` stubbed and `dispatchEvent` replaced by a recorder, and reads markup, child nodes and parts from the flattened `render()` output; every scenario of this capability uses "a new element" in this sense
 - **WHEN** the host calls `element.setAttribute('slots', 'plan-cta')` and the next update completes
 - **THEN** `element.slots` is `undefined` and no `[data-pr-slot]` exists
 
@@ -80,13 +80,19 @@ Needs: impl, utest
 ### Requirement: Loading slot node
 
 `req~slot-loading~1`
-WHILE `slots` includes `'loading'` and the element is loading, the element SHALL render, inside the loading shell and in place of `.pr-skeleton`, one `div` with `data-pr-slot="loading"`, `data-pr-part="loading-slot"` and no child node rendered by the element.
+WHILE `slots` includes `'loading'` and the element renders its loading state (before the first load and while a load runs), the element SHALL render, inside the loading shell and in place of `.pr-skeleton`, one `div` with `data-pr-slot="loading"`, `data-pr-part="loading-slot"` and no child node rendered by the element.
 
 Needs: impl, utest
 
+#### Scenario: Before the first load
+
+- **GIVEN** a `<pricing-renderer>` built without a document, with `slots` `['loading']`, `pricing` Acme and no load started yet
+- **WHEN** a unit test flattens the template that `render()` returns
+- **THEN** the markup holds one `section.pr-shell.pr-shell--loading` with its `h2.pr-sr-only` heading, one `data-pr-slot="loading"` node with no child markup and no `pr-skeleton`
+
 #### Scenario: Slow source
 
-- **GIVEN** a new element with `slots` `['loading']` and, in place of `pricing`, a `src` whose response the test holds back
+- **GIVEN** a new element with `slots` `['loading']` and, in place of `pricing`, the `src` `https://pricing.example.test/acme.yml`, whose response the test holds back
 - **WHEN** the first update completes
 - **THEN** `.pr-shell--loading` keeps its `aria-labelledby` heading, holds one `[data-pr-slot="loading"]` and no `.pr-skeleton`
 
@@ -172,7 +178,7 @@ Needs: impl, utest
 ### Requirement: Summary slot node context attributes
 
 `req~slot-summary-actions-context~1`
-WHILE `slots` includes `'summary-actions'`, the element SHALL set on the summary slot node the attribute `data-relation` (the relation of the selection in effect to the current plan, absent without one) and `data-pending` (`'true'` while `pendingActionId` is set, otherwise absent).
+WHILE `slots` includes `'summary-actions'`, the element SHALL set on the summary slot node `data-relation` (the relation of the selection in effect to the current plan, absent without one) and `data-pending` (`'true'` while any `pendingActionId` is set, whatever action it names, else absent; like the built-in summary action's `aria-disabled`, not its own-id `data-pending`).
 
 Needs: impl, utest
 
@@ -180,7 +186,7 @@ Needs: impl, utest
 
 - **GIVEN** a new element with `slots` `['summary-actions']`, `currentSelection` `{ planId: 'starter' }` and `pendingActionId` `'start-growth'`, ready
 - **WHEN** the user checks the Growth radio
-- **THEN** the summary slot node has `data-relation` `upgrade` and `data-pending` `true`
+- **THEN** the summary slot node has `data-relation` `upgrade` and `data-pending` `true`, although `'start-growth'` is a plan action id and not the summary action's id `review-change`
 
 #### Scenario: Neither
 
@@ -217,15 +223,21 @@ Needs: impl, utest
 ### Requirement: React render props request slots
 
 `req~react-render-props-slots~1`
-The `PricingRenderer` wrapper SHALL set the element's `slots` to the names of the render props given as functions, in the order `plan-cta` (`renderPlanCta`), `summary-actions` (`renderSummaryActions`), `loading` (`renderLoading`), `error` (`renderError`), or to `undefined` when none is given.
+The `PricingRenderer` wrapper SHALL set the element's `slots` to the names of the render props given as functions, in the order `plan-cta` (`renderPlanCta`), `summary-actions` (`renderSummaryActions`), `loading` (`renderLoading`), `error` (`renderError`), or to `undefined` when none is given, as computed by the function `slotNamesOf(props)` that `src/react/slots.ts` exports.
 
 Needs: impl, utest
 
+#### Scenario: Slot names from props
+
+- **GIVEN** the function `slotNamesOf` imported from `src/react/slots.ts` in node
+- **WHEN** a unit test calls it with `{ renderError: fn, renderPlanCta: fn }`, with `{ renderLoading: 'x', renderSummaryActions: undefined }` and with `{}`
+- **THEN** the results are `['plan-cta', 'error']`, `undefined` and `undefined`
+
 #### Scenario: Two props, then none
 
-- **GIVEN** `<PricingRenderer yaml={source} renderError={fn} renderPlanCta={fn} />`
-- **WHEN** it renders on the client, then renders again without the two props
-- **THEN** the element's `slots` is `['plan-cta', 'error']`, then `undefined`
+- **GIVEN** the `@lit/react` mock of `tests/unit/react-style-prop.test.ts`, which records the props the underlying component receives
+- **WHEN** a unit test renders `<PricingRenderer yaml={source} renderError={fn} renderPlanCta={fn} />` with `renderToString`, then `<PricingRenderer yaml={source} />`
+- **THEN** the recorded `slots` are `['plan-cta', 'error']`, then `undefined`
 
 ### Requirement: React portals into slot nodes
 
@@ -239,6 +251,121 @@ Needs: impl, utest
 - **GIVEN** `<PricingRenderer pricing={acme} locale="en-US" renderPlanCta={(c) => <a href={'/buy/' + c.planId}>Buy {c.planName}</a>} />` mounted on the client, with `acme` the normalized Acme
 - **WHEN** the element is ready
 - **THEN** the Growth card's `[data-pr-slot="plan-cta"]` holds one link with `href` `/buy/growth`, and the other cards hold only their own plan's link
+
+### Requirement: Slot events of other elements
+
+`req~react-slots-event-target~1`
+IF a `pricing-slots-change` event reaches the `PricingRenderer` wrapper with a `target` other than the wrapper's own element, THEN the wrapper SHALL ignore the event, which the function `acceptedSlotNodes(element, event)` exported by `src/react/slots.ts` reports by returning `undefined`.
+
+Needs: impl, utest
+
+#### Scenario: Event of a nested element
+
+- **GIVEN** in node, a stand-in element `own` whose `contains` returns `true` for every node, a stand-in plan slot node `n` (`isConnected` `true`, `dataset` `{ prSlot: 'plan-cta', planId: 'growth' }`) and an event `{ target: other, detail: { nodes: [n] } }` with `other` a second stand-in element
+- **WHEN** a unit test calls `acceptedSlotNodes(own, event)`
+- **THEN** the result is `undefined`
+
+#### Scenario: Own event
+
+- **GIVEN** the stand-ins of "Event of a nested element"
+- **WHEN** a unit test calls `acceptedSlotNodes(own, { target: own, detail: { nodes: [n] } })`
+- **THEN** the result is `[n]`
+
+### Requirement: Slot node filter
+
+`req~react-slot-node-accept~1`
+IF a node of `detail.nodes` is not contained in the wrapper's element, is not connected, has a `data-pr-slot` that is not a `PricingSlotName`, or is a `plan-cta` node with an empty or missing `data-plan-id`, THEN the `PricingRenderer` wrapper SHALL render no portal into it, which `acceptedSlotNodes(element, event)` reports by leaving it out of its result, the other nodes keeping their order.
+
+Needs: impl, utest
+
+#### Scenario: Foreign, detached and unknown nodes
+
+- **GIVEN** in node, the stand-in nodes `a` (`dataset` `{ prSlot: 'plan-cta', planId: 'starter' }`), `b` (the same dataset), `c` (the same dataset, `isConnected` `false`), `d` (`dataset` `{ prSlot: 'footer' }`), `e` (`dataset` `{ prSlot: 'plan-cta' }`) and `f` (`dataset` `{ prSlot: 'summary-actions' }`), every node but `c` with `isConnected` `true`, and a stand-in element `own` whose `contains` returns `true` for every node but `b`
+- **WHEN** a unit test calls `acceptedSlotNodes(own, { target: own, detail: { nodes: [b, a, c, d, e, f] } })`
+- **THEN** the result is `[a, f]`
+
+### Requirement: Plan context read from the slot node
+
+`req~react-plan-context-reader~1`
+The function `planCtaContextOf(element, node)` of `src/react/slots.ts` SHALL read the context from the node (D13): `planId`, `planName`, `label`, `href` from `data-plan-id`, `data-plan-name`, `data-label`, a safe `data-href`; `selected`, `current`, `pending` as whether `data-selected`, `data-current`, `data-pending` are `'true'`; `relation` from a `data-relation` that is a `SelectionRelation`, else `undefined`.
+
+Needs: impl, utest
+
+#### Scenario: Values of a plan node
+
+- **GIVEN** in node, a stand-in plan node with `dataset` `{ prSlot: 'plan-cta', planId: 'growth', planName: 'Growth', label: 'Upgrade to Growth', href: 'https://example.com/signup?plan=growth', relation: 'upgrade', selected: 'false', pending: 'true' }`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)` with a stand-in element
+- **THEN** the context has `planId` `'growth'`, `planName` `'Growth'`, `label` `'Upgrade to Growth'`, `href` `'https://example.com/signup?plan=growth'`, `relation` `'upgrade'`, `selected` `false`, `current` `false` and `pending` `true`
+
+#### Scenario: Unknown relation
+
+- **GIVEN** the node of "Values of a plan node" with `relation` `'sideways'` and no `pending`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)`
+- **THEN** the context has `relation` `undefined` and `pending` `false`
+
+### Requirement: Unsafe link in a plan slot node
+
+`req~react-slot-href-safe~1`
+IF a plan slot node has no `data-href` or `isSafeLink` of the `pricing-renderer` core returns `false` for its `data-href`, THEN `planCtaContextOf(element, node)` SHALL return the context with `href` `undefined`.
+
+Needs: impl, utest
+
+#### Scenario: Script link
+
+- **GIVEN** in node, the node of "Values of a plan node" with `href` `'javascript:alert(1)'`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)`
+- **THEN** the context has `href` `undefined` and `label` `'Upgrade to Growth'`
+
+#### Scenario: No link
+
+- **GIVEN** the node of "Values of a plan node" without `href`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)`
+- **THEN** the context has `href` `undefined`
+
+### Requirement: Plan context trigger
+
+`req~react-plan-context-trigger~1`
+WHEN the host calls the `trigger()` of a context that `planCtaContextOf(element, node)` returned, the `trigger()` function SHALL call `element.triggerPlanAction` once with the node's `data-plan-id` and return that call's result.
+
+Needs: impl, utest
+
+#### Scenario: Trigger forwards to the element
+
+- **GIVEN** in node, a stand-in element whose `triggerPlanAction` records its argument and returns `false`, and a plan node with `dataset` `{ prSlot: 'plan-cta', planId: 'enterprise' }`
+- **WHEN** a unit test calls `planCtaContextOf(element, node).trigger()`
+- **THEN** the call returns `false` and the recorded arguments are `['enterprise']`
+
+### Requirement: Summary context read from the slot node
+
+`req~react-summary-context-reader~1`
+The function `summaryActionsContextOf(node, state)` exported by `src/react/slots.ts` SHALL return `{ selection, resolved, relation, pending }`: `selection` and `resolved` of `state` (the `resolvedState` the wrapper read when the event fired), `relation` from `data-relation` as for a plan node, and `pending` as whether `data-pending` is `'true'`, that is whether any `pendingActionId` is set.
+
+Needs: impl, utest
+
+#### Scenario: Summary node values
+
+- **GIVEN** in node, a stand-in summary node with `dataset` `{ prSlot: 'summary-actions', relation: 'upgrade', pending: 'true' }` and `state` `{ selection: s, resolved: r }`
+- **WHEN** a unit test calls `summaryActionsContextOf(node, state)`
+- **THEN** the context is `{ selection: s, resolved: r, relation: 'upgrade', pending: true }`, with `s` and `r` the same objects
+
+#### Scenario: No current plan
+
+- **GIVEN** a stand-in summary node with `dataset` `{ prSlot: 'summary-actions' }` and the same `state`
+- **WHEN** a unit test calls `summaryActionsContextOf(node, state)`
+- **THEN** the context has `relation` `undefined` and `pending` `false`
+
+### Requirement: Error context reload
+
+`req~react-error-context-reload~1`
+The function `errorContextOf(element, diagnostics)` exported by `src/react/slots.ts` SHALL return `{ diagnostics, reload }`, with `diagnostics` the given array and `reload` a function that calls `element.reload()` once per call.
+
+Needs: impl, utest
+
+#### Scenario: Reload calls the element
+
+- **GIVEN** in node, a stand-in element whose `reload` counts its calls and a diagnostics array `d` with one `PR_SOURCE_HTTP_ERROR` error
+- **WHEN** a unit test calls `errorContextOf(element, d)` and then its `reload()` twice
+- **THEN** the context's `diagnostics` is `d` and the count is 2
 
 ### Requirement: Plan CTA render context
 
@@ -269,7 +396,7 @@ Needs: impl, utest
 ### Requirement: Summary, loading and error render props
 
 `req~react-other-slot-contexts~1`
-The `PricingRenderer` wrapper SHALL call `renderSummaryActions` with `{ selection, resolved, relation, pending }` (the selection in effect, its resolved prices, its relation to the current plan or `undefined`, and whether `pendingActionId` is set), `renderLoading` with no argument and `renderError` with `{ diagnostics, reload }` (the failed load's diagnostics and a function calling the element's `reload()`).
+The `PricingRenderer` wrapper SHALL call `renderSummaryActions` with `{ selection, resolved, relation, pending }` (the selection in effect, its resolved prices, its relation to the current plan or `undefined`, and whether any `pendingActionId` is set, whichever action it names), `renderLoading` with no argument and `renderError` with `{ diagnostics, reload }` (the failed load's diagnostics and a function calling the element's `reload()`).
 
 Needs: impl, utest
 
@@ -281,9 +408,9 @@ Needs: impl, utest
 
 #### Scenario: Error with retry
 
-- **GIVEN** `<PricingRenderer src="/missing.yml" renderError={(e) => <button onClick={e.reload}>{e.diagnostics.length} errors</button>} />` mounted on the client and a server answering 404
+- **GIVEN** `<PricingRenderer src="https://pricing.example.test/missing.yml" renderError={(e) => <button onClick={e.reload}>{e.diagnostics.length} errors</button>} />` mounted on the client, and a test route that answers every request for that absolute URL with status 404 and the header `access-control-allow-origin: *` and counts the requests (a relative `src` fails with `PR_SOURCE_URL_INVALID` before any request, `src/yaml/load.ts:131`)
 - **WHEN** the load fails and the user clicks the button
-- **THEN** the button text starts with a number of at least 1 and the element requests `/missing.yml` a second time
+- **THEN** the button text starts with a number of at least 1 and the route has counted 2 requests
 
 ### Requirement: Render props wait for the client
 
@@ -301,12 +428,12 @@ Needs: impl, utest
 ### Requirement: Composition types and manifest
 
 `req~composition-types-manifest~1`
-The package SHALL export the types `PricingSlotName`, `PricingSlotsChangeDetail`, `PricingPlanCtaContext`, `PricingSummaryActionsContext` and `PricingErrorContext`, map `pricing-slots-change` in `HTMLElementEventMap`, and list `slots`, `triggerPlanAction` and `pricing-slots-change` in the `PricingRendererElement` declaration of `custom-elements.json`.
+The package SHALL export the types `PricingSlotName` and `PricingSlotsChangeDetail` from `pricing-renderer/element` and `pricing-renderer/react`, and `PricingPlanCtaContext`, `PricingSummaryActionsContext` and `PricingErrorContext` from `pricing-renderer/react`, map `pricing-slots-change` in `HTMLElementEventMap`, and list `slots`, `triggerPlanAction` and `pricing-slots-change` in the `PricingRendererElement` entry of `custom-elements.json`.
 
 Needs: impl, utest
 
 #### Scenario: Types and manifest entries
 
-- **GIVEN** a snippet that imports the five types from `src/react/index.ts` and types `element.addEventListener('pricing-slots-change', (e) => e.detail.nodes)`, and `custom-elements.json` parsed as JSON
+- **GIVEN** a snippet that imports the five types from `src/react/index.ts`, imports `PricingSlotName` and `PricingSlotsChangeDetail` from `src/element/index.ts` under the aliases `ElementSlotName` and `ElementSlotsChangeDetail`, declares `const names: readonly ElementSlotName[] = ['plan-cta'] satisfies readonly PricingSlotName[]` and types `element.addEventListener('pricing-slots-change', (e) => { const detail: ElementSlotsChangeDetail = e.detail; return detail.nodes; })`, and `custom-elements.json` parsed as JSON
 - **WHEN** a unit test type-checks the snippet and reads the `PricingRendererElement` declaration
 - **THEN** the snippet has no error, a field `slots` has no `attribute`, a method `triggerPlanAction` returns `boolean`, and an event `pricing-slots-change` has type `CustomEvent<PricingSlotsChangeDetail>`
