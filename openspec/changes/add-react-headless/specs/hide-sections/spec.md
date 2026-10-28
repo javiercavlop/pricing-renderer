@@ -1,0 +1,110 @@
+## ADDED Requirements
+
+### Requirement: Hide sections property and attribute
+
+`req~hide-sections-property~1`
+The `<pricing-renderer>` element SHALL accept a `hideSections` property of type `readonly PricingSectionName[] | undefined`, with `PricingSectionName` being `'hero' | 'metadata' | 'billing' | 'variables' | 'plans' | 'comparison' | 'addOns' | 'summary'`, also set by the attribute `hide-sections` as a list of tokens separated by ASCII whitespace.
+
+Needs: impl, utest
+
+#### Scenario: Attribute to property
+
+- **GIVEN** a new element: a `<pricing-renderer>` given `pricing` Acme (`tests/fixtures/acme-pricing.yml` normalized, presentation title `Simple pricing that scales with you`, with billing periods, variables, features and add-ons), `locale: 'en-US'`, `mode: 'catalog'` and the properties of the scenario, appended to `document.body`; every scenario of this capability uses "a new element" in this sense
+- **WHEN** the host calls `element.setAttribute('hide-sections', ' hero  addOns ')`
+- **THEN** `element.hideSections` is `['hero', 'addOns']`
+
+#### Scenario: Not set
+
+- **GIVEN** a new element without `hideSections`
+- **WHEN** it is ready
+- **THEN** each of the eight section parts of "Hidden sections render nothing" exists once
+
+### Requirement: Hidden sections render nothing
+
+`req~hide-sections-render~1`
+WHILE `hideSections` includes a section name, the element SHALL render no markup of that section, the section parts being `hero` → `[data-pr-part="hero"]`, `metadata` → `[data-pr-part="metadata"]`, `billing` → `[data-pr-part="billing"]`, `variables` → `[data-pr-part="variables"]`, `plans` → `[data-pr-part="plans"]`, `comparison` → `[data-pr-part="comparison"]`, `addOns` → `[data-pr-part="add-ons"]` and `summary` → `[data-pr-part="summary"]`, while every section whose name it does not include renders as it does without `hideSections`, apart from the summary placement of "Summary without the add-ons section".
+
+Needs: impl, utest
+
+#### Scenario: One section at a time
+
+- **GIVEN** one new element per section name, with `hideSections` set to that name only
+- **WHEN** each is ready
+- **THEN** each element has no part of its hidden section and one of each of the seven other section parts
+
+### Requirement: Summary without the add-ons section
+
+`req~hide-sections-addons-summary~1`
+WHILE `hideSections` includes `'addOns'` and not `'summary'`, the element SHALL render the summary in the place where it renders the summary of a pricing without add-ons.
+
+Needs: impl, utest
+
+#### Scenario: Add-ons hidden, summary kept
+
+- **GIVEN** a new element with `hideSections` `['addOns']`
+- **WHEN** it is ready
+- **THEN** no `[data-pr-part="add-ons"]` and no `[data-pr-part="add-on-card"]` exist, and one `[data-pr-part="summary"]` outside every add-on layout shows the subtotal of the selection in effect
+
+#### Scenario: All sections hidden
+
+- **GIVEN** a new element with the attribute `hide-sections` `'hero metadata billing variables plans comparison addOns summary'`
+- **WHEN** it is ready
+- **THEN** `section.pr-shell` exists and none of the eight section parts exists
+
+#### Scenario: Loading and error are not sections
+
+- **GIVEN** a new element with `hideSections` set to all eight names and `yaml` `'plans: ['` in place of `pricing`
+- **WHEN** the update after the failed load completes
+- **THEN** `.pr-error` renders its heading, message and `[data-pr-part="diagnostics"]`
+
+### Requirement: Accessible name without the hero
+
+`req~hide-sections-hero-name~1`
+WHILE `hideSections` includes `'hero'`, the element SHALL render inside `section.pr-shell` an `h2` with the class `pr-sr-only`, the id that the shell's `aria-labelledby` references and the text the hero title would show.
+
+Needs: impl, utest
+
+#### Scenario: Hero hidden
+
+- **GIVEN** a new element with `hideSections` `['hero']`
+- **WHEN** it is ready
+- **THEN** `document.getElementById(shell.getAttribute('aria-labelledby'))` is an `h2.pr-sr-only` with the text `Simple pricing that scales with you`, no `[data-pr-part="hero"]` exists, and the accessible name of `section.pr-shell` is `Simple pricing that scales with you`
+
+#### Scenario: Presentation title
+
+- **GIVEN** a new element with `hideSections` `['hero']` and `presentation.title` `'Plans for teams'`
+- **WHEN** it is ready
+- **THEN** the hidden `h2` has the text `Plans for teams`
+
+### Requirement: Unknown section tokens
+
+`req~hide-sections-unknown~1`
+IF the attribute `hide-sections` or the property `hideSections` holds a value that is not a `PricingSectionName`, THEN the element SHALL ignore that value, the attribute converter keeping only the known tokens in their order.
+
+Needs: impl, utest
+
+#### Scenario: Unknown and differently cased tokens
+
+- **GIVEN** a new element
+- **WHEN** the host sets the attribute `hide-sections` to `'hero footer Plans addons'` and the next update completes
+- **THEN** `element.hideSections` is `['hero']`, no `[data-pr-part="hero"]` exists, the other seven section parts exist, and no error is thrown or logged
+
+#### Scenario: Unknown value set as a property
+
+- **GIVEN** a new element
+- **WHEN** the host sets `hideSections` to `['plans', 'footer']` from untyped code and the next update completes
+- **THEN** no `[data-pr-part="plans"]` exists and the other seven section parts exist
+
+### Requirement: React prop and manifest for hidden sections
+
+`req~hide-sections-react-manifest~1`
+The package SHALL export the type `PricingSectionName` and expose `hideSections` as an optional `readonly PricingSectionName[]` prop of `PricingRendererSharedProps` and as a field with the attribute `hide-sections` in the `PricingRendererElement` declaration of `custom-elements.json`.
+
+Needs: impl, utest
+
+#### Scenario: Prop type and manifest entry
+
+- **GIVEN** a snippet with `<PricingRenderer yaml={source} hideSections={['hero', 'comparison']} />`, a second snippet with `hideSections={['footer']}`, and `custom-elements.json` parsed as JSON
+- **WHEN** a unit test type-checks both snippets and reads the `PricingRendererElement` declaration
+- **THEN** the first snippet has no error and the second has error TS2322
+- **AND** a member has `kind: 'field'` and `name: 'hideSections'`, and an attribute has `name: 'hide-sections'` and `fieldName: 'hideSections'`
