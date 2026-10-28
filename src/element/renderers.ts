@@ -90,15 +90,21 @@ export interface RenderState {
   actions: RenderActions;
 }
 
-// [impl->req~element-instance-ids~1] ids are global in the light DOM, so every id carries the
-// instance prefix. The data part (a path, a group or add-on id) is sanitized.
+// [impl->req~element-instance-ids~2] ids are global in the light DOM, so every id carries the
+// instance prefix. The data part (a path, a group or add-on id) keeps [A-Za-z0-9]; every other
+// code point becomes _<lowercase hex>_, so distinct data never yields the same id.
 export function instanceId(
   state: Pick<RenderState, 'idPrefix'>,
   name: string,
   data?: string,
 ): string {
   const base = `${state.idPrefix ?? 'pr'}-${name}`;
-  return data === undefined ? base : `${base}-${data.replace(/[^\w-]+/g, '-')}`;
+  if (data === undefined) return base;
+  const escaped = data.replace(
+    /[^A-Za-z0-9]/gu,
+    (char) => `_${char.codePointAt(0)?.toString(16)}_`,
+  );
+  return `${base}-${escaped}`;
 }
 
 export const DEFAULT_TOOLBAR_THRESHOLD = 40;

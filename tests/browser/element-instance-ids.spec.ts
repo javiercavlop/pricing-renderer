@@ -3,7 +3,7 @@ import { openRenderer } from './helpers/spectra.js';
 
 // Two renderers on one page must not share an id, and every ARIA reference must stay inside its own
 // renderer. The unit test with the same name is tests/unit/element-instance-ids.test.ts.
-// [utest->req~element-instance-ids~1]
+// [utest->req~element-instance-ids~2]
 
 type InstanceElement = HTMLElement & {
   yaml?: string;

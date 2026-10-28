@@ -218,7 +218,7 @@ export class PricingRendererElement extends LitElement {
   // [impl->req~summary-breakdown-unique-ids~1] the element renders in light DOM, so ids are global
   private readonly _instanceNumber = ++breakdownPanelCount;
   private readonly _breakdownId = `pr-breakdown-${this._instanceNumber}`;
-  // [impl->req~element-instance-ids~1] the prefix of every other id of this instance
+  // [impl->req~element-instance-ids~2] the prefix of every other id of this instance
   private readonly _idPrefix = `pr-${this._instanceNumber}`;
 
   constructor() {
