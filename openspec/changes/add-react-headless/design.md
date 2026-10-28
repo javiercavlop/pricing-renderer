@@ -1,7 +1,8 @@
 # Design: add-react-headless
 
-Decisions come from the plan (`docs/agent-work/phase3-react-headless/plan.md`, section 3), whose
-recommendations the owner accepted for CRP-P3-A to CRP-P3-D, and from the intake facts. Line
+Decisions come from the phase plan (`docs/agent-work/phase3-react-headless/phase-plan.md`,
+section 3), whose recommendations the owner accepted for CRP-P3-A to CRP-P3-D, and from the intake
+facts. Line
 numbers are at `88f5141`. D1 to D10 belong to part 1 (P3-S1); D11 and D12 summarise part 2 and the
 examples, whose spec files P3-S2 writes; D13 records the slot context encoding.
 
@@ -79,7 +80,13 @@ moved inside:
 - A kept line carries no label (a line of a failed expression has none). The subtotal is always
   folded again.
 - The element calls `reset()` where it clears its caches today, on a successful load (`:528-529`).
-  The selection store keeps one stabilizer per pricing object.
+- Hooks: one stabilizer per hook instance. `createSelectionStore()` creates it inside the store, so
+  each `usePricingSelection` call site has its own, and the store calls `reset()` when `pricing`
+  changes by identity (`req~use-pricing-selection-pricing-change~1`). No stabilizer, view model or
+  pricing-keyed cache (`Map`, `WeakMap`, `Set`, `WeakSet`) lives at module scope in `src/react`
+  (`req~react-no-module-state~1`). Reason: a module-level cache keyed by the pricing object is shared
+  by every request of a server process, so one request's kept price would hide another request's
+  failed expression (`req~use-pricing-selection-view-model~2`).
 
 ### D4. Search params (CRP-P3-A)
 
@@ -134,6 +141,16 @@ consumer, `usePricingSource`.
   (`:405-411`) and the hook resolves them during render.
 - The abort of the previous load and the sequence number stay in the callers (`:398-401,420-422`).
 - The element's `reload()` calls it in P3-4, after P3-2.
+- Bounds (`req~load-source-request-bounds~1`): a `request.maxBytes` or `request.timeoutMs` that is
+  not a positive finite number is replaced by its default (2097152 bytes, 15000 ms;
+  `src/yaml/load.ts:6-7`) before `loadPricingFromUrl`. Today `loadPricingFromUrl` takes them as
+  given (`:139-140`), so `NaN` aborts at once and a negative size refuses every body; the element
+  gains the rule through `reload()` in P3-4.
+- What is not bounded: a `loadPricing` that returns an object (not a string) is normalized without
+  a size check (`:167-168`), and inline `pricing` and `yaml` have no limit. The host bounds them.
+- SSRF: `loadPricingSource` on a server with a `src` taken from user input fetches whatever URL it
+  gets. The host owns that risk (an allow-list or its own `loadPricing`); the reference docs
+  (P3-15b) say so.
 
 ### D6. Headless subpath (CRP-P3-B)
 
@@ -143,26 +160,120 @@ consumer, `usePricingSource`.
 are allowed only for modules that import no Lit (`current-selection.ts` imports only the core).
 `src/react/index.ts` re-exports the whole headless entry.
 
+The import-graph check of `req~react-headless-entry~1` follows runtime imports only: an
+`import type` or `export type` declaration is skipped; a declaration whose specifiers are all
+inline `type` specifiers still counts, because `verbatimModuleSyntax` keeps it as a side-effect
+import.
+
 ### D7. Hooks are thin layers over framework-free stores (CRP-P3-D (a))
 
-- Stores: a source store (`use-pricing-source.ts`), `selection-store.ts` and a renderer state store
-  (`use-renderer-state.ts`). Each has `subscribe`, `getSnapshot` and actions, and is tested in node.
-  Render-time paths are tested with `react-dom/server`; the wrapper with the `@lit/react` mock
-  (`tests/unit/react-style-prop.test.ts:7-12`). Hook scenarios that need effects are tested on the
-  store.
+- Stores: three framework-free stores, one per hook instance (created with `useState(factory)`),
+  each tested in node; the Store API below names them. Render-time paths are tested with
+  `react-dom/server`; the wrapper with `renderToString` and the `@lit/react` mock
+  (`tests/unit/react-style-prop.test.ts:7-12`). Hook paths that need an effect are tested on the
+  store or with the hook harness below.
 - Cached-snapshot rule (risk R4): every `getSnapshot` returns the same object until the store
   changes. `resolvedState` returns a fresh copy per read (`:493`), so the renderer state store never
   reads it in `getSnapshot`.
+
+#### Store API
+
+Every store has `subscribe(listener: () => void): () => void` (the returned function removes that
+listener) and `getSnapshot()`, which returns the identical object until the store's state changes;
+a change replaces the snapshot object and then calls every listener once. A method called during
+render (`setInput`) updates the snapshot without calling listeners, because the rendering
+component reads it in the same render through `useSyncExternalStore`.
+
+- `createSourceStore(): SourceStore`, exported from `src/react/use-pricing-source.ts` (not from an
+  entry).
+  - Snapshot `{ status: 'loading' | 'ready' | 'error'; pricing: NormalizedPricing | undefined; diagnostics: PricingDiagnostic[] }`.
+  - `setInput(input: { pricing?, yaml?, src? }, options: { request?, loadPricing?, normalizeOptions? })`:
+    render-time. An input equal to the held one by the compare rules below changes nothing.
+    Otherwise the store holds it and adds 1 to `inputVersion`; an inline or invalid input is
+    applied at once from `loadPricingSource`; a `src` input sets `status` `loading` and keeps the
+    last successful `pricing`. A changed input also makes the load in flight stale at once: its
+    result is ignored when it settles, also before the effect cleanup runs `stop()` (which still
+    aborts it), as the element's sequence check does (`:420`;
+    `req~use-pricing-source-stale-load~1`).
+  - `inputVersion: number`: read-only; the dependency of the hook's load effect.
+  - `start()`: effect body. Starts the `src` load of the held input unless a load of that input is
+    in flight or has settled; does nothing for an inline input.
+  - `stop()`: effect cleanup. Aborts the load in flight; its result is ignored.
+  - `reload()`: aborts the load in flight and loads the held input again (an inline input is
+    applied again).
+  - The hook: `store.setInput(...)` during render,
+    `useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)`, and an effect
+    `() => { store.start(); return () => store.stop(); }` with the dependencies
+    `[store, store.inputVersion]`; it returns `{ status, pricing, diagnostics, reload }`.
+- `createSelectionStore(): SelectionStore`, exported from `src/react/selection-store.ts` (not from
+  an entry). It creates its own `createPriceStabilizer()` (D3).
+  - `setInput(pricing: NormalizedPricing | undefined, options: SelectionStoreOptions)`:
+    render-time. `options` are the resolved options of `usePricingSelection` (instance, then
+    provider, then global, already merged by the hook): `selection`, `onSelectionChange`,
+    `defaultSelection`, `currentSelection`, `locale`, `mode`, `visibility`, `messages`,
+    `presentation`, `expressionOptions`, `variablesEnabled`. A `pricing` that differs by identity
+    from the held one, the first one included, restarts the store
+    (`req~use-pricing-selection-pricing-change~1`). The snapshot is rebuilt when `pricing`, the held
+    selection, `pending` or an option other than `onSelectionChange` differs (structural compare).
+  - Snapshot `{ selection, viewModel, resolved, pending, current }`, every field `undefined` while
+    `pricing` is undefined.
+  - Change actions: `selectPlan(planId)`, `toggleAddOn(addOnId, selected)`,
+    `setVariable(path, value)`, `setAddOnQuantity(addOnId, quantity)`,
+    `setBillingPeriod(billingPeriodId)`, `resetVariables()`; then `confirm()`, `cancel()`,
+    `apply(input): ApplySelectionInputResult | undefined`.
+  - Queries: `relationOf(planId)`, `compareWithCurrent()`.
+  - The hook returns the snapshot fields and the actions and queries, whose identities stay the
+    same for the life of the store.
+- `createRendererStateStore(): RendererStateStore`, exported from `src/react/use-renderer-state.ts`
+  (not from an entry).
+  - `attach(target: EventTarget | null)`: the same target changes nothing; another target removes
+    the listeners from the old one, adds them to the new one and sets the snapshot to `undefined`
+    (there is no separate move method: moving is `attach` of another target); `null` is `detach()`.
+  - `detach()`: removes the listeners and sets the snapshot to `undefined`.
+  - `applySelection(input)`: calls `applySelection(input)` of the attached target and returns its
+    result, `undefined` without a target (`req~renderer-state-apply~1`).
+  - Snapshot `{ pricing, selection, resolved, applySelection } | undefined`, `applySelection` being
+    the store's own method; `getServerSnapshot()` returns `undefined`.
+  - The hook: `useClientLayoutEffect(() => store.attach(ref.current))` with no dependency list, so
+    it runs on every commit, `useClientLayoutEffect(() => () => store.detach(), [store])`, and
+    `useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot)`.
+- Hook harness (for scenarios that need a hook's effect in node): `vi.mock('react')` with
+  `useState(init)` returning `[init(), () => {}]` (or `[init, ...]` for a value), `useRef(v)`
+  returning `{ current: v }`, `useMemo(f)` returning `f()`, `useCallback(f)` returning `f`,
+  `useContext(context)` returning the value the test assigns to that context object (its default
+  otherwise), `useSyncExternalStore(subscribe, getSnapshot)` recording `subscribe` and returning
+  `getSnapshot()`, and `useEffect` and `useLayoutEffect` recording their callbacks in two lists
+  that the test runs. `createContext(v)` returns a plain object holding `v`. The hook is called as
+  a plain function. The provider context is the internal export `PricingRendererContext` of
+  `src/react/provider.ts` (not re-exported by an entry).
+
+#### Hook rules
+
 - `usePricingSource`: status `'loading' | 'ready' | 'error'`. Structural compare for `pricing`,
   `request` and `normalizeOptions`, identity for `yaml`, `src` and `loadPricing`, as the element
   (`:122-130`). Any failed load, inline or `src`, keeps the last successful pricing with `ready`
   (`:564`); a `src` load in flight keeps it too, with `loading`.
-- Change members and their core step (`req~use-pricing-selection-changes~1`): `selectPlan(planId)`
-  → `planSelectionChange` with a plan intent; `toggleAddOn(addOnId, selected)` →
-  `planSelectionChange` with an add-on intent; `setVariable(path, value)` →
+- Change members and their core step (`req~use-pricing-selection-changes~1` holds the same list):
+  `selectPlan(planId)` → `planSelectionChange` with a plan intent; `toggleAddOn(addOnId, selected)`
+  → `planSelectionChange` with an add-on intent; `setVariable(path, value)` →
   `selectionWithVariable`; `setAddOnQuantity(addOnId, quantity)` → `selectionWithAddOnQuantity`;
   `setBillingPeriod(id)` → a copy with `billingPeriod`; `resetVariables()` → a copy with a copy of
   `pricing.variables`.
+- `confirm()` passes `applySelectionChange` the not reconciled `selectionInEffect` of the held
+  selection at the time of the call, as the element's `_applyAddOnChange` reads
+  `_effectiveSelection()` when the user confirms (`:834`), not the selection held when the change
+  became pending (`req~use-pricing-selection-confirm-input~1`). A controlled selection that the
+  host changed while the dialog was open is the one confirmed.
+- `apply(input)` differs from the element's `applySelection` (`:435-474`) on purpose: it calls
+  `onSelectionChange` (`req~use-pricing-selection-notify~1`) and it works in controlled mode, where
+  the store does not hold the result (`req~use-pricing-selection-controlled~1`) and the host decides.
+  The element's `applySelection` is silent and refused while `selection` is set because its host
+  already holds the result and reads it from the return value or `resolvedState`; a hooks host has
+  only `onSelectionChange` to learn about a change, and controlled mode is the usual hooks pattern
+  (a selection kept in the URL), where a refusing `apply` would be useless. A member that produces
+  a next selection calls `onSelectionChange` once, also when that selection equals the previous
+  one, as the element's `_setSelection` dispatches (`:684-707`); a change that becomes `pending`
+  calls nothing until `confirm()`.
 - `usePricingSelection(pricing, options)`: other members `viewModel`, `selection`, `resolved`,
   `pending`, `confirm`, `cancel`, `apply`, `relationOf`, `current`, `compareWithCurrent`; options `selection`,
   `onSelectionChange`, `defaultSelection`, `currentSelection`, `locale`, `mode`, `visibility`,
@@ -178,6 +289,16 @@ are allowed only for modules that import no Lit (`current-selection.ts` imports 
   `ref.current` on each commit and moves them when it changes. `useSyncExternalStore` subscribes
   in a passive effect, which can run after the element's first update has already dispatched
   `pricing-ready`; the layout effect runs before it (`req~renderer-state-early-listen~1`).
+- Client check: `src/react/use-renderer-state.ts` evaluates `typeof document !== 'undefined'` once,
+  at module load, into the module constant
+  `useClientLayoutEffect = isClient ? useLayoutEffect : useEffect`. A constant keeps the hook order
+  the same on every render of a process. The node test therefore stubs `globalThis.document`
+  (`vi.stubGlobal`) and calls `vi.resetModules()` before the dynamic `import()` of the module, and
+  removes the stub after it.
+- The end-to-end race (a real element's first `pricing-ready` reaching a hook committed in the same
+  render) needs a browser and a real React commit; node covers it only through the store and the
+  harness. It is checked in CI only, by a browser spec of P3-8 (a followup for tasks.md), not by a
+  local check.
 - The renderer state cannot see an `applySelection` call made on the element directly (silent by
   `req~apply-selection-silent~1`) or a change of a controlled `selection` prop; `applySelection` of
   the returned state refreshes the snapshot. The React guide (P3-15a) states both limits. This is a
@@ -188,7 +309,45 @@ are allowed only for modules that import no Lit (`current-selection.ts` imports 
 ### D8. Provider (CRP-P3-B)
 
 - `PricingRendererProvider` props: `config` (`Partial<PricingRendererConfig>`), `messages`,
-  `presentation`, `request`, `loadPricing`, `children`.
+  `presentation`, `request`, `requestOrigins` (`readonly string[]`, default none), `loadPricing`,
+  `children`.
+- Request and loader (`req~provider-request-loader~1`): each of `request` and `loadPricing` comes
+  from the instance when it sets it, else from the provider. An instance `request` replaces the
+  provider `request` as a whole, so the provider's `maxBytes`, `timeoutMs`, `headers` and
+  `credentials` do not apply to that instance; a host that wants them spreads the provider object
+  itself.
+- Origin rule (`req~provider-request-origin~1`): a provider sets `request` for every `src` in its
+  subtree, and `headers` often hold an `Authorization` value. So the provider `request` keeps its
+  `headers` and `credentials` only when `new URL(src).origin` is the page origin
+  (`globalThis.location.origin`) or the origin of an entry of `requestOrigins` (each entry read
+  with `new URL(entry).origin`; an entry that does not parse is ignored). On a server there is no
+  `location`, so only listed origins get them. A `src` that is not an absolute URL gets neither
+  (its load fails with `PR_SOURCE_URL_INVALID` anyway). `maxBytes` and `timeoutMs` are kept for
+  every origin. The rule applies only while the instance sets no `request`; an instance `request`
+  is used as given: the host chose it for that `src`.
+- A provider `loadPricing` also runs for every `src` in the subtree. It receives the URL as
+  `context.url` (`src/yaml/load.ts:154-163`) and the filtered request; a shared loader that adds
+  its own credentials must check `context.url` itself. The same holds for a provider
+  `request.fetch` (`src/yaml/types.ts:13`), which the origin rule keeps for every origin and which
+  is called with the URL as its first argument (`src/yaml/load.ts:182-188`): a `fetch` wrapper
+  that adds `Authorization` must check that URL. The reference docs (P3-15b) say both; no
+  requirement, because the loader and the `fetch` wrapper are host code.
+- Context value: `PricingRendererContext` (internal export of `src/react/provider.ts`) holds the
+  provider's props without `children`, that is
+  `{ config, messages, presentation, request, requestOrigins, loadPricing }` as passed, and
+  `undefined` outside a provider (its default). The provider memoizes the object on those six
+  props, so consumers re-render only when one of them changes.
+- Wrapper structure: `PricingRenderer` stays a `forwardRef` component and reads the provider with
+  `useContext` in its render function. The three existing tests that call
+  `PricingRenderer.render(props, null)` and then `rendered.type(rendered.props)`
+  (`tests/unit/react-style-prop.test.ts:75-91`, `tests/unit/density.test.ts:274-289`,
+  `tests/unit/spectra-followups-react.test.ts:71-89`) are rewritten by test-designer in P3-5 to
+  render `PricingRenderer` with `renderToString` under the same `@lit/react` mock and read the
+  recorded props; their assertions stay. A hook-free outer component was considered and is not
+  feasible: those tests need `rendered.type` to be the mocked base component, called directly
+  outside React, and only a hook (`useContext`) or a `Context.Consumer` element can read the
+  provider; a `Context.Consumer` is an object, not a callable `type`, and adds one more element
+  level before the base. (A followup asks to add the three files to P3-5 in tasks.md.)
 - Precedence: instance prop or option, then the nearest provider, then the global configuration,
   then `custom.pricingRenderer` (presentation only). The wrapper passes a provider value as an
   element prop only when the instance prop is undefined; for presentation it passes
@@ -200,7 +359,10 @@ are allowed only for modules that import no Lit (`current-selection.ts` imports 
   It writes no global (`configurePricingRenderer`, `registerMessageCatalog`), which removes the
   per-process config of the Next example (risk R5). `configurePricingRenderer` keeps working.
 - Outside a provider the hooks read `getPricingRendererConfig()` at render time; the element still
-  reads it at construction.
+  reads it at construction. The wrapper then adds none of `locale`, `pricingPath`,
+  `selectionEnabled`, `ctaEnabled`, `variablesEnabled`, `presentation`, `messages`, `request` and
+  `loadPricing` that the host did not pass (`req~provider-absent-unchanged~2`); props it derives
+  from render props (`slots`) belong to the composition capability.
 
 ### D9. SSR, React 18 and 19
 
@@ -209,7 +371,10 @@ are allowed only for modules that import no Lit (`current-selection.ts` imports 
   `Fragment`, and `useLayoutEffect` only behind a client check that falls back to `useEffect` on
   the server (React 18 warns about it in server rendering); from `react-dom`:
   `createPortal(children, container, key)`. Not allowed: `use`, ref as a prop, `useEffectEvent`,
-  `useActionState`, `useOptimistic`.
+  `useActionState`, `useOptimistic`. `req~react-hooks-common-api~1` holds the same list in its
+  text. Its scan reads runtime value uses only: a `React.<name>` in a type position, such as
+  `React.CSSProperties` (`src/react/index.ts:107`), is not an API use, and passing the namespace
+  itself (`react: React`, `src/react/index.ts:34`) is not a member access.
 - `pricing` and `yaml` resolve during render; `src` loads only in an effect, abortable and
   idempotent for the StrictMode re-run.
 - The element is not server-rendered. Portals have no target until the element renders on the
@@ -244,6 +409,11 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   `variables`, `plans`, `comparison`, `addOns`, `summary`; with `hero` hidden a visually hidden
   title keeps the shell's accessible name.
 
+### D12. Examples (CRP-P3-D (a))
+
+`react-router` is added to `examples/react` only (a lockfile change through a registered update
+check). The Next example uses `next/link`. Both use an in-memory mock backend for the review flow.
+
 ### D13. Render-prop context travels on the slot nodes
 
 - Each plan slot node carries the per-plan context as data attributes, next to `data-plan-id`
@@ -252,14 +422,30 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   - `data-href`: the safe expanded link only; absent for a button;
   - `data-relation`: absent without a current plan;
   - `data-selected`: `'true'` or `'false'`;
-  - `data-current` and `data-pending`: `'true'` or absent.
+  - `data-current` and `data-pending`: `'true'` or absent; `data-pending` means this plan's own
+    action is the pending one.
 - The summary slot node carries only `data-relation` and `data-pending`
   (`req~slot-summary-actions-context~1`).
-- Encoding as in the built-in markup: `data-selected=${String(selected)}`, `data-current` and
-  `data-pending` as `'true'` or `nothing`, `data-relation=${cta.relation ?? nothing}`
-  (`src/element/renderers.ts:368-369,384-385,427-429`; summary `:1458-1459`). The values come from
-  `planCtaView` (`src/element/cta.ts:92`, called at `renderers.ts:351`), which the built-in CTA
-  already uses, so the context and the built-in markup cannot disagree.
+- Plan slot encoding follows the built-in markup: `data-selected=${String(selected)}`,
+  `data-current` and `data-pending` as `'true'` or `nothing`,
+  `data-relation=${cta.relation ?? nothing}` (`src/element/renderers.ts:368-369,384-385,427-429`).
+  `data-label`, `data-href`, `data-relation` and `data-pending` come from the same `planCtaView`
+  result (`src/element/cta.ts:92`, called at `renderers.ts:351`) that the built-in CTA renders, and
+  `data-selected` and `data-current` from the same card state (`renderers.ts:416-417`), so for plan
+  slots the context and the built-in markup agree.
+- The summary slot does not follow the built-in summary button. There, `data-pending` means the
+  summary's own action is pending (`isPendingActionId(pendingActionId, summaryAction.actionId)`,
+  `renderers.ts:1451,1459`) and `aria-disabled` means any action is pending (`:1461`). On the
+  summary slot node, `data-pending` is `'true'` while any `pendingActionId` is set: a host that
+  renders its own summary actions has action ids the element does not know, so "its own action"
+  has no meaning there, and "any action pending" is what the host needs to disable them. Only
+  `data-relation` (`:1458`) has the built-in meaning.
+- Plan CTAs need the same "any action pending" signal: the built-in CTAs set `aria-disabled` on
+  every CTA while any action is pending (`ariaDisabled: pendingActionId !== undefined`,
+  `cta.ts:110`), and a render-prop CTA must be able to do the same. Proposed for the composition
+  capability (its owner adds the requirement; a followup of this change): the plan slot node
+  attribute `data-any-pending` (`'true'` while `pendingActionId` is set, otherwise absent) and the
+  plan context field `anyPending: boolean`.
 - In `updated()` the element dispatches `pricing-slots-change` when the set of slot nodes (identity
   and order) or any slot node's `data-*` values changed since the last dispatch
   (`req~slots-change-event~2`). `detail` stays `{ nodes }`. The wrapper rebuilds each context from
@@ -274,11 +460,6 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   So the wrapper reads them from `resolvedState` in the event handler, and the event also fires when
   a summary node is connected and the selection in effect or its resolved prices differ
   structurally from the last dispatch (`req~slots-change-event-summary~1`).
-
-### D12. Examples (CRP-P3-D (a))
-
-`react-router` is added to `examples/react` only (a lockfile change through a registered update
-check). The Next example uses `next/link`. Both use an in-memory mock backend for the review flow.
 
 ## Risks
 
