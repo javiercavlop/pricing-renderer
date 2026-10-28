@@ -75,7 +75,7 @@ function declarationsWhere(filter: (rule: Block) => boolean): Record<string, str
   return merged;
 }
 
-// [utest->req~tokens-shadcn-overlay~1]
+// [utest->req~tokens-shadcn-overlay~2]
 describe('tokens-shadcn.css overlay', () => {
   it('starts with the layer order statement', () => {
     const blocks = topLevel(readOverlay());
@@ -136,12 +136,16 @@ describe('tokens-shadcn.css mapping', () => {
     expect(declarationsWhere((rule) => !isDark(rule))['color-scheme']).toBe('light');
   });
 
-  it('sets color-scheme dark under the .dark selectors', () => {
+  it("sets color-scheme dark under the .dark selectors with theme='auto'", () => {
     const dark = overlayRules().filter(isDark);
     expect(dark.length).toBeGreaterThan(0);
     const selectors = dark.flatMap((rule) => rule.prelude.split(',').map((s) => s.trim()));
-    expect(selectors).toContain('.dark pricing-renderer[data-pr-root]');
-    expect(selectors).toContain('.dark pricing-change-review');
+    expect(selectors).toEqual([
+      ".dark pricing-renderer[data-pr-root][theme='auto']",
+      ".dark pricing-change-review[theme='auto']",
+    ]);
+    expect(selectors).not.toContain('.dark pricing-renderer[data-pr-root]');
+    expect(selectors).not.toContain('.dark pricing-change-review');
     expect(declarationsWhere(isDark)['color-scheme']).toBe('dark');
   });
 });

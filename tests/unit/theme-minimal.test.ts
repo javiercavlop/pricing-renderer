@@ -96,20 +96,31 @@ describe('theme-minimal.css tokens', () => {
     expect(minimalRules().map(summary)).toEqual(reference.map(summary));
   });
 
-  it('has the .dark selectors in the dark rule', () => {
+  it("has the .dark selectors restricted to theme='auto' in the dark rule", () => {
     const dark = minimalRules().find((rule) =>
       rule.selectors.includes("pricing-renderer[data-pr-root][theme='dark']"),
     );
     expect(dark, 'the dark rule').toBeDefined();
-    expect(dark?.selectors).toEqual(
-      expect.arrayContaining([
-        "[data-theme='dark'] pricing-renderer[data-pr-root]",
-        "pricing-change-review[theme='dark']",
-        "[data-theme='dark'] pricing-change-review",
-        '.dark pricing-renderer[data-pr-root]',
-        '.dark pricing-change-review',
-      ]),
+    expect(dark?.selectors).toEqual([
+      "pricing-renderer[data-pr-root][theme='dark']",
+      "[data-theme='dark'] pricing-renderer[data-pr-root]",
+      "pricing-change-review[theme='dark']",
+      "[data-theme='dark'] pricing-change-review",
+      ".dark pricing-renderer[data-pr-root][theme='auto']",
+      ".dark pricing-change-review[theme='auto']",
+    ]);
+    expect(dark?.selectors).not.toContain('.dark pricing-renderer[data-pr-root]');
+    expect(dark?.selectors).not.toContain('.dark pricing-change-review');
+  });
+
+  it('keeps .dark out of the auto media rule', () => {
+    const media = minimalRules().filter((rule) =>
+      rule.context.some((c) => c.startsWith('@media (prefers-color-scheme: dark)')),
     );
+    expect(media.length).toBeGreaterThan(0);
+    for (const rule of media) {
+      for (const selector of rule.selectors) expect(selector).not.toContain('.dark');
+    }
   });
 });
 

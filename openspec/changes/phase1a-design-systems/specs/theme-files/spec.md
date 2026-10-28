@@ -2,8 +2,8 @@
 
 ### Requirement: Host dark class
 
-`req~host-dark-class~1`
-The default theme `src/styles/theme.css` SHALL list `.dark pricing-renderer[data-pr-root]` and `.dark pricing-change-review` in the selector list of its dark rule, after the `[theme='dark']` selectors, so that a `.dark` ancestor applies the same token values as a `[data-theme='dark']` ancestor.
+`req~host-dark-class~2`
+The default theme `src/styles/theme.css` SHALL list `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']` in the selector list of its dark rule, after the `[theme='dark']` selectors, so that a `.dark` ancestor applies the same token values as a `[data-theme='dark']` ancestor only when the element has `theme="auto"`. The selector list SHALL NOT contain the bare `.dark pricing-renderer[data-pr-root]` or `.dark pricing-change-review`, and the `@media (prefers-color-scheme: dark)` rule SHALL NOT contain `.dark`.
 
 Needs: impl, utest
 
@@ -11,26 +11,29 @@ Needs: impl, utest
 
 - **GIVEN** the text of `src/styles/theme.css`
 - **WHEN** a unit test reads the selector list of the rule that starts with `pricing-renderer[data-pr-root][theme='dark']`
-- **THEN** it contains `[data-theme='dark'] pricing-renderer[data-pr-root]`, `.dark pricing-renderer[data-pr-root]`, `[data-theme='dark'] pricing-change-review` and `.dark pricing-change-review`
-- **AND** `.dark pricing-renderer[data-pr-root]` comes after `pricing-renderer[data-pr-root][theme='dark']`
+- **THEN** it contains `[data-theme='dark'] pricing-renderer[data-pr-root]`, `.dark pricing-renderer[data-pr-root][theme='auto']`, `[data-theme='dark'] pricing-change-review` and `.dark pricing-change-review[theme='auto']`
+- **AND** `.dark pricing-renderer[data-pr-root][theme='auto']` comes after `pricing-renderer[data-pr-root][theme='dark']`
+- **AND** it contains neither `.dark pricing-renderer[data-pr-root]` nor `.dark pricing-change-review` without the `[theme='auto']` part
 - **AND** the rule is the one sliced by the dark-theme contrast test of `tests/unit/addon-marker.test.ts`, which still passes
 
-#### Scenario: Dark under html.dark
+#### Scenario: Dark under html.dark with theme=auto
 
-- **GIVEN** the demo page with `styles.css` and the class `dark` added to `<html>`
+- **GIVEN** the demo page with `styles.css`, a light system color scheme, the element's attribute `theme="auto"` and the class `dark` added to `<html>`
 - **WHEN** the renderer is ready
 - **THEN** the `pricing-renderer` element has computed `color-scheme` `dark`, computed `--pr-color-surface` `#181820` and computed `--pr-color-accent` `#9b8cff`
+- **AND** after the class is removed the computed `--pr-color-surface` is the light value again
 
-#### Scenario: Ancestor wins over the default theme attribute
+#### Scenario: No change with an explicit theme
 
-- **GIVEN** the demo page with `<html class="dark">` and the element's attribute `theme="light"`
-- **WHEN** the renderer is ready
-- **THEN** the computed `--pr-color-surface` of the element is `#181820`, as with `<html data-theme="dark">` today
+- **GIVEN** the demo page with `<html class="dark">`
+- **WHEN** the element has `theme="light"` (the default)
+- **THEN** the computed `--pr-color-surface` is not `#181820` and the computed `color-scheme` is `light`, as without the class
+- **AND** with `theme="dark"` the computed `--pr-color-surface` stays `#181820`
 
 ### Requirement: shadcn overlay layering
 
-`req~tokens-shadcn-overlay~1`
-The style sheet `src/styles/tokens-shadcn.css` SHALL have `@layer pricing-renderer.theme, pricing-renderer.shadcn;` as its first statement and every rule inside `@layer pricing-renderer.shadcn`, declaring no `--pr-color-success`, `--pr-color-warning`, `--pr-color-warning-surface` or `--pr-color-overlay`.
+`req~tokens-shadcn-overlay~2`
+The style sheet `src/styles/tokens-shadcn.css` SHALL have `@layer pricing-renderer.theme, pricing-renderer.shadcn;` as its first statement and every rule inside `@layer pricing-renderer.shadcn`, declaring no `--pr-color-success`, `--pr-color-warning`, `--pr-color-warning-surface` or `--pr-color-overlay`. The overlay SHALL follow the host `.dark` class only for elements with `theme="auto"`: its `color-scheme: dark` rule SHALL use the selectors `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']`, never the bare `.dark pricing-renderer[data-pr-root]` or `.dark pricing-change-review`.
 
 Needs: impl, utest
 
@@ -51,20 +54,21 @@ Needs: impl, utest
 ### Requirement: shadcn token mapping
 
 `req~tokens-shadcn-mapping~1`
-The overlay `src/styles/tokens-shadcn.css` SHALL map the shadcn variables to the renderer tokens as in the table of design.md, D8, on `pricing-renderer[data-pr-root]` and `pricing-change-review` with `color-scheme: light`, and set `color-scheme: dark` on both under a `.dark` ancestor.
+The overlay `src/styles/tokens-shadcn.css` SHALL map the shadcn variables to the renderer tokens as in the table of design.md, D8, on `pricing-renderer[data-pr-root]` and `pricing-change-review` with `color-scheme: light`, and set `color-scheme: dark` on both under a `.dark` ancestor when the element has `theme="auto"`.
 
 Needs: impl, utest
 
 #### Scenario: Declarations
 
 - **GIVEN** the text of `src/styles/tokens-shadcn.css`
-- **WHEN** a unit test reads the rule for `pricing-renderer[data-pr-root], pricing-change-review` and the rule for `.dark pricing-renderer[data-pr-root], .dark pricing-change-review`
+- **WHEN** a unit test reads the rule for `pricing-renderer[data-pr-root], pricing-change-review` and the rule for `.dark pricing-renderer[data-pr-root][theme='auto'], .dark pricing-change-review[theme='auto']`
 - **THEN** the first has exactly `color-scheme: light`, `--pr-color-accent: var(--primary)`, `--pr-color-on-accent: var(--primary-foreground)`, `--pr-color-text: var(--foreground)`, `--pr-color-muted: var(--muted-foreground)`, `--pr-color-surface: var(--card)`, `--pr-color-surface-raised: var(--popover)`, `--pr-color-surface-subtle: var(--muted)`, `--pr-color-border: var(--border)`, `--pr-color-border-strong: var(--input)`, `--pr-color-focus: var(--ring)`, `--pr-color-link: var(--primary)`, `--pr-radius-lg: var(--radius)`, `--pr-radius-md: calc(var(--radius) - 2px)` and `--pr-radius-sm: calc(var(--radius) - 4px)`
 - **AND** the second has exactly `color-scheme: dark`
 
 #### Scenario: Host dark mode follows .dark
 
 - **GIVEN** a host page with `styles.css` and `tokens-shadcn.css`, `:root { --primary: oklch(0.205 0 0); }` and `.dark { --primary: oklch(0.922 0 0); }`
+- **AND** the element has `theme="auto"` under a light system color scheme
 - **WHEN** the class `dark` is added to `<html>`
 - **THEN** the background color of `button[data-pr-part='cta'][data-kind='primary']` is `oklch(0.922 0 0)`, the element's computed `color-scheme` is `dark` and its computed `--pr-color-success` is `#66d9ad`
 
@@ -84,7 +88,7 @@ Needs: utest
 ### Requirement: Minimal theme token set
 
 `req~theme-minimal-tokens~1`
-The style sheet `src/styles/theme-minimal.css` SHALL be a full replacement for `src/styles/theme.css`, in `@layer pricing-renderer.theme`, with the same rules in the same order, each with the same selector list (light, dark with the `.dark` selectors, `theme='auto'` under `@media (prefers-color-scheme: dark)`) and the same set of declared properties.
+The style sheet `src/styles/theme-minimal.css` SHALL be a full replacement for `src/styles/theme.css`, in `@layer pricing-renderer.theme`, with the same rules in the same order, each with the same selector list (light, dark with the `.dark …[theme='auto']` selectors, `theme='auto'` under `@media (prefers-color-scheme: dark)`) and the same set of declared properties.
 
 Needs: impl, utest
 

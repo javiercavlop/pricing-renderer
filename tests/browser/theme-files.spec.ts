@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openRenderer } from './helpers/spectra.js';
 
-// [utest->req~host-dark-class~1] [utest->req~tokens-shadcn-overlay~1]
+// [utest->req~host-dark-class~2] [utest->req~tokens-shadcn-overlay~2]
 // [utest->req~tokens-shadcn-mapping~1] [utest->req~theme-minimal-flat~1]
 // The theme files are read from disk and injected into the demo, so the specs do not depend on how
 // the demo imports its styles.
@@ -105,60 +105,92 @@ async function setPageTheme(page: Page, theme: string): Promise<void> {
   await setThemeAttribute(page, theme);
 }
 
+// CRP-B: a `.dark` ancestor darkens the renderer only with theme="auto". The system scheme is
+// emulated as light, so auto is light unless the class is there.
 test.describe('host .dark class', () => {
-  test('darkens the renderer and restores it when the class goes', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+  });
+
+  test('darkens a theme="auto" renderer and restores it when the class goes', async ({ page }) => {
     await openRenderer(page, viewport);
+    await clearDemoTokens(page);
+    await setThemeAttribute(page, 'auto');
     const lightSurface = await token(page, '--pr-color-surface');
     expect(lightSurface).not.toBe('#181820');
     expect(await colorScheme(page)).toBe('light');
 
     await setDarkClass(page, true);
+    await settle(page);
     expect(await token(page, '--pr-color-surface')).toBe('#181820');
+    expect(await token(page, '--pr-color-accent')).toBe('#9b8cff');
     expect(await colorScheme(page)).toBe('dark');
 
     await setDarkClass(page, false);
+    await settle(page);
     expect(await token(page, '--pr-color-surface')).toBe(lightSurface);
     expect(await colorScheme(page)).toBe('light');
   });
 
-  test('ancestor wins over theme="light" on the element', async ({ page }) => {
+  test('changes nothing with theme="light"', async ({ page }) => {
     await openRenderer(page, viewport);
     await clearDemoTokens(page);
     await setThemeAttribute(page, 'light');
-    expect(await token(page, '--pr-color-surface'), 'light before the class').not.toBe('#181820');
+    const lightSurface = await token(page, '--pr-color-surface');
+    expect(lightSurface).not.toBe('#181820');
 
     await setDarkClass(page, true);
     await settle(page);
     expect(await page.locator('pricing-renderer').getAttribute('theme')).toBe('light');
+    expect(await token(page, '--pr-color-surface')).toBe(lightSurface);
+    expect(await token(page, '--pr-color-accent')).not.toBe('#9b8cff');
+    expect(await colorScheme(page)).toBe('light');
+  });
+
+  test('keeps theme="dark" dark with and without the class', async ({ page }) => {
+    await openRenderer(page, viewport);
+    await clearDemoTokens(page);
+    await setThemeAttribute(page, 'dark');
     expect(await token(page, '--pr-color-surface')).toBe('#181820');
-    expect(await token(page, '--pr-color-accent')).toBe('#9b8cff');
+
+    await setDarkClass(page, true);
+    await settle(page);
+    expect(await token(page, '--pr-color-surface')).toBe('#181820');
+    expect(await colorScheme(page)).toBe('dark');
+
+    await setDarkClass(page, false);
+    await settle(page);
+    expect(await token(page, '--pr-color-surface')).toBe('#181820');
     expect(await colorScheme(page)).toBe('dark');
   });
 
-  // CRP-B: an unrelated `.dark` ancestor darkens the renderer even with theme="light". The
-  // screenshots are attached for review; there are no baselines.
+  // The screenshots are attached for review; there are no baselines.
   for (const width of [1440, 375]) {
-    test(`attaches screenshots under an unrelated .dark ancestor at ${width}px`, async ({
-      page,
-    }, testInfo) => {
-      await openRenderer(page, { width, height: 900 });
-      await setThemeAttribute(page, 'light');
-      for (const dark of [false, true]) {
-        await page.evaluate((dark) => {
-          const parent = (document.querySelector('pricing-renderer') as HTMLElement)
-            .parentElement as HTMLElement;
-          parent.classList.toggle('dark', dark);
-        }, dark);
-        await settle(page);
-        const surface = await token(page, '--pr-color-surface');
-        if (dark) expect(surface, 'with .dark').toBe('#181820');
-        else expect(surface, 'without .dark').not.toBe('#181820');
-        await testInfo.attach(`dark-ancestor-theme-light-${dark ? 'with' : 'without'}-${width}`, {
-          body: await page.locator('pricing-renderer').screenshot(),
-          contentType: 'image/png',
-        });
-      }
-    });
+    for (const theme of ['light', 'auto'] as const) {
+      test(`attaches screenshots under an unrelated .dark ancestor with theme="${theme}" at ${width}px`, async ({
+        page,
+      }, testInfo) => {
+        await openRenderer(page, { width, height: 900 });
+        await clearDemoTokens(page);
+        await setThemeAttribute(page, theme);
+        for (const dark of [false, true]) {
+          await page.evaluate((dark) => {
+            const parent = (document.querySelector('pricing-renderer') as HTMLElement)
+              .parentElement as HTMLElement;
+            parent.classList.toggle('dark', dark);
+          }, dark);
+          await settle(page);
+          const surface = await token(page, '--pr-color-surface');
+          // theme="light" looks the same with and without the class; theme="auto" darkens.
+          if (theme === 'auto' && dark) expect(surface, 'auto with .dark').toBe('#181820');
+          else expect(surface, `${theme} ${dark ? 'with' : 'without'} .dark`).not.toBe('#181820');
+          await testInfo.attach(
+            `dark-ancestor-theme-${theme}-${dark ? 'with' : 'without'}-${width}`,
+            { body: await page.locator('pricing-renderer').screenshot(), contentType: 'image/png' },
+          );
+        }
+      });
+    }
   }
 });
 
@@ -169,10 +201,12 @@ const hostVariables =
 test.describe('shadcn overlay', () => {
   for (const where of ['first', 'last'] as const) {
     test(`follows the host variables with the overlay injected ${where}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: 'light' });
       await openRenderer(page, viewport);
       await clearDemoTokens(page);
       await injectCss(page, hostVariables, 'last');
       await injectCss(page, readStyles('tokens-shadcn.css'), where);
+      await setThemeAttribute(page, 'auto');
 
       expect(await token(page, '--pr-color-accent')).toBe('#ff0000');
       expect(await token(page, '--pr-color-on-accent')).toBe('#ffffff');

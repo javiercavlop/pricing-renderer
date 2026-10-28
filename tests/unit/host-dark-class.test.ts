@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// [utest->req~host-dark-class~1]
-// A host `.dark` class darkens the renderer like [data-theme='dark'] does, with the same tokens.
+// [utest->req~host-dark-class~2]
+// A host `.dark` class darkens the renderer with theme="auto", with the same tokens as
+// [data-theme='dark'].
 
 const themePath = fileURLToPath(new URL('../../src/styles/theme.css', import.meta.url));
 
@@ -58,7 +59,7 @@ const DARK_DECLARATIONS: Record<string, string> = {
 };
 
 describe('host .dark class selectors', () => {
-  it('keeps the existing dark selectors and adds the .dark ones', () => {
+  it("keeps the existing dark selectors and adds the .dark ones restricted to theme='auto'", () => {
     const { selectors } = parseRule(readTheme(), "\\[theme='dark'\\]");
     expect(selectors).toEqual(
       expect.arrayContaining([
@@ -66,18 +67,28 @@ describe('host .dark class selectors', () => {
         "[data-theme='dark'] pricing-renderer[data-pr-root]",
         "pricing-change-review[theme='dark']",
         "[data-theme='dark'] pricing-change-review",
-        '.dark pricing-renderer[data-pr-root]',
-        '.dark pricing-change-review',
+        ".dark pricing-renderer[data-pr-root][theme='auto']",
+        ".dark pricing-change-review[theme='auto']",
       ]),
     );
+  });
+
+  it('does not list a bare .dark selector', () => {
+    const { selectors } = parseRule(readTheme(), "\\[theme='dark'\\]");
+    expect(selectors).not.toContain('.dark pricing-renderer[data-pr-root]');
+    expect(selectors).not.toContain('.dark pricing-change-review');
+    expect(selectors.filter((selector) => selector.startsWith('.dark'))).toHaveLength(2);
   });
 
   it("appends the .dark selectors after [theme='dark']", () => {
     const { selectors } = parseRule(readTheme(), "\\[theme='dark'\\]");
     const first = selectors.indexOf("pricing-renderer[data-pr-root][theme='dark']");
     expect(first).toBe(0);
-    expect(selectors.indexOf('.dark pricing-renderer[data-pr-root]')).toBeGreaterThan(first);
-    expect(selectors.indexOf('.dark pricing-change-review')).toBeGreaterThan(first);
+    const renderer = selectors.indexOf(".dark pricing-renderer[data-pr-root][theme='auto']");
+    const review = selectors.indexOf(".dark pricing-change-review[theme='auto']");
+    const lastExisting = selectors.indexOf("[data-theme='dark'] pricing-change-review");
+    expect(renderer).toBeGreaterThan(lastExisting);
+    expect(review).toBeGreaterThan(renderer);
   });
 
   it('keeps the same declaration block as before', () => {

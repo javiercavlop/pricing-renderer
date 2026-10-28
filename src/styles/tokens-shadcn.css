@@ -9,7 +9,7 @@
  * defaults of theme.css. Import theme.css first or after this file; the layer order below makes this
  * file win either way.
  *
- * [impl->req~tokens-shadcn-overlay~1]
+ * [impl->req~tokens-shadcn-overlay~2]
  * [impl->req~tokens-shadcn-mapping~1]
  */
 @layer pricing-renderer.theme, pricing-renderer.shadcn;
@@ -34,8 +34,9 @@
     --pr-radius-sm: calc(var(--radius) - 4px);
   }
 
-  .dark pricing-renderer[data-pr-root],
-  .dark pricing-change-review {
+  /* The overlay follows the host `.dark` class only with theme="auto", like theme.css. */
+  .dark pricing-renderer[data-pr-root][theme='auto'],
+  .dark pricing-change-review[theme='auto'] {
     color-scheme: dark;
   }
 }

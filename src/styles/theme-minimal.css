@@ -53,8 +53,9 @@
   [data-theme='dark'] pricing-renderer[data-pr-root],
   pricing-change-review[theme='dark'],
   [data-theme='dark'] pricing-change-review,
-  .dark pricing-renderer[data-pr-root],
-  .dark pricing-change-review {
+  /* [impl->req~host-dark-class~2] A host `.dark` ancestor darkens the renderer with theme=auto. */
+  .dark pricing-renderer[data-pr-root][theme='auto'],
+  .dark pricing-change-review[theme='auto'] {
     color-scheme: dark;
     --pr-color-text: #f2f2f2;
     --pr-color-muted: #a6a6a6;
