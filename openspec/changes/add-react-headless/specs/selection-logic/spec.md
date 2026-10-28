@@ -45,6 +45,26 @@ Needs: impl, utest
 - **WHEN** the same intent is planned
 - **THEN** `pending.addIds` is `[]` and `pending.removeIds` is `['compliance']`
 
+#### Scenario: Compliance is excluded by priority success
+
+- **GIVEN** the acme fixture and a selection with plan `enterprise` and `extraStorage` and `prioritySuccess` selected (`compliance` has no `excludes`; `prioritySuccess` excludes `compliance`)
+- **WHEN** `planSelectionChange(acme, selection, { type: 'addOn', addOnId: 'compliance', selected: true })` is called
+- **THEN** the result deeply equals `{ kind: 'confirm', pending: { addOnId: 'compliance', select: true, addIds: [], removeIds: ['prioritySuccess'] } }`
+
+#### Scenario: Two-level dependency chain
+
+- **GIVEN** the chain pricing `normalizePricing({ syntaxVersion: '3.1', saasName: 'Chain', currency: 'EUR', plans: { basic: { price: 10 } }, addOns: { base: { price: 1 }, middle: { price: 1, dependsOn: ['base'], excludes: ['legacy'] }, top: { price: 1, dependsOn: ['middle'] }, legacy: { price: 1 } } }).value` and a selection with plan `basic` and no add-on selected
+- **WHEN** `planSelectionChange(chain, selection, { type: 'addOn', addOnId: 'top', selected: true })` is called
+- **THEN** the result has `kind: 'confirm'`, `pending.addOnId` is `top` and `pending.select` is `true`
+- **AND** `pending.addIds` holds exactly `middle` and `base`, in any order, and `pending.removeIds` is `[]`
+
+#### Scenario: Exclusion of an added dependency
+
+- **GIVEN** the chain pricing of the scenario "Two-level dependency chain" and a selection with plan `basic` and only `legacy` selected
+- **WHEN** `planSelectionChange(chain, selection, { type: 'addOn', addOnId: 'top', selected: true })` is called
+- **THEN** `pending.addIds` holds exactly `middle` and `base`, in any order
+- **AND** `pending.removeIds` is `['legacy']`, named only by the `excludes` of the dependency `middle`
+
 ### Requirement: Deselecting an add-on removes its dependents
 
 `req~core-addon-deselect-change~1`
@@ -57,6 +77,13 @@ Needs: impl, utest
 - **GIVEN** the acme fixture and a selection with plan `growth`, `extraStorage` and `prioritySuccess` selected
 - **WHEN** `planSelectionChange(acme, selection, { type: 'addOn', addOnId: 'extraStorage', selected: false })` is called
 - **THEN** the result has `kind: 'confirm'` and `pending.removeIds` is `['prioritySuccess']`
+
+#### Scenario: Transitive dependents
+
+- **GIVEN** the chain pricing of the scenario "Two-level dependency chain" and a selection with plan `basic` and `base`, `middle` and `top` selected
+- **WHEN** `planSelectionChange(chain, selection, { type: 'addOn', addOnId: 'base', selected: false })` is called
+- **THEN** the result has `kind: 'confirm'`, `pending.addOnId` is `base`, `pending.select` is `false` and `pending.addIds` is `[]`
+- **AND** `pending.removeIds` holds exactly `middle` and `top`, in any order
 
 ### Requirement: Add-on change without side effects applies at once
 
@@ -233,7 +260,7 @@ Needs: impl, utest
 - **GIVEN** the module namespace of `src/core/index.ts`
 - **WHEN** each of the six function names is read
 - **THEN** each one has type `function`
-- **AND** a type-check snippet that imports the four types from `pricing-renderer` compiles
+- **AND** a type-check snippet that imports the four types from `../../src/core/index.js` (the source of the package root, resolved relative to `tests/unit/` as in `tests/unit/compare-types.test.ts`) compiles
 
 ### Requirement: Pending change type stays on the element entry
 
@@ -244,7 +271,7 @@ Needs: impl, utest
 
 #### Scenario: Both entries name one type
 
-- **GIVEN** a type-check snippet that assigns a `PendingAddOnChange` of `pricing-renderer` to one of `pricing-renderer/element` and back
+- **GIVEN** a type-check snippet in `tests/unit/` that assigns a `PendingAddOnChange` imported from `../../src/core/index.js` (the source of `pricing-renderer`) to one imported from `../../src/element/index.js` (the source of `pricing-renderer/element`) and back
 - **WHEN** it is compiled
 - **THEN** it compiles without errors
 
