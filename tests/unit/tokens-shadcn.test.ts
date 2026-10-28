@@ -147,6 +147,7 @@ describe('tokens-shadcn.css mapping', () => {
     expect(selectors).not.toContain('.dark pricing-renderer[data-pr-root]');
     expect(selectors).not.toContain('.dark pricing-change-review');
     expect(declarationsWhere(isDark)['color-scheme']).toBe('dark');
+    expect(Object.keys(declarationsWhere(isDark))).toEqual(['color-scheme']);
   });
 });
 

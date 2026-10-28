@@ -220,8 +220,14 @@ keeps `theme.css` values for the tokens shadcn has no variable for (`success`, `
 `warning-surface`, `overlay`, shadows). Their dark values come from `theme.css` under `.dark`, so
 the overlay's dark mode depends on `req~host-dark-class~2`. With the overlay and `theme="auto"`, the
 colour mode follows the host's `.dark` class (shadcn's convention; `auto` also follows the system
-dark scheme when the class is absent). With `theme="light"` or `theme="dark"` a `.dark` ancestor
-changes nothing (`req~tokens-shadcn-overlay~2`).
+dark scheme when the class is absent). The mapped colours are `var(--primary)` and the like, so
+they follow the host variables for every `theme` value. Under a host `.dark`, the dark-only values
+(`color-scheme: dark`, `success`, `warning`, `warning-surface`, `overlay`, shadows) apply only with
+`theme="auto"`. With `theme="light"` the status colours and `color-scheme` stay light; with
+`theme="dark"` the status colours are dark but the overlay's `color-scheme: light` wins. Either way
+the palette can be mixed (host colours with the wrong status colours or `color-scheme`) and can fail
+contrast. A shadcn host that toggles `.dark` MUST set `theme="auto"` on the element (recommended
+usage; `req~tokens-shadcn-overlay~2`).
 
 shadcn values are used as full colours (shadcn for Tailwind v4). shadcn for Tailwind v3 (bare HSL
 channels) is out of scope: the guide shows a host rule such as

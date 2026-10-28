@@ -3,8 +3,7 @@
 ### Requirement: Host dark class
 
 `req~host-dark-class~2`
-The default theme `src/styles/theme.css` SHALL list `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']` in the selector list of its dark rule, after the `[theme='dark']` selectors, so that a `.dark` ancestor applies the same token values as a `[data-theme='dark']` ancestor only when the element has `theme="auto"`. The selector list SHALL NOT contain the bare `.dark pricing-renderer[data-pr-root]` or `.dark pricing-change-review`, and the `@media (prefers-color-scheme: dark)` rule SHALL NOT contain `.dark`.
-
+The default theme `src/styles/theme.css` SHALL list `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']` in the selector list of its dark rule, after the `[theme='dark']` selectors, so that a `.dark` ancestor applies the same token values as a `[data-theme='dark']` ancestor only when the element has `theme="auto"`.
 Needs: impl, utest
 
 #### Scenario: Selector list
@@ -14,6 +13,7 @@ Needs: impl, utest
 - **THEN** it contains `[data-theme='dark'] pricing-renderer[data-pr-root]`, `.dark pricing-renderer[data-pr-root][theme='auto']`, `[data-theme='dark'] pricing-change-review` and `.dark pricing-change-review[theme='auto']`
 - **AND** `.dark pricing-renderer[data-pr-root][theme='auto']` comes after `pricing-renderer[data-pr-root][theme='dark']`
 - **AND** it contains neither `.dark pricing-renderer[data-pr-root]` nor `.dark pricing-change-review` without the `[theme='auto']` part
+- **AND** the `@media (prefers-color-scheme: dark)` rule does not contain `.dark`
 - **AND** the rule is the one sliced by the dark-theme contrast test of `tests/unit/addon-marker.test.ts`, which still passes
 
 #### Scenario: Dark under html.dark with theme=auto
@@ -33,7 +33,7 @@ Needs: impl, utest
 ### Requirement: shadcn overlay layering
 
 `req~tokens-shadcn-overlay~2`
-The style sheet `src/styles/tokens-shadcn.css` SHALL have `@layer pricing-renderer.theme, pricing-renderer.shadcn;` as its first statement and every rule inside `@layer pricing-renderer.shadcn`, declaring no `--pr-color-success`, `--pr-color-warning`, `--pr-color-warning-surface` or `--pr-color-overlay`. The overlay SHALL follow the host `.dark` class only for elements with `theme="auto"`: its `color-scheme: dark` rule SHALL use the selectors `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']`, never the bare `.dark pricing-renderer[data-pr-root]` or `.dark pricing-change-review`.
+The style sheet `src/styles/tokens-shadcn.css` SHALL start with `@layer pricing-renderer.theme, pricing-renderer.shadcn;`, put every rule inside `@layer pricing-renderer.shadcn`, declare no status or overlay colour token, and apply `color-scheme: dark` under `.dark` only to elements with `theme="auto"`.
 
 Needs: impl, utest
 
@@ -43,6 +43,7 @@ Needs: impl, utest
 - **WHEN** a unit test strips comments and reads the top-level statements
 - **THEN** the first statement is `@layer pricing-renderer.theme, pricing-renderer.shadcn;`
 - **AND** every other top-level statement is an `@layer pricing-renderer.shadcn { … }` block
+- **AND** the dark rule uses the selectors `.dark pricing-renderer[data-pr-root][theme='auto']` and `.dark pricing-change-review[theme='auto']`, and neither the bare `.dark pricing-renderer[data-pr-root]` nor `.dark pricing-change-review` without the `[theme='auto']` part
 - **AND** the text does not contain `--pr-color-success:`, `--pr-color-warning:`, `--pr-color-warning-surface:` or `--pr-color-overlay:`
 
 #### Scenario: Import order does not matter
@@ -50,6 +51,14 @@ Needs: impl, utest
 - **GIVEN** a host page that sets on `:root` `--primary: oklch(0.205 0 0)`, `--primary-foreground: oklch(0.985 0 0)`, `--card: oklch(1 0 0)` and `--radius: 0.625rem`
 - **WHEN** the page loads `styles.css` then `tokens-shadcn.css`, and in a second run `tokens-shadcn.css` then `styles.css`
 - **THEN** in both runs the background color of `button[data-pr-part='cta'][data-kind='primary']` is `oklch(0.205 0 0)`, the background color of the first `.pr-plan-card` is `oklch(1 0 0)` and the computed `--pr-color-success` of the element is `#087f5b`
+
+#### Scenario: Mapped colours follow the host for every theme value
+
+- **GIVEN** a host page with `styles.css`, `tokens-shadcn.css`, a `:root` and a `.dark` value of `--primary`, and the element has `theme="light"` under a light system color scheme
+- **WHEN** the class `dark` is added to `<html>`
+- **THEN** the computed `--pr-color-accent` follows the host `.dark --primary`
+- **AND** the computed `color-scheme` stays `light` and `--pr-color-success` stays `#087f5b`, because under a host `.dark` the dark-only values (color-scheme dark, success, warning, warning-surface, overlay, shadow) apply only with `theme="auto"`, and `theme="light"` does not match `.dark …[theme='auto']`
+- **AND** a shadcn host that toggles `.dark` MUST set `theme="auto"` on the element (recommended usage)
 
 ### Requirement: shadcn token mapping
 

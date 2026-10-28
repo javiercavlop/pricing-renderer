@@ -228,6 +228,26 @@ test.describe('shadcn overlay', () => {
       expect(await colorScheme(page)).toBe('light');
     });
   }
+
+  // Documented behaviour: the mapped colours follow the host for every theme value, the dark-only
+  // values (color-scheme, status colours) only with theme="auto". A shadcn host that toggles
+  // `.dark` must set theme="auto".
+  test('with theme="light" the host .dark changes the mapped colours but not color-scheme or success', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await openRenderer(page, viewport);
+    await clearDemoTokens(page);
+    await injectCss(page, hostVariables, 'last');
+    await injectCss(page, readStyles('tokens-shadcn.css'), 'last');
+    await setThemeAttribute(page, 'light');
+    await setDarkClass(page, true);
+    await settle(page);
+
+    expect(await token(page, '--pr-color-accent')).toBe('#00ff00');
+    expect(await colorScheme(page)).toBe('light');
+    expect(await token(page, '--pr-color-success')).toBe('#087f5b');
+  });
 });
 
 test.describe('theme-minimal', () => {

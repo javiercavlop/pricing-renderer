@@ -8,7 +8,7 @@ Rules for every slice:
 - Tests are written first by test-designer and fail before the implementation (red before). A test
   of a file that does not exist yet first asserts `existsSync(...)`, so it fails on an assertion,
   not on `ENOENT`. Browser specs are written in the lab and run in CI (no browser in the lab).
-- Every requirement id is traced: `[impl->req~…~1]` in code or CSS comments, `[utest->req~…~1]` in
+- Every requirement id is traced: `[impl->req~…~<rev>]` in code or CSS comments, `[utest->req~…~<rev>]` in
   tests. JSON files hold no tags; their requirements need `utest` only.
 - No feature flag: every addition is a new token, attribute, prop or file that is unset or unused by
   default. The `.dark` selector applies only with `theme="auto"` (CRP-B, option (b)), so no existing
@@ -46,9 +46,7 @@ Checks (the planner registers them; names are the commands):
     hold already; their tests are green from the start and guard the behaviour.
 - [ ] T3 Theme-file tests.
   - Files: `tests/unit/host-dark-class.test.ts`, `tests/unit/tokens-shadcn.test.ts`,
-    `tests/unit/theme-minimal.test.ts`, `tests/browser/host-dark-class.spec.ts`,
-    `tests/browser/tokens-shadcn.spec.ts`,
-    `tests/browser/theme-minimal.spec.ts` (all new).
+    `tests/unit/theme-minimal.test.ts` (all new), `tests/browser/theme-files.spec.ts`.
   - Requirements: the eight `theme-files` ids.
   - Checks: `unit` red before, `lint`, `format`.
 - [ ] T4 Density tests.

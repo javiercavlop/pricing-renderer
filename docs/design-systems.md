@@ -181,7 +181,10 @@ Tokens that shadcn has no variable for (success, warning, warning surface,
 overlay and shadows) keep the values of `theme.css`. For a host that switches
 dark mode with the `.dark` class, as shadcn and Tailwind do, set `theme="auto"`
 on the element so the class darkens it (`auto` also follows the system dark
-scheme when the class is absent). See [Dark mode](#dark-mode). If you wrap an
+scheme when the class is absent). With `theme="light"` or `theme="dark"` the
+mapped colors still follow the host variables, but `color-scheme` (and, with
+`theme="light"`, the status colors) do not change, which can produce contrast
+failures. See [Dark mode](#dark-mode). If you wrap an
 import in `layer(x)`, wrap every renderer file the same way.
 
 The overlay expects the shadcn v4 variables, which hold complete colors such as
@@ -291,8 +294,14 @@ The opt-out rule is unlayered, so it beats every layered theme rule. Under a
 `theme="auto"`, `theme="dark"` and a nearer `[data-theme='dark']` ancestor. A host
 that uses this rule loses dark mode under that ancestor.
 
-With `tokens-shadcn.css`, colors come from the shadcn variables, so they change
-with the host theme.
+With `tokens-shadcn.css`, the mapped colors come from the shadcn variables, so
+they change with the host theme for every `theme` value. Under `.dark`, the
+dark-only values (`color-scheme`, success, warning, warning surface, overlay and
+shadows) apply only with `theme="auto"`. A shadcn host that toggles `.dark` must
+therefore set `theme="auto"` on the element. With `theme="light"` the status
+colors and `color-scheme` stay light; with `theme="dark"` the status colors are
+dark but the overlay keeps `color-scheme: light`. In both cases the palette is
+mixed and can fail contrast.
 
 ## Density
 

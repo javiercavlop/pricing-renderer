@@ -136,6 +136,8 @@ describe('docs/design-systems.md', () => {
     const text = squash(section(guide(), 'Dark mode'));
     expect(text).toMatch(/`\.dark` ancestor, only when the element has `theme="auto"`/);
     expect(text).toMatch(/`theme="light"`.*a `\.dark` ancestor changes nothing/);
+    expect(text).toMatch(/shadcn host that toggles `\.dark` must therefore set `theme="auto"`/);
+    expect(text).toMatch(/palette is mixed .* can fail contrast/);
   });
 
   it('never sets a font family token to inherit', () => {
