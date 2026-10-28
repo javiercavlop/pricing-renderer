@@ -14,7 +14,7 @@ Line numbers are at head `47a7b05`; the intake cites `9cf7e21`, where the `contr
   the add-on card references with `aria-describedby`. The other callers pass no data.
 - Variable field: `<label for=${id}>` (`:652`), help `<p id="${id}-help">` only with
   `control.description` (`:653`), `controlInput` (`:654`), error `<p class="pr-field__error"
-  role="alert">` without id only when `invalid` (`:655-661`).
+role="alert">` without id only when `invalid` (`:655-661`).
 - `controlInput(state, control, invalid)` (`:536-623`) builds `id` itself (`:543`). Controls:
   checkbox (`:545-555`), select (`:558-574`), slider with a range input (`id`, `:579-592`) and a
   number input with no id and an `aria-label` (`:593-606`), number/text input (`:610-622`).
@@ -34,17 +34,17 @@ Keep `[A-Za-z0-9]`. Walk the string by code point (`for...of`) and write every o
 `-` and `_` included, as `_` + the lowercase hexadecimal code point value without leading zeros +
 `_`.
 
-| Data | Encoded |
-|---|---|
-| `a b` | `a_20_b` |
-| `a-b` | `a_2d_b` |
-| `a_b` | `a_5f_b` |
-| `座席` | `_5ea7__5e2d_` |
-| `席位` | `_5e2d__4f4d_` |
-| `Core Features` | `Core_20_Features` |
+| Data                        | Encoded                                 |
+| --------------------------- | --------------------------------------- |
+| `a b`                       | `a_20_b`                                |
+| `a-b`                       | `a_2d_b`                                |
+| `a_b`                       | `a_5f_b`                                |
+| `座席`                      | `_5ea7__5e2d_`                          |
+| `席位`                      | `_5e2d__4f4d_`                          |
+| `Core Features`             | `Core_20_Features`                      |
 | `priceByRegion.eu price[0]` | `priceByRegion_2e_eu_20_price_5b_0_5d_` |
-| `😀` (U+1F600) | `_1f600_` |
-| `extraStorage`, `a02` | unchanged |
+| `😀` (U+1F600)              | `_1f600_`                               |
+| `extraStorage`, `a02`       | unchanged                               |
 
 Why it is injective: outside an escape the output holds only letters and digits; `_` appears only
 as an escape delimiter, and an escape ends at the next `_`. So the output decodes in one way only,
