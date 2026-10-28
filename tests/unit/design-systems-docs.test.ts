@@ -79,6 +79,8 @@ describe('docs/design-systems.md', () => {
       "pricing-renderer[data-pr-root] button[data-pr-part='cta'][data-kind='primary'] { background-color: var(--pr-color-accent); color: var(--pr-color-on-accent); }";
     expect(codeBlocks(text).map(squash)).toContain(fix);
     expect(text).toContain('preflight: false');
+    expect(text).toContain("a[data-pr-part='cta']");
+    expect(text).not.toContain('not affected');
   });
 
   it('Tailwind v4 section orders the layers before the tailwindcss import in one block', () => {

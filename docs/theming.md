@@ -25,7 +25,8 @@ import `base.css` and `styles.css` together.
 
 ## Public tokens
 
-Override tokens on `pricing-renderer` or an ancestor-specific selector:
+Override tokens on `pricing-renderer` itself; a rule on an ancestor does not work
+with `styles.css`, because `theme.css` declares the tokens on the element:
 
 ```css
 pricing-renderer {
@@ -69,7 +70,7 @@ written in `base.css`, so nothing changes until you set one:
 - `--pr-font-family-display`: default `unset`; it falls back to `--pr-font-family`.
   It sets the hero title, the section and plan headings and the price amount.
 - `--pr-font-weight-regular`: default `400`.
-- `--pr-font-weight-medium`: default `500` (650 in one rule).
+- `--pr-font-weight-medium`: default `500` in one rule, `650` in five.
 - `--pr-font-weight-bold`: default `700` (750, 780 and 790 in some rules).
 - `--pr-font-weight-heavy`: default `800` (900 in one rule).
 - `--pr-line-height`: default `1.5`.
@@ -190,11 +191,13 @@ needs the tokens on itself. `theme.css` (part of `styles.css`) defines the same
 `pricing-change-review`; `base.css` has structural rules only and sets no token
 values. With the custom-theme strategy (`base.css` plus your own stylesheet), the
 review has no tokens until you define them: declare the tokens listed below on
-`pricing-change-review` (or an ancestor), as well as on `pricing-renderer`.
+`pricing-change-review` (an ancestor works here, because no element rule
+declares the tokens), as well as on `pricing-renderer`.
 Without them the review loses its colors, sizes and spacing.
 
-With `styles.css`, override the defaults on the element or on an ancestor with an
-unlayered rule:
+With `styles.css`, override the defaults on the element itself with an unlayered
+rule (`theme.css` declares the tokens on the element, so a rule on an ancestor does
+not work):
 
 ```css
 pricing-change-review {

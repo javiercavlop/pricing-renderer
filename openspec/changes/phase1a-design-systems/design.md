@@ -43,7 +43,10 @@ already emits `data-current` on plan and add-on cards.
   `button, input, optgroup, select, textarea { … font-weight: inherit; line-height: inherit; color: inherit; margin: 0; padding: 0; }`
   and `h1, …, h6 { font-size: inherit; font-weight: inherit; }`. An unlayered rule beats every
   layered rule, so the renderer's `<button>` CTA loses its background, colour, padding and weight,
-  and its headings lose their size and weight. The `<a>` CTA keeps them.
+  and its headings lose their size and weight. Preflight also has an unlayered
+  `a { color: inherit; text-decoration: inherit; }`, which beats the layered
+  `.pr-button--primary` colour: the `<a>` CTA keeps its accent background but takes the inherited
+  text colour (about 3.5:1).
 - Tailwind v4 starts with `@layer theme, base, components, utilities;` and puts preflight in `base`
   (intake, medium confidence). shadcn for Tailwind v4 declares full colours (`oklch(…)`) and a
   `--radius` length on `:root`, with dark values in `.dark` on `<html>`; shadcn for Tailwind v3
@@ -79,7 +82,7 @@ The twelve tokens, each with its fallback and its sites:
   amount.
 - `--pr-font-weight-regular`: 400; every 400.
 - `--pr-font-weight-medium`: 500 or 650; every 500 and 650.
-- `--pr-font-weight-bold`: 700, 750, 780 or 790, and 700 on headings; every 700 to 790 and five
+- `--pr-font-weight-bold`: 700, 750, 780 or 790, and 700 on headings; every 700 to 790 and six
   heading rules.
 - `--pr-font-weight-heavy`: 800 or 900; every 800 and 900.
 - `--pr-line-height`: 1.5; both roots.
@@ -91,10 +94,10 @@ The twelve tokens, each with its fallback and its sites:
 
 Weights are grouped per site, keeping that site's value as fallback: a host that sets one token
 unifies its group (for example `--pr-font-weight-bold: 600` makes 700, 750, 780 and 790 all 600).
-The five heading rules that rely on the user-agent bold today get
-`font-weight: var(--pr-font-weight-bold, 700)` (the user-agent bold is 700, so no change):
-`:where(.pr-section__heading, .pr-configurator, .pr-metadata) h3`,
-`.pr-plan-card__top h4, .pr-addon-card h4`, `.pr-dialog h3`, `pricing-change-review .pr-cr-header h2`
+The six heading rules that rely on the user-agent bold today get
+`font-weight: var(--pr-font-weight-bold, 700)` (the user-agent bold is 700, so no change); each
+selector is checked on its own: `:where(.pr-section__heading, .pr-configurator, .pr-metadata) h3`,
+`.pr-plan-card__top h4`, `.pr-addon-card h4`, `.pr-dialog h3`, `pricing-change-review .pr-cr-header h2`
 and `pricing-change-review [data-pr-part='change-review'] > section > h3`. Weight tokens cover the
 review rules too, because they live in the same file and layer.
 
@@ -278,8 +281,9 @@ checks install with `--frozen-lockfile`. Page contract used by the scenarios:
 
 - `select#theme-preset` with the options `default`, `shadcn` (loads the overlay and sets sample
   shadcn v4 variables on `<html>`) and `minimal` (swaps `theme.css` for `theme-minimal.css`);
-- one `input[data-token='<token name>']` per editable token; an edit sets the token on the preview
-  element at once (an unlayered rule or the element's inline style);
+- one control per editable token group; `data-token` names its main token, and the radius and
+  surface controls also write their companion tokens (radius sm and lg, surface raised); an edit
+  sets the tokens on the preview element at once (an unlayered rule or the element's inline style);
 - `#theme-export`, a read-only `textarea` with one unlayered block
   `pricing-renderer[data-pr-root] { … }` that lists the edited tokens as `<name>: <value>;`.
 
@@ -300,8 +304,17 @@ pricing-renderer[data-pr-root] button[data-pr-part='cta'][data-kind='primary'] {
 }
 ```
 
+The `<a>` CTA carries `data-pr-part='cta'` and `data-kind` (`src/element/renderers.ts`), so a
+second unlayered rule restores its text colour:
+
+```css
+pricing-renderer[data-pr-root] a[data-pr-part='cta'][data-kind='primary'] {
+  color: var(--pr-color-on-accent);
+}
+```
+
 The guide also lists the other preflight resets that reach the renderer (button padding and weight,
-heading size and weight) and the host options: scope or disable preflight
+the `a` colour and decoration, heading size and weight) and the host options: scope or disable preflight
 (`corePlugins: { preflight: false }`), or add unlayered rules for the parts the host uses. Each
 option the guide recommends beyond the rule above is checked by a lookup or a browser run before it
 is published (risk R7).

@@ -55,7 +55,7 @@ Needs: impl, utest
 ### Requirement: Font weight tokens
 
 `req~font-weight-tokens~1`
-Every `font-weight` declaration of `src/styles/base.css` SHALL be `var(--pr-font-weight-<group>, <value at 9cf7e21>)` with the group of design.md, D2 (`regular` 400; `medium` 500 and 650; `bold` 700 to 790; `heavy` 800 and 900), including a new `var(--pr-font-weight-bold, 700)` on the five heading rules of D2 that rely on the user-agent bold today.
+Every `font-weight` declaration of `src/styles/base.css` SHALL be `var(--pr-font-weight-<group>, <value at 9cf7e21>)` with the group of design.md, D2 (`regular` 400; `medium` 500 and 650; `bold` 700 to 790; `heavy` 800 and 900), including a new `var(--pr-font-weight-bold, 700)` on the six heading selectors of D2 (section `h3`, plan `h4`, add-on `h4`, dialog `h3`, review `h2` and review section `h3`) that rely on the user-agent bold today.
 
 Needs: impl, utest
 
@@ -69,7 +69,7 @@ Needs: impl, utest
 #### Scenario: Headings that relied on the user-agent bold
 
 - **GIVEN** the text of `src/styles/base.css`
-- **WHEN** a unit test reads the rules with the selectors `:where(.pr-section__heading, .pr-configurator, .pr-metadata) h3`, `.pr-plan-card__top h4, .pr-addon-card h4`, `.pr-dialog h3`, `pricing-change-review .pr-cr-header h2` and `pricing-change-review [data-pr-part='change-review'] > section > h3`
+- **WHEN** a unit test reads the rules for the six heading selectors `:where(.pr-section__heading, .pr-configurator, .pr-metadata) h3`, `.pr-plan-card__top h4`, `.pr-addon-card h4`, `.pr-dialog h3`, `pricing-change-review .pr-cr-header h2` and `pricing-change-review [data-pr-part='change-review'] > section > h3`, checking each selector on its own
 - **THEN** each has the declaration `font-weight: var(--pr-font-weight-bold, 700)`
 
 #### Scenario: A host token unifies its group

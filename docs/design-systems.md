@@ -24,7 +24,10 @@ no safe link). The preflight button resets reach it:
 - `font-weight: inherit` removes the button weight.
 
 Preflight also resets heading sizes and weights (`h1` to `h6` inherit them),
-margins and `img` display. The `<a>` form of the call to action is not affected.
+margins and `img` display. It also resets links (`a { color: inherit;
+text-decoration: inherit; }`), which reaches the `<a>` form of the primary call to
+action: it keeps the accent background but takes the inherited text color, which
+leaves about 3.5:1 contrast.
 
 Import the renderer styles once, for example in the file that holds your
 `@tailwind` directives (`@import` rules must come first):
@@ -49,11 +52,19 @@ Then use one of these fixes:
   }
   ```
 
+  The `<a>` form of the call to action needs the text color only:
+
+  ```css
+  pricing-renderer[data-pr-root] a[data-pr-part='cta'][data-kind='primary'] {
+    color: var(--pr-color-on-accent);
+  }
+  ```
+
 - Or turn the preflight off in `tailwind.config.js` with
   `corePlugins: { preflight: false }`, if the rest of your application does not
   need it.
 
-Utility classes on your own markup are not affected by either choice.
+Utility classes on your own markup behave the same with either choice.
 
 ## Tailwind CSS v4
 
@@ -120,8 +131,10 @@ The type of `style` is `PricingRendererStyle`, exported from
 ## Mapping tokens to host variables
 
 The renderer reads `--pr-*` tokens. Map them to the variables of your design
-system on `pricing-renderer`, or on an ancestor, with an unlayered rule or one in
-a later layer:
+system on `pricing-renderer` itself, with an unlayered rule or one in a later
+layer. `theme.css` declares the tokens on the element, and a value declared on the
+element beats one inherited from an ancestor, so a rule on an ancestor does not
+work:
 
 ```css
 pricing-renderer {
@@ -220,7 +233,32 @@ The renderer can be dark in four ways:
 The `.dark` ancestor uses the same tokens as `[data-theme='dark']`. It follows the
 host class, which is the shadcn and Tailwind convention. This is a visual change
 for hosts that have an unrelated `.dark` ancestor: the renderer now turns dark
-there too. If that is not wanted, restate the light tokens under that ancestor.
+there too. If that is not wanted, restate the light tokens on the renderer
+elements under that ancestor, with an unlayered rule (a rule on the ancestor
+itself does nothing):
+
+```css
+.dark pricing-renderer,
+.dark pricing-change-review {
+  color-scheme: light;
+  --pr-color-text: #171723;
+  --pr-color-muted: #626275;
+  --pr-color-surface: #ffffff;
+  --pr-color-surface-raised: #ffffff;
+  --pr-color-surface-subtle: #f5f5f8;
+  --pr-color-border: #dfdfe7;
+  --pr-color-border-strong: #b8b8c6;
+  --pr-color-accent: #6558e8;
+  --pr-color-on-accent: #ffffff;
+  --pr-color-link: #5145cd;
+  --pr-color-focus: #5145cd;
+  --pr-color-success: #087f5b;
+  --pr-color-warning: #9a5600;
+  --pr-color-warning-surface: #fff7e8;
+  --pr-color-overlay: #11111b;
+  --pr-shadow-sm: 0 1px 2px rgb(25 25 35 / 7%), 0 8px 30px rgb(25 25 35 / 4%);
+}
+```
 
 With `tokens-shadcn.css`, colors come from the shadcn variables, so they change
 with the host theme.
