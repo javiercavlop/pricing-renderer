@@ -18,6 +18,27 @@ async function openClickup(page: Page): Promise<void> {
   const state = await applyPricing(page, readFixture('clickup'), 'en', 'light');
   expect(state, 'the pricing should reach the ready state').toBe('ready');
   await expect(page.locator(toolbar)).toBeAttached();
+  await releaseScrollContainers(page);
+}
+
+// The demo wraps the renderer in `.demo-workbench { overflow: hidden }`, which makes it the scroll
+// container of the sticky toolbar. A host page without such a clip is what the token is for.
+async function releaseScrollContainers(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+    for (
+      let element = renderer.parentElement;
+      element && element !== document.body && element !== document.documentElement;
+      element = element.parentElement
+    ) {
+      const style = getComputedStyle(element);
+      const clipped = (value: string) => value !== 'visible' && value !== 'clip';
+      if (clipped(style.overflowX) || clipped(style.overflowY)) {
+        element.style.overflow = 'visible';
+      }
+    }
+  });
+  await settle(page);
 }
 
 async function settle(page: Page): Promise<void> {

@@ -30,6 +30,32 @@ async function injectCss(page: Page, content: string, where: 'first' | 'last'): 
   );
 }
 
+// The demo page declares --pr-* tokens in an unlayered rule, which beats every layered theme file.
+// Removing them leaves the theme files as the only source of the tokens. Layer blocks are skipped:
+// the default theme and base.css live in layers and keep the tokens the theme files do not set.
+async function clearDemoTokens(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const clear = (rules: CSSRuleList): void => {
+      for (const rule of Array.from(rules)) {
+        if (rule instanceof CSSLayerBlockRule) continue;
+        if (rule instanceof CSSStyleRule) {
+          const names = Array.from(rule.style).filter((name) => name.startsWith('--pr-'));
+          for (const name of names) rule.style.removeProperty(name);
+        }
+        const nested = (rule as CSSGroupingRule).cssRules;
+        if (nested) clear(nested);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        clear(sheet.cssRules);
+      } catch {
+        // A cross-origin sheet cannot be read.
+      }
+    }
+  });
+}
+
 async function token(page: Page, name: string): Promise<string> {
   return page.evaluate((name) => {
     const renderer = document.querySelector('pricing-renderer') as HTMLElement;
@@ -73,6 +99,7 @@ test.describe('shadcn overlay', () => {
   for (const where of ['first', 'last'] as const) {
     test(`follows the host variables with the overlay injected ${where}`, async ({ page }) => {
       await openRenderer(page, viewport);
+      await clearDemoTokens(page);
       await injectCss(page, hostVariables, 'last');
       await injectCss(page, readStyles('tokens-shadcn.css'), where);
 
@@ -100,6 +127,7 @@ test.describe('shadcn overlay', () => {
 test.describe('theme-minimal', () => {
   test('has no box shadow and borders in the text color', async ({ page }) => {
     await openRenderer(page, viewport);
+    await clearDemoTokens(page);
     await injectCss(page, readStyles('theme-minimal.css'), 'last');
 
     const card = await page.evaluate(() => {

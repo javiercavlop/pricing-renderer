@@ -232,7 +232,6 @@ export class PricingRendererElement extends LitElement {
     this.layout = 'auto';
     this.visibility = 'public-only';
     this.theme = 'light';
-    this.density = 'comfortable';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
     this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
   }
