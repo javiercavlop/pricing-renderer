@@ -13,6 +13,49 @@ function loadError(code: string, message: string): LoadedPricingResult {
   };
 }
 
+function tooLarge(): LoadedPricingResult {
+  return loadError('PR_SOURCE_TOO_LARGE', 'Pricing source exceeds the configured size limit.');
+}
+
+// Starts a cancel without waiting for it; a rejection is swallowed.
+function discard(cancel: () => Promise<void> | undefined): void {
+  try {
+    cancel()?.catch(() => {});
+  } catch {
+    // A cancel that throws synchronously must not replace the load result.
+  }
+}
+
+// Returns the body bytes, or undefined when they exceed maxBytes. A body stream is counted chunk
+// by chunk and cancelled at the chunk that crosses the limit; a response without a stream falls
+// back to arrayBuffer().
+async function readBody(response: Response, maxBytes: number): Promise<Uint8Array | undefined> {
+  if (!response.body) {
+    const buffer = await response.arrayBuffer();
+    return buffer.byteLength > maxBytes ? undefined : new Uint8Array(buffer);
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      discard(() => reader.cancel());
+      return undefined;
+    }
+    chunks.push(value);
+  }
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return joined;
+}
+
 async function resolveHeaders(
   headers: PricingRequestOptions['headers'],
 ): Promise<HeadersInit | undefined> {
@@ -100,14 +143,14 @@ export async function loadPricingFromUrl(
         `Pricing request failed with HTTP ${response.status}.`,
       );
     }
+    // [impl->req~fetch-max-bytes-while-reading~1]
     const declaredLength = Number(response.headers.get('content-length'));
     if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-      return loadError('PR_SOURCE_TOO_LARGE', 'Pricing source exceeds the configured size limit.');
+      discard(() => response.body?.cancel());
+      return tooLarge();
     }
-    const body = await response.arrayBuffer();
-    if (body.byteLength > maxBytes) {
-      return loadError('PR_SOURCE_TOO_LARGE', 'Pricing source exceeds the configured size limit.');
-    }
+    const body = await readBody(response, maxBytes);
+    if (!body) return tooLarge();
     return parsePricingYaml(new TextDecoder().decode(body), {
       ...(options.normalize ? { normalize: options.normalize } : {}),
     });
