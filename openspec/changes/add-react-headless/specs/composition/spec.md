@@ -105,22 +105,88 @@ Needs: impl, utest
 
 ### Requirement: Slots change event
 
-`req~slots-change-event~1`
-WHEN an update completes and the connected slot nodes differ, by identity or order, from those at the end of the previous update, the element SHALL dispatch one non-cancelable, bubbling, composed `pricing-slots-change` event whose `detail.nodes` lists the connected slot nodes in document order.
+`req~slots-change-event~2`
+WHEN an update completes and the connected slot nodes differ, by identity or order, from those at the end of the previous update, or the `data-*` values of a slot node differ from the last dispatch, the element SHALL dispatch one non-cancelable, bubbling, composed `pricing-slots-change` event whose `detail.nodes` lists the connected slot nodes in document order.
 
 Needs: impl, utest
 
-#### Scenario: Ready, unchanged, removed
+#### Scenario: Ready, selection, removed
 
 - **GIVEN** a new element with `slots` `['plan-cta']` and a `pricing-slots-change` listener that records details
 - **WHEN** it is ready, then the user checks the Enterprise radio, then the host sets `slots` to `[]`
-- **THEN** two details are recorded: the first `nodes` holds the three plan slot nodes, the second `nodes` is `[]`
+- **THEN** three details are recorded: the first `nodes` holds the three plan slot nodes, the second holds the same three nodes, the third `nodes` is `[]`
+
+#### Scenario: Update without a change
+
+- **GIVEN** a new element with `slots` `['plan-cta']` and the same listener, ready
+- **WHEN** the host sets `slots` to a new array `['plan-cta']` and the next update completes
+- **THEN** exactly one detail is recorded, the one of the ready update
 
 #### Scenario: No slots, no event
 
 - **GIVEN** a new element without `slots` and the same listener
 - **WHEN** it is ready and the host reloads it
 - **THEN** no detail is recorded
+
+### Requirement: Summary slot event on selection changes
+
+`req~slots-change-event-summary~1`
+WHEN an update completes while a summary slot node is connected and the selection in effect or its resolved prices differ structurally from those of the last dispatch, the element SHALL dispatch the `pricing-slots-change` event.
+
+Needs: impl, utest
+
+#### Scenario: Selection changes
+
+- **GIVEN** a new element with `slots` `['summary-actions']` and a `pricing-slots-change` listener that records details, ready
+- **WHEN** the user checks the Enterprise radio
+- **THEN** a second detail is recorded whose `nodes` holds the summary slot node
+
+#### Scenario: Nothing changes
+
+- **GIVEN** the same element, after the second detail
+- **WHEN** the host sets `slots` to a new equal array and the next update completes
+- **THEN** no further detail is recorded
+
+### Requirement: Plan slot node context attributes
+
+`req~slot-plan-cta-context~1`
+WHILE `slots` includes `'plan-cta'`, the element SHALL set on each plan slot node, next to `data-plan-id`, the attributes `data-plan-name`, `data-label` and `data-href` (the safe expanded link, absent for a button), `data-relation` (absent without a current plan), `data-selected` (`'true'` or `'false'`), and `data-current` and `data-pending` (`'true'` or absent), with the values of the plan's built-in CTA and card.
+
+Needs: impl, utest
+
+#### Scenario: Values follow the state
+
+- **GIVEN** a new element with `slots` `['plan-cta']`
+- **WHEN** it is ready
+- **THEN** the Growth slot node has `data-plan-name` `Growth`, `data-label` `Start free trial`, `data-href` `https://example.com/signup?plan=growth`, `data-selected` `false` and no `data-relation`, `data-current` or `data-pending`
+- **WHEN** the user checks the Enterprise radio
+- **THEN** the Enterprise slot node has `data-selected` `true`
+
+#### Scenario: Current plan and pending action
+
+- **GIVEN** a new element with `slots` `['plan-cta']`, `currentSelection` `{ planId: 'starter' }` and `pendingActionId` `'start-growth'`
+- **WHEN** it is ready
+- **THEN** the Starter slot node has `data-current` `true`, `data-relation` `current` and `data-label` `Current plan`
+- **AND** the Growth slot node has `data-relation` `upgrade`, `data-label` `Upgrade to Growth` and `data-pending` `true`
+
+### Requirement: Summary slot node context attributes
+
+`req~slot-summary-actions-context~1`
+WHILE `slots` includes `'summary-actions'`, the element SHALL set on the summary slot node the attribute `data-relation` (the relation of the selection in effect to the current plan, absent without one) and `data-pending` (`'true'` while `pendingActionId` is set, otherwise absent).
+
+Needs: impl, utest
+
+#### Scenario: Relation and pending
+
+- **GIVEN** a new element with `slots` `['summary-actions']`, `currentSelection` `{ planId: 'starter' }` and `pendingActionId` `'start-growth'`, ready
+- **WHEN** the user checks the Growth radio
+- **THEN** the summary slot node has `data-relation` `upgrade` and `data-pending` `true`
+
+#### Scenario: Neither
+
+- **GIVEN** a new element with `slots` `['summary-actions']`
+- **WHEN** it is ready
+- **THEN** the summary slot node has neither attribute
 
 ### Requirement: Trigger a plan action
 
@@ -194,12 +260,24 @@ Needs: impl, utest
 - **WHEN** the element is ready
 - **THEN** the last Starter context has `current` `true`, `relation` `'current'` and `label` `'Current plan'`, and the last Growth context has `relation` `'upgrade'` and `label` `'Upgrade to Growth'`
 
+#### Scenario: Current plan set after ready
+
+- **GIVEN** the wrapper of "Custom plan CTA", ready, with a render prop that records contexts
+- **WHEN** the host renders again with `currentSelection` `{ planId: 'starter' }`
+- **THEN** the last Starter context has `current` `true`, `relation` `'current'` and `label` `'Current plan'`, and the last Growth context has `relation` `'upgrade'`
+
 ### Requirement: Summary, loading and error render props
 
 `req~react-other-slot-contexts~1`
-The `PricingRenderer` wrapper SHALL call `renderSummaryActions` with `{ selection, resolved, relation, pending }`, where `selection` and `resolved` are those of the selection in effect, `relation` is its relation to the current plan or `undefined` without one, and `pending` is whether `pendingActionId` is set, `renderLoading` with no argument and `renderError` with `{ diagnostics, reload }`, where `diagnostics` are those of the failed load and `reload()` calls the element's `reload()`.
+The `PricingRenderer` wrapper SHALL call `renderSummaryActions` with `{ selection, resolved, relation, pending }` (the selection in effect, its resolved prices, its relation to the current plan or `undefined`, and whether `pendingActionId` is set), `renderLoading` with no argument and `renderError` with `{ diagnostics, reload }` (the failed load's diagnostics and a function calling the element's `reload()`).
 
 Needs: impl, utest
+
+#### Scenario: Summary after a plan change
+
+- **GIVEN** `<PricingRenderer pricing={acme} locale="en-US" renderSummaryActions={fn} />` mounted on the client with a `fn` that records contexts, ready
+- **WHEN** the user checks the Enterprise radio
+- **THEN** the last context has the `selection` and `resolved` of the Enterprise selection, read from `resolvedState` when the event fired
 
 #### Scenario: Error with retry
 

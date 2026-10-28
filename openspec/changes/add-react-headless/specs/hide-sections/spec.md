@@ -17,14 +17,20 @@ Needs: impl, utest
 
 - **GIVEN** a new element without `hideSections`
 - **WHEN** it is ready
-- **THEN** each of the eight section parts of "Hidden sections render nothing" exists once
+- **THEN** each of the eight section parts of "Section parts" exists once
 
 ### Requirement: Hidden sections render nothing
 
 `req~hide-sections-render~1`
-WHILE `hideSections` includes a section name, the element SHALL render no markup of that section, the section parts being `hero` → `[data-pr-part="hero"]`, `metadata` → `[data-pr-part="metadata"]`, `billing` → `[data-pr-part="billing"]`, `variables` → `[data-pr-part="variables"]`, `plans` → `[data-pr-part="plans"]`, `comparison` → `[data-pr-part="comparison"]`, `addOns` → `[data-pr-part="add-ons"]` and `summary` → `[data-pr-part="summary"]`, while every section whose name it does not include renders as it does without `hideSections`, apart from the summary placement of "Summary without the add-ons section".
+WHILE `hideSections` includes a section name, the element SHALL render no markup of that section, while every section whose name it does not include renders as it does without `hideSections`, apart from the summary placement of "Summary without the add-ons section".
 
 Needs: impl, utest
+
+#### Scenario: Section parts
+
+- **GIVEN** the section parts `hero` → `[data-pr-part="hero"]`, `metadata` → `[data-pr-part="metadata"]`, `billing` → `[data-pr-part="billing"]`, `variables` → `[data-pr-part="variables"]`, `plans` → `[data-pr-part="plans"]`, `comparison` → `[data-pr-part="comparison"]`, `addOns` → `[data-pr-part="add-ons"]` and `summary` → `[data-pr-part="summary"]`; every scenario of this capability that names "the section parts" uses this list
+- **WHEN** a section name is in `hideSections`
+- **THEN** the part of that section does not exist
 
 #### Scenario: One section at a time
 
