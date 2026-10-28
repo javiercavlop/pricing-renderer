@@ -100,23 +100,43 @@ moved inside:
   are written.
 - The writer has no pricing, so it writes every top-level variable. A host that wants short URLs
   filters the pairs.
-- Reader: the first `plan` and `billing` entries win; a repeated `addon` id takes the last entry;
-  the quantity is `Number` of the text after the last `:`, so `id:abc` gives `NaN` and
-  `normalizeAddOnQuantity` turns it into the minimum. A `var.<path>` value is set with the dot path
-  rules of `setAtPath` on a copy of `pricing.variables`; text that is not JSON stays a string, so a
-  hand-written `var.region=us` works.
+- Reader: the first `plan` and `billing` entries win; a repeated `addon` id takes the last entry
+  (`req~search-params-read-repeated-addon~1`); the quantity is `Number` of the text after the last
+  `:`, so `id:abc` gives `NaN` and `normalizeAddOnQuantity` turns it into the minimum
+  (`req~search-params-read-addon-quantity-nan~1`). A `var.<path>` value is set on a copy of
+  `pricing.variables` at the segments of the path split below; text that is not JSON stays a
+  string, so a hand-written `var.region=us` works.
 - URL text is untrusted. `setAtPath` walks into an existing `__proto__` (`src/core/utils.ts:110-121`),
   and creates an array for a missing parent of a digit segment (`:110-111`), which `cloneValue`
-  then walks index by index (`src/core/apply-selection.ts:22`). So the reader splits the path the
-  way `setAtPath` does (`[n]` as `.n`, `:91-94`) and drops the entry before `setAtPath` when a
-  segment is `__proto__`, `prototype` or `constructor`, or is a digit run that does not index an
-  existing array element of the defaults (`req~search-params-var-path-safe~1`). In the element,
+  then walks index by index (`src/core/apply-selection.ts:22`). So the reader splits the path once
+  (`[<digits>]` read as `.<digits>`, empty segments dropped; other bracket text stays part of a
+  record key) and writes the value at exactly those segments, so the check and the write cannot
+  disagree (`req~search-params-var-path-split~1`). It ignores the entry when a segment is
+  `__proto__`, `prototype` or `constructor`; or when the segment's parent, the value the earlier
+  segments reach in the variables built so far, is an array and the segment is not a canonical
+  index (`/^(0|[1-9]\d*)$/`) below its `length`; or when the parent is anything else (record,
+  scalar or missing) and the segment is a digit run (`/^\d+$/`)
+  (`req~search-params-var-path-safe~2`). So no path segment creates or grows an array. A JSON value
+  loses every `__proto__` key at any depth (`req~search-params-var-proto-keys~1`). In the element,
   paths come only from the pricing author.
-- A URL-safe selection (`req~search-params-round-trip~1`) is reconciled, its selected quantities
-  are `normalizeAddOnQuantity` results, and its variables have the top-level keys of
-  `pricing.variables`, JSON values, and no key with `.`, `[` or a segment the reader drops. The
-  round trip holds only for such selections: the reader normalizes quantities through
-  `applySelectionInput`, fills missing defaults and reads `.` as a path; the writer does neither.
+- Limits on URL input, each checked before the work it bounds: a `var.<path>` value longer than
+  2048 UTF-16 code units is ignored before `JSON.parse` (`req~search-params-var-length-limit~1`); a
+  path of more than 8 segments or a parsed value deeper than 8 is ignored
+  (`req~search-params-var-depth-limit~1`); the reader takes at most 100 entries from `params` and
+  stops iterating, so an endless iterable ends (`req~search-params-entry-limit~1`); an unknown plan,
+  billing or add-on id is cut to its first 64 characters in the diagnostic `message` and `path`,
+  while the whole id is still matched (`req~search-params-diagnostic-id-length~1`). An entry that is
+  not a pair of strings is ignored and the reader never throws for an iterable whose own iteration
+  does not throw (`req~search-params-read-no-throw~1`).
+- Value types are not checked against `pricing.variables` (`req~search-params-var-type-unchecked~1`):
+  a host re-prices and revalidates the selection on its server at checkout.
+- A URL-safe selection (`req~search-params-round-trip~2`) is a `reconcileSelection` result with a
+  defined `planId` and `billingPeriod`, the pricing's ids, `normalizeAddOnQuantity` quantities, at
+  most 100 pairs and URL-safe variables: exactly the top-level keys of `pricing.variables`, none
+  empty or holding `.` or `[`, JSON round-trip values without `__proto__` keys, and no entry a limit
+  above ignores (`req~search-params-round-trip-variables~1`). The round trip holds only for such
+  selections: the reader normalizes quantities through `applySelectionInput`, fills missing
+  defaults and reads `.` as a path; the writer does neither.
 - The read input is relative to the defaults: `applySelectionInput` merges with
   `createDefaultSelection` (`src/core/apply-selection.ts:83-86`); `current` (option, default
   `createDefaultSelection(pricing)`) only replaces an unknown plan or billing period. So one URL
@@ -297,8 +317,8 @@ component reads it in the same render through `useSyncExternalStore`.
   removes the stub after it.
 - The end-to-end race (a real element's first `pricing-ready` reaching a hook committed in the same
   render) needs a browser and a real React commit; node covers it only through the store and the
-  harness. It is checked in CI only, by a browser spec of P3-8 (a followup for tasks.md), not by a
-  local check.
+  harness. It is checked in CI only, by the browser spec `tests/browser/react-renderer-state.spec.ts`
+  of P3-12b, the first slice with a React harness page, not by a local check.
 - The renderer state cannot see an `applySelection` call made on the element directly (silent by
   `req~apply-selection-silent~1`) or a change of a controlled `selection` prop; `applySelection` of
   the returned state refreshes the snapshot. The React guide (P3-15a) states both limits. This is a
@@ -347,7 +367,7 @@ component reads it in the same render through `useSyncExternalStore`.
   feasible: those tests need `rendered.type` to be the mocked base component, called directly
   outside React, and only a hook (`useContext`) or a `Context.Consumer` element can read the
   provider; a `Context.Consumer` is an object, not a callable `type`, and adds one more element
-  level before the base. (A followup asks to add the three files to P3-5 in tasks.md.)
+  level before the base. P3-5 in tasks.md lists the three files.
 - Precedence: instance prop or option, then the nearest provider, then the global configuration,
   then `custom.pricingRenderer` (presentation only). The wrapper passes a provider value as an
   element prop only when the instance prop is undefined; for presentation it passes
@@ -392,7 +412,7 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
 
 - `PricingRenderer` props `renderPlanCta(context)`, `renderSummaryActions(context)`,
   `renderLoading()` and `renderError({ diagnostics, reload })`; plan context `planId`, `planName`,
-  `selected`, `current`, `relation`, `label`, `href`, `pending`, `trigger()`.
+  `selected`, `current`, `relation`, `label`, `href`, `pending`, `anyPending`, `trigger()`.
 - Element property `slots` (no attribute; `plan-cta`, `summary-actions`, `loading`, `error`) that
   renders empty `data-pr-slot="<name>"` nodes (`data-plan-id` on plan CTAs) instead of the default
   markup; without `slots` the markup is unchanged.
@@ -423,7 +443,9 @@ check). The Next example uses `next/link`. Both use an in-memory mock backend fo
   - `data-relation`: absent without a current plan;
   - `data-selected`: `'true'` or `'false'`;
   - `data-current` and `data-pending`: `'true'` or absent; `data-pending` means this plan's own
-    action is the pending one.
+    action is the pending one;
+  - `data-any-pending`: `'true'` while any `pendingActionId` is set, otherwise absent
+    (`req~slot-plan-cta-any-pending~1`).
 - The summary slot node carries only `data-relation` and `data-pending`
   (`req~slot-summary-actions-context~1`).
 - Plan slot encoding follows the built-in markup: `data-selected=${String(selected)}`,
@@ -442,10 +464,11 @@ check). The Next example uses `next/link`. Both use an in-memory mock backend fo
   `data-relation` (`:1458`) has the built-in meaning.
 - Plan CTAs need the same "any action pending" signal: the built-in CTAs set `aria-disabled` on
   every CTA while any action is pending (`ariaDisabled: pendingActionId !== undefined`,
-  `cta.ts:110`), and a render-prop CTA must be able to do the same. Proposed for the composition
-  capability (its owner adds the requirement; a followup of this change): the plan slot node
-  attribute `data-any-pending` (`'true'` while `pendingActionId` is set, otherwise absent) and the
-  plan context field `anyPending: boolean`.
+  `cta.ts:110`), and a render-prop CTA must be able to do the same. So every plan slot node carries
+  `data-any-pending` (`'true'` while `pendingActionId` is set, otherwise absent;
+  `req~slot-plan-cta-any-pending~1`), and `planCtaContextOf` reads it into the plan context field
+  `anyPending: boolean` (`req~react-plan-context-any-pending~1`). `pending` keeps its own-action
+  meaning, as `data-pending` of the built-in CTA.
 - In `updated()` the element dispatches `pricing-slots-change` when the set of slot nodes (identity
   and order) or any slot node's `data-*` values changed since the last dispatch
   (`req~slots-change-event~2`). `detail` stays `{ nodes }`. The wrapper rebuilds each context from

@@ -6,10 +6,10 @@ Rules for every slice:
   `src/` or `package.json` adds one pending changeset (minor for new API, patch otherwise). No
   release (`ROADMAP.md:137-148`).
 - Exception: the spec PR is larger. It holds both spec slices, P3-S1 and P3-S2, and their review
-  fixes: six delta specs with 99 requirements and 1,498 lines, plus `proposal.md`, `design.md`
-  and `tasks.md` (about 760 lines), counted on 2026-10-28 with the round-1 fixes to `composition`,
-  `hide-sections`, the proposal and this file; the parallel round-1 fixes to the other files can
-  move these numbers a little. Each obligation of CRP-P3-A to CRP-P3-C is one requirement with its own scenario.
+  fixes: six delta specs with 117 requirements (`### Requirement` headings) and 1,909 lines, plus
+  `proposal.md`, `design.md` and `tasks.md` (about 1,000 lines), counted on 2026-10-28 after the
+  round-2 fixes of all files. Each obligation of CRP-P3-A to CRP-P3-C is one requirement with its
+  own scenario.
   The size needs the owner's waiver for the whole PR; it adds no code.
 - Additive only: no existing export, property, attribute, event field or part changes meaning.
 - Code slices are a test task (test-designer, red before, G3) and an implementer task in the same
@@ -84,13 +84,21 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
 - [ ] P3-3 Search params (T/I, risk medium; after P3-1I merged, parallel with P3-2).
   - Files: `tests/unit/selection-search-params.test.ts` (new, test task),
     `src/core/search-params.ts` (new), `src/core/index.ts`, `.changeset/selection-search-params.md`.
-  - Requirements: every `req~search-params-*`.
+  - Requirements: every `req~search-params-*`, that is `req~search-params-write~1`,
+    `-write-variables~1`, `-read~1`, `-read-addon-quantity-nan~1`, `-read-repeated-addon~1`,
+    `-var-text~1`, `-var-type-unchecked~1`, `-var-path-safe~2`, `-var-path-split~1`,
+    `-var-proto-keys~1`, `-read-no-throw~1`, `-var-length-limit~1`, `-var-depth-limit~1`,
+    `-entry-limit~1`, `-diagnostic-id-length~1`, `-unknown-ids~1`, `-prefix~1`, `-round-trip~2`,
+    `-round-trip-variables~1` and `-no-dom~1` (design.md D4).
   - Checks: `full`, `pkg`, `red(tests/unit/selection-search-params.test.ts)`.
 - [ ] P3-4 Shared source load (T/I, risk medium; after P3-2 merged).
   - Files: `tests/unit/load-source.test.ts` (new, test task), `src/yaml/source.ts` (new),
     `src/yaml/index.ts`, `src/element/pricing-renderer-element.ts` (`reload()` only),
     `.changeset/load-pricing-source.md`.
-  - Requirements: `req~load-source-one-source~1`, `req~load-source-result~1` (design.md D5).
+  - Requirements: `req~load-source-one-source~1`, `req~load-source-result~1`,
+    `req~load-source-request-bounds~1` (design.md D5). The provider origin rule
+    (`req~provider-request-origin~1`) is not part of `loadPricingSource`: the provider-aware callers
+    filter the request before the call (P3-5, P3-6).
   - Checks: `full`, `pkg`, `red(tests/unit/load-source.test.ts)`,
     `unit(tests/unit/load-reload-pending.test.ts tests/unit/element-stale-load.test.ts tests/unit/load.test.ts)`;
     CI `browser-shards` (`element-stale-load.spec.ts`, `element-reconnect.spec.ts`).
@@ -106,15 +114,21 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
     `.changeset/react-provider.md`.
   - Requirements: `req~react-headless-entry~1`, `req~react-entry-reexports-headless~1`,
     `req~react-hooks-common-api~1`, `req~react-headless-no-new-peer~1`, and the wrapper side of
-    every `req~provider-*`.
-  - Wrapper rule: the `render` function of the `PricingRenderer` `forwardRef` calls no hook
-    itself; it returns the provider context's `Consumer` (or an inner component) that renders the
-    `@lit/react` component, so a direct call outside React does not throw. The three files above
+    every `req~provider-*`: `req~provider-config-precedence~1`,
+    `req~provider-presentation-precedence~1`, `req~provider-messages-merge~1`,
+    `req~provider-request-loader~1`, `req~provider-request-origin~1` (scenario "Wrapper on a
+    foreign origin"), `req~provider-nearest~1`, `req~provider-no-global-write~1` and
+    `req~provider-absent-unchanged~2`.
+  - Origin rule (design.md D8): the request filter lives in `src/react/provider.ts`; the wrapper
+    applies it here to the `request` it passes the element, and `usePricingSource` reuses it in
+    P3-6. `loadPricingSource` (P3-4) does not apply it.
+  - Wrapper structure (design.md D8): `PricingRenderer` stays a `forwardRef` component whose
+    `render` function reads the provider with `useContext`. The three direct-render files above
     call `PricingRenderer.render(props, null)` outside React and then `rendered.type(rendered.props)`
-    (for example `tests/unit/react-style-prop.test.ts:76-87`), which a `Consumer` outer element
-    breaks. The test task rewrites those calls to `renderToString` from `react-dom/server` with the
-    existing `@lit/react` mock, keeping each assertion and tag, so they hold whatever outer element
-    the wrapper returns.
+    (`tests/unit/react-style-prop.test.ts:75-91`, `tests/unit/density.test.ts:274-289`,
+    `tests/unit/spectra-followups-react.test.ts:71-89`), which a hook in `render` breaks. The test
+    task rewrites those calls to `renderToString` from `react-dom/server` with the existing
+    `@lit/react` mock and reads the recorded props, keeping each assertion and tag.
   - Checks: `full`, `pkg`,
     `red(tests/unit/react-provider.test.ts tests/unit/ssr.test.ts)`,
     `unit(tests/unit/density.test.ts tests/unit/react-style-prop.test.ts tests/unit/spectra-followups-react.test.ts)`.
@@ -122,14 +136,20 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
   - Files: `tests/unit/use-pricing-source.test.ts` (new, test task),
     `src/react/use-pricing-source.ts` (new), `src/react/headless.ts`,
     `.changeset/use-pricing-source.md`.
-  - Requirements: every `req~use-pricing-source-*`, the hook side of
-    `req~provider-request-loader~1`.
+  - Requirements: every `req~use-pricing-source-*` (`-render~1`, `-stable~1`, `-src-effect~1`,
+    `-abort~1`, `-reload~1`, `-stale-load~1`, `-success~1`, `-failure-keeps-pricing~1`), the hook
+    side of `req~provider-request-loader~1` and of `req~provider-request-origin~1` (scenarios
+    "Foreign origin gets no Authorization" and "Listed origin on a server", with the request filter
+    of P3-5).
   - Checks: `full`, `pkg`, `red(tests/unit/use-pricing-source.test.ts)`.
 - [ ] P3-7a Selection store (T/I, risk high; after P3-1I merged).
   - Files: `tests/unit/selection-store.test.ts` (new, test task), `src/react/selection-store.ts`
     (new, framework-free).
   - Requirements: `req~use-pricing-selection-changes~1`, `-notify~1`, `-controlled~1`,
-    `-uncontrolled~1`, `-pricing-change~1`, `-pending~1`, `-apply~1`, `-current~1`, `-compare~1`.
+    `-uncontrolled~1`, `-pricing-change~1`, `-pending~1`, `-confirm-input~1`, `-apply~1`,
+    `-current~1`, `-compare~1`, and `req~react-no-module-state~1` (the static scan of
+    `src/react/**/*.ts` in the test file, which keeps guarding every later `src/react` module
+    through `test`; the impl tag on the store's own `createPriceStabilizer()` call, design.md D3).
   - No changeset, an exception to the rule above: the store is a new internal module that no
     package entry exports and nothing imports yet, so the published API and behaviour do not
     change; P3-7b, which exposes it through `usePricingSelection`, adds the changeset.
@@ -139,7 +159,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
   - Files: `tests/unit/use-pricing-selection.test.ts` (new, test task),
     `src/react/use-pricing-selection.ts` (new), `src/react/headless.ts`,
     `.changeset/use-pricing-selection.md`.
-  - Requirements: `req~use-pricing-selection-state~1`, `req~use-pricing-selection-view-model~1`,
+  - Requirements: `req~use-pricing-selection-state~1`, `req~use-pricing-selection-view-model~2`,
     the type-check of
     `req~use-pricing-selection-compare~1`, the hook side of `req~provider-config-precedence~1`,
     `req~provider-presentation-precedence~1`, `req~provider-messages-merge~1`,
@@ -165,7 +185,10 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
     `PricingSectionName`), `src/element/renderers.ts` (one optional `RenderState` field that
     makes `renderAddOns` skip its `renderSummary` call, see the note), `custom-elements.json`,
     `src/react/index.ts`, `.changeset/hide-sections.md`.
-  - Requirements: those of `specs/hide-sections` (P3-S2).
+  - Requirements: those of `specs/hide-sections` (P3-S2): `req~hide-sections-property~1`,
+    `req~hide-sections-attribute-converter~1`, `req~hide-sections-render~1`,
+    `req~hide-sections-addons-summary~1`, `req~hide-sections-hero-name~1`,
+    `req~hide-sections-unknown~1` and `req~hide-sections-react-manifest~1`.
   - Test split: the unit file builds the element in node, runs `reload()` with stubs and checks
     markup presence through `flatten(element.render())` (as `tests/unit/error-state.test.ts:237-244`
     does), and tests
@@ -187,12 +210,19 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
     `RenderState` fields, keyed plan slot, summary slot), `src/element/pricing-renderer-element.ts`,
     `src/element/events.ts`, `src/element/index.ts` (types `PricingSlotName` and
     `PricingSlotsChangeDetail`), `custom-elements.json`, `.changeset/element-slots.md`.
-  - Requirements: the element side of `specs/composition` (P3-S2): `req~slots-property~1` to
-    `req~trigger-plan-action-guard~1`, and the element entry, event map and manifest part of
-    `req~composition-types-manifest~1`. The browser spec holds the browser-only requirements and
-    scenarios listed below; the unit file holds the others through `flatten(element.render())`.
-  - Note: the slot nodes carry the context attributes (`data-plan-name`, `data-label`, `data-href`,
-    `data-relation`, `data-selected`, `data-current`, `data-pending`; design.md, D13).
+  - Requirements: the element side of `specs/composition` (P3-S2): `req~slots-property~1`,
+    `req~slots-default-markup~1`, `req~slot-plan-cta~1`, `req~slot-plan-cta-keyed~1`,
+    `req~slot-summary-actions~1`, `req~slot-loading~1`, `req~slot-error~1`,
+    `req~slots-change-event~2`, `req~slots-change-event-summary~1`, `req~slot-plan-cta-context~1`,
+    `req~slot-summary-actions-context~1`, `req~slot-plan-cta-any-pending~1`,
+    `req~trigger-plan-action~1`, `req~trigger-plan-action-guard~1`, and the element entry, event
+    map and manifest part of `req~composition-types-manifest~1`. The browser spec holds the
+    browser-only requirements and scenarios listed below; the unit file holds the others through
+    `flatten(element.render())`.
+  - Note: the plan slot nodes carry the context attributes (`data-plan-name`, `data-label`,
+    `data-href`, `data-relation`, `data-selected`, `data-current`, `data-pending`,
+    `data-any-pending`) and the summary slot node `data-relation` and `data-pending` (design.md,
+    D13).
   - Checks: `full`, `pkg`, `red(tests/unit/element-slots.test.ts)`; CI `browser-shards` with the
     new spec green and the baselines unchanged. Split the loading and error slots into a follow-up
     PR if it grows past 300 lines.
@@ -205,25 +235,34 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
     (wrapper wiring and the context types), `.changeset/react-render-props.md`.
   - Requirements in the unit file: `req~react-render-props-slots~1`,
     `req~react-slots-event-target~1`, `req~react-slot-node-accept~1`,
-    `req~react-plan-context-reader~1`, `req~react-slot-href-safe~1`,
+    `req~react-plan-context-reader~1`, `req~react-plan-context-any-pending~1`,
+    `req~react-slot-href-safe~1`,
     `req~react-plan-context-trigger~1`, `req~react-summary-context-reader~1`,
     `req~react-error-context-reload~1`, `req~react-slots-client-only~1` and the React entry part of
     `req~composition-types-manifest~1`. The impl tags of the three browser-only React requirements
     go in this slice; their tests come with P3-12b.
-  - Wrapper rule of P3-5 kept: `render` of the `forwardRef` calls no hook itself.
+  - Wrapper structure of P3-5 kept (design.md D8): the three direct-render files read the
+    recorded props through `renderToString`, so the hooks the render props add to `render` do not
+    break them.
   - Checks: `full`, `pkg`, `red(tests/unit/react-slots.test.ts)`,
     `unit(tests/unit/density.test.ts tests/unit/react-style-prop.test.ts tests/unit/spectra-followups-react.test.ts)`,
     `react-demo`.
-- [ ] P3-12b React harness page and browser spec (T/I, risk medium; after P3-12 merged).
-  - Files: `tests/browser/react-slots.spec.ts` (new, test task), `examples/vanilla/react-slots.html`
+- [ ] P3-12b React harness page and browser specs (T/I, risk medium; after P3-12 and P3-8 merged).
+  - Files: `tests/browser/react-slots.spec.ts` (new, test task),
+    `tests/browser/react-renderer-state.spec.ts` (new, test task), `examples/vanilla/react-slots.html`
     (new), `examples/vanilla/src/react-slots.ts` (new: mounts `PricingRenderer` from
     `pricing-renderer/react` with `createRoot` and `createElement`, no JSX, render props chosen by
-    the query string), `examples/vanilla/vite.config.ts` (build input), `examples/vanilla/package.json`
-    and `pnpm-lock.yaml` (`react` and `react-dom` as dev dependencies, the root's ranges; no new
-    package in the lockfile).
-  - Requirements: `req~react-slot-portals~1`, `req~react-plan-cta-context~1`,
-    `req~react-other-slot-contexts~1` (browser-only). Playwright already serves the vanilla demo
-    (`playwright.config.ts:45-50`), so no new web server is needed.
+    the query string; one query mode instead renders a component that calls
+    `usePricingRendererState(ref)` with `ref` on the `PricingRenderer` of the same render and prints
+    the snapshot's `pricing.saasName`), `examples/vanilla/vite.config.ts` (build input),
+    `examples/vanilla/package.json` and `pnpm-lock.yaml` (`react` and `react-dom` as dev
+    dependencies, the root's ranges; no new package in the lockfile).
+  - Requirements: `req~react-slot-portals~1`, `req~react-plan-cta-context~2`,
+    `req~react-other-slot-contexts~1` (browser-only), and the end-to-end race of
+    `req~renderer-state-early-listen~1` (design.md D7; its own scenarios run in node in P3-8): the
+    hook committed with the element shows `Acme Cloud` after the element's first `pricing-ready`,
+    with no later event. Playwright already serves the vanilla demo (`playwright.config.ts:45-50`),
+    so no new web server is needed.
   - No changeset: only a private demo and tests change.
   - Checks: the lockfile update through a registered update check first, then `full`,
     `["pnpm","--filter","pricing-renderer-demo","build"]` after `pkg`; CI `browser-shards` with the
@@ -298,8 +337,10 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
     `req~slot-plan-cta-keyed~1`, `req~slot-summary-actions~1` (`closest`),
     `req~slots-change-event~2`, `req~slots-change-event-summary~1`, `req~trigger-plan-action~1`.
   - `tests/browser/react-slots.spec.ts` (P3-12b): `req~react-slot-portals~1`,
-    `req~react-plan-cta-context~1`, `req~react-other-slot-contexts~1`. Their pure parts are unit
+    `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1`. Their pure parts are unit
     requirements of P3-12.
+  - `tests/browser/react-renderer-state.spec.ts` (P3-12b): the end-to-end race of
+    `req~renderer-state-early-listen~1`, whose scenarios run in the node unit file of P3-8.
 - Some scenarios need a browser (the named ones run in the browser spec, the others in the unit
   file):
   - P3-11: `req~slot-loading~1` ("Slow source"), `req~slot-plan-cta-context~1` ("Values follow the
@@ -317,9 +358,6 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   removing tab, CR and LF, with a unit test) changes how existing CTA, metadata and doc links
   render, which the additive-only rule does not allow inside this change; it needs an owner
   decision and its own slice.
-- The built-in plan CTAs set `aria-disabled` while any action is pending
-  (`src/element/cta.ts:110`); the plan render context has only `pending` (its own action). An
-  any-pending field in `PricingPlanCtaContext` waits for its name in design.md (D13).
 
 ## Traceability checklist
 

@@ -194,6 +194,26 @@ Needs: impl, utest
 - **WHEN** it is ready
 - **THEN** the summary slot node has neither attribute
 
+### Requirement: Plan slot nodes report any pending action
+
+`req~slot-plan-cta-any-pending~1`
+WHILE `slots` includes `'plan-cta'` and `pendingActionId` is set, whatever action it names, the element SHALL set `data-any-pending` to `'true'` on every plan slot node, the state in which every built-in plan CTA has `aria-disabled` `true`; without `pendingActionId` the attribute is absent.
+
+Needs: impl, utest
+
+#### Scenario: Pending plan action
+
+- **GIVEN** a new element with `slots` `['plan-cta']` and `pendingActionId` `'start-growth'`
+- **WHEN** it is ready
+- **THEN** the Starter, Growth and Enterprise slot nodes each have `data-any-pending` `true`
+- **AND** only the Growth slot node has `data-pending` `true`
+
+#### Scenario: Nothing pending
+
+- **GIVEN** a new element with `slots` `['plan-cta']` and no `pendingActionId`
+- **WHEN** it is ready
+- **THEN** no plan slot node has a `data-any-pending` attribute
+
 ### Requirement: Trigger a plan action
 
 `req~trigger-plan-action~1`
@@ -287,7 +307,7 @@ Needs: impl, utest
 ### Requirement: Plan context read from the slot node
 
 `req~react-plan-context-reader~1`
-The function `planCtaContextOf(element, node)` of `src/react/slots.ts` SHALL read the context from the node (D13): `planId`, `planName`, `label`, `href` from `data-plan-id`, `data-plan-name`, `data-label`, a safe `data-href`; `selected`, `current`, `pending` as whether `data-selected`, `data-current`, `data-pending` are `'true'`; `relation` from a `data-relation` that is a `SelectionRelation`, else `undefined`.
+The function `planCtaContextOf(element, node)` of `src/react/slots.ts` SHALL read the context from the node: `planId`, `planName`, `label`, `href` from `data-plan-id`, `data-plan-name`, `data-label`, a safe `data-href`; `selected`, `current`, `pending` as whether `data-selected`, `data-current`, `data-pending` are `'true'`; `relation` from a `data-relation` that is a `SelectionRelation`, else `undefined`.
 
 Needs: impl, utest
 
@@ -302,6 +322,25 @@ Needs: impl, utest
 - **GIVEN** the node of "Values of a plan node" with `relation` `'sideways'` and no `pending`
 - **WHEN** a unit test calls `planCtaContextOf(element, node)`
 - **THEN** the context has `relation` `undefined` and `pending` `false`
+
+### Requirement: Any pending action in the plan context
+
+`req~react-plan-context-any-pending~1`
+The function `planCtaContextOf(element, node)` of `src/react/slots.ts` SHALL return the field `anyPending` as whether the node's `data-any-pending` is `'true'`, so that a render-prop CTA can disable itself while any action is pending, as the built-in CTAs do.
+
+Needs: impl, utest
+
+#### Scenario: Another plan's action is pending
+
+- **GIVEN** in node, a stand-in plan node with `dataset` `{ prSlot: 'plan-cta', planId: 'starter', planName: 'Starter', label: 'Get started', selected: 'true', anyPending: 'true' }`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)` with a stand-in element
+- **THEN** the context has `anyPending` `true` and `pending` `false`
+
+#### Scenario: Nothing pending
+
+- **GIVEN** the node of "Unknown relation", which has neither `pending` nor `anyPending`
+- **WHEN** a unit test calls `planCtaContextOf(element, node)`
+- **THEN** the context has `anyPending` `false`
 
 ### Requirement: Unsafe link in a plan slot node
 
@@ -369,8 +408,8 @@ Needs: impl, utest
 
 ### Requirement: Plan CTA render context
 
-`req~react-plan-cta-context~1`
-The `PricingRenderer` wrapper SHALL call `renderPlanCta` with a context holding `planId`, `planName`, `selected`, `current`, `relation` (`undefined` without a current plan), `label` and `href` of the built-in CTA, `pending` (whether `pendingActionId` is its action id) and `trigger()`, which calls `triggerPlanAction(planId)` and returns its result, with the values of the element's last completed update.
+`req~react-plan-cta-context~2`
+The `PricingRenderer` wrapper SHALL call `renderPlanCta` with the plan context of the element's last completed update: `planId`, `planName`, `selected`, `current`, `relation` (`undefined` without a current plan), `label` and `href` of the built-in CTA, `pending` (`pendingActionId` is its action id), `anyPending` (any `pendingActionId` set) and `trigger()`, calling `triggerPlanAction(planId)` and returning its result.
 
 Needs: impl, utest
 
@@ -379,6 +418,7 @@ Needs: impl, utest
 - **GIVEN** the wrapper of "Custom plan CTA" with a render prop that records contexts
 - **WHEN** the user checks the Enterprise radio, then the host renders with `pendingActionId` `'start-growth'`
 - **THEN** the last Enterprise context has `selected` `true`, `current` `false` and `relation` `undefined`, and the last Growth context has `pending` `true`, `label` `'Start free trial'` and `href` `'https://example.com/signup?plan=growth'`
+- **AND** the last Enterprise context has `pending` `false` and `anyPending` `true`, and the last Growth context has `anyPending` `true`
 - **AND** calling the Enterprise context's `trigger()` returns `false` and dispatches no `pricing-action`
 
 #### Scenario: Current plan

@@ -505,7 +505,7 @@ Needs: impl, utest
 
 #### Scenario: Attach from the layout effect
 
-- **GIVEN** `globalThis.document` stubbed and the module cache reset before `src/react/use-renderer-state.ts` is imported, `react` mocked as the hook harness of design.md D7 so that `useLayoutEffect` callbacks and `useEffect` callbacks are recorded apart and the `subscribe` of `useSyncExternalStore` is recorded, and a ref whose target has an `addEventListener` spy
+- **GIVEN** `globalThis.document` stubbed and the module cache reset before `src/react/use-renderer-state.ts` is imported, `react` replaced by a `vi.mock('react')` stand-in whose `useState(init)` returns `[init(), () => {}]`, `useRef(v)` returns `{ current: v }`, `useMemo(f)` returns `f()`, `useCallback(f)` returns `f`, `useSyncExternalStore(subscribe, getSnapshot)` records `subscribe` and returns `getSnapshot()`, and `useLayoutEffect` and `useEffect` record their callbacks in two separate lists, the hook being called as a plain function, and a ref whose target has an `addEventListener` spy
 - **WHEN** `usePricingRendererState(ref)` is called and only the recorded layout callbacks run
 - **THEN** the spy was called for `pricing-ready` and `pricing-selection-change`
 
