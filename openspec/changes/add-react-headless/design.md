@@ -135,8 +135,9 @@ moved inside:
   path of more than 8 segments or a parsed value deeper than 8 is ignored
   (`req~search-params-var-depth-limit~1`); the reader takes at most 100 entries from `params` and
   stops iterating, so an endless iterable ends (`req~search-params-entry-limit~1`); an unknown plan,
-  billing or add-on id is cut to its first 64 characters in the diagnostic `message` and `path`,
-  while the whole id is still matched (`req~search-params-diagnostic-id-length~1`). An entry that is
+  billing or add-on id is cut to its first 64 UTF-16 code units in the diagnostic `message` and
+  `path`, or to 63 when the 64th is a high surrogate, so the cut never leaves half a surrogate pair,
+  while the whole id is still matched (`req~search-params-diagnostic-id-length~2`). An entry that is
   not a pair of strings is ignored and the reader never throws for an iterable whose own iteration
   does not throw (`req~search-params-read-no-throw~1`).
 - Value types are not checked against `pricing.variables` (`req~search-params-var-type-unchecked~1`):
@@ -455,7 +456,7 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   is `element.querySelectorAll('[data-pr-slot]')` filtered by `acceptedSlotNodes`.
 - `acceptedSlotNodes` keeps a node only if its nearest ancestor matching
   `'pricing-renderer, [data-pr-slot]'` is the wrapper's own element
-  (`req~react-slot-node-accept~1`), so a node of a nested renderer, or one inside another slot
+  (`req~react-slot-node-accept~2`), so a node of a nested renderer, or one inside another slot
   node's portal content, gets no portal from this wrapper. The element, for its part, reports in
   `pricing-slots-change` only the slot nodes it rendered itself
   (`req~slots-change-event-own-nodes~1`).
@@ -510,9 +511,10 @@ check). The Next example uses `next/link`. Both use an in-memory mock backend fo
   `req~slot-plan-cta-any-pending~1`), and `planCtaContextOf` reads it into the plan context field
   `anyPending: boolean` (`req~react-plan-context-any-pending~1`). `pending` keeps its own-action
   meaning, as `data-pending` of the built-in CTA.
-- In `updated()` the element dispatches `pricing-slots-change` when the set of slot nodes (identity
-  and order) or any slot node's `data-*` values changed since the last dispatch
-  (`req~slots-change-event~2`). `detail` stays `{ nodes }`. The wrapper rebuilds each context from
+- In `updated()` the element dispatches `pricing-slots-change` when the set of connected slot nodes
+  it rendered itself (identity and order) changed since the previous update or any of their `data-*`
+  values changed since the last dispatch
+  (`req~slots-change-event~3`). `detail` stays `{ nodes }`. The wrapper rebuilds each context from
   the reported nodes on each event.
 - Reason: an event on the node set alone left the context stale when selection, label, link,
   `currentSelection` or `pendingActionId` changed with the same nodes.

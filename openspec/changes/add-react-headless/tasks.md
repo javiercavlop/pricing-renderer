@@ -42,8 +42,9 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 - `red(<files>)`:
   `{"argv":["pnpm","exec","vitest","run",<files...>],"type":"red_before","expect_exit":[1],"expect_pattern":"AssertionError|expected","reject_pattern":"Cannot find module|SyntaxError|is not a function","overlay":[<files...>]}`.
   A test of a module that does not exist yet imports the entry that will re-export it and asserts
-  `toBeTypeOf('function')` first. A module that no entry re-exports (the stores of P3-6, P3-7a and
-  P3-8) is loaded with `const mod = await import('<path>').catch(() => ({}))`, followed by
+  `toBeTypeOf('function')` first. A module that no entry re-exports when the red check runs (the
+  stores of P3-6, P3-7a and P3-8, `src/react/headless.ts` of P3-5, which its tests import by its own
+  path, and `src/react/slots.ts` of P3-12) is loaded with `const mod = await import('<path>').catch(() => ({}))`, followed by
   `expect(mod.<factory>).toBeTypeOf('function')`, so the base fails on an assertion.
   In both forms the `toBeTypeOf('function')` assertion of each new function runs before its first
   call, in a `beforeAll` of the file or as the first assertion of every test that calls it: a test
@@ -120,14 +121,14 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `-write-variables~1`, `-read~1`, `-read-addon-quantity-nan~1`, `-read-repeated-addon~1`,
     `-var-text~1`, `-var-type-unchecked~1`, `-var-path-safe~2`, `-var-path-split~1`,
     `-var-proto-keys~1`, `-read-no-throw~1`, `-var-length-limit~1`, `-var-depth-limit~1`,
-    `-entry-limit~1`, `-diagnostic-id-length~1`, `-unknown-ids~1`, `-prefix~1`, `-round-trip~2`,
+    `-entry-limit~1`, `-diagnostic-id-length~2`, `-unknown-ids~1`, `-prefix~1`, `-round-trip~2`,
     `-round-trip-variables~1` and `-no-dom~1` (design.md D4).
   - Checks: `full`, `pkg`, `red(tests/unit/selection-search-params.test.ts)`.
   - Split point: if the PR grows past 300 lines it becomes two T/I PRs on the same files. First the
     writer and the reader: every requirement above except the four URL-input limits, so the path,
     prototype-key and no-throw rules ship with the first reader. Then
     `req~search-params-var-length-limit~1`, `-var-depth-limit~1`, `-entry-limit~1` and
-    `-diagnostic-id-length~1`.
+    `-diagnostic-id-length~2`.
 - [ ] P3-4 Shared source load (T/I, risk medium; after P3-2 merged).
   - Files: `tests/unit/load-source.test.ts` (new, test task), `src/yaml/source.ts` (new),
     `src/yaml/index.ts`, `src/element/pricing-renderer-element.ts` (`reload()` only),
@@ -239,7 +240,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Requirements: those of `specs/hide-sections` (P3-S2): `req~hide-sections-property~1`,
     `req~hide-sections-attribute-converter~1`, `req~hide-sections-render~1`,
     `req~hide-sections-addons-summary~1`, `req~hide-sections-hero-name~1`,
-    `req~hide-sections-unknown~1` and `req~hide-sections-react-manifest~1`.
+    `req~hide-sections-unknown~2` and `req~hide-sections-react-manifest~1`.
   - Test split: the unit file builds the element in node, runs `reload()` with stubs and checks
     markup presence through `flatten(element.render())` (as `tests/unit/error-state.test.ts:237-244`
     does), and tests
@@ -265,15 +266,19 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `docs/events.md`, `docs/vue.md`, the events list of `README.md` (`:378-381`) and
     `docs/theming.md` (implementer, docs-sync), `.changeset/element-slots.md`.
   - Requirements: the element side of `specs/composition` (P3-S2): `req~slots-property~1`,
-    `req~slots-default-markup~1`, `req~slot-plan-cta~1`, `req~slot-plan-cta-keyed~1`,
-    `req~slot-summary-actions~1`, `req~slot-loading~1`, `req~slot-error~1`,
-    `req~slot-error-diagnostics~1`, `req~slots-change-event~2`,
+    `req~slots-default-markup~1`, `req~slots-not-array~1`, `req~slot-plan-cta~1`,
+    `req~slot-plan-cta-keyed~1`, `req~slot-summary-actions~1`, `req~slot-loading~1`,
+    `req~slot-error~1`, `req~slot-error-diagnostics~1`, `req~slots-change-event~3`,
     `req~slots-change-event-own-nodes~1`, `req~slots-change-event-summary~1`,
     `req~slot-plan-cta-context~1`, `req~slot-summary-actions-context~1`,
     `req~slot-plan-cta-any-pending~1`, `req~trigger-plan-action~1`,
     `req~trigger-plan-action-guard~1`, and the element entry, event map and manifest part of
-    `req~composition-types-manifest~1`. The browser spec holds the browser-only requirements and
-    scenarios listed below; the unit file holds the others through `flatten(element.render())`.
+    `req~composition-types-manifest~1`. The browser spec `tests/browser/element-slots.spec.ts`
+    holds the browser-only requirements and scenarios listed below, among them
+    `req~slots-change-event-own-nodes~1` (it needs a nested element, a radio click and waiting for
+    readiness). The unit file `tests/unit/element-slots.test.ts` holds the others through
+    `flatten(element.render())`, among them `req~slots-not-array~1` (its scenario only sets
+    properties and reads the flattened markup).
   - Note: the plan slot nodes carry the context attributes (`data-plan-name`, `data-label`,
     `data-href`, `data-relation`, `data-selected`, `data-current`, `data-pending`,
     `data-any-pending`) and the summary slot node `data-relation` and `data-pending` (design.md,
@@ -302,23 +307,28 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     task); `tests/unit/density.test.ts`,
     `tests/unit/react-style-prop.test.ts` and `tests/unit/spectra-followups-react.test.ts` (test
     task, only if the render-prop change still breaks them after P3-5's rewrite); `src/react/slots.ts`
-    (new: `slotNamesOf`, `acceptedSlotNodes`, `planCtaContextOf`, `summaryActionsContextOf`,
-    `errorContextOf`, pure and DOM-free, tested in node with stand-in nodes), `src/react/index.ts`
-    (wrapper wiring and the context types), `.changeset/react-render-props.md`.
-  - Requirements in the unit file: `req~react-render-props-slots~1`,
-    `req~react-slots-event-target~1`, `req~react-slot-node-accept~1`,
+    (new: `slotNamesOf`, `currentSlotNodes`, `acceptedSlotNodes`, `planCtaContextOf`,
+    `summaryActionsContextOf`, `errorContextOf`, `errorDiagnosticsOf`, pure and DOM-free, tested in
+    node with stand-in nodes), `src/react/index.ts` (wrapper wiring and the context types),
+    `.changeset/react-render-props.md`.
+  - Requirements in the unit files: `req~react-render-props-slots~1`,
+    `req~react-slots-event-target~1`, `req~react-slot-node-accept~2`,
     `req~react-plan-context-reader~1`, `req~react-plan-context-any-pending~1`,
     `req~react-slot-href-safe~1`,
     `req~react-plan-context-trigger~1`, `req~react-summary-context-reader~1`,
-    `req~react-error-context-reload~1`, `req~react-slots-client-only~1`,
-    `req~react-slots-attach-read~1`, `req~react-error-diagnostics-reader~1`,
-    `req~react-error-diagnostics-source~1` and the React entry part of
-    `req~composition-types-manifest~1`. The impl tags of the three browser-only React requirements
-    go in this slice; their tests come with P3-12b.
+    `req~react-error-context-reload~1`, `req~react-error-diagnostics-reader~1`, the node scenarios
+    of two requirements whose other scenarios are browser-only (`req~react-slots-attach-read~1`:
+    "Slot nodes read by the helper"; `req~react-slots-client-only~1`: "Server output"), and the
+    React entry part of `req~composition-types-manifest~1`. The impl tags of the browser-only
+    React requirements and scenarios (P3-12b) go in this slice; their tests come with P3-12b.
   - Accepted trace gap: between the merges of P3-12 and P3-12b, `req~react-slot-portals~1`,
-    `req~react-plan-cta-context~2` and `req~react-other-slot-contexts~1` have impl tags and no
-    utest tag. The P3-12 PR text names them and states that P3-12b adds their tests; the two slices
-    stay separate PRs.
+    `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1` and
+    `req~react-error-diagnostics-source~1` have impl tags and no utest tag, and
+    `req~react-slots-attach-read~1` ("Render prop given after the first event", "Summary state on
+    attach") and `req~react-slots-client-only~1` ("During the first client render") have the utest
+    tags of their node scenarios only; their browser utest tags arrive with P3-12b. The P3-12 PR
+    text names these requirements and states that P3-12b adds their tests; the two slices stay
+    separate PRs.
   - Wrapper structure of P3-5 kept (design.md D8): the three direct-render files read the
     recorded props through `renderToString`, so the hooks the render props add to `render` do not
     break them.
@@ -337,7 +347,11 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `examples/vanilla/package.json` and `pnpm-lock.yaml` (`react` and `react-dom` as dev
     dependencies, the root's ranges; no new package in the lockfile).
   - Requirements: `req~react-slot-portals~1`, `req~react-plan-cta-context~2`,
-    `req~react-other-slot-contexts~1` (browser-only), and the end-to-end race of
+    `req~react-other-slot-contexts~1`, `req~react-error-diagnostics-source~1` (browser-only), the
+    browser scenarios of `req~react-slots-attach-read~1` ("Render prop given after the first event",
+    "Summary state on attach") and of `req~react-slots-client-only~1` ("During the first client
+    render", which hydrates `renderToString` markup with `hydrateRoot`), all in
+    `tests/browser/react-slots.spec.ts`, and the end-to-end race of
     `req~renderer-state-early-listen~1` (design.md D7; its own scenarios run in node in P3-8): the
     hook committed with the element shows `Acme Cloud` after the element's first `pricing-ready`,
     with no later event. Playwright already serves the vanilla demo (`playwright.config.ts:45-50`),
@@ -431,10 +445,12 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
 - Every scenario needs a browser:
   - `tests/browser/element-slots.spec.ts` (P3-11): `req~slots-property~1`,
     `req~slot-plan-cta-keyed~1`, `req~slot-summary-actions~1` (`closest`),
-    `req~slots-change-event~2`, `req~slots-change-event-summary~1`, `req~trigger-plan-action~1`.
+    `req~slots-change-event~3`, `req~slots-change-event-own-nodes~1` (a nested element, a radio
+    click and waiting for readiness), `req~slots-change-event-summary~1`,
+    `req~trigger-plan-action~1`.
   - `tests/browser/react-slots.spec.ts` (P3-12b): `req~react-slot-portals~1`,
-    `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1`. Their pure parts are unit
-    requirements of P3-12.
+    `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1`,
+    `req~react-error-diagnostics-source~1`. Their pure parts are unit requirements of P3-12.
   - `tests/browser/react-renderer-state.spec.ts` (P3-12b): the end-to-end race of
     `req~renderer-state-early-listen~1`, whose scenarios run in the node unit file of P3-8.
 - Some scenarios need a browser (the named ones run in the browser spec, the others in the unit
@@ -442,8 +458,12 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   - P3-11: `req~slot-loading~1` ("Slow source"), `req~slot-plan-cta-context~1` ("Values follow the
     state"), `req~slot-summary-actions-context~1` ("Relation and pending").
   - P3-10: `req~hide-sections-property~1` ("Attribute to property"),
-    `req~hide-sections-hero-name~1` ("Hero hidden"), `req~hide-sections-unknown~1` ("Unknown and
+    `req~hide-sections-hero-name~1` ("Hero hidden"), `req~hide-sections-unknown~2` ("Unknown and
     differently cased tokens").
+  - P3-12b, in `tests/browser/react-slots.spec.ts`: `req~react-slots-attach-read~1` ("Render prop
+    given after the first event", "Summary state on attach"; "Slot nodes read by the helper" runs
+    in the node unit file of P3-12), `req~react-slots-client-only~1` ("During the first client
+    render"; "Server output" runs in the node unit file of P3-12).
 
 ## Follow-ups outside the slices
 
@@ -477,10 +497,11 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   `src/element/events.ts`, `src/element/index.ts`, `src/react/slots.ts`, `src/react/index.ts`;
   utest in `tests/unit/element-slots.test.ts`, `tests/unit/react-slots.test.ts`,
   `tests/unit/react-slots-mocked.test.ts`, `tests/browser/element-slots.spec.ts` and
-  `tests/browser/react-slots.spec.ts`. The element side includes
-  `req~slots-change-event-own-nodes~1` and `req~slot-error-diagnostics~1` (P3-11), the React side
-  `req~react-slots-attach-read~1`, `req~react-error-diagnostics-reader~1` and
-  `req~react-error-diagnostics-source~1` (P3-12).
+  `tests/browser/react-slots.spec.ts`. The element side includes `req~slots-not-array~1` (unit
+  file), `req~slots-change-event-own-nodes~1` (browser spec) and `req~slot-error-diagnostics~1`
+  (P3-11), the React side `req~react-slots-attach-read~1`, `req~react-error-diagnostics-reader~1`
+  and `req~react-error-diagnostics-source~1` (impl in P3-12; the browser tests of
+  `req~react-slots-attach-read~1` and `req~react-error-diagnostics-source~1` in P3-12b).
 - `req~apply-input-internal~1` has no impl tag in `src/` and loses its only utest tag in P3-1T; it
   lives in `docs/agent-work/delivera-2-load-current-contract/spec.md`, not in an OpenSpec spec, so
   no delta removes it (design.md, D2).

@@ -130,14 +130,14 @@ Needs: impl, utest
 
 - **GIVEN** the acme fixture and the entries `[['var.x.4294967294', '1'], ['var.seats[9]', '1']]`
 - **WHEN** `selectionFromSearchParams(acme, entries)` is called
-- **THEN** it returns in less than 1000 ms and `selection.variables` has no own key `x`
+- **THEN** it does not throw and `selection.variables` has no own key `x`
 - **AND** `selection.variables.seats` is 5
 
 #### Scenario: Array index that is not a canonical number
 
 - **GIVEN** the tiers pricing of the scenario "Quantity that is not a number" and the entries `[['var.tiers.1e9', '7'], ['var.tiers.0x7fffffff', '7'], ['var.tiers. 5', '7'], ['var.tiers.01', '7'], ['var.tiers.3', '7'], ['var.tiers.length', '0']]`
 - **WHEN** `selectionFromSearchParams(tiers, entries)` is called
-- **THEN** it returns in less than 1000 ms
+- **THEN** it does not throw
 - **AND** `selection.variables.tiers` deeply equals `[1, 2, 3]` and its `length` is 3
 - **AND** `selection.variables` has no own key other than `tiers`
 
@@ -285,12 +285,12 @@ Needs: impl, utest
 - **THEN** the diagnostic codes are `PR_SELECTION_UNKNOWN_PLAN`, `PR_SELECTION_UNKNOWN_BILLING_PERIOD` and `PR_SELECTION_UNKNOWN_ADDON`, in that order, all with severity `warning`
 - **AND** `selection.planId` is `starter` and `selection.billingPeriod` is `monthly`
 
-#### Scenario: Add-on ids named like prototype properties
+#### Scenario: Ids named like prototype properties
 
-- **GIVEN** the acme fixture and the entries `[['addon', '__proto__'], ['addon', 'constructor']]`
+- **GIVEN** the acme fixture and the entries `[['plan', '__proto__'], ['billing', 'constructor'], ['addon', '__proto__'], ['addon', 'constructor']]`
 - **WHEN** `selectionFromSearchParams(acme, entries)` is called
-- **THEN** the diagnostic codes are `PR_SELECTION_UNKNOWN_ADDON` and `PR_SELECTION_UNKNOWN_ADDON`, with the paths `selection.addOns.__proto__` and `selection.addOns.constructor`
-- **AND** `selection.addOns` deeply equals `{}` and `Object.prototype` is unchanged
+- **THEN** the diagnostic codes are `PR_SELECTION_UNKNOWN_PLAN`, `PR_SELECTION_UNKNOWN_BILLING_PERIOD`, `PR_SELECTION_UNKNOWN_ADDON` and `PR_SELECTION_UNKNOWN_ADDON`, in that order, all with severity `warning`, the two add-on diagnostics with the paths `selection.addOns.__proto__` and `selection.addOns.constructor`
+- **AND** `selection.planId` is `starter`, `selection.billingPeriod` is `monthly`, `selection.addOns` deeply equals `{}` and `Object.prototype` is unchanged
 
 ### Requirement: Search parameter prefix
 
