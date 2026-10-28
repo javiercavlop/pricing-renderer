@@ -219,12 +219,17 @@ the import order. The overlay wins over `theme.css` in every mode, works with `s
 keeps `theme.css` values for the tokens shadcn has no variable for (`success`, `warning`,
 `warning-surface`, `overlay`, shadows). Their dark values come from `theme.css` under `.dark`, so
 the overlay's dark mode depends on `req~host-dark-class~2`. With the overlay and `theme="auto"`, the
-colour mode follows the host's `.dark` class (shadcn's convention; `auto` also follows the system
-dark scheme when the class is absent). The mapped colours are `var(--primary)` and the like, so
-they follow the host variables for every `theme` value. Under a host `.dark`, the dark-only values
-(`color-scheme: dark`, `success`, `warning`, `warning-surface`, `overlay`, shadows) apply only with
-`theme="auto"`. With `theme="light"` the status colours and `color-scheme` stay light; with
-`theme="dark"` the status colours are dark but the overlay's `color-scheme: light` wins. Either way
+colour mode follows the host's `.dark` class (shadcn's convention). It does not cleanly follow the
+system dark scheme: with a dark OS, a light host and no `.dark`, the status colours go dark
+(`success` `#66d9ad`) while `color-scheme` stays light and the mapped colours keep the host's light
+values, a mixed palette that can fail contrast (success on a white card is about 1.7:1). A
+class-strategy host should add `.dark` whenever the app is dark (for example next-themes with the
+system option), or accept the mix, or not use `theme="auto"`. The mapped colours are `var(--primary)` and the like, so
+they follow the host variables for every `theme` value. A `.dark` ancestor turns on `color-scheme:
+dark` and the dark status colours (`success`, `warning`, `warning-surface`, `overlay`, shadows) only
+with `theme="auto"`. With `theme="light"` the status colours and `color-scheme` stay light;
+`theme="dark"` always has the dark status colours, with or without `.dark`, and the overlay's
+`color-scheme: light` wins. Either way
 the palette can be mixed (host colours with the wrong status colours or `color-scheme`) and can fail
 contrast. A shadcn host that toggles `.dark` MUST set `theme="auto"` on the element (recommended
 usage; `req~tokens-shadcn-overlay~2`).

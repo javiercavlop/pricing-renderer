@@ -248,6 +248,22 @@ test.describe('shadcn overlay', () => {
     expect(await colorScheme(page)).toBe('light');
     expect(await token(page, '--pr-color-success')).toBe('#087f5b');
   });
+
+  test('with theme="auto" under a system dark scheme and no .dark the status colours go dark but color-scheme stays light', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await openRenderer(page, viewport);
+    await clearDemoTokens(page);
+    await injectCss(page, hostVariables, 'last');
+    await injectCss(page, readStyles('tokens-shadcn.css'), 'last');
+    await setThemeAttribute(page, 'auto');
+    await settle(page);
+
+    expect(await token(page, '--pr-color-success')).toBe('#66d9ad');
+    expect(await colorScheme(page)).toBe('light');
+    expect(await token(page, '--pr-color-accent')).toBe('#ff0000');
+  });
 });
 
 test.describe('theme-minimal', () => {

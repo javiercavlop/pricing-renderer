@@ -180,8 +180,8 @@ The file uses the layer `pricing-renderer.shadcn`, declared after
 Tokens that shadcn has no variable for (success, warning, warning surface,
 overlay and shadows) keep the values of `theme.css`. For a host that switches
 dark mode with the `.dark` class, as shadcn and Tailwind do, set `theme="auto"`
-on the element so the class darkens it (`auto` also follows the system dark
-scheme when the class is absent). With `theme="light"` or `theme="dark"` the
+on the element so the class darkens it. With the overlay, `auto` does not follow
+the system dark scheme cleanly (see [Dark mode](#dark-mode)). With `theme="light"` or `theme="dark"` the
 mapped colors still follow the host variables, but `color-scheme` (and, with
 `theme="light"`, the status colors) do not change, which can produce contrast
 failures. See [Dark mode](#dark-mode). If you wrap an
@@ -250,11 +250,13 @@ The renderer can be dark in four ways:
 The `.dark` ancestor uses the same tokens as `[data-theme='dark']`. It follows the
 host class, which is the shadcn and Tailwind convention, but only for
 `theme="auto"`. With `theme="light"` (the default) or an explicit `theme="dark"` a
-`.dark` ancestor changes nothing, so existing hosts look the same. A
+`.dark` ancestor changes nothing with the default theme (without
+`tokens-shadcn.css`), so existing hosts look the same. A
 `[data-theme='dark']` ancestor works as before.
 
-For a shadcn or Tailwind class-strategy host, set `theme="auto"`. Note that `auto`
-also follows the system dark scheme when the `.dark` class is absent.
+For a shadcn or Tailwind class-strategy host, set `theme="auto"`. With the
+`tokens-shadcn.css` overlay, `auto` does not cleanly follow the system dark scheme
+(see below).
 
 If a host has an unrelated `.dark` wrapper and uses `theme="auto"`, the simplest
 fix is to use `theme="light"` instead. For the rare case that needs `auto` and an
@@ -295,13 +297,21 @@ The opt-out rule is unlayered, so it beats every layered theme rule. Under a
 that uses this rule loses dark mode under that ancestor.
 
 With `tokens-shadcn.css`, the mapped colors come from the shadcn variables, so
-they change with the host theme for every `theme` value. Under `.dark`, the
-dark-only values (`color-scheme`, success, warning, warning surface, overlay and
-shadows) apply only with `theme="auto"`. A shadcn host that toggles `.dark` must
-therefore set `theme="auto"` on the element. With `theme="light"` the status
-colors and `color-scheme` stay light; with `theme="dark"` the status colors are
-dark but the overlay keeps `color-scheme: light`. In both cases the palette is
-mixed and can fail contrast.
+they change with the host theme for every `theme` value. A `.dark` ancestor turns
+on `color-scheme: dark` and the dark status colors (success, warning, warning
+surface, overlay and shadows) only with `theme="auto"`. A shadcn host that toggles
+`.dark` must therefore set `theme="auto"` on the element. With `theme="light"` the
+status colors and `color-scheme` stay light; `theme="dark"` always has the dark
+status colors, with or without `.dark`, but the overlay keeps `color-scheme:
+light`. In both cases the palette is mixed and can fail contrast.
+
+With the overlay, `theme="auto"` does not cleanly follow the system dark scheme.
+When the system is dark but the host app is light and has no `.dark` class, the
+status colors go dark (success `#66d9ad`) while `color-scheme` stays light and the
+mapped colors keep the host's light values. This mixed palette can fail contrast
+(success on a white card is about 1.7:1). A class-strategy host should add `.dark`
+whenever the app is dark (for example next-themes with the system option), or
+else accept this mix or not use `theme="auto"`.
 
 ## Density
 

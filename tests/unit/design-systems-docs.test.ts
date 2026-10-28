@@ -138,6 +138,7 @@ describe('docs/design-systems.md', () => {
     expect(text).toMatch(/`theme="light"`.*a `\.dark` ancestor changes nothing/);
     expect(text).toMatch(/shadcn host that toggles `\.dark` must therefore set `theme="auto"`/);
     expect(text).toMatch(/palette is mixed .* can fail contrast/);
+    expect(text).toMatch(/does not cleanly follow the system dark scheme.*status colors go dark/);
   });
 
   it('never sets a font family token to inherit', () => {

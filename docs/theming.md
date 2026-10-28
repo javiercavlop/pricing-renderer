@@ -308,10 +308,13 @@ Set `theme="light"`, `theme="dark"`, or `theme="auto"`. The default theme also
 responds to an ancestor `[data-theme="dark"]` and, with the same tokens, to an
 ancestor `.dark` when the element has `theme="auto"`. With `theme="light"` or an
 explicit `theme="dark"` a `.dark` ancestor changes nothing. For a host that uses the
-`.dark` class, set `theme="auto"` (it also follows the system dark scheme). With the shadcn overlay in a `.dark`
+`.dark` class, set `theme="auto"`. With the shadcn overlay in a `.dark`
 host, `theme="auto"` is required: with `theme="light"` the mapped colors follow
 the host but the status colors and `color-scheme` stay light; with
-`theme="dark"` `color-scheme` stays light. Both can fail contrast. See
+`theme="dark"` `color-scheme` stays light. Both can fail contrast. With the
+overlay, `theme="auto"` under a system dark scheme and no `.dark` class gives dark
+status colors on the host's light palette, so add `.dark` whenever the app is
+dark. See
 [Dark mode](design-systems.md#dark-mode). Every custom theme should test:
 
 - WCAG AA contrast for text, controls, borders, and selected states.

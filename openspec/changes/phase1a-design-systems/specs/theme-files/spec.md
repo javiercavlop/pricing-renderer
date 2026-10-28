@@ -57,8 +57,13 @@ Needs: impl, utest
 - **GIVEN** a host page with `styles.css`, `tokens-shadcn.css`, a `:root` and a `.dark` value of `--primary`, and the element has `theme="light"` under a light system color scheme
 - **WHEN** the class `dark` is added to `<html>`
 - **THEN** the computed `--pr-color-accent` follows the host `.dark --primary`
-- **AND** the computed `color-scheme` stays `light` and `--pr-color-success` stays `#087f5b`, because under a host `.dark` the dark-only values (color-scheme dark, success, warning, warning-surface, overlay, shadow) apply only with `theme="auto"`, and `theme="light"` does not match `.dark …[theme='auto']`
+- **AND** the computed `color-scheme` stays `light` and `--pr-color-success` stays `#087f5b`, because a `.dark` ancestor turns on color-scheme dark and the dark status colors only with `theme="auto"` (`theme="dark"` always has the dark status colors and a light color-scheme)
 - **AND** a shadcn host that toggles `.dark` MUST set `theme="auto"` on the element (recommended usage)
+
+#### Scenario: Auto under a system dark scheme without .dark
+
+- **GIVEN** the same page with a dark system color scheme, no `dark` class and `theme="auto"`
+- **THEN** `--pr-color-success` is `#66d9ad`, `color-scheme` is `light` and `--pr-color-accent` is the host light `--primary`
 
 ### Requirement: shadcn token mapping
 
