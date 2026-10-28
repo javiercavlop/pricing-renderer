@@ -9,11 +9,11 @@ Needs: impl, utest
 
 #### Scenario: Every key from the provider, then from the instance
 
-- **GIVEN** `configurePricingRenderer({ locale: 'en-US' })` and a provider with `config` `{ locale: 'es-ES', pricingPath: 'catalog.pricing', selectionEnabled: false, ctaEnabled: false, variablesEnabled: false }`
+- **GIVEN** `configurePricingRenderer({ locale: 'en-US' })` and a provider with `config` `{ locale: 'es-ES', pricingPath: '/catalog', selectionEnabled: false, ctaEnabled: false, variablesEnabled: false }`
 - **WHEN** `PricingRenderer` with `yaml={acmeYaml}` (with `@lit/react` mocked to record its props) and a component using `usePricingSelection(acme, {})` render inside it with `renderToString`
-- **THEN** the wrapper passes `locale` `es-ES`, `pricingPath` `catalog.pricing`, `selectionEnabled` `false`, `ctaEnabled` `false` and `variablesEnabled` `false`
+- **THEN** the wrapper passes `locale` `es-ES`, `pricingPath` `/catalog`, `selectionEnabled` `false`, `ctaEnabled` `false` and `variablesEnabled` `false`
 - **AND** `viewModel.locale` is `es-ES`
-- **AND** with the instance props `locale="fr-FR"`, `pricingPath="plans"`, `selectionEnabled`, `ctaEnabled` and `variablesEnabled` all `true`, the wrapper passes `fr-FR`, `plans`, `true`, `true` and `true`
+- **AND** with the instance props `locale="fr-FR"`, `pricingPath="/plans"`, `selectionEnabled`, `ctaEnabled` and `variablesEnabled` all `true`, the wrapper passes `fr-FR`, `/plans`, `true`, `true` and `true`
 
 ### Requirement: Presentation precedence with a provider
 
@@ -35,6 +35,13 @@ Needs: impl, utest
 - **AND** a provider with `config.presentation.planBadges` `{ growth: [c], enterprise: [c] }`, `c` with label `Config`, and `presentation.planBadges` `{ enterprise: [p] }`, `p` with label `Provider`
 - **WHEN** `usePricingSelection(acme, {})` renders inside it with `renderToString`
 - **THEN** `viewModel.presentation.planBadges` has `starter[0].label` `Global`, `growth[0].label` `Config` and `enterprise[0].label` `Provider`
+
+#### Scenario: Wrapper passes the merged presentation
+
+- **GIVEN** a provider with `presentation` `pp`, whose `planBadges.growth` is `[{ id: 'p', label: 'Provider', tone: 'accent' }]`, and `@lit/react` mocked to record the props of the base component
+- **WHEN** `PricingRenderer` with `yaml={acmeYaml}` and `presentation` `ip`, whose `planBadges.starter` is `[{ id: 'i', label: 'Instance', tone: 'accent' }]`, renders inside it with `renderToString`
+- **THEN** the recorded `presentation` deeply equals `mergePresentationOptions(pp, ip)`
+- **AND** its `planBadges.growth[0].label` is `Provider` and its `planBadges.starter[0].label` is `Instance`
 
 ### Requirement: Messages merge per key
 
@@ -62,10 +69,18 @@ Needs: impl, utest
 - **WHEN** `usePricingSource({ src: 'https://example.com/acme.yml', request: { maxBytes: 4096 } })` is called and its recorded effects run
 - **THEN** the spy was called once with `request.maxBytes` 4096 and `request.timeoutMs` 15000, the default, not the provider's 5000
 
+#### Scenario: Wrapper passes the provider loader and request
+
+- **GIVEN** a provider with a `loadPricing` function `L` and `request` `{ timeoutMs: 5000 }`, and `@lit/react` mocked to record the props of the base component
+- **WHEN** `PricingRenderer` with `src="https://example.com/acme.yml"` and no `request` renders inside it with `renderToString`
+- **THEN** the recorded `loadPricing` is `Object.is` equal to `L` and the recorded `request` deeply equals `{ timeoutMs: 5000 }`
+- **AND** with the instance prop `request={{ maxBytes: 4096 }}`, the recorded `request` deeply equals `{ maxBytes: 4096 }`, with no `timeoutMs`, and the recorded `loadPricing` is still `L`
+
 ### Requirement: Provider request headers stay on allowed origins
 
 `req~provider-request-origin~1`
 IF the instance sets no `request` and its `src` either is not an absolute URL or has an origin `new URL(src).origin` that is neither the page origin `globalThis.location.origin` (none on a server) nor the origin of an entry of the provider's `requestOrigins`, THEN `PricingRenderer` and `usePricingSource` SHALL use the provider `request` without its `headers` and `credentials`.
+The check reads the given `src` only, never the target of a redirect.
 
 Needs: impl, utest
 
@@ -101,6 +116,12 @@ Needs: impl, utest
 - **GIVEN** an outer provider with `config` `{ locale: 'es-ES' }` and an inner one with `messages` only
 - **WHEN** `usePricingSelection(acme, {})` renders inside the inner provider with `renderToString`
 - **THEN** `viewModel.locale` is the global `en-US`
+
+#### Scenario: Wrapper inside two providers
+
+- **GIVEN** an outer provider with `messages` `{ 'summary.title': 'Outer title', 'cta.select': 'Outer' }` around an inner provider with `messages` `{ 'cta.select': 'Inner' }`, and `@lit/react` mocked to record the props of the base component
+- **WHEN** `PricingRenderer` with `yaml={acmeYaml}` and no `messages` renders inside the inner provider with `renderToString`
+- **THEN** the recorded `messages` deeply equal `{ 'cta.select': 'Inner' }`, with no `summary.title` key
 
 ### Requirement: Provider keeps the global configuration
 

@@ -82,10 +82,22 @@ moved inside:
 - Hooks: one stabilizer per hook instance. `createSelectionStore()` creates it inside the store, so
   each `usePricingSelection` call site has its own, and the store calls `reset()` when `pricing`
   changes by identity (`req~use-pricing-selection-pricing-change~1`). No stabilizer, view model or
-  pricing-keyed cache (`Map`, `WeakMap`, `Set`, `WeakSet`) lives at module scope in `src/react`
-  (`req~react-no-module-state~1`). Reason: a module-level cache keyed by the pricing object is shared
-  by every request of a server process, so one request's kept price would hide another request's
-  failed expression (`req~use-pricing-selection-view-model~2`).
+  pricing-keyed cache lives at module scope in `src/react` (`req~react-no-module-state~1`). Reason:
+  a module-level cache keyed by the pricing object is shared by every request of a server process,
+  so one request's kept price would hide another request's failed expression
+  (`req~use-pricing-selection-view-model~2`).
+- Module scope in `src/react` is an allow-list of statement kinds, not a list of forbidden
+  constructors. A deny-list (`Map`, `WeakMap`, `Set`, `WeakSet`, `createPriceStabilizer`) misses
+  other carriers of state: an object or array literal written later, a class with static fields, a
+  property assigned on an exported function, a call that returns a cache, `export default` of a
+  value. An allow-list can be checked by a syntax scan of each top-level statement, without data
+  flow. It admits imports and exports of bindings, type, interface and function declarations, and
+  `const` declarations of a function, an arrow function or a call of `createContext` (an argument
+  with no call or `new` expression), `forwardRef` from `react` or `createComponent` from
+  `@lit/react`, the calls the adapter needs to build its components and context. Two narrow forms
+  cover the code that exists or is planned: `<X>.displayName = '<string>'` on a top-level `const`
+  (`src/react/index.ts:121,161`) and the client-check constant of D7. A new form needs a change of
+  the requirement.
 
 ### D4. Search params (CRP-P3-A)
 
@@ -160,11 +172,17 @@ consumer, `usePricingSource`.
   (`:405-411`) and the hook resolves them during render.
 - The abort of the previous load and the sequence number stay in the callers (`:398-401,420-422`).
 - The element's `reload()` calls it in P3-4, after P3-2.
-- Bounds (`req~load-source-request-bounds~1`): a `request.maxBytes` or `request.timeoutMs` that is
-  not a positive finite number is replaced by its default (2097152 bytes, 15000 ms;
-  `src/yaml/load.ts:6-7`) before `loadPricingFromUrl`. Today `loadPricingFromUrl` takes them as
-  given (`:139-140`), so `NaN` aborts at once and a negative size refuses every body; the element
-  gains the rule through `reload()` in P3-4.
+- Bounds (`req~load-source-request-bounds~1`): `usePricingSource` and its store
+  `createSourceStore()` replace a `request.maxBytes` that is not a positive finite number, and a
+  `request.timeoutMs` that is not a positive finite number at most 2147483647, by its default
+  (2097152 bytes, 15000 ms; `src/yaml/load.ts:6-7`). They apply the rule after the provider rule
+  and the origin rule (D8), to the request they pass `loadPricingSource`, so a provider value of
+  `0`, `NaN` or `Infinity` does not disable a limit. 2147483647 ms is the largest delay a timer
+  honours; Node sets a larger one to 1 ms, so the load would abort at once.
+- `loadPricingSource` and the element's `reload()` pass `request` as given. `loadPricingFromUrl`
+  takes the fields as given (`:139-140`), so `NaN` aborts at once and a negative size refuses every
+  body (`PR_SOURCE_TOO_LARGE`), and the element keeps that behaviour. P3-6 (`createSourceStore`)
+  implements and tests the bounds; P3-4 does not.
 - What is not bounded: a `loadPricing` that returns an object (not a string) is normalized without
   a size check (`:167-168`), and inline `pricing` and `yaml` have no limit. The host bounds them.
 - SSRF: `loadPricingSource` on a server with a `src` taken from user input fetches whatever URL it
@@ -309,9 +327,10 @@ component reads it in the same render through `useSyncExternalStore`.
   in a passive effect, which can run after the element's first update has already dispatched
   `pricing-ready`; the layout effect runs before it (`req~renderer-state-early-listen~1`).
 - Client check: `src/react/use-renderer-state.ts` evaluates `typeof document !== 'undefined'` once,
-  at module load, into the module constant
-  `useClientLayoutEffect = isClient ? useLayoutEffect : useEffect`. A constant keeps the hook order
-  the same on every render of a process. The node test therefore stubs `globalThis.document`
+  at module load, in the module constant
+  `const useClientLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect`,
+  the client-check form that the module-scope allow-list admits (D3). A constant keeps the hook
+  order the same on every render of a process. The node test therefore stubs `globalThis.document`
   (`vi.stubGlobal`) and calls `vi.resetModules()` before the dynamic `import()` of the module, and
   removes the stub after it.
 - The end-to-end race (a real element's first `pricing-ready` reaching a hook committed in the same
@@ -344,6 +363,11 @@ component reads it in the same render through `useSyncExternalStore`.
   (its load fails with `PR_SOURCE_URL_INVALID` anyway). `maxBytes` and `timeoutMs` are kept for
   every origin. The rule applies only while the instance sets no `request`; an instance `request`
   is used as given: the host chose it for that `src`.
+- The origin check reads the initial `src` only. The adapter never sees a redirect: `fetch` follows
+  it, and on a cross-origin redirect the Fetch standard removes only `Authorization`, so other
+  provider headers (an API key header, for example) reach the redirect target. Preventing a
+  cross-origin redirect is the host's job: a listed origin or the page origin must not redirect to
+  another origin while the provider sends headers to it. The reference docs (P3-15b) say so.
 - A provider `loadPricing` also runs for every `src` in the subtree. It receives the URL as
   `context.url` (`src/yaml/load.ts:154-163`) and the filtered request; a shared loader that adds
   its own credentials must check `context.url` itself. The same holds for a provider
@@ -424,6 +448,21 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
 - The wrapper renders each slot with `createPortal(node, container, planId)` from `react-dom`
   (key = plan id for plan nodes, slot name for the others); it is the implementation of
   `req~react-slot-portals~1`.
+- The wrapper listens to `pricing-slots-change` through the `createComponent` events map, which
+  `@lit/react` 1.0.8 sets, together with the element properties, in a `useLayoutEffect`
+  (`node_modules/@lit/react/development/create-component.js:135`). Slot nodes that exist before
+  that listener is set are read once on attach with the helper `currentSlotNodes(element)`, that
+  is `element.querySelectorAll('[data-pr-slot]')` filtered by `acceptedSlotNodes`.
+- `acceptedSlotNodes` keeps a node only if its nearest ancestor matching
+  `'pricing-renderer, [data-pr-slot]'` is the wrapper's own element
+  (`req~react-slot-node-accept~1`), so a node of a nested renderer, or one inside another slot
+  node's portal content, gets no portal from this wrapper. The element, for its part, reports in
+  `pricing-slots-change` only the slot nodes it rendered itself
+  (`req~slots-change-event-own-nodes~1`).
+- `renderError({ diagnostics, reload })` gets the diagnostics that `errorDiagnosticsOf(node)` of
+  `src/react/slots.ts` reads from the error slot node (`req~react-error-diagnostics-reader~1`; the
+  attribute is in D13), never diagnostics collected from `pricing-diagnostic` events
+  (`req~react-error-diagnostics-source~1`).
 - `hideSections` property and `hide-sections` attribute: `hero`, `metadata`, `billing`,
   `variables`, `plans`, `comparison`, `addOns`, `summary`; with `hero` hidden a visually hidden
   title keeps the shell's accessible name.
@@ -447,6 +486,9 @@ check). The Next example uses `next/link`. Both use an in-memory mock backend fo
     (`req~slot-plan-cta-any-pending~1`).
 - The summary slot node carries only `data-relation` and `data-pending`
   (`req~slot-summary-actions-context~1`).
+- The error slot node carries `data-diagnostics`, the `JSON.stringify` of
+  `[{ code, severity, message, path? }]` of the failed load's diagnostics
+  (`req~slot-error-diagnostics~1`), which the wrapper reads with `errorDiagnosticsOf(node)` (D11).
 - Plan slot encoding follows the built-in markup: `data-selected=${String(selected)}`,
   `data-current` and `data-pending` as `'true'` or `nothing`,
   `data-relation=${cta.relation ?? nothing}` (`src/element/renderers.ts:368-369,384-385,427-429`).

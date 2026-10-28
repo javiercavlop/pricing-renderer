@@ -82,26 +82,40 @@ Needs: impl, utest
 - **THEN** the first result is not a promise and its `value.saasName` is `Acme Cloud`
 - **AND** the second is a promise whose value has the same `saasName`, and `loadPricing` got the `signal`
 
-### Requirement: Shared source load, request bounds
+#### Scenario: Request passed as given
+
+- **GIVEN** a `loadPricing` spy that resolves the acme YAML text
+- **WHEN** `loadPricingSource({ src: 'https://example.com/acme.yml' }, { loadPricing, request: { maxBytes: -1 } })` settles
+- **THEN** the spy's `request.maxBytes` is -1
+- **AND** the result has no `value` and its diagnostics hold `PR_SOURCE_TOO_LARGE`
+
+### Requirement: Source hook, request bounds
 
 `req~load-source-request-bounds~1`
-IF `options.request.maxBytes` or `options.request.timeoutMs` given to `loadPricingSource` with a `src` input is not a positive finite number, THEN `loadPricingSource` SHALL call `loadPricingFromUrl` with that field set to its default, 2097152 bytes for `maxBytes` and 15000 ms for `timeoutMs`, in place of the given value.
-An object returned by `loadPricing` and the inline sources are not bounded; the host bounds them.
+IF the `request` that `usePricingSource` or its store `createSourceStore()` holds after the provider and origin rules has a `maxBytes` that is not a positive finite number, or a `timeoutMs` that is not a positive finite number at most 2147483647, THEN the hook and the store SHALL pass `loadPricingSource` that field set to its default, 2097152 bytes or 15000 ms.
+`loadPricingSource` and the element's `reload()` pass `request` as given.
 
 Needs: impl, utest
 
 #### Scenario: Invalid bounds fall back to the defaults
 
-- **GIVEN** a `loadPricing` spy that resolves the acme YAML
-- **WHEN** `loadPricingSource({ src: 'https://example.com/acme.yml' }, { loadPricing, request: { maxBytes: -1, timeoutMs: Number.NaN } })` settles
+- **GIVEN** a `loadPricing` spy that resolves the acme YAML and `store = createSourceStore()` given `setInput({ src: 'https://example.com/acme.yml' }, { loadPricing, request: { maxBytes: -1, timeoutMs: Number.NaN } })`
+- **WHEN** `store.start()` is called and the load settles
 - **THEN** the spy's `request.maxBytes` is 2097152 and its `request.timeoutMs` is 15000
-- **AND** the result's `value.saasName` is `Acme Cloud`
+- **AND** `getSnapshot().pricing.saasName` is `Acme Cloud`
 
-#### Scenario: Valid bounds are kept
+#### Scenario: Timeout above the timer limit
 
-- **GIVEN** the same spy
-- **WHEN** `loadPricingSource({ src: 'https://example.com/acme.yml' }, { loadPricing, request: { maxBytes: 4096, timeoutMs: 500 } })` settles
-- **THEN** the spy's `request.maxBytes` is 4096 and its `request.timeoutMs` is 500
+- **GIVEN** the same spy and a `createSourceStore()` given the same `src` with `request` `{ maxBytes: 0, timeoutMs: 2147483648 }`
+- **WHEN** `start()` is called and the load settles
+- **THEN** the spy's `request.maxBytes` is 2097152 and its `request.timeoutMs` is 15000
+- **AND** on a new store given `request` `{ maxBytes: 4096, timeoutMs: 2147483647 }`, the spy's `request.maxBytes` is 4096 and its `request.timeoutMs` is 2147483647
+
+#### Scenario: Provider bounds through the hook
+
+- **GIVEN** the hook harness of design.md D7, with `useContext` returning a provider value whose `request` is `{ maxBytes: 0, timeoutMs: Number.POSITIVE_INFINITY }` and whose `loadPricing` is a spy that resolves the acme YAML
+- **WHEN** `usePricingSource({ src: 'https://example.com/acme.yml' })` is called and its recorded effects run
+- **THEN** the spy's `request.maxBytes` is 2097152 and its `request.timeoutMs` is 15000
 
 ### Requirement: Inline sources resolve during render
 
@@ -230,6 +244,20 @@ Needs: impl, utest
 - **WHEN** it is rendered with `renderToString`
 - **THEN** the output contains `starter`
 
+#### Scenario: No pricing, no selection
+
+- **GIVEN** `store = createSelectionStore()` given `setInput(undefined, { defaultSelection: { planId: 'growth' } })`
+- **WHEN** `getSnapshot()` is read
+- **THEN** its `selection` is undefined
+- **AND** a component that renders `String(usePricingSelection(undefined, {}).selection)` with `renderToString` outputs `undefined`
+
+#### Scenario: Controlled selection in effect
+
+- **GIVEN** `s` equal to `createDefaultSelection(acme)` except plan `growth` and `variables.seats` 40, and `store = createSelectionStore()` given `setInput(acme, { selection: s, defaultSelection: { planId: 'enterprise' }, variablesEnabled: false })`
+- **WHEN** `getSnapshot()` is read
+- **THEN** `selection.planId` is `growth`, from `options.selection` and not from `defaultSelection`
+- **AND** `selection.variables.seats` is 5, the pricing's value, as `selectionInEffect` gives with `variablesEnabled` false
+
 ### Requirement: View model of the hook
 
 `req~use-pricing-selection-view-model~2`
@@ -253,15 +281,24 @@ Needs: impl, utest
 ### Requirement: No shared state at module scope
 
 `req~react-no-module-state~1`
-The modules under `src/react` SHALL hold no price stabilizer, view model, `Map`, `WeakMap`, `Set` or `WeakSet` in a module-scope binding, so that no state is shared between hook instances or between server requests.
+The modules under `src/react` SHALL hold at module top level only the statement kinds that the scan below lists: import and export declarations of bindings, type, interface and function declarations, `const` declarations of a function, an arrow function or a call of `createContext`, `forwardRef` or `createComponent`, and one `displayName` and one client-check form, so that no state is shared between hook instances or server requests.
 
 Needs: impl, utest
 
 #### Scenario: Static scan of module scope
 
-- **GIVEN** the sources of `src/react/**/*.ts`
-- **WHEN** the initializers of their top-level variable declarations and the right-hand sides of every assignment (`=`, `??=`, `||=`, `&&=`) to a top-level binding, anywhere in the module, are listed
-- **THEN** none is a `new Map`, `new WeakMap`, `new Set` or `new WeakSet` expression or a call of `createPriceStabilizer` or `createPricingViewModel`
+- **GIVEN** the sources of `src/react/**/*.ts`, parsed as text with the TypeScript compiler API, the test importing no module under `src/react` or calling `vi.resetModules()` before it does
+- **WHEN** each top-level statement is classified
+- **THEN** each is one of: the `'use client'` directive of the prologue; an `import` declaration, side-effect imports included; an `export` declaration that lists or re-exports bindings or types (`export { a }`, `export ... from`, `export type`), not `export default` or `export =`; a type alias or interface declaration; a function declaration that is not `export default`
+- **AND** otherwise a `const` statement (with or without `export`) each of whose declarators is initialized with a function expression, an arrow function, or a call, type arguments allowed, of `createContext` or `forwardRef` imported from `react` (named import, or `React.<name>` of its namespace import) or of `createComponent` imported from `@lit/react`, a `createContext` argument containing no call or `new` expression
+- **AND** otherwise `<X>.displayName = '<string literal>'`, `<X>` a top-level `const` of the same module, or `const useClientLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect`, both hooks imported from `react`
+- **AND** `src/react/index.ts` as it is at the base of this change passes the scan
+
+#### Scenario: Statements outside the allow-list
+
+- **GIVEN** the scan of the scenario above, the test importing no module under `src/react` or calling `vi.resetModules()` before it does
+- **WHEN** it classifies each of the module texts `export default {}`, `class A {}`, `enum E { A }`, `namespace N {}`, `let x = 1`, `var y = 1`, `const m = new Map()`, `const n = 1`, `const c = createContext(new Map())`, `const s = createSelectionStore()`, `PricingRenderer.cache = {}` and `register()`
+- **THEN** each text fails the scan
 
 ### Requirement: Changes go through the core
 
@@ -306,6 +343,13 @@ Needs: impl, utest
 - **GIVEN** the same store and a reset spy
 - **WHEN** `store.setVariable('seats', 12)` is called
 - **THEN** the spy was called once and its `selection.variables.seats` is 12
+
+#### Scenario: Equal selection reported, snapshot kept
+
+- **GIVEN** `store = createSelectionStore()` given `setInput(acme, { onSelectionChange })` with an `onSelectionChange` spy, plan `starter` selected, a listener added with `store.subscribe`, and `before = store.getSnapshot()`
+- **WHEN** `store.selectPlan('starter')` is called
+- **THEN** the spy was called once with `selection.planId` `starter`, as the element dispatches for an equal selection
+- **AND** `getSnapshot()` is `Object.is` equal to `before` and the listener was not called
 
 #### Scenario: Confirm reports once, the pending step none
 
@@ -367,6 +411,13 @@ Needs: impl, utest
 - **WHEN** `store.setInput(acme2, { defaultSelection: { planId: 'growth' } })` is called, `acme2` a new normalized acme pricing object
 - **THEN** `getSnapshot().selection.planId` is `growth` and `getSnapshot().pending` is undefined
 
+#### Scenario: A new pricing resets the stabilizer
+
+- **GIVEN** two normalized acme pricing objects `P1` and `P2` whose `starter` price is `rate() * #seats`, and `store = createSelectionStore()` given `setInput(P1, { expressionOptions: { functions: { rate: () => 30 } } })`, whose `viewModel.resolved.planPrices.starter.kind` is `amount`
+- **WHEN** `store.setInput(P2, { expressionOptions: {} })` is called
+- **THEN** `getSnapshot().viewModel.resolved.planPrices.starter.kind` is `error`
+- **AND** on a second store given the same first input and then `setInput(P1, { expressionOptions: {} })`, the same pricing object, the kind stays `amount`
+
 ### Requirement: Pending change, confirm and cancel
 
 `req~use-pricing-selection-pending~1`
@@ -408,6 +459,13 @@ Needs: impl, utest
 - **GIVEN** `store = createSelectionStore()` given `setInput(acme, { defaultSelection: { planId: 'growth' } })`
 - **WHEN** `store.apply({ planId: 'legacy' })` is called
 - **THEN** the result's only diagnostic code is `PR_SELECTION_UNKNOWN_PLAN` and `getSnapshot().selection.planId` stays `growth`
+
+#### Scenario: Apply drops a pending change
+
+- **GIVEN** `store = createSelectionStore()` given `setInput(acme, { defaultSelection: { planId: 'growth' } })`, after `store.toggleAddOn('prioritySuccess', true)` left a pending change
+- **WHEN** `store.apply({ billingPeriod: 'yearly' })` is called
+- **THEN** `getSnapshot().pending` is undefined and `getSnapshot().selection.billingPeriod` is `yearly`
+- **AND** no add-on is selected, and a later `store.confirm()` changes nothing
 
 ### Requirement: Current plan and relations
 
@@ -512,7 +570,7 @@ Needs: impl, utest
 ### Requirement: Apply through the renderer state
 
 `req~renderer-state-apply~1`
-WHEN `applySelection(input)` of the returned state is called, `usePricingRendererState` and its store `createRendererStateStore()` SHALL call `applySelection(input)` of the element, replace the snapshot with the result's `selection` and `resolved` when `applied` is true, and return that result.
+WHEN `applySelection(input)` of the returned state is called, `usePricingRendererState` and its store `createRendererStateStore()` SHALL call `applySelection(input)` of the element, replace the snapshot with the result's `selection` and `resolved` when `applied` is true, and return that result, or return `undefined` while no element is attached.
 
 Needs: impl, utest
 
@@ -521,3 +579,15 @@ Needs: impl, utest
 - **GIVEN** `store = createRendererStateStore()` attached to an element stand-in after its `pricing-ready`, whose `applySelection` returns `applied: true` with plan `enterprise` and dispatches no event, and a listener added with `store.subscribe`
 - **WHEN** `store.getSnapshot().applySelection({ planId: 'enterprise' })` is called
 - **THEN** `getSnapshot().selection.planId` is `enterprise` and the listener was called once
+
+#### Scenario: Refused apply keeps the snapshot
+
+- **GIVEN** the attached store of the scenario above, whose stand-in `applySelection` now returns a result `r` with `applied: false`, a listener added with `store.subscribe`, and `before = store.getSnapshot()`
+- **WHEN** `store.applySelection({ planId: 'growth' })` is called
+- **THEN** it returns `r`, `getSnapshot()` is `Object.is` equal to `before` and the listener was not called
+
+#### Scenario: Apply without an element
+
+- **GIVEN** `store = createRendererStateStore()` never attached, and a second store after `attach(target)` and `detach()`
+- **WHEN** `applySelection({ planId: 'growth' })` is called on each
+- **THEN** both calls return `undefined`
