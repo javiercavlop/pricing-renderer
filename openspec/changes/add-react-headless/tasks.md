@@ -127,8 +127,9 @@ Checks (names used per slice; plan section 2):
   - Files: `tests/unit/renderer-state-store.test.ts` (new, test task),
     `src/react/use-renderer-state.ts` (new), `src/react/headless.ts`,
     `.changeset/use-renderer-state.md`.
-  - Requirements: every `req~renderer-state-*`. The late-attach question of design.md ("Open
-    questions") gets its own slice if the owner chooses the element getter.
+  - Requirements: every `req~renderer-state-*`. Late attach: decision (b), a documented limit in
+    this phase (P3-15a), no `normalizedPricing` getter (design.md, "Open questions"); option (a)
+    stays a possible later slice.
   - Checks: `full`, `pkg`, `red(tests/unit/renderer-state-store.test.ts)`.
 
 ## Wave 3: composition (item 4; after CRP-P3-C and P3-S2)
@@ -138,6 +139,11 @@ Checks (names used per slice; plan section 2):
     `src/element/pricing-renderer-element.ts`, `custom-elements.json`, `src/react/index.ts`,
     `.changeset/hide-sections.md`.
   - Requirements: those of `specs/hide-sections` (P3-S2).
+  - Note on `req~hide-sections-addons-summary~1`: `renderAddOns` draws the summary inside
+    `section[data-pr-part=add-ons]` (`src/element/renderers.ts:1350`), so hiding `addOns` must not
+    drop the summary. P3-10 treats hidden add-ons as no add-ons in the element's own summary
+    placement (`src/element/pricing-renderer-element.ts:84-89`) and skips `renderAddOns`;
+    `renderers.ts` stays P3-11 only.
   - Checks: `full`, `pkg`, `red(tests/unit/hide-sections.test.ts)`,
     `unit(tests/unit/custom-elements.test.ts)`; CI `browser-shards` with the baselines unchanged.
 - [ ] P3-11 Element slots (T/I, risk high; after P3-10 merged).
@@ -146,6 +152,8 @@ Checks (names used per slice; plan section 2):
     `RenderState` fields, keyed plan slot, summary slot), `src/element/pricing-renderer-element.ts`,
     `src/element/events.ts`, `custom-elements.json`, `.changeset/element-slots.md`.
   - Requirements: the element side of `specs/composition` (P3-S2).
+  - Note: the slot nodes carry the context attributes (`data-plan-name`, `data-label`, `data-href`,
+    `data-relation`, `data-selected`, `data-current`, `data-pending`; design.md, D13).
   - Checks: `full`, `pkg`, `red(tests/unit/element-slots.test.ts)`; CI `browser-shards` with the
     new spec green and the baselines unchanged. Split the loading and error slots into a follow-up
     PR if it grows past 300 lines.
@@ -174,7 +182,7 @@ Checks (names used per slice; plan section 2):
   - Files: `docs/react.md` (new), the "React and Next" section of `README.md` (`:224-263`) and its
     docs list (`:472-492`).
   - Content: the provider, the hooks, SSR rules, and the two limits of `usePricingRendererState`
-    (design.md, D7).
+    (design.md, D7), and the late-attach limit (decision (b)).
   - Checks: `docs`.
 - [ ] P3-15b Reference (doc-steward, risk low; parallel with P3-15a).
   - Files: `docs/api-reference.md` (core functions, `pricing-renderer/react`, the new subpath,

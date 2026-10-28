@@ -3,7 +3,7 @@
 Decisions come from the plan (`docs/agent-work/phase3-react-headless/plan.md`, section 3), whose
 recommendations the owner accepted for CRP-P3-A to CRP-P3-D, and from the intake facts. Line
 numbers are at `88f5141`. D1 to D10 belong to part 1 (P3-S1); D11 and D12 summarise part 2 and the
-examples, whose spec files P3-S2 writes.
+examples, whose spec files P3-S2 writes; D13 records the slot context encoding.
 
 ## Context
 
@@ -182,6 +182,8 @@ are allowed only for modules that import no Lit (`current-selection.ts` imports 
   `req~apply-selection-silent~1`) or a change of a controlled `selection` prop; `applySelection` of
   the returned state refreshes the snapshot. The React guide (P3-15a) states both limits. This is a
   docs task, not a requirement, because no test reads the guide's prose.
+- Late attach (decision (b), see Open questions): a hook attached after `pricing-ready` stays
+  `undefined` until the next event. It is a documented limit of this phase, in the same guide.
 
 ### D8. Provider (CRP-P3-B)
 
@@ -232,9 +234,46 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
 - Event `pricing-slots-change` from `updated()` when the set of slot nodes changes; method
   `triggerPlanAction(planId)` that dispatches the same `pricing-action` as the built-in CTA.
 - Plan slot nodes wrapped in `keyed(plan.id, ...)`, so no test helper changes (intake, item 4).
+  `keyed(plan.id, ...)` is used only when `slots` requests `plan-cta`; it is the implementation of
+  `req~slot-plan-cta-keyed~1`. Without `slots` no directive is added, so the existing test helpers
+  that flatten directives stay unchanged. `repeat()` for the whole plan map is not used.
+- The wrapper renders each slot with `createPortal(node, container, planId)` from `react-dom`
+  (key = plan id for plan nodes, slot name for the others); it is the implementation of
+  `req~react-slot-portals~1`.
 - `hideSections` property and `hide-sections` attribute: `hero`, `metadata`, `billing`,
   `variables`, `plans`, `comparison`, `addOns`, `summary`; with `hero` hidden a visually hidden
   title keeps the shell's accessible name.
+
+### D13. Render-prop context travels on the slot nodes
+
+- Each plan slot node carries the per-plan context as data attributes, next to `data-plan-id`
+  (`req~slot-plan-cta-context~1`):
+  - `data-plan-name`, `data-label`;
+  - `data-href`: the safe expanded link only; absent for a button;
+  - `data-relation`: absent without a current plan;
+  - `data-selected`: `'true'` or `'false'`;
+  - `data-current` and `data-pending`: `'true'` or absent.
+- The summary slot node carries only `data-relation` and `data-pending`
+  (`req~slot-summary-actions-context~1`).
+- Encoding as in the built-in markup: `data-selected=${String(selected)}`, `data-current` and
+  `data-pending` as `'true'` or `nothing`, `data-relation=${cta.relation ?? nothing}`
+  (`src/element/renderers.ts:368-369,384-385,427-429`; summary `:1458-1459`). The values come from
+  `planCtaView` (`src/element/cta.ts:92`, called at `renderers.ts:351`), which the built-in CTA
+  already uses, so the context and the built-in markup cannot disagree.
+- In `updated()` the element dispatches `pricing-slots-change` when the set of slot nodes (identity
+  and order) or any slot node's `data-*` values changed since the last dispatch
+  (`req~slots-change-event~2`). `detail` stays `{ nodes }`. The wrapper rebuilds each context from
+  the reported nodes on each event.
+- Reason: an event on the node set alone left the context stale when selection, label, link,
+  `currentSelection` or `pendingActionId` changed with the same nodes.
+- The compare runs once per update. A React re-render that passes a new but equal `slots` array
+  dispatches nothing, so it cannot loop. Portal content lives in the nodes' children, which the
+  compare does not read.
+- Summary flaw: the summary context holds `selection` and `resolved`, which are objects, not
+  attributes, and `resolved` can change with an equal selection (for example a new pricing object).
+  So the wrapper reads them from `resolvedState` in the event handler, and the event also fires when
+  a summary node is connected and the selection in effect or its resolved prices differ
+  structurally from the last dispatch (`req~slots-change-event-summary~1`).
 
 ### D12. Examples (CRP-P3-D (a))
 
@@ -255,7 +294,7 @@ check). The Next example uses `next/link`. Both use an in-memory mock backend fo
 - R8. File contention with the phase 1b and 1c chains. Mitigation: the order in tasks.md.
 - R9. A renderer state attached after `pricing-ready` (a hook mounted later than the element) has
   no pricing to show until the next event. Mitigation: listeners attached in the commit cover the
-  usual case; the open question below covers the rest.
+  usual case; the rest is a documented limit (decision (b), React guide P3-15a).
 - R10. The URL format becomes public. Mitigation: D4 fixed here; any later change is a new revision.
 
 ## Migration
@@ -266,7 +305,7 @@ None. No stored data, option, default or event detail changes.
 
 - Late attach (risk R9): the element has no public getter of its normalized pricing, so a hook
   attached after `pricing-ready` cannot fill `pricing` and its snapshot stays `undefined` until the
-  next event. This change specifies only the accepted CRP-P3-B shape. Options for the owner: (a) a
-  read-only element getter `normalizedPricing` (new element API, also in `custom-elements.json`),
-  then a new requirement that seeds the snapshot from it and `resolvedState`, in a slice after
-  P3-8; (b) keep the documented limit. Recommended: (a).
+  next event. Owner-facing answer: decision (b). It stays a documented limit in this phase (React
+  guide, P3-15a), with no `normalizedPricing` getter. Option (a), a read-only element getter
+  `normalizedPricing` (new element API, also in `custom-elements.json`) that seeds the snapshot
+  together with `resolvedState`, stays a possible later slice after P3-8.
