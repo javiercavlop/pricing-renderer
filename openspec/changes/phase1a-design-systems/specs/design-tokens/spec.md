@@ -74,9 +74,9 @@ Needs: impl, utest
 
 #### Scenario: A host token unifies its group
 
-- **GIVEN** the demo page with a host rule `pricing-renderer { --pr-font-weight-bold: 600; }`
+- **GIVEN** the demo page without its unlayered button font reset, and a host rule `pricing-renderer { --pr-font-weight-bold: 600; }`
 - **WHEN** the renderer is ready
-- **THEN** the computed `font-weight` of `.pr-hero__title`, of the first `.pr-price__amount`, of the first `.pr-plan-card__top h4` and of the first `[data-pr-part='cta']` is `600`
+- **THEN** the computed `font-weight` of `.pr-hero__title`, of the first `.pr-price__amount`, of the first `.pr-plan-card__top h4` and of the first `button[data-pr-part='cta']` is `600`
 - **AND** without the host rule they are `780`, `790`, `700` and `750`
 
 ### Requirement: Line height token
