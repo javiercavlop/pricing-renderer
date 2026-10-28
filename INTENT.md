@@ -65,8 +65,9 @@ Why: the same package serves the Web Component, React, Next and the Vue example.
 
 Progress signals:
 
-- Pending changesets. Current value: 17 files in `.changeset/` besides `README.md`. Evidence:
-  `.changeset/*.md`. Threshold: the release is postponed (Q6).
+- Pending changesets. Current value: 45 `.md` files in `.changeset/` besides `README.md` (at
+  `52a31c8`). Evidence: `.changeset/*.md`. Threshold: the release decision of 2026-10-27 (ROADMAP.md,
+  "Release"): no release until the owner says so, and then one single release.
 - Released versions. Current value: `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). Threshold:
   no release to main is prepared until the owner asks (Q6).
 - API reference coverage. Current value: `docs/api-reference.md` exists; whether it lists every
@@ -88,7 +89,8 @@ Progress signals:
   `id-token: write`, whole pipeline in the publishing job, `prepublishOnly` repeats work). Evidence:
   `docs/audit-report.md:88-104`. Threshold: owner decision.
 - CI time of the SPECTRA browser spec, which runs on every PR. Current value: not measured here.
-  Evidence: `report.md:592-594`. Threshold: the spec becomes optional (on demand) in CI (Q6).
+  Evidence: `report.md:592-594`. Threshold: the spec becomes optional (on demand) in CI (Q6). Met: the `on-demand-specs` job runs
+  only on `workflow_dispatch` (`.github/workflows/ci.yml:330-331`).
 
 ## Non-goals
 
@@ -96,7 +98,7 @@ Progress signals:
 - No framework lock-in: the core stays DOM-free and SSR-safe.
 - No hand-tuned layouts for a single customer pricing; fixes must hold for the measured set.
 - Thresholds not marked as decided in the signals stay owner decisions.
-- Item 9 (group by tags) is dropped (Q4), as the report advises (`report.md:364-367`).
+- Spanish plural rules are a non-goal (owner decision of 2026-10-27; ROADMAP.md, item 3a-es).
 
 ## Constraints
 
@@ -116,11 +118,13 @@ items (`report.md:108-121`):
 
 - Done: 1 (sticky header), 2 (shorter collapsed page, #48), 3b (`unitLabels`, #49), 4 (names for
   dependencies), 5 (Okta without plans), 6 (add-on marker, #47), 7 (add-on grid, #50), 8 and 10 (grid
-  and no split words, #46), 11 (filler descriptions).
+  and no split words, #46), 11 (filler descriptions), 9 (comparison groups follow declared tags,
+  `3072086`; PR not verified).
 - Partly done: 3a (plural units, English only; Spanish units are shown as written,
-  `.changeset/plural-units.md:5-7`). Spanish plurals are a low-priority objective (Q5).
+  `.changeset/plural-units.md:5-7`). Spanish plurals are a non-goal since 2026-10-27 (ROADMAP.md,
+  item 3a-es).
 - Done: phase 2 step 1, the expanded-state height measurement (PR #53).
-- Dropped: item 9, group by tags (Q4).
+- Done in the owner's plan: phases 0, 1a and 2 (ROADMAP.md, "Phases").
 
 ## Owner questions
 
@@ -131,11 +135,14 @@ All answered by the owner on 2026-10-26.
 - Q2. Answered 2026-10-26: page height at most 5 screens at 1440 px; no target at 375 px for now.
 - Q3. Answered 2026-10-26: the CTA is visible in the first screen at 1440 and 375 px; the 1024 px
   target is removed.
-- Q4. Answered 2026-10-26: item 9 (group by tags) is dropped.
+- Q4. Answered 2026-10-26: item 9 (group by tags) is dropped. Reversed by the owner on 2026-10-27
+  (ROADMAP.md, item 9).
 - Q5. Answered 2026-10-26: Spanish plurals become a low-priority objective, with its own row in
-  `ROADMAP.md`.
+  `ROADMAP.md`. Made a non-goal by the owner on 2026-10-27 (ROADMAP.md, item 3a-es).
 - Q6. Answered 2026-10-26: the SPECTRA browser spec becomes optional (on demand) in CI. The release
   of the 17 pending changesets is postponed; no release to main is prepared until the owner asks.
   The in-flight `ci-speed` change (`docs/agent-work/ci-speed/intake.md`) covers sharding and
   docs-only skips, not an on-demand SPECTRA spec; the on-demand switch stays a backlog row in
-  `ROADMAP.md`, and no new change is added here.
+  `ROADMAP.md`, and no new change is added here. Update: the on-demand switch is done
+  (ROADMAP.md, Backlog), and the release was replaced by the decision of 2026-10-27 (ROADMAP.md,
+  "Release").
