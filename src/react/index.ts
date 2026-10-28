@@ -90,7 +90,10 @@ export interface PricingRendererSharedProps {
   toolbarThreshold?: number;
   // Number of add-ons above which the add-on search and "Show more" are shown.
   addOnFilterThreshold?: number;
+  // [impl->req~react-classname~1]
   className?: string;
+  // [impl->req~react-style-prop~1] CSS properties plus custom properties such as `--pr-color-accent`
+  style?: PricingRendererStyle;
   id?: string;
   'aria-label'?: string;
   onReady?: (event: PricingReadyEvent) => void;
@@ -98,6 +101,10 @@ export interface PricingRendererSharedProps {
   onAction?: (event: PricingActionEvent) => void;
   onDiagnostic?: (event: PricingDiagnosticEvent) => void;
 }
+
+export type PricingRendererStyle = React.CSSProperties & {
+  [property: `--${string}`]: string | number | undefined;
+};
 
 export type PricingRendererProps = PricingInputProps & PricingRendererSharedProps;
 

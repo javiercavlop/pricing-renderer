@@ -346,8 +346,8 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
     currentPlanId: state.currentPlanId,
     pendingActionId: state.pendingActionId,
   });
-  const variant = cta.kind === 'secondary' ? 'pr-button--secondary' : 'pr-button--primary';
-  const className = `pr-button ${variant}`;
+  // [impl->req~state-kind~1] data-kind agrees with the pr-button--<kind> class
+  const kind = cta.kind === 'secondary' ? 'secondary' : 'primary';
   const origin: ActionOrigin | undefined = cta.relation
     ? { relation: cta.relation, source: 'plan' }
     : undefined;
@@ -356,8 +356,9 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
     actions.triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   return cta.href
     ? html`<a
-        class=${className}
+        class="pr-button pr-button--${kind}"
         data-pr-part="cta"
+        data-kind=${kind}
         data-relation=${cta.relation ?? nothing}
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
@@ -371,8 +372,9 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
         >${content}</a
       >`
     : html`<button
-        class=${className}
+        class="pr-button pr-button--${kind}"
         data-pr-part="cta"
+        data-kind=${kind}
         data-relation=${cta.relation ?? nothing}
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
@@ -408,6 +410,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                 const selected = selection.planId === plan.id;
                 const current = state.currentPlanId === plan.id;
                 const highlightSummary = getPlanHighlightSummary(viewModel, plan.id);
+                // [impl->req~state-featured~1] [impl->req~state-current~1]
                 const featured = highlightSummary.badges.some((badge) => badge.emphasize);
                 return html`
                   <article
@@ -418,6 +421,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                     data-plan-id=${plan.id}
                     data-selected=${String(selected)}
                     data-current=${current ? 'true' : nothing}
+                    data-featured=${String(featured)}
                     @click=${(event: MouseEvent) =>
                       selectionEnabled
                         ? selectFromCard(event, () => actions.selectPlan(plan.id))
@@ -1114,6 +1118,7 @@ function renderAddOnCard(
   const available = addOnAvailability(addOn, selection.planId);
   const constraints = addOn.subscriptionConstraints;
   const current = state.currentAddOnIds?.has(addOn.id) ?? false;
+  // [impl->req~state-available~1] data-available is the negation of is-unavailable
   const helpId = instanceId(state, 'addon-help', addOn.id);
   return html`
     <article
@@ -1124,6 +1129,7 @@ function renderAddOnCard(
       data-add-on-id=${addOn.id}
       data-selected=${String(selected)}
       data-current=${current ? 'true' : nothing}
+      data-available=${String(available)}
       @click=${(event: MouseEvent) =>
         selectionEnabled && available
           ? selectFromCard(event, () => actions.toggleAddOn(addOn.id, !selected))
