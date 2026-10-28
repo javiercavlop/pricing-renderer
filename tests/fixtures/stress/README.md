@@ -21,6 +21,17 @@ descriptions of 100 to 250 characters).
 - `build.ts` exports `stressFixtures`, `findStressFixture(id)`, `buildStressPricing(fixture)` and
   `buildStressYaml(fixture)`. Fixture ids read `<shape>-<currency>-<period>`, for example
   `zoom-eur-annual`.
+- `metrics.ts` exports `loneLastCard(gridColumns, cardsPerRow)`, a pure function that is true only
+  when the grid has more than one column, more than one row and a last row of one card.
+  `tests/unit/ux-stress-metrics.test.ts` covers it.
 - `tests/unit/ux-stress-fixtures.test.ts` parses every fixture with the renderer's parser and checks
   the counts.
 - `tests/browser/ux-stress.spec.ts` prints a `SPECTRA_UX_SUMMARY` line per fixture and viewport.
+  Besides the page and renderer heights, sticky state and horizontal scroll, the line carries:
+  - `sectionHeightsInViewports`: the height of the first element of each `data-pr-part`, divided by
+    the viewport height and rounded, to show which section makes the page long.
+  - `planGrid.cardWidths`: the smallest and largest plan card width in px (null without cards).
+  - `planGrid.firstCtaBottom`: the bottom of the first call to action, in px from the renderer top.
+  - `planGrid.layoutBreakdown`: the offsets and heights of the blocks above the plan grid and of the
+    first card's children.
+  - `planGrid.loneLastCard`: the result of `loneLastCard` for the measured grid.
