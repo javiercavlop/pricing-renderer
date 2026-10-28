@@ -1,0 +1,5 @@
+---
+'pricing-renderer': minor
+---
+
+New optional design tokens for fitting the renderer into a host design system. None is declared by `theme.css`, and every use has the previous value as its fallback, so nothing changes by default: `--pr-font-family` (unset, the host font is inherited), `--pr-font-family-display` (hero title, section and plan headings, price amount; default `--pr-font-family`), `--pr-font-weight-regular` (400), `--pr-font-weight-medium` (500, 650), `--pr-font-weight-bold` (700, 750, 780, 790) and `--pr-font-weight-heavy` (800, 900), `--pr-line-height` (1.5), `--pr-sticky-top` (0px; offsets the comparison toolbar and, from 840px, the add-on summary), `--pr-table-max-height` (80dvh) and `--pr-table-min-width` (720px) for the comparison table, `--pr-z-dialog` (1000) and `--pr-plan-columns` (unset: the columns follow the plan count and the container width; set, it replaces the `grid-template-columns` of the plan grid in every band). A weight token sets every weight of its group to one value. The container breakpoints (600, 840, 1040, 1200 and 1280px) stay fixed.
