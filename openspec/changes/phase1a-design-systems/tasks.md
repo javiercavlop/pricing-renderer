@@ -106,7 +106,7 @@ Checks (the planner registers them; names are the commands):
 
 - [ ] E1 Theme builder page.
   - Files: `examples/vanilla/theme-builder.html` (new), `examples/vanilla/src/theme-builder.ts`
-    (new), `examples/vanilla/vite.config.ts` (the build input only), `docs/demo.md` (one section).
+    (new), `examples/vanilla/vite.config.ts` (the build input only). The page is documented in `docs/design-systems.md` (task D1).
   - Checks: `typecheck`, `lint`, `unit`, `format`, `demo`, `browser` (the page shares the web
     server; the other specs stay green).
 
