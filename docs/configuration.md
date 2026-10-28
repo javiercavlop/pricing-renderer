@@ -83,6 +83,18 @@ renderer.presentation = {
 `locale` and the deprecated `pricing-path` also have HTML attributes. The three feature flags
 are JavaScript/React properties so `false` remains unambiguous.
 
+## Density
+
+`density` is an attribute and property of the element and a prop of the React
+component. `"comfortable"` is the default. `"compact"` reduces the spacing:
+
+```html
+<pricing-renderer density="compact"></pricing-renderer>
+```
+
+It is a presentation setting, not a project configuration key. See
+[Design systems](./design-systems.md#density).
+
 ## Disabled behavior
 
 - With `selectionEnabled: false`, plan and add-on selection controls, quantity

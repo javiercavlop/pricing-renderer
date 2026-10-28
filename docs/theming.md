@@ -25,7 +25,8 @@ import `base.css` and `styles.css` together.
 
 ## Public tokens
 
-Override tokens on `pricing-renderer` or an ancestor-specific selector:
+Override tokens on `pricing-renderer` itself; a rule on an ancestor does not work
+with `styles.css`, because `theme.css` declares the tokens on the element:
 
 ```css
 pricing-renderer {
@@ -62,8 +63,37 @@ Token groups:
   `--pr-shadow-lg`.
 - Motion: `--pr-motion-fast`.
 
-The host font is inherited. Set `font-family` on the element when a pricing-only
-typeface is required.
+Optional tokens. None is declared by `theme.css`; the default is the fallback
+written in `base.css`, so nothing changes until you set one:
+
+- `--pr-font-family`: default `unset`, so the host font is inherited.
+- `--pr-font-family-display`: default `unset`; it falls back to `--pr-font-family`.
+  It sets the hero title, the section and plan headings and the price amount.
+- `--pr-font-weight-regular`: default `400`.
+- `--pr-font-weight-medium`: default `500` in one rule, `650` in five.
+- `--pr-font-weight-bold`: default `700` (750, 780 and 790 in some rules).
+- `--pr-font-weight-heavy`: default `800` (900 in one rule).
+- `--pr-line-height`: default `1.5`.
+- `--pr-sticky-top`: default `0px`. It offsets the comparison toolbar and, from
+  840px, the add-on summary.
+- `--pr-table-max-height`: default `80dvh`, the comparison table box.
+- `--pr-table-min-width`: default `720px`, the comparison table.
+- `--pr-z-dialog`: default `1000`, the z-index of the dialog backdrop.
+- `--pr-plan-columns`: default `unset`, so the columns follow the plan count and the
+  container width. When set, it replaces the `grid-template-columns` of the plan
+  grid in every band.
+
+A weight token sets every weight of its group to one value.
+
+The container breakpoints (600, 840, 1040, 1200 and 1280px) are fixed.
+
+The host font is inherited. Set `--pr-font-family` when a pricing-only typeface is
+required. For Tailwind, CSS Modules, shadcn/ui and density, see
+[Design systems](./design-systems.md).
+
+Plan cards, add-on cards and plan calls to action also expose state attributes
+(`data-current`, `data-selected`, `data-featured`, `data-available`, `data-kind`);
+see [State attributes](./design-systems.md#state-attributes).
 
 ## Stable part hooks
 
@@ -159,13 +189,18 @@ offset, or the summary text overlaps it.
 needs the tokens on itself. `theme.css` (part of `styles.css`) defines the same
 `--pr-*` tokens, with the same default values, for both `pricing-renderer` and
 `pricing-change-review`; `base.css` has structural rules only and sets no token
-values. With the custom-theme strategy (`base.css` plus your own stylesheet), the
+values except the compact spacing tokens under `pricing-renderer[density="compact"]`.
+With the custom-theme strategy (`base.css` plus your own stylesheet), the
 review has no tokens until you define them: declare the tokens listed below on
-`pricing-change-review` (or an ancestor), as well as on `pricing-renderer`.
+`pricing-change-review` (an ancestor works here, because no element rule
+declares the tokens), as well as on `pricing-renderer`. The compact rule selects
+only `pricing-renderer`, so that holds for the review; for `density="compact"` on
+`pricing-renderer`, spacing tokens set on an ancestor are overridden.
 Without them the review loses its colors, sizes and spacing.
 
-With `styles.css`, override the defaults on the element or on an ancestor with an
-unlayered rule:
+With `styles.css`, override the defaults on the element itself with an unlayered
+rule (`theme.css` declares the tokens on the element, so a rule on an ancestor does
+not work):
 
 ```css
 pricing-change-review {
@@ -187,7 +222,9 @@ It reads these tokens: `--pr-color-text`, `--pr-color-muted`,
 here.
 
 Color modes follow the renderer: `theme="light"` (default), `theme="dark"`,
-`theme="auto"` (the system color scheme), and an ancestor `[data-theme="dark"]`.
+`theme="auto"` (the system color scheme, and an ancestor `.dark`), and an ancestor
+`[data-theme="dark"]`. A `.dark` ancestor darkens the renderer only with
+`theme="auto"`.
 
 Stable `data-pr-part` values:
 
@@ -251,12 +288,12 @@ or exclude renderer parts:
 
 The library declares `@layer pricing-renderer` (structure) and
 `@layer pricing-renderer.theme` (tokens). For predictable ordering, declare
-layers before imports. Importing with `layer(pricing-renderer)` places the whole
-stylesheet, with its own layers, inside that layer, below `product-overrides`:
+layers before imports. The renderer's own layers then sit in the order you declare,
+below `product-overrides`:
 
 ```css
 @layer reset, pricing-renderer, product-overrides;
-@import 'pricing-renderer/styles.css' layer(pricing-renderer);
+@import 'pricing-renderer/styles.css';
 
 @layer product-overrides {
   pricing-renderer {
@@ -268,7 +305,17 @@ stylesheet, with its own layers, inside that layer, below `product-overrides`:
 ## Color modes
 
 Set `theme="light"`, `theme="dark"`, or `theme="auto"`. The default theme also
-responds to an ancestor `[data-theme="dark"]`. Every custom theme should test:
+responds to an ancestor `[data-theme="dark"]` and, with the same tokens, to an
+ancestor `.dark` when the element has `theme="auto"`. With `theme="light"` or an
+explicit `theme="dark"` a `.dark` ancestor changes nothing. For a host that uses the
+`.dark` class, set `theme="auto"`. With the shadcn overlay in a `.dark`
+host, `theme="auto"` is required: with `theme="light"` the mapped colors follow
+the host but the status colors and `color-scheme` stay light; with
+`theme="dark"` `color-scheme` stays light. Both can fail contrast. With the
+overlay, `theme="auto"` under a system dark scheme and no `.dark` class gives dark
+status colors on the host's light palette, so add `.dark` whenever the app is
+dark. See
+[Dark mode](design-systems.md#dark-mode). Every custom theme should test:
 
 - WCAG AA contrast for text, controls, borders, and selected states.
 - `forced-colors: active`.

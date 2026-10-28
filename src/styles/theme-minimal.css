@@ -1,0 +1,103 @@
+/*
+ * A flat, neutral theme: grayscale palette, no shadows, borders in the text color.
+ *
+ * It is a full replacement of theme.css (same selectors and tokens), so import it instead of
+ * theme.css. Use it as a starting point for a custom theme: copy it and change the values.
+ *
+ * [impl->req~theme-minimal-tokens~1]
+ * [impl->req~theme-minimal-flat~1]
+ * [impl->req~theme-minimal-contrast~1]
+ */
+@layer pricing-renderer.theme {
+  pricing-renderer[data-pr-root],
+  pricing-change-review {
+    color-scheme: light;
+    --pr-font-size-xs: 0.75rem;
+    --pr-font-size-sm: 0.875rem;
+    --pr-font-size-lg: 1.125rem;
+    --pr-font-size-xl: 1.35rem;
+    --pr-font-size-2xl: 1.75rem;
+    --pr-space-1: 0.25rem;
+    --pr-space-2: 0.5rem;
+    --pr-space-3: 0.75rem;
+    --pr-space-4: 1rem;
+    --pr-space-5: 1.5rem;
+    --pr-space-section: clamp(3rem, 8cqi, 6rem);
+    --pr-shell-padding: clamp(1rem, 4cqi, 3rem);
+    --pr-radius-sm: 0.55rem;
+    --pr-radius-md: 0.85rem;
+    --pr-radius-lg: 1.25rem;
+    --pr-radius-pill: 999px;
+    --pr-motion-fast: 0s ease;
+    --pr-color-text: #111111;
+    --pr-color-muted: #595959;
+    --pr-color-surface: #ffffff;
+    --pr-color-surface-raised: #ffffff;
+    --pr-color-surface-subtle: #f5f5f5;
+    --pr-color-border: currentcolor;
+    --pr-color-border-strong: currentcolor;
+    --pr-color-accent: #111111;
+    --pr-color-on-accent: #ffffff;
+    --pr-color-link: #333333;
+    --pr-color-focus: #111111;
+    --pr-color-success: #1b5e20;
+    --pr-color-warning: #7a4a00;
+    --pr-color-warning-surface: #f5f5f5;
+    --pr-color-overlay: #000000;
+    --pr-shadow-sm: none;
+    --pr-shadow-accent: none;
+    --pr-shadow-lg: none;
+  }
+
+  pricing-renderer[data-pr-root][theme='dark'],
+  [data-theme='dark'] pricing-renderer[data-pr-root],
+  pricing-change-review[theme='dark'],
+  [data-theme='dark'] pricing-change-review,
+  /* [impl->req~host-dark-class~2] A host `.dark` ancestor darkens the renderer with theme=auto. */
+  .dark pricing-renderer[data-pr-root][theme='auto'],
+  .dark pricing-change-review[theme='auto'] {
+    color-scheme: dark;
+    --pr-color-text: #f2f2f2;
+    --pr-color-muted: #a6a6a6;
+    --pr-color-surface: #121212;
+    --pr-color-surface-raised: #1c1c1c;
+    --pr-color-surface-subtle: #1a1a1a;
+    --pr-color-border: currentcolor;
+    --pr-color-border-strong: currentcolor;
+    --pr-color-accent: #f2f2f2;
+    --pr-color-on-accent: #121212;
+    --pr-color-link: #d9d9d9;
+    --pr-color-focus: #f2f2f2;
+    --pr-color-success: #7ed6a0;
+    --pr-color-warning: #e6b85c;
+    --pr-color-warning-surface: #1a1a1a;
+    --pr-color-overlay: #000000;
+    --pr-shadow-sm: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    pricing-renderer[data-pr-root][theme='auto'],
+    pricing-change-review[theme='auto'] {
+      color-scheme: dark;
+      --pr-color-text: #f2f2f2;
+      --pr-color-muted: #a6a6a6;
+      --pr-color-surface: #121212;
+      --pr-color-surface-raised: #1c1c1c;
+      --pr-color-surface-subtle: #1a1a1a;
+      --pr-color-border: currentcolor;
+      --pr-color-border-strong: currentcolor;
+      --pr-color-accent: #f2f2f2;
+      --pr-color-on-accent: #121212;
+      --pr-color-link: #d9d9d9;
+      --pr-color-focus: #f2f2f2;
+      --pr-color-success: #7ed6a0;
+      --pr-color-warning: #e6b85c;
+      --pr-color-warning-surface: #1a1a1a;
+      --pr-color-overlay: #000000;
+    }
+
+    pricing-change-review[theme='auto'] {
+      --pr-shadow-sm: none;
+    }
+  }
+}

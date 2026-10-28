@@ -148,6 +148,10 @@ export class PricingRendererElement extends LitElement {
     layout: { type: String, reflect: true },
     visibility: { type: String, reflect: true },
     theme: { type: String, reflect: true },
+    // [impl->req~density-attribute~1]
+    // The accessor below is the class's own, so Lit reads it on the first update and would reflect
+    // density="comfortable" onto every host; useDefault records that value as the default instead.
+    density: { type: String, reflect: true, noAccessor: true, useDefault: true },
     loadingLabel: { type: String, attribute: 'loading-label' },
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
@@ -232,6 +236,30 @@ export class PricingRendererElement extends LitElement {
     this.theme = 'light';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
     this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
+  }
+
+  // Unset until the host sets it. Any value other than compact reads as comfortable; the stored
+  // value is not validated.
+  private _density: unknown;
+
+  get density(): 'comfortable' | 'compact' {
+    return this._density === 'compact' ? 'compact' : 'comfortable';
+  }
+
+  set density(value: unknown) {
+    // The old value is the one read back: Lit takes the first old value as the default that a
+    // removed attribute restores, and it must be comfortable.
+    const previous = this.density;
+    const wasSet = this._density !== undefined && this._density !== null;
+    this._density = value;
+    // Unsetting, for example a React prop that becomes undefined, removes the attribute instead of
+    // reflecting density="comfortable". A value set and unset before the same update is still
+    // reflected, as comfortable.
+    if (value === undefined || value === null) {
+      if (wasSet) this.removeAttribute('density');
+      return;
+    }
+    this.requestUpdate('density', previous);
   }
 
   // [impl->req~current-selection-property~1] [impl->req~current-selection-detached~1]

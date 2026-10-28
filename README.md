@@ -155,6 +155,8 @@ Trusted Publisher.
 | `pricing-renderer/base.css`             | Required structural and accessibility styles                    |
 | `pricing-renderer/theme.css`            | Default professional visual tokens                              |
 | `pricing-renderer/styles.css`           | Base and theme combined                                         |
+| `pricing-renderer/tokens-shadcn.css`    | Overlay that maps the tokens to shadcn/ui variables             |
+| `pricing-renderer/theme-minimal.css`    | Flat grayscale theme that replaces `theme.css`                  |
 
 ## Web Component
 
@@ -464,6 +466,7 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [Release and npm publication](./docs/releasing.md)
 - [Extending the library](./docs/extending.md)
 - [Theming](./docs/theming.md)
+- [Design systems](./docs/design-systems.md)
 - [Internationalization](./docs/i18n.md)
 - [Pricing2Yaml compatibility](./docs/pricing2yaml-compatibility.md)
 - [Contributing](./CONTRIBUTING.md)

@@ -5,8 +5,23 @@
     min-inline-size: 0;
     color: var(--pr-color-text);
     font: inherit;
-    line-height: 1.5;
+    /* [impl->req~font-family-tokens~1] unset, the token is invalid at computed-value time and the
+       inherited property inherits, like font: inherit */
+    font-family: var(--pr-font-family);
+    /* [impl->req~line-height-token~1] */
+    line-height: var(--pr-line-height, 1.5);
     text-rendering: optimizeLegibility;
+  }
+
+  /* [impl->req~density-compact-tokens~1] opt-in compact spacing; comfortable adds no rule */
+  pricing-renderer[density='compact'] {
+    --pr-space-1: 0.2rem;
+    --pr-space-2: 0.4rem;
+    --pr-space-3: 0.55rem;
+    --pr-space-4: 0.75rem;
+    --pr-space-5: 1.1rem;
+    --pr-space-section: clamp(2rem, 5cqi, 4rem);
+    --pr-shell-padding: clamp(0.75rem, 3cqi, 2rem);
   }
 
   pricing-renderer[data-pr-root],
@@ -114,15 +129,18 @@
     margin: 0 0 var(--pr-space-2);
     color: var(--pr-color-accent);
     font-size: var(--pr-font-size-sm);
-    font-weight: 750;
+    /* [impl->req~font-weight-tokens~1] */
+    font-weight: var(--pr-font-weight-bold, 750);
     letter-spacing: 0.09em;
     text-transform: uppercase;
   }
 
   pricing-renderer[data-pr-root] .pr-hero__title {
     margin: 0;
+    /* [impl->req~font-family-tokens~1] */
+    font-family: var(--pr-font-family-display, var(--pr-font-family));
     font-size: clamp(2rem, 8cqi, 4rem);
-    font-weight: 780;
+    font-weight: var(--pr-font-weight-bold, 780);
     letter-spacing: -0.045em;
     line-height: 1.02;
     text-wrap: balance;
@@ -162,7 +180,7 @@
     background: var(--pr-color-surface-raised);
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-xs);
-    font-weight: 700;
+    font-weight: var(--pr-font-weight-bold, 700);
   }
 
   pricing-renderer[data-pr-root] .pr-badge[data-tone='accent'] {
@@ -211,7 +229,9 @@
 
   pricing-renderer[data-pr-root] :where(.pr-section__heading, .pr-configurator, .pr-metadata) h3 {
     margin: 0;
+    font-family: var(--pr-font-family-display, var(--pr-font-family));
     font-size: var(--pr-font-size-2xl);
+    font-weight: var(--pr-font-weight-bold, 700);
     letter-spacing: -0.025em;
   }
 
@@ -227,7 +247,7 @@
     margin: 0 auto var(--pr-space-2);
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-sm);
-    font-weight: 700;
+    font-weight: var(--pr-font-weight-bold, 700);
     text-align: center;
   }
 
@@ -268,10 +288,17 @@
   pricing-renderer[data-pr-root] .pr-segmented__option small {
     color: var(--pr-color-success);
     font-size: var(--pr-font-size-xs);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
 
-  pricing-renderer[data-pr-root] .pr-plan-grid,
+  /* [impl->req~plan-columns-token~1] the plan grid takes the token; the add-on and variable grids
+     keep their own columns */
+  pricing-renderer[data-pr-root] .pr-plan-grid {
+    display: grid;
+    grid-template-columns: var(--pr-plan-columns, minmax(0, 1fr));
+    gap: var(--pr-space-4);
+  }
+
   pricing-renderer[data-pr-root] .pr-addon-grid,
   pricing-renderer[data-pr-root] .pr-variable-grid {
     display: grid;
@@ -362,7 +389,7 @@
     background: var(--pr-color-surface-raised);
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-sm);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     line-height: 1;
     cursor: pointer;
     transition:
@@ -399,7 +426,7 @@
   pricing-renderer[data-pr-root] .pr-selection-control__icon::after {
     color: var(--pr-color-on-accent);
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: var(--pr-font-weight-heavy, 900);
     line-height: 1;
     content: '✓';
     opacity: 0;
@@ -446,6 +473,17 @@
     letter-spacing: -0.02em;
   }
 
+  /* [impl->req~font-family-tokens~1] [impl->req~font-weight-tokens~1] the plan name only */
+  pricing-renderer[data-pr-root] .pr-plan-card__top h4 {
+    font-family: var(--pr-font-family-display, var(--pr-font-family));
+    font-weight: var(--pr-font-weight-bold, 700);
+  }
+
+  /* [impl->req~font-weight-tokens~1] the add-on name: the user-agent bold, now explicit */
+  pricing-renderer[data-pr-root] .pr-addon-card h4 {
+    font-weight: var(--pr-font-weight-bold, 700);
+  }
+
   pricing-renderer[data-pr-root] .pr-plan-card__top p,
   pricing-renderer[data-pr-root] .pr-addon-card p {
     margin: var(--pr-space-2) 0 0;
@@ -464,9 +502,14 @@
   pricing-renderer[data-pr-root] .pr-price__amount,
   pricing-renderer[data-pr-root] .pr-price__quote {
     font-size: clamp(2rem, 8cqi, 3rem);
-    font-weight: 790;
+    font-weight: var(--pr-font-weight-bold, 790);
     letter-spacing: -0.05em;
     line-height: 1;
+  }
+
+  /* [impl->req~font-family-tokens~1] the amount only, not the quote */
+  pricing-renderer[data-pr-root] .pr-price__amount {
+    font-family: var(--pr-font-family-display, var(--pr-font-family));
   }
 
   pricing-renderer[data-pr-root] .pr-price__quote {
@@ -493,7 +536,7 @@
     margin: 0 0 var(--pr-space-3);
     color: var(--pr-color-text);
     font-size: var(--pr-font-size-sm);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
 
   /* Name and value share a line when both fit; otherwise the value moves to the next line. The
@@ -513,7 +556,7 @@
 
   pricing-renderer[data-pr-root] .pr-highlight-list__icon {
     color: var(--pr-color-success);
-    font-weight: 800;
+    font-weight: var(--pr-font-weight-heavy, 800);
   }
 
   pricing-renderer[data-pr-root] .pr-highlight-list__value {
@@ -531,7 +574,7 @@
     padding: 0.65rem 1rem;
     border: 1px solid transparent;
     border-radius: var(--pr-radius-md);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
@@ -620,7 +663,7 @@
   pricing-renderer[data-pr-root] .pr-field > label,
   pricing-renderer[data-pr-root] .pr-stepper > span {
     font-size: var(--pr-font-size-sm);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
 
   pricing-renderer[data-pr-root] .pr-field p {
@@ -635,7 +678,7 @@
 
   pricing-renderer[data-pr-root] .pr-field .pr-field__error {
     color: var(--pr-color-warning);
-    font-weight: 650;
+    font-weight: var(--pr-font-weight-medium, 650);
   }
 
   pricing-renderer[data-pr-root]
@@ -708,7 +751,8 @@
   pricing-renderer[data-pr-root] .pr-comparison-toolbar {
     position: sticky;
     z-index: 3;
-    inset-block-start: 0;
+    /* [impl->req~sticky-top-token~1] measured against the page */
+    inset-block-start: var(--pr-sticky-top, 0px);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -750,7 +794,7 @@
     padding: 0.5rem 0.7rem;
     border: 0;
     background: transparent;
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     cursor: pointer;
   }
 
@@ -843,7 +887,6 @@
   pricing-renderer[data-pr-root] .pr-table-scroll {
     max-inline-size: 100%;
     max-block-size: 80vh;
-    max-block-size: 80dvh;
     overflow: auto;
     border: 1px solid var(--pr-color-border);
     border-radius: var(--pr-radius-lg);
@@ -851,9 +894,18 @@
     overscroll-behavior-inline: contain;
   }
 
+  /* [impl->req~table-size-tokens~1] a var() declaration is valid when parsed, so it sits behind a
+     dvh guard, after the 80vh rule it replaces where dvh is supported. */
+  @supports (max-block-size: 1dvh) {
+    pricing-renderer[data-pr-root] .pr-table-scroll {
+      max-block-size: var(--pr-table-max-height, 80dvh);
+    }
+  }
+
   pricing-renderer[data-pr-root] .pr-comparison-table {
     width: 100%;
-    min-width: 720px;
+    /* [impl->req~table-size-tokens~1] */
+    min-width: var(--pr-table-min-width, 720px);
     border-collapse: separate;
     border-spacing: 0;
   }
@@ -891,7 +943,7 @@
     display: block;
     margin-block-start: var(--pr-space-1);
     color: var(--pr-color-muted);
-    font-weight: 400;
+    font-weight: var(--pr-font-weight-regular, 400);
   }
 
   pricing-renderer[data-pr-root] .pr-row-metadata {
@@ -899,7 +951,7 @@
     margin-block-start: var(--pr-space-1);
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-xs);
-    font-weight: 500;
+    font-weight: var(--pr-font-weight-medium, 500);
   }
 
   pricing-renderer[data-pr-root] .pr-category-row th {
@@ -916,7 +968,7 @@
 
   pricing-renderer[data-pr-root] .pr-value--included {
     color: var(--pr-color-success);
-    font-weight: 800;
+    font-weight: var(--pr-font-weight-heavy, 800);
   }
 
   pricing-renderer[data-pr-root] .pr-value--excluded {
@@ -932,7 +984,7 @@
     background: color-mix(in srgb, var(--pr-color-accent) 11%, var(--pr-color-surface-raised));
     color: var(--pr-color-link);
     font-size: var(--pr-font-size-xs);
-    font-weight: 700;
+    font-weight: var(--pr-font-weight-bold, 700);
     white-space: nowrap;
   }
 
@@ -1003,7 +1055,7 @@
 
   pricing-renderer[data-pr-root] .pr-addon-effects summary {
     font-size: var(--pr-font-size-sm);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     cursor: pointer;
   }
 
@@ -1129,7 +1181,7 @@
     content: 'i';
     font-size: var(--pr-font-size-sm);
     font-style: italic;
-    font-weight: 700;
+    font-weight: var(--pr-font-weight-bold, 700);
     line-height: 1;
   }
 
@@ -1160,7 +1212,7 @@
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__title {
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__lines {
@@ -1180,7 +1232,7 @@
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__name {
-    font-weight: 650;
+    font-weight: var(--pr-font-weight-medium, 650);
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__detail {
@@ -1210,12 +1262,12 @@
 
   pricing-renderer[data-pr-root] .pr-breakdown__totals dd {
     margin: 0;
-    font-weight: 650;
+    font-weight: var(--pr-font-weight-medium, 650);
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__total :where(dt, dd) {
     color: var(--pr-color-text);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
 
   pricing-renderer[data-pr-root] .pr-breakdown__quote {
@@ -1260,7 +1312,7 @@
   }
 
   pricing-renderer[data-pr-root] .pr-diagnostics summary {
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     cursor: pointer;
   }
 
@@ -1271,7 +1323,8 @@
 
   pricing-renderer[data-pr-root] .pr-dialog-backdrop {
     position: fixed;
-    z-index: 1000;
+    /* [impl->req~dialog-z-token~1] */
+    z-index: var(--pr-z-dialog, 1000);
     inset: 0;
     display: grid;
     place-items: end center;
@@ -1291,6 +1344,8 @@
 
   pricing-renderer[data-pr-root] .pr-dialog h3 {
     margin-block-start: 0;
+    /* [impl->req~font-weight-tokens~1] */
+    font-weight: var(--pr-font-weight-bold, 700);
   }
 
   pricing-renderer[data-pr-root] .pr-dialog__actions {
@@ -1328,7 +1383,10 @@
   }
 
   @container pricing-renderer (min-width: 600px) {
-    pricing-renderer[data-pr-root] .pr-plan-grid,
+    pricing-renderer[data-pr-root] .pr-plan-grid {
+      grid-template-columns: var(--pr-plan-columns, repeat(2, minmax(0, 1fr)));
+    }
+
     pricing-renderer[data-pr-root] .pr-addon-grid,
     pricing-renderer[data-pr-root] .pr-variable-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1337,7 +1395,7 @@
     /* One or two plans (no third child) keep the centered cards of at most 320px they had before:
        this selector is more specific than the plan count rules, which use :where(). */
     pricing-renderer[data-pr-root] .pr-plan-grid:not(:has(> :nth-child(3))) {
-      grid-template-columns: repeat(2, minmax(0, 320px));
+      grid-template-columns: var(--pr-plan-columns, repeat(2, minmax(0, 320px)));
       justify-content: center;
     }
 
@@ -1345,7 +1403,8 @@
       grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
     }
 
-    pricing-renderer[data-pr-root] .pr-dialog-backdrop {
+    /* :where(*) adds no specificity; it keeps the base rule the only one with this exact selector */
+    pricing-renderer[data-pr-root] .pr-dialog-backdrop:where(*) {
       place-items: center;
       padding: var(--pr-space-5);
     }
@@ -1364,17 +1423,17 @@
        is its last child has exactly N plans. The generic rule of a wider band comes later in the
        file and overrides the count rules of the narrower ones. */
     pricing-renderer[data-pr-root] .pr-plan-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(3, minmax(0, 1fr)));
     }
 
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(4):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(10):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(16):last-child)) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(2, minmax(0, 1fr)));
     }
 
     pricing-renderer[data-pr-root] .pr-plan-grid:not(:has(> :nth-child(3))) {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
+      grid-template-columns: var(--pr-plan-columns, repeat(auto-fit, minmax(220px, 320px)));
     }
 
     /* Tighter plan cards and less space above the plans bring the first CTA into the first
@@ -1426,7 +1485,8 @@
     }
 
     pricing-renderer[data-pr-root] .pr-summary {
-      inset-block-start: var(--pr-space-4);
+      /* [impl->req~sticky-top-token~1] */
+      inset-block-start: calc(var(--pr-sticky-top, 0px) + var(--pr-space-4));
       inset-block-end: auto;
     }
 
@@ -1461,14 +1521,14 @@
 
   @container pricing-renderer (min-width: 1040px) {
     pricing-renderer[data-pr-root] .pr-plan-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(4, minmax(0, 1fr)));
     }
 
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(3):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(5):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(6):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(9):last-child)) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(3, minmax(0, 1fr)));
     }
   }
 
@@ -1490,14 +1550,14 @@
      taller than today, and push the first CTA below the first screen. */
   @container pricing-renderer (min-width: 1280px) {
     pricing-renderer[data-pr-root] .pr-plan-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(4, minmax(0, 1fr)));
     }
 
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(3):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(5):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(6):last-child)),
     pricing-renderer[data-pr-root] .pr-plan-grid:where(:has(> :nth-child(9):last-child)) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: var(--pr-plan-columns, repeat(3, minmax(0, 1fr)));
     }
   }
 
@@ -1599,7 +1659,9 @@
     min-inline-size: 0;
     color: var(--pr-color-text);
     font: inherit;
-    line-height: 1.5;
+    /* [impl->req~font-family-tokens~1] as on the renderer root */
+    font-family: var(--pr-font-family);
+    line-height: var(--pr-line-height, 1.5);
     text-rendering: optimizeLegibility;
   }
 
@@ -1646,6 +1708,7 @@
 
   pricing-change-review .pr-cr-header h2 {
     font-size: var(--pr-font-size-2xl);
+    font-weight: var(--pr-font-weight-bold, 700);
     letter-spacing: -0.025em;
   }
 
@@ -1663,6 +1726,7 @@
 
   pricing-change-review [data-pr-part='change-review'] > section > h3 {
     font-size: var(--pr-font-size-lg);
+    font-weight: var(--pr-font-weight-bold, 700);
     letter-spacing: -0.02em;
   }
 
@@ -1682,7 +1746,7 @@
   pricing-change-review .pr-cr-row__name {
     flex: 1 1 10rem;
     min-inline-size: 0;
-    font-weight: 650;
+    font-weight: var(--pr-font-weight-medium, 650);
   }
 
   pricing-change-review .pr-cr-row__detail {
@@ -1710,7 +1774,7 @@
     background: var(--pr-color-surface-raised);
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-xs);
-    font-weight: 700;
+    font-weight: var(--pr-font-weight-bold, 700);
     overflow-wrap: anywhere;
   }
 
@@ -1763,7 +1827,7 @@
     border: 1px solid var(--pr-color-warning);
     border-radius: var(--pr-radius-sm);
     color: var(--pr-color-warning);
-    font-weight: 650;
+    font-weight: var(--pr-font-weight-medium, 650);
   }
 
   pricing-change-review .pr-cr-error {
@@ -1791,7 +1855,7 @@
 
   pricing-change-review .pr-cr-price dd {
     font-size: var(--pr-font-size-xl);
-    font-weight: 790;
+    font-weight: var(--pr-font-weight-bold, 790);
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
   }
@@ -1799,7 +1863,7 @@
   pricing-change-review .pr-cr-price dd small {
     color: var(--pr-color-muted);
     font-size: var(--pr-font-size-sm);
-    font-weight: 400;
+    font-weight: var(--pr-font-weight-regular, 400);
     letter-spacing: 0;
   }
 
@@ -1830,7 +1894,7 @@
     padding: 0.65rem 1rem;
     border: 1px solid transparent;
     border-radius: var(--pr-radius-md);
-    font-weight: 750;
+    font-weight: var(--pr-font-weight-bold, 750);
     line-height: 1.2;
     text-align: center;
     white-space: nowrap;

@@ -269,13 +269,22 @@ function assertPlanGridEvaluable(root: Block): void {
 
 type Winner = { value: string; selector: string };
 
+// A plan grid value is `var(--pr-plan-columns, X)` (phase 1a) and evaluates to X. A value that is
+// not a var() is returned as it is with a null variable, so the expectations below keep their
+// values; the test "wraps every plan grid value in --pr-plan-columns" asserts the variable name.
+function unwrapPlanColumns(value: string): { variable: string | null; value: string } {
+  const match = /^var\((--[\w-]+),\s*(.+)\)$/.exec(value);
+  return match ? { variable: match[1], value: match[2].trim() } : { variable: null, value };
+}
+
 // The grid-template-columns that wins for a plan grid with `plans` cards at a container width.
 function planColumnsAt(width: number, plans: number): Winner | null {
   assertPlanGridEvaluable(sheet);
   let winner: (Winner & { specificity: Specificity; order: number }) | null = null;
   for (const rule of rulesAt(width)) {
-    const value = rule.declarations.get('grid-template-columns');
-    if (!value) continue;
+    const declared = rule.declarations.get('grid-template-columns');
+    if (!declared) continue;
+    const value = unwrapPlanColumns(declared).value;
     for (const selector of rule.selectors) {
       if (!targetsPlanGrid(selector) || !compoundMatches(lastCompound(selector), plans)) continue;
       const candidate = { value, selector, specificity: specificity(selector), order: rule.order };
@@ -300,6 +309,26 @@ describe('plan grid columns (spectra-item8)', () => {
     expect(layer).toBeDefined();
     const mins = (layer?.blocks ?? []).map((block) => containerMin(block.prelude));
     for (const min of [600, 840, 1040, 1280]) expect(mins).toContain(min);
+  });
+
+  // [utest->req~plan-columns-token~1]
+  it('wraps every plan grid value in --pr-plan-columns', () => {
+    const wrong: string[] = [];
+    let checked = 0;
+    for (const rule of allRules(layer ?? sheet)) {
+      const declared = rule.declarations.get('grid-template-columns');
+      if (!declared || !rule.selectors.some(targetsPlanGrid)) continue;
+      checked += 1;
+      if (unwrapPlanColumns(declared).variable !== '--pr-plan-columns') {
+        wrong.push(`${rule.selectors.join(', ')}: ${declared}`);
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+    expect(wrong).toEqual([]);
+    expect(unwrapPlanColumns('var(--pr-plan-columns, repeat(2, minmax(0, 1fr)))')).toEqual({
+      variable: '--pr-plan-columns',
+      value: 'repeat(2, minmax(0, 1fr))',
+    });
   });
 
   // [utest->spectra-item8:AC2]

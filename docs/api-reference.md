@@ -445,6 +445,7 @@ Exports `PricingRendererElement` without registering it globally.
 | `layout`               | `layout`                  | `"auto" \| "compact" \| "table"` | `"auto"`           |
 | `visibility`           | `visibility`              | `"public-only" \| "all"`         | `"public-only"`    |
 | `theme`                | `theme`                   | `"light" \| "dark" \| "auto"`    | `"light"`          |
+| `density`              | `density`                 | `"comfortable" \| "compact"`     | `"comfortable"`    |
 | `loadingLabel`         | `loading-label`           | `string`                         | localized          |
 | `onlyDifferences`      | `only-differences`        | `boolean`                        | automatic          |
 | `toolbarThreshold`     | `toolbar-threshold`       | `number`                         | `40`               |
@@ -1095,6 +1096,11 @@ at once from `resolvedState`.
 point. The props `currentSelection` and `pendingActionId` are passed to the
 element as properties.
 
+The component also takes `className` and `style`. `style` has the type
+`PricingRendererStyle` (`React.CSSProperties` plus any `--*` custom property), so
+it can set `--pr-*` tokens: `style={{ '--pr-color-accent': 'var(--brand)' }}`.
+`density` (`"comfortable"` or `"compact"`) is a prop too.
+
 `PricingChangeReview` renders `<pricing-change-review>` and registers the tag when
 it renders, so React hosts need no extra import. Its props are `comparison`,
 `notices`, `pending`, `error`, `locale`, `messages`, `confirmLabel`, `className`,
@@ -1104,10 +1110,21 @@ entry.
 
 ## CSS entry points
 
-| Entry                         | Contents                                             |
-| ----------------------------- | ---------------------------------------------------- |
-| `pricing-renderer/base.css`   | Required structure, responsive layout, accessibility |
-| `pricing-renderer/theme.css`  | Default visual token values and color modes          |
-| `pricing-renderer/styles.css` | Base and theme combined                              |
+| Entry                                | Contents                                             |
+| ------------------------------------ | ---------------------------------------------------- |
+| `pricing-renderer/base.css`          | Required structure, responsive layout, accessibility |
+| `pricing-renderer/theme.css`         | Default visual token values and color modes          |
+| `pricing-renderer/styles.css`        | Base and theme combined                              |
+| `pricing-renderer/tokens-shadcn.css` | Overlay that maps the tokens to shadcn/ui variables  |
+| `pricing-renderer/theme-minimal.css` | Flat grayscale theme that replaces `theme.css`       |
 
-Import exactly one strategy: `styles.css`, or `base.css` plus your own tokens.
+Import exactly one strategy: `styles.css`, or `base.css` plus a theme (`theme.css`,
+`theme-minimal.css` or your own tokens). `tokens-shadcn.css` is an overlay that you
+add to either. See [Design systems](./design-systems.md).
+
+### State attributes
+
+Plan and add-on cards and plan calls to action expose `data-current`,
+`data-selected`, `data-featured` (plan cards), `data-available` (add-on cards) and
+`data-kind` (`primary` or `secondary`, on plan calls to action). They are stable
+styling hooks.

@@ -967,7 +967,15 @@ footer > a:last-child {
     width: min(100% - 1.25rem, 1380px);
   }
 
-  .demo-nav nav > a:not(.demo-nav__github) {
+  .demo-nav {
+    gap: 0.75rem;
+  }
+
+  .demo-nav nav {
+    gap: 0.75rem;
+  }
+
+  .demo-nav nav > a:not(.demo-nav__github):not(.demo-nav__builder) {
     display: none;
   }
 

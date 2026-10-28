@@ -44,8 +44,12 @@ test('selects plans and add-ons from the full card with a clear visual state', a
   await expect(extraStorage.locator('.pr-selection-control__label')).toHaveText('Added');
   await expect(extraStorage).toHaveAttribute('data-selected', 'true');
 
+  // min-block-size: 44px (border-box) sets the layout height, a whole number of 1/64 px layout
+  // units. The click leaves the pointer on the card, whose hover translate is still transitioning
+  // (and the demo scrolls smoothly), so the box sits at a fractional offset and its float32 quad
+  // can read one float step short (43.999969482421875 = 44 - 2^-15). 0.01 px absorbs that only.
   const selectionTarget = await extraStorage.locator('.pr-selection-control').boundingBox();
-  expect(selectionTarget?.height).toBeGreaterThanOrEqual(44);
+  expect(selectionTarget?.height).toBeGreaterThanOrEqual(44 - 0.01);
 
   await extraStorage.locator('.pr-price').click();
   await expect(extraStorage.getByRole('checkbox', { name: 'Add Extra Storage' })).not.toBeChecked();

@@ -60,6 +60,8 @@
     },
     "./base.css": "./dist/styles/base.css",
     "./theme.css": "./dist/styles/theme.css",
+    "./tokens-shadcn.css": "./dist/styles/tokens-shadcn.css",
+    "./theme-minimal.css": "./dist/styles/theme-minimal.css",
     "./styles.css": "./dist/styles/styles.css",
     "./package.json": "./package.json"
   },
