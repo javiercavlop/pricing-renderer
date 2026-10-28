@@ -40,7 +40,7 @@ Today a host product that uses Tailwind, CSS Modules or shadcn must:
   `pricing-renderer/tokens-shadcn.css` (an overlay that maps shadcn variables) and
   `pricing-renderer/theme-minimal.css` (a flat, neutral replacement for `theme.css`).
 - **density**: `density="comfortable|compact"` attribute, property and React prop; compact tightens
-  spacing and type through tokens.
+  spacing through tokens (spacing only; type sizes are deferred).
 - **docs**: `docs/design-systems.md`, accurate layer docs in `docs/theming.md`, a browser spec that
   proves the Tailwind v3 preflight failure and its fix, and a theme builder demo page.
 

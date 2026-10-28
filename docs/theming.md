@@ -189,10 +189,13 @@ offset, or the summary text overlaps it.
 needs the tokens on itself. `theme.css` (part of `styles.css`) defines the same
 `--pr-*` tokens, with the same default values, for both `pricing-renderer` and
 `pricing-change-review`; `base.css` has structural rules only and sets no token
-values. With the custom-theme strategy (`base.css` plus your own stylesheet), the
+values except the compact spacing tokens under `pricing-renderer[density="compact"]`.
+With the custom-theme strategy (`base.css` plus your own stylesheet), the
 review has no tokens until you define them: declare the tokens listed below on
 `pricing-change-review` (an ancestor works here, because no element rule
-declares the tokens), as well as on `pricing-renderer`.
+declares the tokens), as well as on `pricing-renderer`. The compact rule selects
+only `pricing-renderer`, so that holds for the review; for `density="compact"` on
+`pricing-renderer`, spacing tokens set on an ancestor are overridden.
 Without them the review loses its colors, sizes and spacing.
 
 With `styles.css`, override the defaults on the element itself with an unlayered

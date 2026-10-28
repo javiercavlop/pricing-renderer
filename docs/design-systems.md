@@ -42,13 +42,24 @@ Import the renderer styles once, for example in the file that holds your
 
 Then use one of these fixes:
 
-- Restore the primary button with an unlayered rule. State attributes make it
-  short (see [State attributes](#state-attributes)):
+- Restore the background and text color of the primary button with an unlayered
+  rule. State attributes make it short (see
+  [State attributes](#state-attributes)):
 
   ```css
   pricing-renderer[data-pr-root] button[data-pr-part='cta'][data-kind='primary'] {
     background-color: var(--pr-color-accent);
     color: var(--pr-color-on-accent);
+  }
+  ```
+
+  The padding and the weight stay reset unless you restore them. Use the values
+  of the renderer button:
+
+  ```css
+  pricing-renderer[data-pr-root] button[data-pr-part='cta'][data-kind='primary'] {
+    padding: 0.65rem 1rem;
+    font-weight: var(--pr-font-weight-bold, 750);
   }
   ```
 
@@ -259,6 +270,15 @@ itself does nothing):
   --pr-shadow-sm: 0 1px 2px rgb(25 25 35 / 7%), 0 8px 30px rgb(25 25 35 / 4%);
 }
 ```
+
+The snippet restates the light values of the first rule of `theme.css`. With
+`theme-minimal.css`, or a theme copied from it, restate the first rule of that file
+instead (its `.dark` selectors are the same).
+
+The opt-out rule is unlayered, so it beats every layered theme rule. Under a
+`.dark` ancestor it therefore also cancels `theme="dark"`, `theme="auto"` under a
+dark system color scheme and a nearer `[data-theme='dark']` ancestor. A host that
+uses `theme="auto"` would lose system dark mode there.
 
 With `tokens-shadcn.css`, colors come from the shadcn variables, so they change
 with the host theme.
