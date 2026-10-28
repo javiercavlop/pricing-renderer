@@ -141,7 +141,12 @@ export async function loadPricingFromUrl(
   const { controller, cleanup } = createAbortController(options.signal, timeoutMs);
   try {
     const { signal } = controller;
-    const headers = await untilAborted(resolveHeaders(options.headers), signal);
+    // Static headers need no wait: the loader or fetch starts in the same turn as the call, so a
+    // load replaced right after it began has already called its loader, as before the race.
+    const headers =
+      typeof options.headers === 'function'
+        ? await untilAborted(resolveHeaders(options.headers), signal)
+        : options.headers;
     if (signal.aborted) throw signal.reason;
     if (options.loadPricing) {
       const loaded = await untilAborted(
