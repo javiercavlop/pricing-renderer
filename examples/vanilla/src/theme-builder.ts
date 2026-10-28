@@ -171,7 +171,7 @@ const radius = el('input', undefined, {
   'data-token': RADIUS_TOKEN,
 });
 const radiusValue = el('output', undefined, { for: 'theme-radius' });
-const font = el('select');
+const font = el('select', undefined, { 'data-token': FONT_PROP });
 const dark = el('input', undefined, { type: 'checkbox' });
 const presetSelect = el('select', undefined, { id: 'theme-preset' });
 let preset: PresetName = 'default';

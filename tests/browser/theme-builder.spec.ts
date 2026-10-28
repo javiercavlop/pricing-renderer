@@ -25,6 +25,7 @@ test('a token edit applies at once and appears in the export block', async ({ pa
   await openBuilder(page);
   await expect(page.locator('#theme-preset')).toHaveValue('default');
 
+  await expect(page.locator("select[data-token='--pr-font-family']")).toHaveCount(1);
   await page.locator("input[data-token='--pr-color-accent']").fill('#ff0000');
 
   await expect.poll(() => ctaBackground(page)).toBe('rgb(255, 0, 0)');
