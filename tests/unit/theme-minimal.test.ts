@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const minimalPath = fileURLToPath(new URL('../../src/styles/theme-minimal.css', import.meta.url));
 const themePath = fileURLToPath(new URL('../../src/styles/theme.css', import.meta.url));
+const basePath = fileURLToPath(new URL('../../src/styles/base.css', import.meta.url));
 const packagePath = fileURLToPath(new URL('../../package.json', import.meta.url));
 
 function readCss(path: string): string {
@@ -252,6 +253,57 @@ describe('theme-minimal.css contrast', () => {
       });
     }
   }
+});
+
+// The renderer, its hero, the billing legend and the section headings paint no background, in any
+// theme: that text is drawn on the host page, so a dark-theme contrast check needs a dark page
+// behind the renderer (tests/browser/theme-files.spec.ts sets the demo's data-theme for that).
+const HOST_BACKGROUND_SELECTORS = [
+  'pricing-renderer[data-pr-root]',
+  'pricing-renderer[data-pr-root] .pr-shell',
+  'pricing-renderer[data-pr-root] .pr-content',
+  'pricing-renderer[data-pr-root] .pr-hero',
+  'pricing-renderer[data-pr-root] .pr-hero__eyebrow',
+  'pricing-renderer[data-pr-root] .pr-hero__title',
+  'pricing-renderer[data-pr-root] .pr-hero__subtitle',
+  'pricing-renderer[data-pr-root] .pr-section',
+  'pricing-renderer[data-pr-root] .pr-section__heading',
+  'pricing-renderer[data-pr-root] .pr-section__eyebrow',
+  'pricing-renderer[data-pr-root] .pr-billing',
+  'pricing-renderer[data-pr-root] .pr-billing legend',
+];
+
+const backgroundOf = (rule: Rule): string[] =>
+  [...rule.declarations.keys()].filter((name) => name.startsWith('background'));
+
+describe('theme-minimal.css leaves the background to the host', () => {
+  it('declares no background, like theme.css', () => {
+    for (const rule of [...minimalRules(), ...themeRules()]) {
+      expect(backgroundOf(rule), rule.selectors.join(', ')).toEqual([]);
+    }
+  });
+
+  it('keeps the hero, legend and section headings of base.css without a background', () => {
+    const rules = parseRules(readCss(basePath));
+    for (const selector of HOST_BACKGROUND_SELECTORS) {
+      const matching = rules.filter((rule) => rule.selectors.includes(selector));
+      expect(matching.length, `${selector} has a rule`).toBeGreaterThan(0);
+      for (const rule of matching) expect(backgroundOf(rule), selector).toEqual([]);
+    }
+  });
+
+  it('gives no base.css rule of the hero, the billing or the section headings a background', () => {
+    // Also covers selector lists such as `:where(.pr-section__heading, ...) h3` (the section titles).
+    const names = ['.pr-hero', '.pr-section__heading', '.pr-section__eyebrow', '.pr-billing'];
+    const rules = parseRules(readCss(basePath)).filter((rule) =>
+      rule.selectors.some((selector) => names.some((name) => selector.includes(name))),
+    );
+    expect(
+      rules.some((rule) => rule.selectors.some((selector) => selector.endsWith(') h3'))),
+      'the section title rule',
+    ).toBe(true);
+    for (const rule of rules) expect(backgroundOf(rule), rule.selectors.join(', ')).toEqual([]);
+  });
 });
 
 // [utest->req~theme-minimal-export~1]

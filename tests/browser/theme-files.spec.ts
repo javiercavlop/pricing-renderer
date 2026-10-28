@@ -94,6 +94,17 @@ async function setThemeAttribute(page: Page, theme: string): Promise<void> {
   await settle(page);
 }
 
+// The renderer paints no background of its own (base.css and the theme files leave it to the
+// host), so the hero, the billing legend and the section headings are drawn on the demo page. The
+// demo's theme switch sets data-theme on the root together with the renderer attribute
+// (examples/vanilla/src/main.ts), so the page behind the renderer follows the theme.
+async function setPageTheme(page: Page, theme: string): Promise<void> {
+  await page.evaluate((theme) => {
+    document.documentElement.dataset.theme = theme;
+  }, theme);
+  await setThemeAttribute(page, theme);
+}
+
 test.describe('host .dark class', () => {
   test('darkens the renderer and restores it when the class goes', async ({ page }) => {
     await openRenderer(page, viewport);
@@ -208,14 +219,23 @@ test.describe('theme-minimal', () => {
   });
 
   // [utest->req~theme-minimal-contrast~1]
-  for (const theme of ['light', 'dark']) {
+  const minimalTokens = {
+    light: { text: '#111111', surface: '#ffffff' },
+    dark: { text: '#f2f2f2', surface: '#121212' },
+  } as const;
+  for (const theme of ['light', 'dark'] as const) {
     test(`has no color-contrast violation in the ${theme} theme`, async ({ page }) => {
       // The reduced-motion rule shortens transitions, so axe never samples a half-way color.
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await openRenderer(page, viewport);
       await clearDemoTokens(page);
       await injectCss(page, readStyles('theme-minimal.css'), 'last');
-      await setThemeAttribute(page, theme);
+      // Text outside the cards sits on the host page: with only the renderer attribute set, the
+      // page stays light behind light text.
+      await setPageTheme(page, theme);
+      expect(await token(page, '--pr-color-text')).toBe(minimalTokens[theme].text);
+      expect(await token(page, '--pr-color-surface')).toBe(minimalTokens[theme].surface);
+      expect(await colorScheme(page)).toBe(theme);
 
       const results = await new AxeBuilder({ page })
         .include('pricing-renderer')
