@@ -46,7 +46,9 @@ across requests (intake, item 3).
 - **Search params** (`pricing-renderer`): `selectionToSearchParams` and `selectionFromSearchParams`
   over `[string, string]` pairs; keys `plan`, `billing`, `addon`, `var.<path>`, optional prefix.
 - **Shared source load** (`pricing-renderer/yaml`): `loadPricingSource`, the element's one-source
-  rule and load, used by the element and `usePricingSource`.
+  rule and load, used by the element and `usePricingSource`. The request bounds apply on the hook
+  path only; the element's `reload()` keeps passing `request` as given (lead decision R2-REV-002;
+  design.md, D5).
 - **Headless React** (new subpath `pricing-renderer/react/headless`, re-exported by
   `pricing-renderer/react`): `PricingRendererProvider`, `usePricingSource`, `usePricingSelection`
   (with `compareWithCurrent()` for `<PricingChangeReview>`) and `usePricingRendererState(ref)`.
@@ -80,7 +82,7 @@ Each one has its own entry point, consumer and risk, and can be built and accept
   (design.md, D2).
 - Code areas: `src/core` (new `selection-change.ts`, `price-stabilizer.ts`, `search-params.ts`;
   `types.ts`, `index.ts`), `src/yaml` (new `source.ts`, `index.ts`), `src/element`
-  (`pricing-renderer-element.ts`, `events.ts`, `renderers.ts`), `src/react` (new `headless.ts`,
+  (`pricing-renderer-element.ts`, `events.ts`, `renderers.ts`, `index.ts`), `src/react` (new `headless.ts`,
   `provider.ts`, `use-pricing-source.ts`, `selection-store.ts`, `use-pricing-selection.ts`,
   `use-renderer-state.ts`, `slots.ts`; `index.ts`), `package.json` (export `./react/headless` and
   the `package:check` entry list), `custom-elements.json`, `examples/react`, `examples/next`, a
@@ -95,7 +97,11 @@ Each one has its own entry point, consumer and risk, and can be built and accept
   dependencies, as dev dependencies of the private vanilla demo (an importer entry of the lockfile,
   no new package).
 - Behaviour for existing hosts: none. Without the provider, the new subpath, `slots` or
-  `hideSections`, the element and the wrapper behave as in 0.1.0.
+  `hideSections`, the element and the wrapper behave as in 0.1.0. The request bounds of
+  `loadPricingSource` apply on the hook path only (`usePricingSource`); the element's `reload()`
+  keeps passing `request` as given (lead decision R2-REV-002; design.md, D5).
+- Migration: none. No existing call changes; the request bounds apply only on the hook path
+  (`usePricingSource`).
 - Risks: design.md, "Risks".
 
 ## Out of scope
