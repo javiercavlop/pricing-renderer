@@ -65,21 +65,24 @@ Token groups:
 Optional tokens. None is declared by `theme.css`; the default is the fallback
 written in `base.css`, so nothing changes until you set one:
 
-- Fonts: `--pr-font-family` (unset: the host font is inherited) and
-  `--pr-font-family-display` (hero title, section and plan headings, price amount;
-  default `--pr-font-family`).
-- Weights: `--pr-font-weight-regular` (400), `--pr-font-weight-medium` (500, 650),
-  `--pr-font-weight-bold` (700, 750, 780, 790) and `--pr-font-weight-heavy` (800,
-  900). A weight token sets every weight of its group to one value.
-- Text: `--pr-line-height` (1.5).
-- Sticky offset: `--pr-sticky-top` (`0px`). It offsets the comparison toolbar and,
-  from 840px, the add-on summary.
-- Comparison table: `--pr-table-max-height` (`80dvh`) and `--pr-table-min-width`
-  (`720px`).
-- Dialog: `--pr-z-dialog` (`1000`), the z-index of the dialog backdrop.
-- Plan grid: `--pr-plan-columns` (unset: the columns follow the plan count and the
-  container width). When set, it replaces the `grid-template-columns` of the plan
+- `--pr-font-family`: default `unset`, so the host font is inherited.
+- `--pr-font-family-display`: default `unset`; it falls back to `--pr-font-family`.
+  It sets the hero title, the section and plan headings and the price amount.
+- `--pr-font-weight-regular`: default `400`.
+- `--pr-font-weight-medium`: default `500` (650 in one rule).
+- `--pr-font-weight-bold`: default `700` (750, 780 and 790 in some rules).
+- `--pr-font-weight-heavy`: default `800` (900 in one rule).
+- `--pr-line-height`: default `1.5`.
+- `--pr-sticky-top`: default `0px`. It offsets the comparison toolbar and, from
+  840px, the add-on summary.
+- `--pr-table-max-height`: default `80dvh`, the comparison table box.
+- `--pr-table-min-width`: default `720px`, the comparison table.
+- `--pr-z-dialog`: default `1000`, the z-index of the dialog backdrop.
+- `--pr-plan-columns`: default `unset`, so the columns follow the plan count and the
+  container width. When set, it replaces the `grid-template-columns` of the plan
   grid in every band.
+
+A weight token sets every weight of its group to one value.
 
 The container breakpoints (600, 840, 1040, 1200 and 1280px) are fixed.
 
@@ -278,12 +281,12 @@ or exclude renderer parts:
 
 The library declares `@layer pricing-renderer` (structure) and
 `@layer pricing-renderer.theme` (tokens). For predictable ordering, declare
-layers before imports. Importing with `layer(pricing-renderer)` places the whole
-stylesheet, with its own layers, inside that layer, below `product-overrides`:
+layers before imports. The renderer's own layers then sit in the order you declare,
+below `product-overrides`:
 
 ```css
 @layer reset, pricing-renderer, product-overrides;
-@import 'pricing-renderer/styles.css' layer(pricing-renderer);
+@import 'pricing-renderer/styles.css';
 
 @layer product-overrides {
   pricing-renderer {

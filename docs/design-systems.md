@@ -13,10 +13,18 @@ avoid that.
 
 Tailwind v3 emits its preflight reset as plain CSS, without a native cascade
 layer. The renderer's rules are layered, so the preflight wins. The visible case
-is a plan call to action that is a `button` (when the plan has no safe link):
-preflight sets `button { background-color: transparent; background-image: none }`
-and the accent background of the primary button is lost. Preflight also resets
-heading sizes and weights (`h1` to `h6` inherit them), margins and `img` display.
+is the `<button>` form of the primary plan call to action (used when the plan has
+no safe link). The preflight button resets reach it:
+
+- `background-color: transparent` (and `background-image: none`) removes the
+  accent background;
+- `color: inherit` replaces the text color on the accent, which leaves about 3.5:1
+  contrast;
+- `padding: 0` removes the button padding;
+- `font-weight: inherit` removes the button weight.
+
+Preflight also resets heading sizes and weights (`h1` to `h6` inherit them),
+margins and `img` display. The `<a>` form of the call to action is not affected.
 
 Import the renderer styles once, for example in the file that holds your
 `@tailwind` directives (`@import` rules must come first):
@@ -35,8 +43,9 @@ Then use one of these fixes:
   short (see [State attributes](#state-attributes)):
 
   ```css
-  pricing-renderer [data-pr-part='cta'][data-kind='primary'] {
+  pricing-renderer[data-pr-root] button[data-pr-part='cta'][data-kind='primary'] {
     background-color: var(--pr-color-accent);
+    color: var(--pr-color-on-accent);
   }
   ```
 
@@ -54,26 +63,21 @@ renderer between `base` and `components`:
 
 ```css
 @layer theme, base, pricing-renderer, components, utilities;
-```
-
-The line must come before any `@import`, so that it fixes the order. Then import
-Tailwind and the renderer styles into their layers:
-
-```css
 @import 'tailwindcss';
-@import 'pricing-renderer/styles.css' layer(pricing-renderer);
+@import 'pricing-renderer/styles.css';
 ```
 
-With this order the preflight is below the renderer, utilities stay above it, and
-the renderer's own sublayers (`pricing-renderer.theme`, `pricing-renderer.shadcn`)
+The layer line must come before any `@import`, so that it fixes the order. With
+this order the preflight is below the renderer and utilities stay above it. The
+renderer's own sublayers (`pricing-renderer.theme`, `pricing-renderer.shadcn`)
 stay inside `pricing-renderer`.
 
 To use your own tokens instead of the default theme, import `base.css` and a
 theme file:
 
 ```css
-@import 'pricing-renderer/base.css' layer(pricing-renderer);
-@import 'pricing-renderer/theme-minimal.css' layer(pricing-renderer);
+@import 'pricing-renderer/base.css';
+@import 'pricing-renderer/theme-minimal.css';
 ```
 
 Do not import `styles.css` together with `base.css`.
@@ -113,7 +117,7 @@ properties are allowed) and add a class with `className`:
 The type of `style` is `PricingRendererStyle`, exported from
 `pricing-renderer/react`: `React.CSSProperties` plus any `--*` property.
 
-## Mapping tokens
+## Mapping tokens to host variables
 
 The renderer reads `--pr-*` tokens. Map them to the variables of your design
 system on `pricing-renderer`, or on an ancestor, with an unlayered rule or one in
@@ -143,15 +147,16 @@ shadcn/ui theme (`--primary`, `--primary-foreground`, `--foreground`,
 `base.css` and a theme.
 
 ```css
-@import 'pricing-renderer/styles.css' layer(pricing-renderer);
-@import 'pricing-renderer/tokens-shadcn.css' layer(pricing-renderer);
+@import 'pricing-renderer/styles.css';
+@import 'pricing-renderer/tokens-shadcn.css';
 ```
 
 The file uses the layer `pricing-renderer.shadcn`, declared after
 `pricing-renderer.theme`, so it wins over `theme.css` in either import order.
 Tokens that shadcn has no variable for (success, warning, warning surface,
 overlay and shadows) keep the values of `theme.css`. Dark mode follows the host
-`.dark` class, as in shadcn.
+`.dark` class, as in shadcn. If you wrap an import in `layer(x)`, wrap every
+renderer file the same way.
 
 The overlay expects the shadcn v4 variables, which hold complete colors such as
 `oklch(...)`. If your shadcn setup is v3, its variables are HSL channels, so
@@ -174,8 +179,8 @@ same selectors and tokens, a flat grayscale palette, no shadows and no motion. U
 it instead of `theme.css`, or copy it as the start of your own theme.
 
 ```css
-@import 'pricing-renderer/base.css' layer(pricing-renderer);
-@import 'pricing-renderer/theme-minimal.css' layer(pricing-renderer);
+@import 'pricing-renderer/base.css';
+@import 'pricing-renderer/theme-minimal.css';
 ```
 
 ## Fonts
@@ -223,7 +228,8 @@ with the host theme.
 ## Density
 
 `density="compact"` on `<pricing-renderer>` reduces the spacing. The default is
-`comfortable`, which is unchanged. The attribute is reflected, so you can also
+`comfortable`, which is unchanged. The element writes no density attribute by
+default; the attribute is reflected only when density is set, so you can also
 select on it. The compact values are CSS rules under
 `pricing-renderer[density='compact']` in `base.css` that override the spacing
 tokens. Tokens you set in an unlayered host rule still win.
@@ -261,11 +267,11 @@ pricing-renderer [data-pr-part='add-on-card'][data-available='false'] {
 
 `data-current` is present only while the host sets `currentSelection`.
 
-## Container breakpoints
+## Container breakpoints stay fixed
 
 The layout reacts to the width of the renderer, not to the width of the window.
-The renderer is a CSS container, and its breakpoints are container queries at 600,
-840, 1040, 1200 and 1280px. They are fixed. Tailwind screen breakpoints (`sm:`,
+The renderer is a CSS container, and its breakpoints are container queries at
+600px, 840px, 1040px, 1200px and 1280px. They are fixed. Tailwind screen breakpoints (`sm:`,
 `md:`, `lg:`) are media queries on the viewport, so they do not apply to the
 renderer's layout. A renderer in a narrow sidebar of a wide window gets the
 compact layout.

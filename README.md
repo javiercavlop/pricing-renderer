@@ -155,6 +155,8 @@ Trusted Publisher.
 | `pricing-renderer/base.css`             | Required structural and accessibility styles                    |
 | `pricing-renderer/theme.css`            | Default professional visual tokens                              |
 | `pricing-renderer/styles.css`           | Base and theme combined                                         |
+| `pricing-renderer/tokens-shadcn.css`    | Overlay that maps the tokens to shadcn/ui variables             |
+| `pricing-renderer/theme-minimal.css`    | Flat grayscale theme that replaces `theme.css`                  |
 
 ## Web Component
 
