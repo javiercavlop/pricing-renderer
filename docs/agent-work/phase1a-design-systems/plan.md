@@ -1,1 +1,1 @@
-R5: push round-4 fixes, CI, narrow re-check, review package, lead_ready.
+R6: push round-5 wording fixes (head after checkpoint), CI green (new browser test runs there), final narrow reviewer, review package, lead_ready.
