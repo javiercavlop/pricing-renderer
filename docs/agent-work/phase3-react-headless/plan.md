@@ -1,1 +1,1 @@
-PR1 spec (S1+S2+fixups) -> PR2 core P3-1T/1I -> P3-2 -> P3-3 -> P3-4 -> P3-5.. per plan.md sections 4/5.
+Original plan (owner CRP-P3-A..D answers, sections 2-7) is in git: docs/agent-work/phase3-react-headless/plan.md at commit 07f10bf515d53e19b2a5fbc5abe5b2dddb74fa26 (git show 07f10bf5:...). This plan.md is the lead's short note. Order: PR1 spec (PR 73) panel round 2 -> ready; PR2 core P3-1T/1I -> P3-2 -> P3-3 -> P3-4 -> P3-5.. per openspec/changes/add-react-headless/tasks.md.
