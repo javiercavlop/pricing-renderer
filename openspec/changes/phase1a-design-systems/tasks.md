@@ -83,8 +83,8 @@ Checks (the planner registers them; names are the commands):
   - Checks: `typecheck`, `lint`, `unit`, `format`, `browser`, `package`.
 - [ ] I4 Density (after CRP-C, T4, I1 and I2).
   - Files: `src/element/pricing-renderer-element.ts`, `src/react/index.ts`, `src/styles/base.css`,
-    `custom-elements.json`, `.changeset/density.md` (mentions the reflected `density="comfortable"`
-    attribute).
+    `custom-elements.json`, `.changeset/density.md` (says compact changes spacing tokens only and the
+    element writes no default `density` attribute).
   - Checks: `typecheck`, `lint`, `unit`, `format`, `browser`, `package`.
 
 ## Phase D: documentation (doc-steward, after I1, I2 and I3)

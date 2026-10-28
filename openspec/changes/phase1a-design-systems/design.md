@@ -240,14 +240,20 @@ in every mode, which is a full token set anyway).
 
 ## D10: density
 
-`density` attribute and property (`'comfortable' | 'compact'`, default `'comfortable'`, reflected
-like `theme`), React prop and manifest entry. Compact is one rule
-`pricing-renderer[data-pr-root][density='compact']` placed directly in `@layer pricing-renderer` in
-`base.css`, so it beats `theme.css`, the overlay and replacement themes (sublayers), while unlayered
-host tokens still win. `comfortable` adds no rule, so the default is unchanged, and an unknown value
-matches no rule (comfortable). The element does not validate the attribute.
+`density` attribute and property (`'comfortable' | 'compact'`, default `'comfortable'`), React prop
+and manifest entry. The element does not write a default `density` attribute; it reflects the
+property when it is set. Any value other than exactly `compact` reads as `comfortable`, and the
+rendered output has no `data-density` markup. Compact is one rule
+`pricing-renderer[density='compact']` (no `[data-pr-root]`) placed directly in
+`@layer pricing-renderer` in `base.css`, so it beats `theme.css`, the overlay and replacement themes
+(sublayers), while unlayered host tokens still win. `comfortable` adds no rule, so the default is
+unchanged, and an unknown value matches no rule (comfortable).
 
-Compact values (**proposed**, CRP-C; `--pr-font-size-xs` unchanged):
+Compact overrides only spacing tokens, so compact is a spacing-only mode. Font-size tokens are not
+changed by compact. Decision: deferred, to keep compact a spacing-only mode; a later change may add
+type sizes with its own owner decision.
+
+Compact values (**proposed**, CRP-C, subject to the owner):
 
 Each line gives the comfortable value of `theme.css`, then the proposed compact value:
 
@@ -258,10 +264,6 @@ Each line gives the comfortable value of `theme.css`, then the proposed compact 
 - `--pr-space-5`: 1.5rem, compact 1.1rem
 - `--pr-space-section`: `clamp(3rem, 8cqi, 6rem)`, compact `clamp(2rem, 5cqi, 4rem)`
 - `--pr-shell-padding`: `clamp(1rem, 4cqi, 3rem)`, compact `clamp(0.75rem, 3cqi, 2rem)`
-- `--pr-font-size-sm`: 0.875rem, compact 0.8125rem
-- `--pr-font-size-lg`: 1.125rem, compact 1rem
-- `--pr-font-size-xl`: 1.35rem, compact 1.2rem
-- `--pr-font-size-2xl`: 1.75rem, compact 1.5rem
 
 If CRP-C changes a value, `req~density-compact-tokens~1` gets revision 2 and its tags follow.
 Rejected: the earlier name `plan-density` (`visual-review-spectra/report.md`), because the attribute
@@ -331,9 +333,9 @@ renderer and utilities still win.
 - R6. No browser in the lab: visual proof and CRP screenshots come from CI artifacts.
 - R7. The Tailwind facts rest on medium-confidence lookups; `host-reset.spec.ts` proves the failure
   and the fix before the guide is published.
-- R8. Reflecting `density="comfortable"` adds an attribute to every element. No CSS matches it and
-  the visual baselines guard the look; host selectors such as `pricing-renderer:not([density])`
-  would change meaning (noted in the changeset).
+- R8. The element writes no default `density` attribute, so existing host selectors such as
+  `pricing-renderer:not([density])` keep their meaning; a host that sets `density` reads back
+  `comfortable` for any value other than `compact`. The visual baselines guard the default look.
 
 ## Migration
 
@@ -357,7 +359,8 @@ with screenshots. Visual defaults do not change otherwise.
   requirement gets revision 2 with the selectors `.dark pricing-renderer[data-pr-root][theme='auto']`
   and `.dark pricing-change-review[theme='auto']`. Screenshots at 1440 and 375 from the CI run of the
   host-dark-class spec.
-- **CRP-C, density**: whether the attribute is wanted and the compact values of D10. Screenshots at
+- **CRP-C, density**: whether the attribute is wanted and the compact values of D10 (proposed,
+  subject to the owner; spacing tokens only). Screenshots at
   1440 and 375 from the CI run of the density spec.
 
 ## Assumptions
