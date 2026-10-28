@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { buildStressYaml, findStressFixture } from '../fixtures/stress/build.js';
+import { loneLastCard } from '../fixtures/stress/metrics.js';
 import {
   applyPricing,
   measureOverflow,
@@ -141,7 +142,23 @@ async function measureUx(page: Page) {
     jump(0);
     await nextFrame();
 
+    // Height of the first element of each data-pr-part, in viewports, to see which section is long.
+    const sectionHeightsInViewports: Record<string, number> = {};
+    for (const part of new Set(
+      [...renderer.querySelectorAll('[data-pr-part]')].map(
+        (element) => element.getAttribute('data-pr-part') ?? '',
+      ),
+    )) {
+      const first = renderer.querySelector(`[data-pr-part="${part}"]`);
+      if (first) {
+        sectionHeightsInViewports[part] = Math.round(
+          first.getBoundingClientRect().height / viewportHeight,
+        );
+      }
+    }
+
     return {
+      sectionHeightsInViewports,
       documentHeight,
       documentHeightInViewports: round(documentHeight / viewportHeight),
       rendererHeightInViewports: round(rendererHeight / viewportHeight),
@@ -216,11 +233,15 @@ test.describe('ux stress summary', () => {
           },
           sticky: ux.sticky,
           comparisonLayout: ux.comparisonLayout,
+          sectionHeightsInViewports: ux.sectionHeightsInViewports,
           planGrid: {
             cards: grid.planCardCount,
             columns: grid.gridColumns,
             cardsPerRow: rows,
-            loneLastCard: rows.length > 1 && rows[rows.length - 1] === 1,
+            cardWidths: grid.cardWidths,
+            firstCtaBottom: grid.firstCtaBottom,
+            layoutBreakdown: grid.layoutBreakdown,
+            loneLastCard: loneLastCard(grid.gridColumns, rows),
           },
         };
         console.info(`SPECTRA_UX_SUMMARY ${JSON.stringify(summary)}`);
