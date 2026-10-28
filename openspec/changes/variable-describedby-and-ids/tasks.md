@@ -69,12 +69,12 @@ Requirement: `req~element-instance-ids~2`. Risk low. Starts its I task after S1 
 
 ## Ownership and order
 
-| Order | Task | Owns | Parallel with |
-|---|---|---|---|
-| 1 | S1-T | `tests/unit/variable-field-describedby.test.ts` | S2-T |
-| 1 | S2-T | `tests/unit/element-instance-ids.test.ts` | S1-T |
-| 2 | S1-I | `src/element/renderers.ts`, `.changeset/variable-field-describedby.md` | none |
-| 3 | S2-I | `src/element/renderers.ts`, the element file tag, the browser spec tag, `.changeset/injective-instance-ids.md` | none |
+| Order | Task | Owns                                                                                                           | Parallel with |
+| ----- | ---- | -------------------------------------------------------------------------------------------------------------- | ------------- |
+| 1     | S1-T | `tests/unit/variable-field-describedby.test.ts`                                                                | S2-T          |
+| 1     | S2-T | `tests/unit/element-instance-ids.test.ts`                                                                      | S1-T          |
+| 2     | S1-I | `src/element/renderers.ts`, `.changeset/variable-field-describedby.md`                                         | none          |
+| 3     | S2-I | `src/element/renderers.ts`, the element file tag, the browser spec tag, `.changeset/injective-instance-ids.md` | none          |
 
 ## Traceability checklist
 

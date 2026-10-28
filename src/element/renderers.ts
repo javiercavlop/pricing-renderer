@@ -541,11 +541,17 @@ function controlInput(
   const { selection, actions } = state;
   const value = getAtPath(selection.variables, control.path);
   const id = instanceId(state, 'variable', control.path);
+  // [impl->req~variable-field-describedby~1]
+  const describedBy =
+    [control.description ? `${id}-help` : '', invalid ? `${id}-error` : '']
+      .filter(Boolean)
+      .join(' ') || nothing;
   if (control.type === 'boolean') {
     return html`<label class="pr-switch" for=${id}>
       <input
-        id=${id}
+        id="${id}"
         type="checkbox"
+        aria-describedby="${describedBy}"
         aria-invalid=${invalid}
         .checked=${Boolean(value)}
         @change=${(event: Event) =>
@@ -556,7 +562,8 @@ function controlInput(
   }
   if (control.type === 'select') {
     return html`<select
-      id=${id}
+      id="${id}"
+      aria-describedby="${describedBy}"
       aria-invalid=${invalid}
       .value=${String(value ?? '')}
       @change=${(event: Event) => {
@@ -577,8 +584,9 @@ function controlInput(
     const numericValue = typeof value === 'number' ? value : Number(value) || 0;
     return html`<div class="pr-slider">
       <input
-        id=${id}
+        id="${id}"
         type="range"
+        aria-describedby="${describedBy}"
         aria-invalid=${invalid}
         .value=${String(numericValue)}
         min=${control.min ?? 0}
@@ -592,6 +600,7 @@ function controlInput(
       />
       <input
         type="number"
+        aria-describedby="${describedBy}"
         aria-invalid=${invalid}
         aria-label=${control.label ?? control.path}
         .value=${String(numericValue)}
@@ -608,7 +617,8 @@ function controlInput(
   }
   const isNumber = control.type === 'number';
   return html`<input
-    id=${id}
+    id="${id}"
+    aria-describedby="${describedBy}"
     aria-invalid=${invalid}
     type=${isNumber ? 'number' : 'text'}
     .value=${String(value ?? '')}
@@ -654,7 +664,7 @@ export function renderVariables(state: RenderState): TemplateResult | typeof not
               ${controlInput(state, control, invalid)}
               ${
                 invalid
-                  ? html`<p class="pr-field__error" role="alert">
+                  ? html`<p id="${id}-error" class="pr-field__error" role="alert">
                       ${t(viewModel, 'pricing.variableError')}
                     </p>`
                   : nothing
