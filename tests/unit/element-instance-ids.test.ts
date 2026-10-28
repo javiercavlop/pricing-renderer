@@ -142,7 +142,7 @@ function viewModelFromYaml(yaml: string): PricingViewModel {
   return createPricingViewModel(parsed.value);
 }
 
-// [utest->req~element-instance-ids~1]
+// [utest->req~element-instance-ids~2]
 describe('two elements of the same pricing', () => {
   it('render no id twice in the combined output', async () => {
     const first = flatten((await ready()).render());
@@ -219,7 +219,7 @@ describe('two elements of the same pricing', () => {
   });
 });
 
-// [utest->req~element-instance-ids~1]
+// [utest->req~element-instance-ids~2]
 describe('renderer output with an instance prefix', () => {
   it('sanitizes a group id with spaces', () => {
     const viewModel = viewModelFromYaml(
@@ -227,8 +227,8 @@ describe('renderer output with an instance prefix', () => {
     );
     expect(viewModel.comparisonGroups.map((group) => group.id)).toContain('Core Features');
     const text = flatten(renderComparison(stateFor(viewModel, { idPrefix: 'pr-3' })));
-    expect(attributeValues(text, ['aria-controls'])).toContain('pr-3-group-Core-Features');
-    expect(ids(text)).toContain('pr-3-group-Core-Features');
+    expect(attributeValues(text, ['aria-controls'])).toContain('pr-3-group-Core_20_Features');
+    expect(ids(text)).toContain('pr-3-group-Core_20_Features');
     for (const id of ids(text)) expect(id, 'no id has a space').not.toMatch(/\s/);
   });
 
@@ -276,13 +276,13 @@ describe('renderer output with an instance prefix', () => {
     const found = ids(text).filter((id) => id !== 'pr-7-variables-title');
     expect(found.length).toBeGreaterThan(1);
     for (const id of found) expect(id, id).toMatch(/^pr-7-variable-[\w-]+$/);
-    expect(found).toContain('pr-7-variable-priceByRegion-eu-price-0-');
+    expect(found).toContain('pr-7-variable-priceByRegion_2e_eu_20_price_5b_0_5d_');
   });
 
   it('sanitizes an add-on id with spaces into the help id', () => {
     const viewModel = viewModelFromYaml(acmeYaml.replaceAll('extraStorage', 'extra storage'));
     const text = flatten(renderAddOns(stateFor(viewModel, { idPrefix: 'pr-9' })));
-    expect(ids(text)).toContain('pr-9-addon-help-extra-storage');
+    expect(ids(text)).toContain('pr-9-addon-help-extra_20_storage');
     for (const id of ids(text)) expect(id, 'no id has a space').not.toMatch(/\s/);
     const present = new Set(ids(text));
     for (const ref of references(text)) expect(present.has(ref), ref).toBe(true);
@@ -299,7 +299,7 @@ describe('renderer output with an instance prefix', () => {
   });
 });
 
-// [utest->req~element-instance-ids~1]
+// [utest->req~element-instance-ids~2]
 describe('renderer output without an instance prefix', () => {
   it('keeps the ids of today', () => {
     const viewModel = viewModelFromYaml(acmeYaml);
@@ -307,5 +307,93 @@ describe('renderer output without an instance prefix', () => {
     expect(references(text)).toContain('pr-comparison-title');
     expect(ids(text)).toContain('pr-comparison-title');
     expect(ids(text)).toContain(`pr-group-${viewModel.comparisonGroups[0]!.id}`);
+  });
+});
+
+// A view model with extra number controls, rendered by renderVariables with the prefix pr-7.
+interface ControlSpec {
+  path: string;
+  description?: string;
+}
+
+function withControls(specs: ControlSpec[]): string {
+  const variableControls = specs.map((spec) => ({
+    ...spec,
+    type: 'number' as const,
+    label: spec.path,
+  }));
+  const viewModel: PricingViewModel = { ...viewModelFromYaml(acmeYaml), variableControls };
+  return flatten(renderVariables(stateFor(viewModel, { idPrefix: 'pr-7' })));
+}
+
+const duplicatesOf = (values: string[]): string[] =>
+  values.filter((value, index) => values.indexOf(value) !== index);
+
+// [utest->req~element-instance-ids~2]
+describe('injective data part of an id', () => {
+  it('tells a space from a hyphen in variable paths', () => {
+    const found = ids(withControls([{ path: 'a b' }, { path: 'a-b' }]));
+    expect(found).toContain('pr-7-variable-a_20_b');
+    expect(found).toContain('pr-7-variable-a_2d_b');
+    expect(duplicatesOf(found)).toEqual([]);
+  });
+
+  it('tells a space from a hyphen in group ids', () => {
+    const base = viewModelFromYaml(acmeYaml);
+    const template = base.comparisonGroups[0]!;
+    const viewModel: PricingViewModel = {
+      ...base,
+      comparisonGroups: ['a b', 'a-b'].map((id) => ({ ...template, id })),
+    };
+    const expandedGroups = new Set(['a b', 'a-b']);
+    const state = stateFor(viewModel, { idPrefix: 'pr-3', expandedGroups });
+    const text = flatten(renderComparison(state));
+    const found = ids(text);
+    expect(found).toContain('pr-3-group-a_20_b');
+    expect(found).toContain('pr-3-group-a_2d_b');
+    expect(duplicatesOf(found)).toEqual([]);
+    const controls = attributeValues(text, ['aria-controls']);
+    expect(controls.length).toBeGreaterThan(0);
+    for (const control of controls) expect(found, control).toContain(control);
+  });
+
+  it('keeps CJK variable paths apart', () => {
+    const text = withControls([{ path: '座席' }, { path: '席位' }]);
+    const found = ids(text);
+    expect(found).toContain('pr-7-variable-_5ea7__5e2d_');
+    expect(found).toContain('pr-7-variable-_5e2d__4f4d_');
+    for (const id of found.filter((item) => item !== 'pr-7-variables-title')) {
+      expect(id).toMatch(/^pr-7-variable-[\w-]+$/);
+    }
+  });
+
+  it('does not collide the help suffix with another path', () => {
+    const helped = { path: 'x', description: 'Help for x' };
+    const found = ids(withControls([helped, { path: 'x-help' }]));
+    const expected = ['pr-7-variable-x', 'pr-7-variable-x-help', 'pr-7-variable-x_2d_help'];
+    expect(found).toEqual(expect.arrayContaining(expected));
+    expect(duplicatesOf(found)).toEqual([]);
+  });
+
+  it('writes punctuation as hex escapes', () => {
+    const found = ids(withControls([{ path: 'priceByRegion.eu price[0]' }]));
+    expect(found).toContain('pr-7-variable-priceByRegion_2e_eu_20_price_5b_0_5d_');
+  });
+
+  it('writes an astral code point as one escape', () => {
+    const found = ids(withControls([{ path: 'seats😀' }]));
+    expect(found).toContain('pr-7-variable-seats_1f600_');
+  });
+
+  it('escapes an underscore so it cannot imitate an escape', () => {
+    const found = ids(withControls([{ path: 'a_b' }, { path: 'a b' }]));
+    expect(found).toContain('pr-7-variable-a_5f_b');
+    expect(duplicatesOf(found)).toEqual([]);
+  });
+
+  it('keeps letters and digits as they are', () => {
+    const viewModel = viewModelFromYaml(acmeYaml);
+    const text = flatten(renderAddOns(stateFor(viewModel, { idPrefix: 'pr-9' })));
+    expect(ids(text)).toContain('pr-9-addon-help-extraStorage');
   });
 });
