@@ -12,6 +12,11 @@ test.beforeEach(({ browserName }) => {
 
 const toolbar = '.pr-comparison-toolbar';
 
+// The plan CTA in its <button> form (.pr-button styles both forms). In the demo pricing
+// (tests/fixtures/acme-pricing.yml) the Starter CTA has no href, so it is the first CTA and a
+// button; Growth and Enterprise are links (renderPlanCta in src/element/renderers.ts).
+const cta = "button[data-pr-part='cta']";
+
 // A pricing with a comparison toolbar and table (the same fixture the shorter-page spec uses).
 async function openClickup(page: Page): Promise<void> {
   await openRenderer(page, { width: 1440, height: 900 });
@@ -220,12 +225,13 @@ test.describe('optional design tokens', () => {
   // [utest->req~token-fallbacks~1]
   test('without a host token the defaults are unchanged', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
+    await clearDemoButtonFont(page);
     await setRendererToken(page, 'font-size', '16px');
     expect(await computed(page, '.pr-hero__title', 'fontWeight')).toBe('780');
     expect(await computed(page, 'pricing-renderer', 'lineHeight')).toBe('24px');
     expect(await computed(page, '.pr-price__amount', 'fontWeight')).toBe('790');
     expect(await computed(page, '.pr-plan-card__top h4', 'fontWeight')).toBe('700');
-    expect(await computed(page, "[data-pr-part='cta']", 'fontWeight')).toBe('750');
+    expect(await computed(page, cta, 'fontWeight')).toBe('750');
   });
 
   // [utest->req~line-height-token~1]
@@ -238,12 +244,13 @@ test.describe('optional design tokens', () => {
   // [utest->req~font-weight-tokens~1]
   test('--pr-font-weight-bold unifies the bold group', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
+    await clearDemoButtonFont(page);
     const weights = () =>
       Promise.all([
         computed(page, '.pr-hero__title', 'fontWeight'),
         computed(page, '.pr-price__amount', 'fontWeight'),
         computed(page, '.pr-plan-card__top h4', 'fontWeight'),
-        computed(page, "[data-pr-part='cta']", 'fontWeight'),
+        computed(page, cta, 'fontWeight'),
       ]);
     expect(await weights(), 'without the host rule').toEqual(['780', '790', '700', '750']);
 
@@ -308,6 +315,35 @@ async function clearDemoTokens(page: Page): Promise<void> {
         if (rule instanceof CSSStyleRule) {
           const names = Array.from(rule.style).filter((name) => name.startsWith('--pr-'));
           for (const name of names) rule.style.removeProperty(name);
+        }
+        const nested = (rule as CSSGroupingRule).cssRules;
+        if (nested) clear(nested);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        clear(sheet.cssRules);
+      } catch {
+        // A cross-origin sheet cannot be read.
+      }
+    }
+  });
+  await settle(page);
+}
+
+// The demo page resets `button, select { font: inherit; }` in an unlayered rule
+// (examples/vanilla/src/page.css). Unlayered declarations outrank the layered package styles, so
+// the CTA button inherits the 400 of its card instead of the .pr-button weight of base.css (the
+// cascade host-reset.spec.ts shows for the background). The weight scenarios start from a page
+// without that host reset, so its font declaration is removed; layer blocks are left as they are.
+async function clearDemoButtonFont(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const clear = (rules: CSSRuleList): void => {
+      for (const rule of Array.from(rules)) {
+        if (rule instanceof CSSLayerBlockRule) continue;
+        if (rule instanceof CSSStyleRule) {
+          const selectors = rule.selectorText.split(',').map((selector) => selector.trim());
+          if (selectors.includes('button')) rule.style.removeProperty('font');
         }
         const nested = (rule as CSSGroupingRule).cssRules;
         if (nested) clear(nested);
