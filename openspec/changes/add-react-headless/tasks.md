@@ -24,7 +24,7 @@ Rules for every slice:
   `tests/browser/plan-cta.spec.ts`).
 - No feature flag (design.md, D10). Browser proof comes from the CI `browser-shards` artifacts.
 
-Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.md`, section 2):
+Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at commit 07f10bf515d53e19b2a5fbc5abe5b2dddb74fa26 (git show 07f10bf5:docs/agent-work/phase3-react-headless/plan.md), section 2`):
 
 - `install`: `["pnpm","install","--frozen-lockfile"]`
 - `type`: `["pnpm","run","typecheck"]`
@@ -36,7 +36,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/phase-plan.
 - `next-demo`: `["pnpm","--filter","pricing-renderer-next-demo","build"]`, after `pkg`
 - `spec`: `["openspec","validate","add-react-headless","--strict"]`, the array registered in the
   lab for P3-S1; `openspec` is not in `package.json` and the lab provides the binary
-  (phase-plan.md section 2 wrote it with `pnpm exec`)
+  (the plan at commit 07f10bf5, section 2, wrote it with `pnpm exec`)
 - `unit(<files>)`: `["pnpm","exec","vitest","run",<files...>]`
 - `red(<files>)`:
   `{"argv":["pnpm","exec","vitest","run",<files...>],"type":"red_before","expect_exit":[1],"expect_pattern":"AssertionError|expected","reject_pattern":"Cannot find module|SyntaxError|is not a function","overlay":[<files...>]}`.

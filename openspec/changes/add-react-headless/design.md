@@ -1,7 +1,6 @@
 # Design: add-react-headless
 
-Decisions come from the phase plan (`docs/agent-work/phase3-react-headless/phase-plan.md`,
-section 3), whose recommendations the owner accepted for CRP-P3-A to CRP-P3-D, and from the intake
+Decisions come from the phase plan (`docs/agent-work/phase3-react-headless/plan.md at commit 07f10bf515d53e19b2a5fbc5abe5b2dddb74fa26 (git show 07f10bf5:docs/agent-work/phase3-react-headless/plan.md), section 3`), whose recommendations the owner accepted for CRP-P3-A to CRP-P3-D, and from the intake
 facts. Line
 numbers are at `88f5141`. D1 to D10 belong to part 1 (P3-S1); D11 and D12 summarise part 2 and the
 examples, whose spec files P3-S2 writes; D13 records the slot context encoding.

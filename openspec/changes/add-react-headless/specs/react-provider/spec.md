@@ -58,7 +58,7 @@ Needs: impl, utest
 
 #### Scenario: Shared loader, own request
 
-- **GIVEN** a provider with a `loadPricing` spy and `request` `{ timeoutMs: 5000 }`, and `react` mocked as the hook harness of design.md D7 with `useContext` returning that provider value
+- **GIVEN** a provider with a `loadPricing` spy and `request` `{ timeoutMs: 5000 }`, and `react` mocked so hooks run as plain functions in node (`useState(init)` returns `[init(), () => {}]`, `useRef(v)` returns `{ current: v }`, `useMemo(f)` returns `f()`, `useCallback(f)` returns `f`, `useSyncExternalStore` returns `getSnapshot()`, `useEffect` and `useLayoutEffect` record their callbacks for the test to run) with `useContext` returning that provider value
 - **WHEN** `usePricingSource({ src: 'https://example.com/acme.yml', request: { maxBytes: 4096 } })` is called and its recorded effects run
 - **THEN** the spy was called once with `request.maxBytes` 4096 and `request.timeoutMs` 15000, the default, not the provider's 5000
 
@@ -71,7 +71,7 @@ Needs: impl, utest
 
 #### Scenario: Foreign origin gets no Authorization
 
-- **GIVEN** `globalThis.location` stubbed with origin `https://app.example.com`, a provider with `request` `{ headers: { Authorization: 'Bearer t' }, credentials: 'include', timeoutMs: 5000 }` and a `loadPricing` spy, and `react` mocked as the hook harness of design.md D7 with `useContext` returning that provider value
+- **GIVEN** `globalThis.location` stubbed with origin `https://app.example.com`, a provider with `request` `{ headers: { Authorization: 'Bearer t' }, credentials: 'include', timeoutMs: 5000 }` and a `loadPricing` spy, and `react` mocked so hooks run as plain functions in node (`useState(init)` returns `[init(), () => {}]`, `useRef(v)` returns `{ current: v }`, `useMemo(f)` returns `f()`, `useCallback(f)` returns `f`, `useSyncExternalStore` returns `getSnapshot()`, `useEffect` and `useLayoutEffect` record their callbacks for the test to run) with `useContext` returning that provider value
 - **WHEN** `usePricingSource({ src: 'https://cdn.example.net/acme.yml' })` is called and its recorded effects run
 - **THEN** the spy's `request` has no `headers`, its `credentials` is `omit` and its `timeoutMs` is 5000
 - **AND** with `src` `https://app.example.com/acme.yml` instead, the spy's `request.headers` deeply equals `{ Authorization: 'Bearer t' }` and its `credentials` is `include`
