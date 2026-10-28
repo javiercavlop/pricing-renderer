@@ -59,7 +59,7 @@ test.describe('density', () => {
     expect(compact.gap, 'grid gap').toBeLessThan(comfortable.gap);
   });
 
-  // [utest->req~density-default-unchanged~1]
+  // [utest->req~density-attribute~1]
   test('default, an unknown value and a removed attribute measure the same', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     const host = page.locator('pricing-renderer');

@@ -68,7 +68,7 @@ describe('density property of the element', () => {
   });
 });
 
-// [utest->req~density-default-unchanged~1]
+// [utest->req~density-attribute~1]
 describe('density default stays unchanged', () => {
   it('writes no data-density attribute in any source of the element', () => {
     const files = readdirSync(elementRoot).filter((file) => file.endsWith('.ts'));
@@ -128,7 +128,7 @@ const header = `
 const element = (attributes: string): string =>
   `${header}\nexport const element = <PricingRenderer yaml={s} ${attributes} />;`;
 
-// [utest->req~density-react-prop~1]
+// [utest->req~density-react~1]
 describe('React density prop', () => {
   it('accepts comfortable and compact', () => {
     expect(messages(typeCheckSnippet(element(`density="comfortable"`)))).toEqual([]);

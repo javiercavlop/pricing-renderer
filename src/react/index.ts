@@ -83,6 +83,8 @@ export interface PricingRendererSharedProps {
   layout?: PricingLayout;
   visibility?: PricingVisibility;
   theme?: 'light' | 'dark' | 'auto';
+  // [impl->req~density-react~1]
+  density?: 'comfortable' | 'compact';
   loadingLabel?: string;
   // Absent is automatic, `false` is off, `true` is on.
   onlyDifferences?: boolean;

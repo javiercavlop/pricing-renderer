@@ -148,6 +148,8 @@ export class PricingRendererElement extends LitElement {
     layout: { type: String, reflect: true },
     visibility: { type: String, reflect: true },
     theme: { type: String, reflect: true },
+    // [impl->req~density-attribute~1]
+    density: { type: String, reflect: true, noAccessor: true },
     loadingLabel: { type: String, attribute: 'loading-label' },
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
@@ -230,8 +232,22 @@ export class PricingRendererElement extends LitElement {
     this.layout = 'auto';
     this.visibility = 'public-only';
     this.theme = 'light';
+    this.density = 'comfortable';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
     this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
+  }
+
+  // Any value other than compact reads as comfortable; the stored value is not validated.
+  private _density: unknown = 'comfortable';
+
+  get density(): 'comfortable' | 'compact' {
+    return this._density === 'compact' ? 'compact' : 'comfortable';
+  }
+
+  set density(value: unknown) {
+    const previous = this._density;
+    this._density = value;
+    this.requestUpdate('density', previous);
   }
 
   // [impl->req~current-selection-property~1] [impl->req~current-selection-detached~1]

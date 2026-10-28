@@ -13,6 +13,17 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* [impl->req~density-compact-tokens~1] opt-in compact spacing; comfortable adds no rule */
+  pricing-renderer[density='compact'] {
+    --pr-space-1: 0.2rem;
+    --pr-space-2: 0.4rem;
+    --pr-space-3: 0.55rem;
+    --pr-space-4: 0.75rem;
+    --pr-space-5: 1.1rem;
+    --pr-space-section: clamp(2rem, 5cqi, 4rem);
+    --pr-shell-padding: clamp(0.75rem, 3cqi, 2rem);
+  }
+
   pricing-renderer[data-pr-root],
   pricing-renderer[data-pr-root] *,
   pricing-renderer[data-pr-root] *::before,
