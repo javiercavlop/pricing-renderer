@@ -49,14 +49,47 @@ async function settle(page: Page): Promise<void> {
   });
 }
 
-// Scrolls well past the top of the toolbar, so it is stuck, and returns its top in the viewport.
+// The largest offset the test sets; the scroll target leaves room for it.
+const largestStickyTop = 64;
+
+// Scrolls the page so the toolbar is stuck in the middle of its containing block (the comparison
+// section), with room for the largest offset, and returns its top in the viewport. The scroll
+// target comes from the static position of the toolbar (position: static for one layout read; it
+// takes the same space in flow), so each call scrolls to the same place. The rect of a stuck
+// toolbar is not its static position: reading it made every call scroll further, until the end of
+// the section pushed the toolbar up.
 async function stuckToolbarTop(page: Page): Promise<number> {
-  await page.evaluate((selector) => {
-    const element = document.querySelector(selector) as HTMLElement;
-    const top = element.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: top + 300, behavior: 'instant' });
-  }, toolbar);
+  const scroll = await page.evaluate(
+    ({ selector, largest }) => {
+      const element = document.querySelector(selector) as HTMLElement;
+      const section = element.parentElement as HTMLElement;
+      element.style.position = 'static';
+      const top = element.getBoundingClientRect().top + window.scrollY;
+      element.style.position = '';
+      const height = element.getBoundingClientRect().height;
+      const marginEnd = parseFloat(getComputedStyle(element).marginBlockEnd);
+      const sectionStyle = getComputedStyle(section);
+      const sectionEnd =
+        section.getBoundingClientRect().bottom +
+        window.scrollY -
+        parseFloat(sectionStyle.paddingBlockEnd) -
+        parseFloat(sectionStyle.borderBlockEndWidth);
+      // How far the top of the toolbar can move below its static top before the section ends.
+      const travel = sectionEnd - marginEnd - height - top;
+      const target = Math.ceil(top + Math.max(0, travel - largest) / 2);
+      window.scrollTo({ top: target, behavior: 'instant' });
+      return { top, travel };
+    },
+    { selector: toolbar, largest: largestStickyTop },
+  );
   await settle(page);
+  // A page too short to reach the target still measures right while the toolbar is past its
+  // static top and the offset fits before the section ends.
+  const past = (await page.evaluate(() => window.scrollY)) - scroll.top;
+  expect(past, 'the page scrolls past the static top of the toolbar').toBeGreaterThanOrEqual(0);
+  expect(past, 'the offset fits before the section ends').toBeLessThanOrEqual(
+    scroll.travel - largestStickyTop,
+  );
   return page.evaluate((selector) => {
     const element = document.querySelector(selector) as HTMLElement;
     return element.getBoundingClientRect().top;

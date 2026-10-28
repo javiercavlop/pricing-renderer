@@ -68,6 +68,129 @@ describe('density property of the element', () => {
   });
 });
 
+interface Mounted {
+  density: unknown;
+  updateComplete: Promise<boolean>;
+  connectedCallback(): void;
+  attributeChangedCallback(name: string, old: string | null, value: string | null): void;
+  hasAttribute(name: string): boolean;
+  getAttribute(name: string): string | null;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
+  update(changed: unknown): void;
+  firstUpdated(): void;
+  updated(): void;
+}
+
+// Runs the Lit update cycle in node on the DOM shim of Lit. Rendering, the first load and the size
+// observer need a DOM, so they are stand-ins; ReactiveElement.update still reflects the properties
+// to attributes. The shim calls no attributeChangedCallback, so the density attribute methods call
+// it as a browser does, also when Lit reflects or the element removes the attribute itself.
+async function mount(beforeConnect?: (element: Mounted) => void): Promise<Mounted> {
+  const Element = await loadElement();
+  const { ReactiveElement } = await import('lit');
+  const reflect = (ReactiveElement.prototype as unknown as Mounted).update;
+  const element = new Element() as unknown as Mounted;
+  const setAttribute = element.setAttribute.bind(element);
+  const removeAttribute = element.removeAttribute.bind(element);
+  element.setAttribute = (name, value) => {
+    const old = element.getAttribute(name);
+    setAttribute(name, value);
+    if (name === 'density') element.attributeChangedCallback(name, old, value);
+  };
+  element.removeAttribute = (name) => {
+    const old = element.getAttribute(name);
+    removeAttribute(name);
+    if (name === 'density' && old !== null) element.attributeChangedCallback(name, old, null);
+  };
+  element.update = (changed) => reflect.call(element, changed);
+  element.firstUpdated = () => undefined;
+  element.updated = () => undefined;
+  beforeConnect?.(element);
+  element.connectedCallback();
+  await element.updateComplete;
+  return element;
+}
+
+async function setDensityAttribute(element: Mounted, value: string | null): Promise<void> {
+  if (value === null) element.removeAttribute('density');
+  else element.setAttribute('density', value);
+  await element.updateComplete;
+}
+
+// [utest->req~density-attribute~1]
+describe('density attribute of a connected element', () => {
+  it('is not added when density is never set', async () => {
+    const element = await mount();
+    expect(element.hasAttribute('data-pr-root'), 'the element was connected').toBe(true);
+    expect(element.hasAttribute('density')).toBe(false);
+    expect(element.density).toBe('comfortable');
+    // a later update of another property does not add it either
+    (element as unknown as { theme: string }).theme = 'dark';
+    await element.updateComplete;
+    expect(element.hasAttribute('density')).toBe(false);
+  });
+
+  it('reflects density="compact" when the property is set', async () => {
+    const element = await mount();
+    element.density = 'compact';
+    await element.updateComplete;
+    expect(element.getAttribute('density')).toBe('compact');
+  });
+
+  it('reflects a property set before the first update', async () => {
+    const element = await mount((host) => {
+      host.density = 'compact';
+    });
+    expect(element.getAttribute('density')).toBe('compact');
+  });
+
+  it('removes the attribute when unset, as an undefined React prop', async () => {
+    const element = await mount();
+    element.density = undefined;
+    await element.updateComplete;
+    expect(element.hasAttribute('density'), 'undefined on a fresh element').toBe(false);
+
+    element.density = 'compact';
+    await element.updateComplete;
+    element.density = undefined;
+    await element.updateComplete;
+    expect(element.hasAttribute('density'), 'undefined after compact').toBe(false);
+    expect(element.density).toBe('comfortable');
+
+    element.density = 'compact';
+    await element.updateComplete;
+    element.density = null;
+    await element.updateComplete;
+    expect(element.hasAttribute('density'), 'null after compact').toBe(false);
+  });
+
+  it('keeps a host attribute and reads unknown values as comfortable', async () => {
+    const element = await mount();
+    await setDensityAttribute(element, 'compact');
+    expect(element.density).toBe('compact');
+    expect(element.getAttribute('density')).toBe('compact');
+
+    await setDensityAttribute(element, 'tight');
+    expect(element.density).toBe('comfortable');
+    expect(element.getAttribute('density')).toBe('tight');
+
+    await setDensityAttribute(element, null);
+    expect(element.density).toBe('comfortable');
+    expect(element.hasAttribute('density')).toBe(false);
+  });
+
+  it('restores comfortable when an early compact attribute is removed', async () => {
+    const element = await mount((host) => host.setAttribute('density', 'compact'));
+    expect(element.density).toBe('compact');
+    expect(element.getAttribute('density')).toBe('compact');
+
+    await setDensityAttribute(element, null);
+    expect(element.density).toBe('comfortable');
+    expect(element.hasAttribute('density')).toBe(false);
+  });
+});
+
 // [utest->req~density-attribute~1]
 describe('density default stays unchanged', () => {
   it('writes no data-density attribute in any source of the element', () => {
