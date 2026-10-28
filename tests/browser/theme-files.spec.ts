@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -74,6 +75,25 @@ async function setDarkClass(page: Page, on: boolean): Promise<void> {
   await page.evaluate((on) => document.documentElement.classList.toggle('dark', on), on);
 }
 
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      updateComplete: Promise<unknown>;
+    };
+    await renderer.updateComplete;
+    for (let frame = 0; frame < 3; frame += 1) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  });
+}
+
+async function setThemeAttribute(page: Page, theme: string): Promise<void> {
+  await page.evaluate((theme) => {
+    document.querySelector('pricing-renderer')?.setAttribute('theme', theme);
+  }, theme);
+  await settle(page);
+}
+
 test.describe('host .dark class', () => {
   test('darkens the renderer and restores it when the class goes', async ({ page }) => {
     await openRenderer(page, viewport);
@@ -89,6 +109,46 @@ test.describe('host .dark class', () => {
     expect(await token(page, '--pr-color-surface')).toBe(lightSurface);
     expect(await colorScheme(page)).toBe('light');
   });
+
+  test('ancestor wins over theme="light" on the element', async ({ page }) => {
+    await openRenderer(page, viewport);
+    await clearDemoTokens(page);
+    await setThemeAttribute(page, 'light');
+    expect(await token(page, '--pr-color-surface'), 'light before the class').not.toBe('#181820');
+
+    await setDarkClass(page, true);
+    await settle(page);
+    expect(await page.locator('pricing-renderer').getAttribute('theme')).toBe('light');
+    expect(await token(page, '--pr-color-surface')).toBe('#181820');
+    expect(await token(page, '--pr-color-accent')).toBe('#9b8cff');
+    expect(await colorScheme(page)).toBe('dark');
+  });
+
+  // CRP-B: an unrelated `.dark` ancestor darkens the renderer even with theme="light". The
+  // screenshots are attached for review; there are no baselines.
+  for (const width of [1440, 375]) {
+    test(`attaches screenshots under an unrelated .dark ancestor at ${width}px`, async ({
+      page,
+    }, testInfo) => {
+      await openRenderer(page, { width, height: 900 });
+      await setThemeAttribute(page, 'light');
+      for (const dark of [false, true]) {
+        await page.evaluate((dark) => {
+          const parent = (document.querySelector('pricing-renderer') as HTMLElement)
+            .parentElement as HTMLElement;
+          parent.classList.toggle('dark', dark);
+        }, dark);
+        await settle(page);
+        const surface = await token(page, '--pr-color-surface');
+        if (dark) expect(surface, 'with .dark').toBe('#181820');
+        else expect(surface, 'without .dark').not.toBe('#181820');
+        await testInfo.attach(`dark-ancestor-theme-light-${dark ? 'with' : 'without'}-${width}`, {
+          body: await page.locator('pricing-renderer').screenshot(),
+          contentType: 'image/png',
+        });
+      }
+    });
+  }
 });
 
 const hostVariables =
@@ -114,6 +174,7 @@ test.describe('shadcn overlay', () => {
       await setDarkClass(page, true);
       expect(await token(page, '--pr-color-accent')).toBe('#00ff00');
       expect(await token(page, '--pr-color-surface')).toBe('#101010');
+      expect(await token(page, '--pr-color-success')).toBe('#66d9ad');
       expect(await colorScheme(page)).toBe('dark');
 
       await setDarkClass(page, false);
@@ -145,4 +206,25 @@ test.describe('theme-minimal', () => {
     expect(card.borderColor).toBe(card.color);
     expect(await token(page, '--pr-shadow-sm')).toBe('none');
   });
+
+  // [utest->req~theme-minimal-contrast~1]
+  for (const theme of ['light', 'dark']) {
+    test(`has no color-contrast violation in the ${theme} theme`, async ({ page }) => {
+      // The reduced-motion rule shortens transitions, so axe never samples a half-way color.
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await openRenderer(page, viewport);
+      await clearDemoTokens(page);
+      await injectCss(page, readStyles('theme-minimal.css'), 'last');
+      await setThemeAttribute(page, theme);
+
+      const results = await new AxeBuilder({ page })
+        .include('pricing-renderer')
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+        .analyze();
+      const contrast = results.violations.filter((violation) => violation.id === 'color-contrast');
+      expect(
+        contrast.map((violation) => violation.nodes.map((node) => node.target.join(' '))),
+      ).toEqual([]);
+    });
+  }
 });

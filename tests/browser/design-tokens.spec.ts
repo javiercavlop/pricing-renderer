@@ -156,8 +156,9 @@ test.describe('optional design tokens', () => {
   // [utest->req~dialog-z-token~1]
   test('--pr-z-dialog changes the z-index of the dialog backdrop', async ({ page }) => {
     await openRenderer(page, { width: 1280, height: 800 });
-    // The add-on confirmation dialog opens through the pending change, as in
-    // element-instance-ids.spec.ts.
+    // The add-on confirmation dialog opens through the private pending change, as in
+    // element-instance-ids.spec.ts. No public flow opens it reliably: the dialog only shows for an
+    // add-on with a dependency or an exclusion, and the demo pricing does not guarantee one.
     const opened = await page.evaluate(async () => {
       const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
         _pendingAddOnChange?: { addIds: string[]; removeIds: string[] };
@@ -171,7 +172,8 @@ test.describe('optional design tokens', () => {
       await renderer.updateComplete;
       return true;
     });
-    test.skip(!opened, 'The demo pricing has no add-on to open the dialog with.');
+    expect(opened, 'the demo pricing has an add-on to open the dialog with').toBe(true);
+    await expect(page.locator('pricing-renderer .pr-dialog-backdrop')).toBeAttached();
 
     const zIndex = () =>
       page.evaluate(() => {
@@ -199,4 +201,148 @@ test.describe('optional design tokens', () => {
     await setRendererToken(page, '--pr-table-min-width', '900px');
     expect(await minWidth()).toBe('900px');
   });
+
+  // [utest->req~table-size-tokens~1]
+  test('--pr-table-max-height changes the max-height of the table scroll box', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openClickup(page);
+    const maxHeight = () =>
+      page.evaluate(() => {
+        const element = document.querySelector('pricing-renderer .pr-table-scroll') as Element;
+        return getComputedStyle(element).maxHeight;
+      });
+
+    expect(await maxHeight(), 'unset keeps 80dvh of a 900px viewport').toBe('720px');
+    await setRendererToken(page, '--pr-table-max-height', '300px');
+    expect(await maxHeight()).toBe('300px');
+  });
+
+  // [utest->req~token-fallbacks~1]
+  test('without a host token the defaults are unchanged', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    await setRendererToken(page, 'font-size', '16px');
+    expect(await computed(page, '.pr-hero__title', 'fontWeight')).toBe('780');
+    expect(await computed(page, 'pricing-renderer', 'lineHeight')).toBe('24px');
+    expect(await computed(page, '.pr-price__amount', 'fontWeight')).toBe('790');
+    expect(await computed(page, '.pr-plan-card__top h4', 'fontWeight')).toBe('700');
+    expect(await computed(page, "[data-pr-part='cta']", 'fontWeight')).toBe('750');
+  });
+
+  // [utest->req~line-height-token~1]
+  test('--pr-line-height sets the line height of the root', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    await hostRule(page, 'pricing-renderer { font-size: 16px; --pr-line-height: 1.7; }');
+    expect(await computed(page, 'pricing-renderer', 'lineHeight')).toBe('27.2px');
+  });
+
+  // [utest->req~font-weight-tokens~1]
+  test('--pr-font-weight-bold unifies the bold group', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    const weights = () =>
+      Promise.all([
+        computed(page, '.pr-hero__title', 'fontWeight'),
+        computed(page, '.pr-price__amount', 'fontWeight'),
+        computed(page, '.pr-plan-card__top h4', 'fontWeight'),
+        computed(page, "[data-pr-part='cta']", 'fontWeight'),
+      ]);
+    expect(await weights(), 'without the host rule').toEqual(['780', '790', '700', '750']);
+
+    await hostRule(page, 'pricing-renderer { --pr-font-weight-bold: 600; }');
+    expect(await weights(), 'with --pr-font-weight-bold: 600').toEqual([
+      '600',
+      '600',
+      '600',
+      '600',
+    ]);
+  });
+
+  // [utest->req~font-family-tokens~1]
+  test.describe('font family tokens', () => {
+    test('unset tokens inherit the host font', async ({ page }) => {
+      await openRenderer(page, { width: 1440, height: 900 });
+      await clearDemoTokens(page);
+      await hostRule(page, 'body { font-family: Verdana, sans-serif; }');
+      const expected = 'Verdana, sans-serif';
+      expect(await computed(page, 'pricing-renderer', 'fontFamily')).toBe(expected);
+      expect(await computed(page, '.pr-hero__title', 'fontFamily')).toBe(expected);
+      expect(await computed(page, '.pr-plan-card__top h4', 'fontFamily')).toBe(expected);
+    });
+
+    test('body and display fonts', async ({ page }) => {
+      await openRenderer(page, { width: 1440, height: 900 });
+      await clearDemoTokens(page);
+      await hostRule(
+        page,
+        `pricing-renderer { --pr-font-family: Georgia, serif; --pr-font-family-display: 'Courier New', monospace; }`,
+      );
+      expect(await computed(page, '.pr-plan-card', 'fontFamily')).toBe('Georgia, serif');
+      const display = '"Courier New", monospace';
+      for (const selector of [
+        '.pr-hero__title',
+        "[data-pr-part='plans'] .pr-section__heading h3",
+        '.pr-plan-card__top h4',
+        '.pr-price__amount',
+      ]) {
+        expect(await computed(page, selector, 'fontFamily'), selector).toBe(display);
+      }
+    });
+
+    test('the display font falls back to the body font', async ({ page }) => {
+      await openRenderer(page, { width: 1440, height: 900 });
+      await clearDemoTokens(page);
+      await hostRule(page, 'pricing-renderer { --pr-font-family: Georgia, serif; }');
+      expect(await computed(page, '.pr-hero__title', 'fontFamily')).toBe('Georgia, serif');
+    });
+  });
 });
+
+// The demo page declares --pr-font-family and --pr-color-accent on `.demo-browser pricing-renderer`
+// in an unlayered rule that outranks a host rule on `pricing-renderer`. The font scenarios start
+// from a page without a --pr-* token, so the demo declarations are removed (as in
+// theme-files.spec.ts); layer blocks keep the tokens of the package styles.
+async function clearDemoTokens(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const clear = (rules: CSSRuleList): void => {
+      for (const rule of Array.from(rules)) {
+        if (rule instanceof CSSLayerBlockRule) continue;
+        if (rule instanceof CSSStyleRule) {
+          const names = Array.from(rule.style).filter((name) => name.startsWith('--pr-'));
+          for (const name of names) rule.style.removeProperty(name);
+        }
+        const nested = (rule as CSSGroupingRule).cssRules;
+        if (nested) clear(nested);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        clear(sheet.cssRules);
+      } catch {
+        // A cross-origin sheet cannot be read.
+      }
+    }
+  });
+  await settle(page);
+}
+
+// Injects an unlayered host rule and waits for the styles to apply.
+async function hostRule(page: Page, content: string): Promise<void> {
+  await page.addStyleTag({ content });
+  await settle(page);
+}
+
+// A computed style property of the first element that matches the selector.
+async function computed(
+  page: Page,
+  selector: string,
+  property: 'fontWeight' | 'fontFamily' | 'lineHeight',
+): Promise<string> {
+  return page.evaluate(
+    ({ selector, property }) => {
+      const element = document.querySelector(
+        selector === 'pricing-renderer' ? selector : `pricing-renderer ${selector}`,
+      ) as Element;
+      return getComputedStyle(element)[property];
+    },
+    { selector, property },
+  );
+}

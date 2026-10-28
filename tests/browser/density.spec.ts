@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { openRenderer } from './helpers/spectra.js';
+
+const stylesRoot = fileURLToPath(new URL('../../src/styles/', import.meta.url));
 
 // Opt-in density setting: compact has smaller plan-card padding and plan-grid gap, while the
 // default, an unknown value and a removed attribute measure the same. The CSS text is checked by
@@ -45,6 +49,49 @@ async function measure(page: Page): Promise<Spacing> {
   });
 }
 
+type Tokens = { space4: string; fontSizeLg: string; paddingTop: string };
+
+const comfortableTokens: Tokens = { space4: '1rem', fontSizeLg: '1.125rem', paddingTop: '16px' };
+const compactTokens: Tokens = { space4: '0.75rem', fontSizeLg: '1.125rem', paddingTop: '12px' };
+
+async function tokens(page: Page): Promise<Tokens> {
+  return page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+    const card = document.querySelector('pricing-renderer .pr-plan-card') as HTMLElement;
+    const style = getComputedStyle(renderer);
+    return {
+      space4: style.getPropertyValue('--pr-space-4').trim(),
+      fontSizeLg: style.getPropertyValue('--pr-font-size-lg').trim(),
+      paddingTop: getComputedStyle(card).paddingTop,
+    };
+  });
+}
+
+// The demo page declares --pr-* tokens in an unlayered rule, which beats the layered theme files.
+// Removing them leaves the theme file as the only source (as in theme-files.spec.ts).
+async function clearDemoTokens(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const clear = (rules: CSSRuleList): void => {
+      for (const rule of Array.from(rules)) {
+        if (rule instanceof CSSLayerBlockRule) continue;
+        if (rule instanceof CSSStyleRule) {
+          const names = Array.from(rule.style).filter((name) => name.startsWith('--pr-'));
+          for (const name of names) rule.style.removeProperty(name);
+        }
+        const nested = (rule as CSSGroupingRule).cssRules;
+        if (nested) clear(nested);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        clear(sheet.cssRules);
+      } catch {
+        // A cross-origin sheet cannot be read.
+      }
+    }
+  });
+}
+
 // [utest->req~density-attribute~1] [utest->req~density-compact-tokens~1]
 test.describe('density', () => {
   test('compact tightens the plan card padding and the plan grid gap', async ({ page }) => {
@@ -70,8 +117,11 @@ test.describe('density', () => {
     await setAttribute(page, 'comfortable');
     expect(await measure(page), 'comfortable').toEqual(defaults);
 
-    await setAttribute(page, 'tight');
-    expect(await measure(page), 'unknown value').toEqual(defaults);
+    for (const unknown of ['tight', 'dense']) {
+      await setAttribute(page, unknown);
+      expect(await measure(page), `unknown value ${unknown}`).toEqual(defaults);
+      expect(await tokens(page), `tokens of ${unknown}`).toEqual(comfortableTokens);
+    }
 
     await setAttribute(page, 'compact');
     expect((await measure(page)).padding).toBeLessThan(defaults.padding);
@@ -79,6 +129,37 @@ test.describe('density', () => {
     await setAttribute(page, null);
     expect(await measure(page), 'removed attribute').toEqual(defaults);
     await expect(host).not.toHaveAttribute('data-density', /.*/);
+  });
+
+  test('compact sets the exact spacing values and leaves the font sizes', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    expect(await tokens(page), 'comfortable').toEqual(comfortableTokens);
+
+    await setAttribute(page, 'compact');
+    expect(await tokens(page)).toEqual(compactTokens);
+  });
+
+  test('an unlayered host token still wins over compact', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    await setAttribute(page, 'compact');
+    await page.addStyleTag({ content: 'pricing-renderer { --pr-space-4: 2rem; }' });
+    await settle(page);
+    expect((await tokens(page)).space4).toBe('2rem');
+  });
+
+  test('compact beats theme-minimal.css', async ({ page }) => {
+    await openRenderer(page, { width: 1440, height: 900 });
+    await clearDemoTokens(page);
+    await page.evaluate(
+      (css) => {
+        const style = document.createElement('style');
+        style.textContent = css;
+        document.head.append(style);
+      },
+      readFileSync(`${stylesRoot}theme-minimal.css`, 'utf8'),
+    );
+    await setAttribute(page, 'compact');
+    expect(await tokens(page)).toEqual(compactTokens);
   });
 
   test('setting the property reflects density="compact" on the host', async ({ page }) => {
