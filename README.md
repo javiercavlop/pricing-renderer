@@ -386,19 +386,31 @@ Public events:
 
 ## Private remote sources
 
-Secrets are property-only and never reflected into markup:
+Never put a SPHERE or SPACE key in browser code. The safe default is a same-origin
+server route that holds the key and serves the pricing:
 
 ```ts
-renderer.src = 'https://api.example.com/private/pricing.yml';
+renderer.src = '/api/pricing';
 renderer.request = {
-  credentials: 'include',
-  headers: async () => ({
-    Authorization: `Bearer ${await refreshAccessToken()}`,
-  }),
+  credentials: 'same-origin',
   timeoutMs: 15_000,
   maxBytes: 2 * 1024 * 1024,
 };
 ```
+
+`request` is property-only and never reflected into markup. Use `request.headers`
+only for short-lived tokens of the signed-in user, and never put a token in `src`:
+
+```ts
+renderer.request = {
+  headers: async () => ({
+    Authorization: `Bearer ${await refreshAccessToken()}`,
+  }),
+};
+```
+
+See [Private pricings](./docs/private-pricings.md) for Next.js and Express recipes,
+version pinning and ETag revalidation.
 
 Use `loadPricing` for OAuth exchanges, signed URLs, proxies, or SDK clients. The
 built-in loader permits HTTP/HTTPS `GET` only, defaults to
@@ -464,6 +476,7 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [Project and instance configuration](./docs/configuration.md)
 - [Events and diagnostics](./docs/events.md)
 - [Vue 3 and Vite](./docs/vue.md)
+- [Private pricings](./docs/private-pricings.md)
 - [Preload the current subscription](./docs/preload-current-subscription.md)
 - [Change a subscription](./docs/change-subscription-flow.md)
 - [Demo and release acceptance](./docs/demo.md)
