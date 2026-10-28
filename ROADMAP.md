@@ -11,7 +11,7 @@ This roadmap lists the SPECTRA improvement items from
 - O3: a stable public API and package across the integrations.
 - O4: supply-chain and CI health.
 
-States: done, partly done, not started, proposed drop. A PR number is written only when a file in
+States: done, in progress, partly done, not started, proposed drop. A PR number is written only when a file in
 the repository confirms it; otherwise the row says "merged, PR not verified".
 
 ## SPECTRA items
@@ -49,15 +49,15 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
   - Objective: O1. State: done.
   - Evidence: PR #46, commit `6561348`, `.changeset/spectra-grid-plan-columns.md`.
 - Item 9, group by tags
-  - Objective: O1. State: not started (owner reopened 2026-10-27); the earlier drop of 2026-10-26 no
+  - Objective: O1. State: done (owner reopened 2026-10-27); the earlier drop of 2026-10-26 no
     longer stands.
   - Owner decision of 2026-10-27: comparison groups follow the declared tags. A pricing with no tags
     renders one comparison with no group headers. In a partly tagged pricing, the untagged features
     and usage limits go into one final group, "Other features". A fully tagged pricing is unchanged.
     The visual change is approved. The report's concern about grouping by name prefix
     (`report.md:364-367`) does not apply, because the groups use only declared tags.
-  - Evidence: `docs/agent-work/spectra-item9-tags/`. The state becomes done, with the PR number,
-    after the merge.
+  - Evidence: commit `3072086`, `.changeset/spectra-item9-tags.md`,
+    `docs/agent-work/spectra-item9-tags/`; merged, PR not verified.
 - Item 10, long text handling, no split words such as "Unlimited"
   - Objective: O1. State: done.
   - Evidence: PR #46, commit `6561348`, `.changeset/spectra-grid-plan-columns.md`.
@@ -67,12 +67,14 @@ the repository confirms it; otherwise the row says "merged, PR not verified".
 
 ## Phase 2 checks
 
+This is SPECTRA phase 2 (`report.md:422`), not phase 2 of the owner's plan (see "Phases").
+
 - Expanded-state height check (phase 2, step 1)
   - Objective: O2. State: done (measurement delivered by PR #53).
   - Evidence: PR #53 (`xscreens`); proposed in `report.md:422`. Values are not recorded yet
     (`docs/agent-work/visual-review-spectra/o1-remeasure.md:26`).
   - Next step: proposal P-20261027-2 (owner approved, intake in progress). The values come from
-    a run of the `on-demand-specs` job, which runs `spectra-review.spec.ts` (`ci.yml:299-302`).
+    a run of the `on-demand-specs` job, which runs `spectra-review.spec.ts` (`ci.yml:347-350`).
 - Contrast guard (contrast stays at 0)
   - Objective: O2. State: done as a regression guard; not a ranked item (`report.md:126`).
   - Evidence: `report.md:88-89`.
@@ -137,7 +139,7 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
 Owner decision of 2026-10-27, which replaces the postponement of Q6:
 
 - There is NO release of pricing-renderer until further notice. All work accumulates in `develop`.
-- The next version is ONE single release. It carries the 20 pending changesets plus everything
+- The next version is ONE single release. It carries the 45 pending changesets (at `47a7b05`) plus everything
   requested on 2026-10-27.
 - It goes out only when the owner says that the companion PRs to SPACE, SPHERE and the SPACE
   clients (space-node-client, space-python-client, space-java-client, space-react-client) are
@@ -147,13 +149,20 @@ Owner decision of 2026-10-27, which replaces the postponement of Q6:
 
 ## Phases
 
-Phase list from the owner's plan:
+Phase list from the owner's plan (not the SPECTRA phase 2 above):
 
-- Phase 0, hygiene and fixes.
-- Phase 1, design-system integration and private pricings.
-- Phase 2, subscription-change flow.
-- Phase 3, React headless and composition.
-- Phase 4, reference integration with SPACE (later).
+- Phase 0, hygiene and fixes. State: done.
+  - Evidence: PR 64, commit `9cf7e21`, `docs/agent-work/phase0-hygiene/`.
+- Phase 1, design-system integration and private pricings, in two parts:
+  - Phase 1a, design system. State: done.
+    - Evidence: PR 65, commit `e68e0bc`, `docs/agent-work/phase1a-design-system/`.
+  - Phase 1b, private pricings. State: not started (intake only; waiting on the owner's answers).
+    - Evidence: `docs/agent-work/phase1b-private-pricings/`.
+- Phase 2, subscription-change flow. State: done.
+  - Evidence: PR 63, commit `2b79e45`, `docs/agent-work/phase2-subscription-change/`,
+    `openspec/changes/add-subscription-change-flow/`.
+- Phase 3, React headless and composition. State: not started.
+- Phase 4, reference integration with SPACE (later). State: not started.
 
 ## Backlog
 
@@ -161,16 +170,16 @@ Every entry is not verified, from earlier task followups.
 
 - SPECTRA browser spec optional (on demand) in CI, because it runs on every PR and costs CI time
   (`report.md:592-594`). Decided by the owner (Q6). Objective: O4. State: done.
-  - Evidence: job `on-demand-specs`, `.github/workflows/ci.yml:282-311` (`if:` at `:283`), commit
+  - Evidence: job `on-demand-specs`, `.github/workflows/ci.yml:320-358` (`if:` at `:331`), commit
     `0dfff01`; merged, PR not verified. Design: `docs/agent-work/ci-speed/on-demand-specs.md`.
-  - A dispatch works only once `ci.yml` is on the default branch (`ci.yml:277-278`).
+  - A dispatch works only once `ci.yml` is on the default branch (`ci.yml:325-326`).
 - Make the `audit` job blocking; today it has `continue-on-error: true`
   (`docs/audit-report.md:72-75`). Objective: O4.
 - Replace `typescript 5.6.1-rc`, which comes in through `@arethetypeswrong/core`
   (`docs/audit-report.md:38-41`). Objective: O4.
 - Release workflow findings: global npm, and the publish job runs everything
   (`docs/audit-report.md:88-99`). Objective: O4.
-- Release the 20 pending changesets; `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). On hold by
+- Release the pending changesets (45 at `47a7b05`); `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). On hold by
   owner decision of 2026-10-27 (see "Release"): no release until further notice; the single next
   release also includes everything requested on 2026-10-27. Objective: O3.
 - Refresh the stale `docs/agent-work/spectra-grid-and-text/handoff.md`. Objective: O1.
