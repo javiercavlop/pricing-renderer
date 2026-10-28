@@ -38,6 +38,7 @@ describe('density property of the element', () => {
     const Element = await loadElement();
     const entry = Element.properties.density;
     expect(entry, 'density is declared in static properties').toBeDefined();
+    expect(entry?.type).toBe(String);
     expect(entry?.reflect).toBe(true);
     expect(entry?.attribute === undefined || entry.attribute === 'density').toBe(true);
     expect(Element.observedAttributes).toContain('density');
@@ -259,11 +260,15 @@ describe('React density prop', () => {
   });
 
   it('rejects any other string', () => {
-    expect(typeCheckSnippet(element(`density="tight"`)).length).toBeGreaterThan(0);
+    const diagnostics = typeCheckSnippet(element(`density="tight"`));
+    expect(diagnostics.length).toBeGreaterThan(0);
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(2322);
   });
 
   it('rejects a non-string value', () => {
-    expect(typeCheckSnippet(element(`density={42}`)).length).toBeGreaterThan(0);
+    const diagnostics = typeCheckSnippet(element(`density={42}`));
+    expect(diagnostics.length).toBeGreaterThan(0);
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(2322);
   });
 
   it('passes density to the underlying component unchanged', async () => {
@@ -345,6 +350,18 @@ describe('compact density block of base.css', () => {
     expect(names.some((name) => /color|shadow|font|radius/.test(name))).toBe(false);
   });
 
+  it('declares exactly the seven compact values', () => {
+    expect(compactBlocks()[0]?.declarations).toEqual([
+      ['--pr-space-1', '0.2rem'],
+      ['--pr-space-2', '0.4rem'],
+      ['--pr-space-3', '0.55rem'],
+      ['--pr-space-4', '0.75rem'],
+      ['--pr-space-5', '1.1rem'],
+      ['--pr-space-section', 'clamp(2rem, 5cqi, 4rem)'],
+      ['--pr-shell-padding', 'clamp(0.75rem, 3cqi, 2rem)'],
+    ]);
+  });
+
   it('uses smaller rem values than the theme.css defaults', () => {
     const defaults = themeDefaults();
     const declarations = compactBlocks()[0]?.declarations ?? [];
@@ -357,5 +374,71 @@ describe('compact density block of base.css', () => {
         remTotal(base ?? ''),
       );
     }
+  });
+
+  it('places the rule directly in @layer pricing-renderer', () => {
+    const css = stripComments(baseCss);
+    const position = css.search(/pricing-renderer\[density=['"]compact['"]\]/);
+    expect(position).toBeGreaterThan(0);
+    const enclosing: string[] = [];
+    let start = 0;
+    for (let index = 0; index < position; index += 1) {
+      if (css[index] === '{') {
+        enclosing.push(collapse(css.slice(start, index)));
+        start = index + 1;
+      } else if (css[index] === '}') {
+        enclosing.pop();
+        start = index + 1;
+      } else if (css[index] === ';') {
+        start = index + 1;
+      }
+    }
+    expect(enclosing).toEqual(['@layer pricing-renderer']);
+  });
+
+  it('has no comfortable selector in any style sheet', () => {
+    const files = readdirSync(stylesRoot).filter((file) => file.endsWith('.css'));
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const css = stripComments(readFileSync(`${stylesRoot}${file}`, 'utf8'));
+      expect(css, file).not.toMatch(/density\s*=\s*["']?comfortable/);
+    }
+  });
+});
+
+// [utest->req~density-manifest~1]
+describe('density in custom-elements.json', () => {
+  interface Manifest {
+    modules: Array<{
+      declarations?: Array<{
+        name: string;
+        members?: Array<{
+          kind: string;
+          name: string;
+          type?: { text: string };
+          attribute?: string;
+        }>;
+        attributes?: Array<{ name: string; fieldName?: string; type?: { text: string } }>;
+      }>;
+    }>;
+  }
+
+  it('declares the density field and attribute', () => {
+    const manifest = JSON.parse(
+      readFileSync(fileURLToPath(new URL('../../custom-elements.json', import.meta.url)), 'utf8'),
+    ) as Manifest;
+    const declaration = manifest.modules
+      .flatMap((module) => module.declarations ?? [])
+      .find((entry) => entry.name === 'PricingRendererElement');
+    expect(declaration, 'PricingRendererElement').toBeDefined();
+    const text = '"comfortable" | "compact"';
+    const field = declaration?.members?.find(
+      (member) => member.kind === 'field' && member.name === 'density',
+    );
+    expect(field?.type?.text).toBe(text);
+    expect(field?.attribute).toBe('density');
+    const attribute = declaration?.attributes?.find((entry) => entry.name === 'density');
+    expect(attribute?.fieldName).toBe('density');
+    expect(attribute?.type?.text).toBe(text);
   });
 });

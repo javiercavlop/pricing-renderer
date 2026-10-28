@@ -54,9 +54,7 @@
   pricing-change-review[theme='dark'],
   [data-theme='dark'] pricing-change-review,
   .dark pricing-renderer[data-pr-root],
-  .dark pricing-change-review,
-  /* Repeated on purpose: tests slice this list at its first [theme='dark']. */
-  pricing-renderer[data-pr-root][theme='dark'] {
+  .dark pricing-change-review {
     color-scheme: dark;
     --pr-color-text: #f2f2f2;
     --pr-color-muted: #a6a6a6;

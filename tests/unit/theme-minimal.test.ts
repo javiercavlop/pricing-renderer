@@ -11,81 +11,162 @@ function readCss(path: string): string {
   return readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
-type SectionName = 'light' | 'dark' | 'auto';
-
-// The same slicing as addon-marker.test.ts: light, then the dark list, then the auto media block.
-function sectionsOf(css: string): Record<SectionName, string> {
-  const darkStart = css.indexOf("[theme='dark']");
-  const autoStart = css.indexOf('@media (prefers-color-scheme: dark)');
-  expect(darkStart, "the [theme='dark'] section").toBeGreaterThan(0);
-  expect(autoStart, 'the auto media section').toBeGreaterThan(darkStart);
-  return {
-    light: css.slice(0, darkStart),
-    dark: css.slice(darkStart, autoStart),
-    auto: css.slice(autoStart),
-  };
+interface Rule {
+  // enclosing at-rules, outermost first, e.g. ['@layer pricing-renderer.theme', '@media (...)']
+  context: string[];
+  selectors: string[];
+  declarations: Map<string, string>;
 }
 
-const SECTION_NAMES: SectionName[] = ['light', 'dark', 'auto'];
+const collapse = (value: string): string => value.replace(/\s+/g, ' ').trim();
 
-function tokenNames(section: string): string[] {
-  return [...new Set([...section.matchAll(/(--pr-[\w-]+)\s*:/g)].map((match) => match[1]!))].sort();
+function matchingBrace(css: string, open: number): number {
+  let depth = 0;
+  for (let index = open; index < css.length; index += 1) {
+    if (css[index] === '{') depth += 1;
+    else if (css[index] === '}') {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  throw new Error('unbalanced braces');
 }
 
-function valueOf(section: string, name: string): string | undefined {
-  const match = new RegExp(`${name}\\s*:\\s*([^;]+);`).exec(section);
-  return match?.[1]?.replace(/\s+/g, ' ').trim();
+// Parses comment-free CSS into style rules with their enclosing at-rules. Statements without a
+// block (`@layer a, b;`) are skipped.
+function parseRules(css: string, context: string[] = []): Rule[] {
+  const rules: Rule[] = [];
+  let start = 0;
+  let index = 0;
+  while (index < css.length) {
+    const char = css[index];
+    if (char === ';') {
+      start = index + 1;
+    } else if (char === '{') {
+      const end = matchingBrace(css, index);
+      const prelude = collapse(css.slice(start, index));
+      const body = css.slice(index + 1, end);
+      if (prelude.startsWith('@')) {
+        rules.push(...parseRules(body, [...context, prelude]));
+      } else {
+        const declarations = new Map<string, string>();
+        for (const declaration of body.split(';')) {
+          const colon = declaration.indexOf(':');
+          if (colon === -1) continue;
+          declarations.set(
+            declaration.slice(0, colon).trim().toLowerCase(),
+            collapse(declaration.slice(colon + 1)),
+          );
+        }
+        rules.push({
+          context,
+          selectors: prelude.split(',').map(collapse),
+          declarations,
+        });
+      }
+      start = end + 1;
+      index = end;
+    }
+    index += 1;
+  }
+  return rules;
 }
+
+const summary = (rule: Rule): unknown => ({
+  context: rule.context,
+  selectors: rule.selectors,
+  properties: [...rule.declarations.keys()].sort(),
+});
+
+const minimalRules = (): Rule[] => parseRules(readCss(minimalPath));
+const themeRules = (): Rule[] => parseRules(readCss(themePath));
 
 // [utest->req~theme-minimal-tokens~1]
 describe('theme-minimal.css tokens', () => {
-  it('uses the pricing-renderer.theme layer', () => {
-    expect(readCss(minimalPath)).toMatch(/@layer\s+pricing-renderer\.theme\s*\{/);
+  it('uses the pricing-renderer.theme layer for every rule', () => {
+    const rules = minimalRules();
+    expect(rules.length).toBeGreaterThan(0);
+    for (const rule of rules) expect(rule.context[0]).toBe('@layer pricing-renderer.theme');
   });
 
-  for (const name of SECTION_NAMES) {
-    it(`declares the same --pr-* names as theme.css in the ${name} section`, () => {
-      const reference = sectionsOf(readCss(themePath))[name];
-      const minimal = sectionsOf(readCss(minimalPath))[name];
-      expect(tokenNames(reference).length).toBeGreaterThan(0);
-      expect(tokenNames(minimal)).toEqual(tokenNames(reference));
-    });
-  }
+  it('has the same rules as theme.css: layer, media, selector list, properties, order', () => {
+    const reference = themeRules();
+    expect(reference.length).toBeGreaterThan(0);
+    expect(minimalRules().map(summary)).toEqual(reference.map(summary));
+  });
 
-  it('has the .dark selectors in the dark list', () => {
-    const css = readCss(minimalPath);
-    const { dark } = sectionsOf(css);
-    const list = dark.slice(0, dark.indexOf('{'));
-    expect(list).toContain("pricing-renderer[data-pr-root][theme='dark']");
-    expect(list).toContain("[data-theme='dark'] pricing-renderer[data-pr-root]");
-    expect(list).toContain("pricing-change-review[theme='dark']");
-    expect(list).toContain("[data-theme='dark'] pricing-change-review");
-    expect(list).toContain('.dark pricing-renderer[data-pr-root]');
-    expect(list).toContain('.dark pricing-change-review');
+  it('has the .dark selectors in the dark rule', () => {
+    const dark = minimalRules().find((rule) =>
+      rule.selectors.includes("pricing-renderer[data-pr-root][theme='dark']"),
+    );
+    expect(dark, 'the dark rule').toBeDefined();
+    expect(dark?.selectors).toEqual(
+      expect.arrayContaining([
+        "[data-theme='dark'] pricing-renderer[data-pr-root]",
+        "pricing-change-review[theme='dark']",
+        "[data-theme='dark'] pricing-change-review",
+        '.dark pricing-renderer[data-pr-root]',
+        '.dark pricing-change-review',
+      ]),
+    );
   });
 });
+
+const COLOR_TOKENS_FLAT_EXEMPT = new Set([
+  '--pr-color-border',
+  '--pr-color-border-strong',
+  '--pr-color-success',
+  '--pr-color-warning',
+  '--pr-color-warning-surface',
+]);
 
 // [utest->req~theme-minimal-flat~1]
 describe('theme-minimal.css is flat', () => {
   it('sets every --pr-shadow-* token to none', () => {
-    const css = readCss(minimalPath);
-    const declared = [...css.matchAll(/(--pr-shadow[\w-]*)\s*:\s*([^;]+);/g)];
+    const declared = minimalRules().flatMap((rule) =>
+      [...rule.declarations].filter(([name]) => name.startsWith('--pr-shadow')),
+    );
     expect(declared.length).toBeGreaterThan(0);
-    for (const [, name, value] of declared) {
-      expect(value!.trim(), name).toBe('none');
+    for (const [name, value] of declared) expect(value, name).toBe('none');
+  });
+
+  it('sets both borders to currentColor in every rule that declares them', () => {
+    const rules = minimalRules().filter((rule) => rule.declarations.has('--pr-color-border'));
+    expect(rules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of rules) {
+      for (const token of ['--pr-color-border', '--pr-color-border-strong']) {
+        expect(rule.declarations.get(token)?.toLowerCase(), token).toBe('currentcolor');
+      }
     }
   });
 
-  for (const name of SECTION_NAMES) {
-    it(`uses currentColor for both borders in the ${name} section`, () => {
-      const section = sectionsOf(readCss(minimalPath))[name];
-      const reference = sectionsOf(readCss(themePath))[name];
-      for (const token of ['--pr-color-border', '--pr-color-border-strong']) {
-        expect(valueOf(reference, token), `${token} in theme.css`).toBeDefined();
-        expect(valueOf(section, token)?.toLowerCase(), token).toBe('currentcolor');
+  it('declares every other --pr-color-* token as a six-digit gray hex', () => {
+    const required = [
+      '--pr-color-text',
+      '--pr-color-muted',
+      '--pr-color-surface',
+      '--pr-color-surface-raised',
+      '--pr-color-surface-subtle',
+      '--pr-color-accent',
+      '--pr-color-on-accent',
+      '--pr-color-link',
+      '--pr-color-focus',
+      '--pr-color-overlay',
+    ];
+    const rules = minimalRules();
+    for (const token of required) {
+      expect(
+        rules.some((rule) => rule.declarations.has(token)),
+        `${token} is declared`,
+      ).toBe(true);
+    }
+    for (const rule of rules) {
+      for (const [name, value] of rule.declarations) {
+        if (!name.startsWith('--pr-color-') || COLOR_TOKENS_FLAT_EXEMPT.has(name)) continue;
+        expect(value, name).toMatch(/^#([0-9a-f]{2})\1\1$/i);
       }
-    });
-  }
+    }
+  });
 
   it('has no box-shadow declaration outside the tokens', () => {
     expect(readCss(minimalPath)).not.toMatch(/(^|[^-\w])box-shadow\s*:/);
@@ -94,11 +175,11 @@ describe('theme-minimal.css is flat', () => {
 
 type Rgb = [number, number, number];
 
-function hex(section: string, name: string): Rgb {
-  const match = new RegExp(`${name}\\s*:\\s*#([0-9a-fA-F]{6})\\b`).exec(section);
+function toRgb(value: string | undefined, name: string): Rgb {
+  const match = /^#([0-9a-f]{6})$/i.exec(value ?? '');
   expect(match, `${name} as a six-digit hex`).not.toBeNull();
-  const value = match![1]!;
-  return [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16)) as Rgb;
+  const hexValue = match![1]!;
+  return [0, 2, 4].map((index) => parseInt(hexValue.slice(index, index + 2), 16)) as Rgb;
 }
 
 function luminance(color: Rgb): number {
@@ -114,27 +195,60 @@ function contrast(first: Rgb, second: Rgb): number {
   return (light! + 0.05) / (dark! + 0.05);
 }
 
+// The light, dark and theme='auto' rules; a token missing from a dark rule comes from the light one.
+function tokenSets(): Record<'light' | 'dark' | 'auto', Map<string, string>> {
+  const rules = minimalRules();
+  const light = rules.find((rule) => rule.selectors.includes('pricing-change-review'));
+  const dark = rules.find((rule) =>
+    rule.selectors.includes("pricing-renderer[data-pr-root][theme='dark']"),
+  );
+  const auto = rules.find(
+    (rule) =>
+      rule.context.some((entry) => entry.includes('prefers-color-scheme: dark')) &&
+      rule.selectors.includes("pricing-renderer[data-pr-root][theme='auto']") &&
+      rule.declarations.has('--pr-color-text'),
+  );
+  expect(light, 'the light rule').toBeDefined();
+  expect(dark, 'the dark rule').toBeDefined();
+  expect(auto, "the theme='auto' rule").toBeDefined();
+  return {
+    light: light!.declarations,
+    dark: new Map([...light!.declarations, ...dark!.declarations]),
+    auto: new Map([...light!.declarations, ...auto!.declarations]),
+  };
+}
+
+const TEXT_TOKENS = ['--pr-color-text', '--pr-color-muted'];
+const SURFACES = ['--pr-color-surface', '--pr-color-surface-raised', '--pr-color-surface-subtle'];
+
+const pairs: Array<[string, string]> = [
+  ...TEXT_TOKENS.flatMap((text) => SURFACES.map((surface): [string, string] => [text, surface])),
+  ['--pr-color-on-accent', '--pr-color-accent'],
+  ['--pr-color-link', '--pr-color-surface'],
+  ['--pr-color-link', '--pr-color-surface-raised'],
+  // extra, not in the requirement
+  ['--pr-color-focus', '--pr-color-surface'],
+];
+
 // [utest->req~theme-minimal-contrast~1]
 describe('theme-minimal.css contrast', () => {
   it('computes contrast with a known pair', () => {
     expect(contrast([0, 0, 0], [255, 255, 255])).toBeCloseTo(21, 5);
   });
 
-  const pairs: Array<[string, string]> = [
-    ['--pr-color-text', '--pr-color-surface'],
-    ['--pr-color-muted', '--pr-color-surface'],
-    ['--pr-color-on-accent', '--pr-color-accent'],
-    ['--pr-color-link', '--pr-color-surface'],
-    ['--pr-color-focus', '--pr-color-surface'],
-  ];
+  it('checks the nine pairs of the requirement', () => {
+    expect(pairs.slice(0, 9)).toHaveLength(9);
+  });
 
-  for (const name of SECTION_NAMES) {
+  for (const name of ['light', 'dark', 'auto'] as const) {
     for (const [foreground, background] of pairs) {
-      it(`has at least 4.5:1 for ${foreground} on ${background} in the ${name} section`, () => {
-        const section = sectionsOf(readCss(minimalPath))[name];
-        expect(contrast(hex(section, foreground), hex(section, background))).toBeGreaterThanOrEqual(
-          4.5,
+      it(`has at least 4.5:1 for ${foreground} on ${background} in the ${name} rule`, () => {
+        const tokens = tokenSets()[name];
+        const ratio = contrast(
+          toRgb(tokens.get(foreground), foreground),
+          toRgb(tokens.get(background), background),
         );
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
       });
     }
   }
