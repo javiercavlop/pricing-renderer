@@ -193,6 +193,15 @@ renders.
 error as a load failure must check the code, because `PR_SELECTION_NOT_READY` and
 `PR_SELECTION_CONTROLLED` are errors that mean only that the call was refused.
 
+## Load the contract's version
+
+The plan and add-on names in a contract belong to the version in
+`contractedServices[service]`. Load the pricing of that version for a signed-in
+customer. If the page shows another version, `applySelection` can return
+`PR_SELECTION_UNKNOWN_PLAN`. [Which pricing version a page shows](./pricing-versions.md)
+gives the rule for signed-out and signed-in visitors, and why a SPACE-managed
+service is read through SPACE and not straight from SPHERE.
+
 ## Reload
 
 `reload()` or a new source restarts the element from `defaultSelection` (or the

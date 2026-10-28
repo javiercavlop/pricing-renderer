@@ -212,6 +212,36 @@ it instead of `theme.css`, or copy it as the start of your own theme.
 @import 'pricing-renderer/theme-minimal.css';
 ```
 
+### Theme builder
+
+`examples/vanilla/theme-builder.html` is a page for trying a theme on a sample
+pricing and exporting the result as CSS. Start the demo with
+`pnpm --filter pricing-renderer-demo dev` and open `/theme-builder.html`.
+
+The Preset control loads one of three starting points:
+
+- `default`: `theme.css`.
+- `shadcn`: `theme.css` plus the `tokens-shadcn.css` overlay. The page also sets
+  sample shadcn variables (`--primary`, `--foreground`, `--card`, `--border`,
+  `--radius` and others) on `<html>`, with a dark variant.
+- `minimal`: `theme-minimal.css` in place of `theme.css`.
+
+Choosing a preset discards all earlier edits and resets the controls.
+
+The other controls are the accent, surface and text colors, the border radius, the
+font family (default, System UI, serif or monospace) and a dark checkbox. A readout
+shows the text-on-surface contrast ratio and whether it passes AA or AAA.
+
+The read-only `#theme-export` box shows the generated CSS: one unlayered
+`pricing-renderer[data-pr-root]` block that lists only the tokens you edited. The
+Copy CSS button copies it to the clipboard. Paste it after the theme import.
+
+Some controls write more than one token:
+
+- The surface color also writes `--pr-color-surface-raised`.
+- The radius writes `--pr-radius-sm`, `--pr-radius-md` and `--pr-radius-lg`, at
+  0.6, 1 and 1.5 times the chosen value.
+
 ## Fonts
 
 By default the renderer inherits the font of the host. Two optional tokens change
