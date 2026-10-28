@@ -1,0 +1,41 @@
+/*
+ * Maps the renderer tokens to the variables of a shadcn/ui theme.
+ *
+ * These are the shadcn v4 full-color variables (--primary: oklch(...) or #hex). For v3 setups whose
+ * variables are HSL channels, wrap them yourself, for example
+ * --pr-color-accent: hsl(var(--primary)), in a rule of your own that comes after this file.
+ *
+ * Tokens shadcn has no variable for (success, warning, warning-surface, overlay, shadows) keep the
+ * defaults of theme.css. Import theme.css first or after this file; the layer order below makes this
+ * file win either way.
+ *
+ * [impl->req~tokens-shadcn-overlay~1]
+ * [impl->req~tokens-shadcn-mapping~1]
+ */
+@layer pricing-renderer.theme, pricing-renderer.shadcn;
+
+@layer pricing-renderer.shadcn {
+  pricing-renderer[data-pr-root],
+  pricing-change-review {
+    color-scheme: light;
+    --pr-color-accent: var(--primary);
+    --pr-color-on-accent: var(--primary-foreground);
+    --pr-color-text: var(--foreground);
+    --pr-color-muted: var(--muted-foreground);
+    --pr-color-surface: var(--card);
+    --pr-color-surface-raised: var(--popover);
+    --pr-color-surface-subtle: var(--muted);
+    --pr-color-border: var(--border);
+    --pr-color-border-strong: var(--input);
+    --pr-color-focus: var(--ring);
+    --pr-color-link: var(--primary);
+    --pr-radius-lg: var(--radius);
+    --pr-radius-md: calc(var(--radius) - 2px);
+    --pr-radius-sm: calc(var(--radius) - 4px);
+  }
+
+  .dark pricing-renderer[data-pr-root],
+  .dark pricing-change-review {
+    color-scheme: dark;
+  }
+}
