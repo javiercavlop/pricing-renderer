@@ -403,14 +403,23 @@ loadPricingFromUrl(
 
 - `headers`: a `HeadersInit` value or async token-producing function.
 - `credentials`: defaults to `"omit"`.
-- `timeoutMs`: defaults to 15 seconds.
+- `timeoutMs`: defaults to 15 seconds. It covers every step of the load: the
+  `headers` function, `loadPricing` or `fetch`, and reading the body. A
+  `headers`, `loadPricing` or `fetch` function that ignores its signal is cut
+  off at `timeoutMs`: the load fails with `PR_SOURCE_ABORTED`, the late result
+  is ignored, and the work of that function is not stopped. Raise `timeoutMs`
+  for a slow loader.
 - `maxBytes`: defaults to 2 MiB. It also limits a string returned by a custom
   `loadPricing`, measured in UTF-8 bytes (exactly `maxBytes` is accepted); a
   larger string fails with `PR_SOURCE_TOO_LARGE`. An object returned by
   `loadPricing` is not measured.
 - `fetch`: an injected fetch implementation.
 - `loadPricing`: a custom loader for OAuth, signed URLs, proxies, or SDKs.
-- `signal`: an external cancellation signal.
+- `signal`: an external cancellation signal. Aborting it ends the load at once
+  with `PR_SOURCE_ABORTED`, even when a `headers`, `loadPricing` or `fetch`
+  function ignores the signal (its late result is ignored and its work is not
+  stopped). A signal that is already aborted when the call starts fails the
+  load with `PR_SOURCE_ABORTED` and starts no `loadPricing` or `fetch` call.
 - `normalize`: syntax adapters used after loading.
 
 Only HTTP/HTTPS URLs are accepted by the built-in loader.

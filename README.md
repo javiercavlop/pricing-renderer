@@ -403,6 +403,10 @@ renderer.request = {
 Use `loadPricing` for OAuth exchanges, signed URLs, proxies, or SDK clients. The
 built-in loader permits HTTP/HTTPS `GET` only, defaults to
 `credentials: "omit"`, honors cancellation, and never fetches during SSR.
+`request.timeoutMs` and an abort cut off every step: a `loadPricing`, `fetch` or
+`headers` function that ignores the signal fails the load with
+`PR_SOURCE_ABORTED`, its late result is ignored, and its work is not stopped. A
+signal already aborted at the start fails the load with `PR_SOURCE_ABORTED`.
 `request.maxBytes` (2 MiB by default) also limits a string that `loadPricing`
 returns, measured in UTF-8 bytes; a larger one fails with `PR_SOURCE_TOO_LARGE`.
 An object result is not measured.
