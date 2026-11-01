@@ -93,11 +93,14 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
 - UX-1, stress spec: browser measurement extension (`ux-report.md:341`)
   - Objective: O1. State: partly done. Priority P8, about 250 lines, risk low. Owner CRP: no.
   - Evidence: U1a merged (#72, `07f10bf`): `tests/fixtures/stress/metrics.ts`,
-    `tests/browser/ux-stress.spec.ts`. U1b is not started.
+    `tests/browser/ux-stress.spec.ts`, `tests/unit/ux-stress-metrics.test.ts`. U1b is not started.
 - UX-2, unit-level counts on the stress fixtures and the 37 real pricings (`ux-report.md:373`)
-  - Objective: O1. State: done. Priority P8, about 200 lines, risk low. Owner CRP: no.
+  - Objective: O1. State: partly done. Priority P8, about 200 lines, risk low. Owner CRP: no.
   - Evidence: U2 merged (#72, `07f10bf`): `tests/unit/ux-counts.test.ts`. The measurements are to be
     recorded in `docs/agent-work/ux-review/measurements.md` (planned, proposal P-20261101-2).
+  - Missing (`docs/agent-work/prop-20261101-2/intake.md:46-53`, `ux-report.md:378-385`): the
+    singular-unit counts (a), the cell and mixed-row counts of (b), and the row-description and
+    length counts of (c).
 - UX-3, narrow top compaction (`ux-report.md:395`)
   - Objective: O1. State: not started. Priority P2, about 60 lines, risk low. Owner CRP: no.
     Depends on UX-1.
