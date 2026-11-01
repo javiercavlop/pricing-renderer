@@ -110,12 +110,15 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 - [ ] P3-2 The element uses the core (refactorer, risk high; after P3-1I merged; same PR as P3-2T).
   - Files: `src/element/pricing-renderer-element.ts`. The refactorer touches no test file.
   - Change: `:578-585`, `:598-649` and `:709-875` become calls to the core; focus, dialog and
-    events stay. No changeset unless review asks.
+    events stay. P3-2 requires a patch changeset that names the element fix for two-level `dependsOn`
+    chains.
   - One deliberate fix, the only exception to the "additive only" rules: the element's dependency
     closure was direct-only and becomes transitive (design D1), so add-ons with two-level `dependsOn`
     chains now add the whole chain. P3-2 must check `tests/browser/pricing-renderer.spec.ts:125-432,1547-1600`
-    and add a browser or unit case for a two-level chain if none exists (a test file, so the lead
-    assigns it to the test-designer).
+    and a browser or unit test of an element two-level `dependsOn` chain is mandatory (a test file,
+    so the lead assigns it to the test-designer).
+  - The element must pass `Boolean(this.variablesEnabled)` to `selectionInEffect`: the core treats
+    only `false` as off, while the element treats any falsy value as off.
   - Checks: `full`, `pkg`,
     `unit(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/phase0-docs.test.ts)`; CI
     `browser-shards` green, in particular `tests/browser/pricing-renderer.spec.ts:125-432,1547-1600`.

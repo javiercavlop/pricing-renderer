@@ -77,8 +77,14 @@ export function getAtPath(source: unknown, path: string): unknown {
   let current = source;
   for (const segment of segments) {
     if (Array.isArray(current)) {
-      current = current[Number(segment)];
+      if (!hasOwn(current, segment)) {
+        return undefined;
+      }
+      current = (current as unknown as Record<string, unknown>)[segment];
     } else if (isRecord(current)) {
+      if (!hasOwn(current, segment)) {
+        return undefined;
+      }
       current = current[segment];
     } else {
       return undefined;
@@ -87,12 +93,42 @@ export function getAtPath(source: unknown, path: string): unknown {
   return current;
 }
 
+const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+const MAX_ARRAY_INDEX = 1000;
+
+function hasOwn(target: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}
+
+// True when writing the path would touch a prototype or build an oversized sparse array.
+function isUnsafePath(source: unknown, segments: string[]): boolean {
+  if (segments.some((segment) => FORBIDDEN_SEGMENTS.has(segment))) {
+    return true;
+  }
+  // a missing container is created as an array exactly when its segment is numeric
+  let current: unknown = source;
+  for (const segment of segments) {
+    const numeric = /^\d+$/.test(segment);
+    const isArray = current === undefined ? numeric : Array.isArray(current);
+    if (isArray && numeric && Number(segment) > MAX_ARRAY_INDEX) {
+      return true;
+    }
+    if (current !== undefined && typeof current === 'object' && current !== null) {
+      const key = Array.isArray(current) ? Number(segment) : segment;
+      current = hasOwn(current, key) ? (current as Record<PropertyKey, unknown>)[key] : undefined;
+    } else {
+      current = undefined;
+    }
+  }
+  return false;
+}
+
 export function setAtPath(source: Record<string, unknown>, path: string, value: unknown): void {
   const segments = path
     .replace(/\[(\d+)\]/g, '.$1')
     .split('.')
     .filter(Boolean);
-  if (segments.length === 0) {
+  if (segments.length === 0 || isUnsafePath(source, segments)) {
     return;
   }
 
@@ -102,12 +138,12 @@ export function setAtPath(source: Record<string, unknown>, path: string, value: 
     const next = segments[index + 1]!;
     if (Array.isArray(current)) {
       const numericIndex = Number(segment);
-      if (current[numericIndex] === undefined) {
+      if (!hasOwn(current, numericIndex) || current[numericIndex] === undefined) {
         current[numericIndex] = /^\d+$/.test(next) ? [] : {};
       }
       current = current[numericIndex];
     } else if (isRecord(current)) {
-      if (current[segment] === undefined) {
+      if (!hasOwn(current, segment) || current[segment] === undefined) {
         current[segment] = /^\d+$/.test(next) ? [] : {};
       }
       current = current[segment];

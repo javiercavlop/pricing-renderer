@@ -6,8 +6,18 @@ import type { PriceBreakdownLine, PriceStabilizer, ResolvedPrice } from './types
 // A line whose price is replaced by the last valid price takes that price's own factors, and
 // the subtotal is the line amount fold of the stabilized breakdown, so both stay in sync.
 export function createPriceStabilizer(): PriceStabilizer {
-  let lastValidPlanPrices: Record<string, ResolvedPrice> = {};
-  let lastValidAddOnPrices: Record<string, ResolvedPrice> = {};
+  let lastValidPlanPrices = new Map<string, ResolvedPrice>();
+  let lastValidAddOnPrices = new Map<string, ResolvedPrice>();
+
+  // an id such as "__proto__" must become an own key, never a prototype change
+  const setOwn = (target: Record<string, ResolvedPrice>, id: string, price: ResolvedPrice) => {
+    Object.defineProperty(target, id, {
+      value: price,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  };
 
   const keptLine = (line: PriceBreakdownLine, kept: ResolvedPrice): PriceBreakdownLine => {
     if (kept.kind !== 'amount') return line;
@@ -28,28 +38,30 @@ export function createPriceStabilizer(): PriceStabilizer {
       const keptPlanIds = new Set<string>();
       const keptAddOnIds = new Set<string>();
       for (const [id, price] of Object.entries(resolved.planPrices)) {
+        const lastValid = lastValidPlanPrices.get(id);
         if (price.kind === 'amount') {
-          lastValidPlanPrices[id] = price;
-        } else if (price.kind === 'error' && lastValidPlanPrices[id]) {
-          resolved.planPrices[id] = lastValidPlanPrices[id]!;
+          lastValidPlanPrices.set(id, price);
+        } else if (price.kind === 'error' && lastValid) {
+          setOwn(resolved.planPrices, id, lastValid);
           keptPlanIds.add(id);
         }
       }
       for (const [id, price] of Object.entries(resolved.addOnPrices)) {
+        const lastValid = lastValidAddOnPrices.get(id);
         if (price.kind === 'amount') {
-          lastValidAddOnPrices[id] = price;
-        } else if (price.kind === 'error' && lastValidAddOnPrices[id]) {
-          resolved.addOnPrices[id] = lastValidAddOnPrices[id]!;
+          lastValidAddOnPrices.set(id, price);
+        } else if (price.kind === 'error' && lastValid) {
+          setOwn(resolved.addOnPrices, id, lastValid);
           keptAddOnIds.add(id);
         }
       }
 
       const { breakdown } = resolved;
       if (breakdown.plan && keptPlanIds.has(breakdown.plan.id)) {
-        breakdown.plan = keptLine(breakdown.plan, resolved.planPrices[breakdown.plan.id]!);
+        breakdown.plan = keptLine(breakdown.plan, lastValidPlanPrices.get(breakdown.plan.id)!);
       }
       breakdown.addOns = breakdown.addOns.map((line) =>
-        keptAddOnIds.has(line.id) ? keptLine(line, resolved.addOnPrices[line.id]!) : line,
+        keptAddOnIds.has(line.id) ? keptLine(line, lastValidAddOnPrices.get(line.id)!) : line,
       );
       let subtotal = breakdown.plan?.amount ?? 0;
       for (const line of breakdown.addOns) {
@@ -60,8 +72,8 @@ export function createPriceStabilizer(): PriceStabilizer {
       return viewModel;
     },
     reset() {
-      lastValidPlanPrices = {};
-      lastValidAddOnPrices = {};
+      lastValidPlanPrices = new Map();
+      lastValidAddOnPrices = new Map();
     },
   };
 }

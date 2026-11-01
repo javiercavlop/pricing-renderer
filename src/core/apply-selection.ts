@@ -5,7 +5,7 @@ import type {
   PricingDiagnostic,
   PricingSelection,
 } from './types.js';
-import { cloneValue } from './utils.js';
+import { asFiniteNumber, cloneValue, isRecord } from './utils.js';
 
 export interface ApplySelectionInputResult {
   selection: PricingSelection;
@@ -72,9 +72,21 @@ export function applySelectionInput(
         continue;
       }
       if (entry === undefined) continue;
-      addOns[id] = entry.selected
-        ? { ...entry, quantity: normalizeAddOnQuantity(pricing, id, entry) }
-        : entry;
+      if (!isRecord(entry)) {
+        // not an add-on record: the current entry stays
+        const currentEntry = Object.prototype.hasOwnProperty.call(current.addOns, id)
+          ? current.addOns[id]
+          : undefined;
+        if (currentEntry !== undefined) addOns[id] = currentEntry;
+        continue;
+      }
+      const quantity = asFiniteNumber(entry.quantity);
+      if (entry.selected === true) {
+        const accepted: AddOnSelection = { selected: true, quantity: quantity ?? Number.NaN };
+        addOns[id] = { ...accepted, quantity: normalizeAddOnQuantity(pricing, id, accepted) };
+      } else {
+        addOns[id] = { selected: false, quantity: quantity ?? 0 };
+      }
     }
     validated.addOns = addOns;
   }
