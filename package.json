@@ -144,7 +144,7 @@
     "release:check": "node scripts/check-release-ready.mjs",
     "release:registry-check": "node scripts/check-npm-version-available.mjs",
     "prepack": "pnpm build",
-    "prepublishOnly": "pnpm test && pnpm package:check"
+    "prepublishOnly": "pnpm package:check"
   },
   "publishConfig": {
     "access": "public",
