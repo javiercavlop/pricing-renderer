@@ -35,6 +35,8 @@
 
 - Owner: CRP-1, CRP-2, N1 and N2; O-1a, O-1b and O-1c; CRP-U3 to CRP-U11; Q-F; the Phase 3 request
   text and CRP-P3 (`plan.md` section 3).
+  - Update 2026-11-01: the Phase 3 request text and CRP-P3 are answered; see
+    `docs/agent-work/phase3-react-headless/intake.md:6` and `plan.md:1`.
 - Coordinator: whether a dispatch works (N-CI), and whether the `openspec` CLI is available (N-spec).
 
 ## Next three steps

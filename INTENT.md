@@ -65,8 +65,8 @@ Why: the same package serves the Web Component, React, Next and the Vue example.
 
 Progress signals:
 
-- Pending changesets. Current value: 45 `.md` files in `.changeset/` besides `README.md` (at
-  `52a31c8`). Evidence: `.changeset/*.md`. Threshold: the release decision of 2026-10-27 (ROADMAP.md,
+- Pending changesets. Current value: 52 `.md` files in `.changeset/` besides `README.md` (at
+  `8d50f7a`). Evidence: `.changeset/*.md`. Threshold: the release decision of 2026-10-27 (ROADMAP.md,
   "Release"): no release until the owner says so, and then one single release.
 - Released versions. Current value: `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). Threshold:
   no release to main is prepared until the owner asks (Q6).

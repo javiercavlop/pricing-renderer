@@ -82,16 +82,22 @@ This is SPECTRA phase 2 (`report.md:422`), not phase 2 of the owner's plan (see 
 ## UX review (PR 56)
 
 Source: `docs/agent-work/ux-review/report.md` (`ux-report.md` below), summary table at
-`ux-report.md:587-599`, dependencies at `:601-602`. No proposal has started. Owner CRP is needed
+`ux-report.md:587-599`, dependencies at `:601-602`. U1a and U2 are merged (#72, `07f10bf`); proposal
+P-20261101-1 (UX-7) is approved and in progress, and the approval also answers CRP-U7
+(`docs/agent-work/prop-20261101-1/intake.md:1-5`). Owner CRP is needed
 for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 need none
 (`ux-report.md:582-584`). The report's thresholds predate the owner's Q2 and Q3 answers
 (`ux-report.md:617-621` against Q2 and Q3 below), and its questions Q-A to Q-G
 (`ux-report.md:623-640`) are open, except that Q2 already answers part of Q-A.
 
 - UX-1, stress spec: browser measurement extension (`ux-report.md:341`)
-  - Objective: O1. State: not started. Priority P8, about 250 lines, risk low. Owner CRP: no.
+  - Objective: O1. State: partly done. Priority P8, about 250 lines, risk low. Owner CRP: no.
+  - Evidence: U1a merged (#72, `07f10bf`): `tests/fixtures/stress/metrics.ts`,
+    `tests/browser/ux-stress.spec.ts`. U1b is not started.
 - UX-2, unit-level counts on the stress fixtures and the 37 real pricings (`ux-report.md:373`)
-  - Objective: O1. State: not started. Priority P8, about 200 lines, risk low. Owner CRP: no.
+  - Objective: O1. State: done. Priority P8, about 200 lines, risk low. Owner CRP: no.
+  - Evidence: U2 merged (#72, `07f10bf`): `tests/unit/ux-counts.test.ts`. The measurements are to be
+    recorded in `docs/agent-work/ux-review/measurements.md` (planned, proposal P-20261101-2).
 - UX-3, narrow top compaction (`ux-report.md:395`)
   - Objective: O1. State: not started. Priority P2, about 60 lines, risk low. Owner CRP: no.
     Depends on UX-1.
@@ -105,7 +111,9 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
   - Objective: O1. State: not started. Priority P1, about 90 lines, risk medium. Owner CRP: yes.
     Depends on UX-1.
 - UX-7, add-on marker aware of `availableFor` (`ux-report.md:482`)
-  - Objective: O1. State: not started. Priority P4, about 120 lines, risk low. Owner CRP: yes.
+  - Objective: O1. State: in progress (proposal P-20261101-1 approved, intake written; no code
+    merged). Priority P4, about 120 lines, risk low. Owner CRP: yes; CRP-U7 is answered by that
+    approval.
     Depends on UX-2.
 - UX-8, add-on filter for the selected plan only (`ux-report.md:502`)
   - Objective: O1. State: not started. Priority P5, about 150 lines, risk low. Owner CRP: yes.
@@ -140,7 +148,7 @@ Owner decision of 2026-10-27, which replaces the postponement of Q6:
 
 - There is NO release of pricing-renderer until further notice. All work accumulates in `develop`.
 - The next version is ONE single release. It carries the 45 pending changesets (at `47a7b05`) plus everything
-  requested on 2026-10-27.
+  requested on 2026-10-27. Now 52 pending at `8d50f7a`.
 - It goes out only when the owner says that the companion PRs to SPACE, SPHERE and the SPACE
   clients (space-node-client, space-python-client, space-java-client, space-react-client) are
   merged.
@@ -156,12 +164,17 @@ Phase list from the owner's plan (not the SPECTRA phase 2 above):
 - Phase 1, design-system integration and private pricings, in two parts:
   - Phase 1a, design system. State: done.
     - Evidence: PR 65, commit `e68e0bc`, `docs/agent-work/phase1a-design-system/`.
-  - Phase 1b, private pricings. State: not started (intake only; waiting on the owner's answers).
-    - Evidence: `docs/agent-work/phase1b-private-pricings/`.
+      L2 theme builder docs: #71, `88f5141` (`docs/design-systems.md`).
+  - Phase 1b, private pricings. State: partly done. B1 (`docs/private-pricings.md`) and B5
+    (`docs/pricing-versions.md`) are merged (#71, `88f5141`); the rest waits on CRP-1 and CRP-2.
+    - Evidence: `docs/agent-work/phase1b-private-pricings/` (`handoff.md`).
 - Phase 2, subscription-change flow. State: done.
   - Evidence: PR 63, commit `2b79e45`, `docs/agent-work/phase2-subscription-change/`,
     `openspec/changes/add-subscription-change-flow/`.
-- Phase 3, React headless and composition. State: not started.
+- Phase 3, React headless and composition. State: in progress.
+  - Evidence: spec #73 (`09363ed`, `openspec/changes/add-react-headless/`); P3-1 core selection
+    logic #74 (`ee91c18`, `.changeset/core-selection-logic.md`); plan in
+    `docs/agent-work/phase3-react-headless/`.
 - Phase 4, reference integration with SPACE (later). State: not started.
 
 ## Backlog
@@ -179,7 +192,7 @@ Every entry is not verified, from earlier task followups.
   (`docs/audit-report.md:38-41`). Objective: O4.
 - Release workflow findings: global npm, and the publish job runs everything
   (`docs/audit-report.md:88-99`). Objective: O4.
-- Release the pending changesets (45 at `47a7b05`); `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). On hold by
+- Release the pending changesets (52 at `8d50f7a`); `CHANGELOG.md` has only 0.1.0 (`CHANGELOG.md:3`). On hold by
   owner decision of 2026-10-27 (see "Release"): no release until further notice; the single next
   release also includes everything requested on 2026-10-27. Objective: O3.
 - Refresh the stale `docs/agent-work/spectra-grid-and-text/handoff.md`. Objective: O1.
