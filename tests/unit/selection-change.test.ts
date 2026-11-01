@@ -463,6 +463,57 @@ describe('selection helpers', () => {
         expect(tiers.length).toBe(0);
       });
     }
+
+    for (const path of ['tiers.01', 'tiers[00]']) {
+      // [utest->req~core-selection-variable-path-safe~1]
+      it(`refuses the leading-zero index ${path}`, () => {
+        const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
+        const next = api.selectionWithVariable(selection, path, 1);
+        expect((next.variables.tiers as unknown[]).length).toBe(0);
+        expect(next.variables).toEqual({ tiers: [] });
+      });
+    }
+
+    for (const path of ['x.01', 'x.0.01']) {
+      // [utest->req~core-selection-variable-path-safe~1]
+      it(`refuses the leading-zero index ${path} under a missing parent`, () => {
+        const next = api.selectionWithVariable(defaults, path, 1);
+        expect(next.variables).toEqual(defaults.variables);
+      });
+    }
+
+    for (const path of ['tiers[1001]', 'tiers.4294967294']) {
+      // [utest->req~core-selection-variable-path-safe~1]
+      it(`refuses the new index ${path} on an existing array`, () => {
+        const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
+        const next = api.selectionWithVariable(selection, path, 1);
+        expect((next.variables.tiers as unknown[]).length).toBe(0);
+        expect(next.variables).toEqual({ tiers: [] });
+      });
+    }
+
+    // [utest->req~core-selection-variable-path-safe~1]
+    it('writes the new index tiers[1000] on an existing array', () => {
+      const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
+      const tiers = api.selectionWithVariable(selection, 'tiers[1000]', 1).variables
+        .tiers as unknown[];
+      expect(tiers[1000]).toBe(1);
+    });
+
+    // [utest->req~core-selection-variable-path-safe~1]
+    it('overwrites an existing index above 1000 and refuses a different new one', () => {
+      const tiers: unknown[] = [0];
+      tiers[1500] = 1;
+      const selection = { ...defaults, variables: { tiers } };
+      const written = api.selectionWithVariable(selection, 'tiers[1500]', 2).variables
+        .tiers as unknown[];
+      expect(written[1500]).toBe(2);
+      const refused = api.selectionWithVariable(selection, 'tiers[1600]', 2).variables
+        .tiers as unknown[];
+      expect(refused[1600]).toBeUndefined();
+      expect(refused.length).toBe(1501);
+      expect(refused[1500]).toBe(1);
+    });
   });
 
   // [utest->req~core-selection-variable-path-safe~1]
