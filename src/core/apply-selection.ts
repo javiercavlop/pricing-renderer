@@ -5,7 +5,7 @@ import type {
   PricingDiagnostic,
   PricingSelection,
 } from './types.js';
-import { cloneValue } from './utils.js';
+import { cloneValue, isRecord } from './utils.js';
 
 export interface ApplySelectionInputResult {
   selection: PricingSelection;
@@ -14,6 +14,7 @@ export interface ApplySelectionInputResult {
 }
 
 // [impl->req~apply-input-result~1] [impl->req~apply-input-no-mutation~1]
+// [impl->req~apply-input-malformed-entries~1]
 export function applySelectionInput(
   pricing: NormalizedPricing,
   current: PricingSelection,
@@ -53,15 +54,18 @@ export function applySelectionInput(
     }
   }
 
-  if (copy.variables !== undefined) {
+  // [impl->req~apply-input-malformed-entries~1]
+  if (isRecord(copy.variables)) {
     validated.variables = copy.variables;
   }
 
   // [impl->req~apply-input-unknown-addons~1] [impl->req~apply-input-quantities~1]
-  if (copy.addOns !== undefined) {
+  // [impl->req~apply-input-malformed-entries~1]
+  if (isRecord(copy.addOns)) {
+    const inputAddOns: Record<string, unknown> = copy.addOns;
     const addOns: Record<string, AddOnSelection> = {};
-    for (const id of Object.keys(copy.addOns)) {
-      const entry = copy.addOns[id];
+    for (const id of Object.keys(inputAddOns)) {
+      const entry = inputAddOns[id];
       if (!pricing.addOns.some((addOn) => addOn.id === id)) {
         diagnostics.push({
           code: 'PR_SELECTION_UNKNOWN_ADDON',
@@ -71,10 +75,12 @@ export function applySelectionInput(
         });
         continue;
       }
-      if (entry === undefined) continue;
+      // a known add-on without a plain-object entry counts as omitted: the default applies
+      if (!isRecord(entry)) continue;
+      const accepted = entry as unknown as AddOnSelection;
       addOns[id] = entry.selected
-        ? { ...entry, quantity: normalizeAddOnQuantity(pricing, id, entry) }
-        : entry;
+        ? { ...accepted, quantity: normalizeAddOnQuantity(pricing, id, accepted) }
+        : accepted;
     }
     validated.addOns = addOns;
   }

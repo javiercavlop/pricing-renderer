@@ -166,6 +166,25 @@ export interface PricingSelection {
   addOns: Record<string, AddOnSelection>;
 }
 
+export interface PendingAddOnChange {
+  addOnId: string;
+  select: boolean;
+  addIds: string[];
+  removeIds: string[];
+  planId?: string;
+}
+
+export type SelectionChangeIntent =
+  { type: 'plan'; planId: string } | { type: 'addOn'; addOnId: string; selected: boolean };
+
+export type SelectionChangeResult =
+  { kind: 'apply'; selection: PricingSelection } | { kind: 'confirm'; pending: PendingAddOnChange };
+
+export interface PriceStabilizer {
+  stabilize(viewModel: PricingViewModel): PricingViewModel;
+  reset(): void;
+}
+
 export type ResolvedPrice =
   | {
       kind: 'amount';

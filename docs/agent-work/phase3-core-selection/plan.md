@@ -1,0 +1,1 @@
+PR2 = P3-1T + P3-1I of add-react-headless. Done: tests (red verified), core implementation, round 1 to 3 fixes, design/tasks note on transitive closure. Remaining: push, panel round 4, ready. Later PRs (not this change): P3-2, P3-3, P3-4, P3-5 ... per tasks.md.

@@ -77,22 +77,26 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `tests/unit/apply-selection.test.ts` (only the block at `:69-73`, flipped, design.md D2).
   - Requirements: every `req~core-*`, every `req~price-stabilizer-*`,
     `req~selection-logic-exported~1`, `req~pending-change-type-shared~1`,
-    `req~apply-input-exported~1`.
+    `req~apply-input-exported~1`, `req~apply-input-malformed-entries~1`.
   - Checks: `install`,
     `red(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/apply-selection.test.ts)`,
     `lint`, `fmt`.
 - [ ] P3-1I Core functions (implementer, risk medium; same PR as P3-1T).
   - Files: `src/core/selection-change.ts` (new), `src/core/price-stabilizer.ts` (new),
     `src/core/types.ts`, `src/core/index.ts`, `src/element/events.ts` (type re-export only),
-    `.changeset/core-selection-logic.md`.
+    `src/core/utils.ts`, `src/core/apply-selection.ts`, `.changeset/core-selection-logic.md`.
   - Change: design.md D1 to D3, copied from the element; the element is not touched.
+  - The hardening of `src/core/utils.ts` and `src/core/apply-selection.ts` came from the PR 74
+    review (`req~core-selection-variable-path-safe~1`, `req~apply-input-malformed-entries~1`).
   - Checks: `full`, `pkg`,
     `unit(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/apply-selection.test.ts tests/unit/dependency-names.test.ts)`.
   - Split point: if the P3-1T/P3-1I PR grows past 300 lines it becomes two T/I PRs. First the
     selection change: `tests/unit/selection-change.test.ts`, the block of
     `tests/unit/apply-selection.test.ts`, `src/core/selection-change.ts`, `src/core/types.ts`,
-    `src/element/events.ts`, its exports in `src/core/index.ts` and the changeset; requirements
-    every `req~core-*`, `req~pending-change-type-shared~1` and `req~apply-input-exported~1`. Then
+    `src/element/events.ts`, `src/core/utils.ts`, `src/core/apply-selection.ts`, its exports in
+    `src/core/index.ts` and the changeset; requirements every `req~core-*`,
+    `req~pending-change-type-shared~1`, `req~apply-input-exported~1` and
+    `req~apply-input-malformed-entries~1`. Then
     the price stabilizer: `tests/unit/price-stabilizer.test.ts`, `src/core/price-stabilizer.ts` and
     its export; every `req~price-stabilizer-*` and `req~selection-logic-exported~1`, which reads all
     six function names, `createPriceStabilizer` included. Later slices that wait for "P3-1I merged"
@@ -110,7 +114,15 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 - [ ] P3-2 The element uses the core (refactorer, risk high; after P3-1I merged; same PR as P3-2T).
   - Files: `src/element/pricing-renderer-element.ts`. The refactorer touches no test file.
   - Change: `:578-585`, `:598-649` and `:709-875` become calls to the core; focus, dialog and
-    events stay. No changeset unless review asks.
+    events stay. P3-2 requires a patch changeset that names the element fix for two-level `dependsOn`
+    chains.
+  - One deliberate fix, the only exception to the "additive only" rules: the element's dependency
+    closure was direct-only and becomes transitive (design D1), so add-ons with two-level `dependsOn`
+    chains now add the whole chain. P3-2 must check `tests/browser/pricing-renderer.spec.ts:125-432,1547-1600`
+    and a browser or unit test of an element two-level `dependsOn` chain is mandatory (a test file,
+    so the lead assigns it to the test-designer).
+  - The element must pass `Boolean(this.variablesEnabled)` to `selectionInEffect`: the core treats
+    only `false` as off, while the element treats any falsy value as off.
   - Checks: `full`, `pkg`,
     `unit(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/phase0-docs.test.ts)`; CI
     `browser-shards` green, in particular `tests/browser/pricing-renderer.spec.ts:125-432,1547-1600`.

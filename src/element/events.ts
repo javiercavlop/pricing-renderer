@@ -1,5 +1,6 @@
 import type {
   NormalizedPricing,
+  PendingAddOnChange,
   PricingDiagnostic,
   PricingSelection,
   ResolvedPricing,
@@ -69,10 +70,5 @@ declare global {
   }
 }
 
-export interface PendingAddOnChange {
-  addOnId: string;
-  select: boolean;
-  addIds: string[];
-  removeIds: string[];
-  planId?: string;
-}
+// [impl->req~pending-change-type-shared~1]
+export type { PendingAddOnChange };
