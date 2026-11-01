@@ -40,8 +40,14 @@ Rules that keep the element's exact behaviour:
   The element and the hooks both pass the `selectionInEffect` of the held selection, not
   reconciled, so an unreconciled controlled selection gives the same result in both. The hooks'
   `apply` uses the reconciled `selection`, as `applySelection` does (`:454-458`).
-- Dependency closure, the three conflict sources and the transitive dependents are the element's
-  (`:760-830`), including the order of `addIds` (traversal order) and `removeIds`.
+- The three conflict sources, the dependents and the order of `addIds` (traversal order) and
+  `removeIds` are the element's (`:760-830`). The dependency closure is not: it is transitive in the
+  core (`collectDependencies` in `src/core/selection-change.ts`), while the element's private
+  `_collectDependencies` (`:760-770`) stops after the direct level, a defect found in P3-1I (it adds a
+  dependency to `collected`, then recurses into it, and the `collected.has(addOnId)` guard returns at
+  once). A dependency cycle never lists the selected add-on in `addIds`. P3-2 therefore changes the
+  element's behaviour for add-ons with two-level `dependsOn` chains: the element then adds the whole
+  chain.
 - `applySelectionChange` returns the reconciled selection. The element's `_setSelection` reconciles
   again, which changes nothing (`reconcileSelection` is idempotent on its output).
 - `selectionWithVariable` and `selectionWithAddOnQuantity` do not reconcile; the caller's set step
