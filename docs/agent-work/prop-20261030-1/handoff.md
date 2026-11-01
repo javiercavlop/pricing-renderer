@@ -1,5 +1,5 @@
-Goal: close release.yml audit findings 3 and 4 now; finding 1 after owner decision (not started); finding 2 accepted.
-State: S0 (05ece5d7), T1 (fae95516), I1 (729eeb07) integrated; branch head includes release.yml DIST_TAG env + latest|next guard, prepublishOnly = pnpm package:check, audit-report items 3 and 4 resolved, static test 5/5 green, check-release-ready passes.
-Decisions: Q2 = pnpm package:check. G4 not usable (test is not under acceptance/). Spec has 3 reqs; req~release-npm-cli-verified~1 added with finding 1.
-Open: push may be refused for Workflows: write (report exact message to coordinator); OFT trace of impl tags in .github unverified; INTENT/ROADMAP/docs/releasing.md updates are followups (out of scope).
-Next: push, pr_open, review panel (reviewer, test-reviewer, security-auditor) on pushed head, set_review_package, lead_ready. Finding 1 only after coordinator note.
+Goal: close release.yml audit findings 3 and 4 (PR 77); finding 1 only after owner decision via coordinator (not started); finding 2 accepted.
+State: round-1 fixes (task 75b7a8b4) integrated: guard test anchored on DIST_TAG case form, prepublishOnly exact, command-line counting, single publish step, audit item 3 retitled, isPrerelease fail-open noted as follow-up (not fixed, pre-existing), tasks.md ticked. Round 2 panel submitted on the new pushed head.
+Decisions: R1-SEC-001 left as a documented follow-up. G4 unusable. Push of workflow changes works.
+Open: OFT trace of .github impl tags unverified; INTENT/ROADMAP/docs/releasing.md updates are followups.
+Next: round-2 verdicts, pr_ready, set_review_package, lead_ready. Escalate if round 2 fails.
