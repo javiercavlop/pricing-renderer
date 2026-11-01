@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import * as core from '../../src/core/index.js';
 import { createPricingViewModel, getMessages } from '../../src/core/index.js';
 import type {
+  NormalizedAddOn,
   PricingComparisonRow,
   PricingViewModel,
   ViewModelOptions,
@@ -13,6 +14,7 @@ import { isAddOnOnlyRow } from '../../src/core/view-model.js';
 import { renderAddOns, renderComparison, renderPlans } from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
+import { buildStressYaml, stressFixtures } from '../fixtures/stress/build.js';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const fixturesRoot = join(repoRoot, 'tests/fixtures/spectra');
@@ -368,6 +370,128 @@ describe('add-on only marker in the comparison', () => {
   });
 });
 
+// Two plans; the row Row Alpha is provided only by the add-ons appended to this text, and the row
+// Row Bravo is included in both plans.
+const TWO_PLANS = `
+syntaxVersion: '3.1'
+saasName: Plan Co
+version: '2026.01'
+createdAt: '2026-01-01'
+currency: EUR
+features:
+  alpha:
+    name: Row Alpha
+    tag: Group
+    valueType: BOOLEAN
+    defaultValue: false
+  bravo:
+    name: Row Bravo
+    tag: Group
+    valueType: BOOLEAN
+    defaultValue: false
+plans:
+  planA:
+    name: Plan A
+    price: 10
+    unit: month
+    features:
+      bravo:
+        value: true
+  planB:
+    name: Plan B
+    price: 20
+    unit: month
+    features:
+      bravo:
+        value: true
+addOns:
+`;
+
+function alphaAddOn(id: string, availableFor: string[]): string {
+  return `  ${id}:
+    name: Pack ${id}
+    availableFor: [${availableFor.join(', ')}]
+    price: 5
+    unit: month
+    features:
+      alpha:
+        value: true
+`;
+}
+
+// The cells of a rendered row chunk: <td> in the table layout, <dt> in the compact layout.
+function cellsOf(chunk: string, compact: boolean): string[] {
+  return chunk.split(compact ? '<dt>' : '<td').slice(1);
+}
+
+describe('add-on marker per plan availability', () => {
+  const restricted = TWO_PLANS + alphaAddOn('packB', ['planB']);
+
+  for (const compact of [false, true]) {
+    const layout = compact ? 'compact' : 'table';
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`marks only the plan an add-on is available for (${layout})`, () => {
+      const viewModel = viewModelFromYaml(restricted);
+      expect(viewModel.plans.map((plan) => plan.id)).toEqual(['planA', 'planB']);
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const cells = cellsOf(chunkFor(text, 'Row Alpha'), compact);
+      expect(cells).toHaveLength(2);
+      const [planA, planB] = cells as [string, string];
+      expect(count(planB, MARKER)).toBe(1);
+      expect(planB).toContain('Add-on');
+      expect(planB).toContain('Available as add-on');
+      expect(planB).not.toContain('pr-value--excluded');
+      expect(count(planA, EXCLUDED)).toBe(1);
+      expect(count(planA, MARKER)).toBe(0);
+      expect(planA).toContain('—');
+      expect(planA).toContain('Not included');
+      expect(count(text, MARKER)).toBe(1);
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`leaves the row every plan includes unmarked (${layout})`, () => {
+      const viewModel = viewModelFromYaml(restricted);
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const chunk = chunkFor(text, 'Row Bravo');
+      expect(count(chunk, MARKER)).toBe(0);
+      expect(count(chunk, EXCLUDED)).toBe(0);
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`marks both plans when the add-on has no availableFor (${layout})`, () => {
+      const viewModel = viewModelFromYaml(TWO_PLANS + alphaAddOn('packAll', []));
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const chunk = chunkFor(text, 'Row Alpha');
+      expect(count(chunk, MARKER)).toBe(2);
+      expect(chunk).not.toContain('pr-value--excluded');
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`marks both plans when two add-ons cover one plan each (${layout})`, () => {
+      const yaml = TWO_PLANS + alphaAddOn('packA', ['planA']) + alphaAddOn('packB', ['planB']);
+      const viewModel = viewModelFromYaml(yaml);
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const chunk = chunkFor(text, 'Row Alpha');
+      const cells = cellsOf(chunk, compact);
+      expect(cells.map((cell) => count(cell, MARKER))).toEqual([1, 1]);
+      expect(chunk).not.toContain('pr-value--excluded');
+    });
+  }
+
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('localizes both the marker and the dash with the es catalog', () => {
+    const spanish = viewModelFromYaml(restricted, {}, 'es');
+    const text = flatten(renderComparison(stateFor(spanish)));
+    const [planA, planB] = cellsOf(chunkFor(text, 'Row Alpha'), false) as [string, string];
+    expect(planB).toContain('Complemento');
+    expect(planB).toContain('Disponible como complemento');
+    expect(planA).toContain('—');
+    expect(planA).toContain(getMessages('es')['pricing.notIncluded']!);
+    expect(count(planA, MARKER)).toBe(0);
+  });
+});
+
 describe('i18n keys', () => {
   it('defines the English texts', () => {
     const messages = getMessages('en-US');
@@ -387,6 +511,13 @@ describe('no public API change', () => {
     expect('isAddOnOnlyRow' in core).toBe(false);
     const entry = readFileSync(join(repoRoot, 'src/core/index.ts'), 'utf8');
     expect(entry).not.toContain('isAddOnOnlyRow');
+  });
+
+  // [utest->req~addon-marker-helper-internal~1]
+  it('does not expose the per-plan helper from the core entry point', () => {
+    expect('addOnProvidesForPlan' in core).toBe(false);
+    const entry = readFileSync(join(repoRoot, 'src/core/index.ts'), 'utf8');
+    expect(entry).not.toContain('addOnProvidesForPlan');
   });
 
   it('exports isAddOnOnlyRow from the view model module', () => {
@@ -515,15 +646,99 @@ function unwrap(value: unknown): unknown {
 }
 
 // Reference implementation of the definition, as the SPECTRA metrics count it.
+function referenceProvides(addOn: NormalizedAddOn, row: PricingComparisonRow): boolean {
+  if (row.kind === 'feature') return !isEmptyCell(unwrap(addOn.features[row.id]));
+  return (
+    !isEmptyCell(unwrap(addOn.usageLimits[row.id])) ||
+    !isEmptyCell(unwrap(addOn.usageLimitsExtensions[row.id]))
+  );
+}
+
 function referenceAddOnOnly(viewModel: PricingViewModel, row: PricingComparisonRow): boolean {
-  const provides = viewModel.addOns.some((addOn) => {
-    if (row.kind === 'feature') return !isEmptyCell(unwrap(addOn.features[row.id]));
-    return (
-      !isEmptyCell(unwrap(addOn.usageLimits[row.id])) ||
-      !isEmptyCell(unwrap(addOn.usageLimitsExtensions[row.id]))
-    );
-  });
+  const provides = viewModel.addOns.some((addOn) => referenceProvides(addOn, row));
   return row.values.every((cell) => isEmptyCell(cell.value)) && provides;
+}
+
+// True when some add-on that provides the row can be bought on the plan (empty availableFor: any).
+function referenceBuyable(
+  viewModel: PricingViewModel,
+  row: PricingComparisonRow,
+  planId: string,
+): boolean {
+  return viewModel.addOns.some(
+    (addOn) =>
+      referenceProvides(addOn, row) &&
+      (addOn.availableFor.length === 0 || addOn.availableFor.includes(planId)),
+  );
+}
+
+// The plans whose cell must show the marker: none unless the row is add-on only.
+function referenceMarkerPlans(viewModel: PricingViewModel, row: PricingComparisonRow): string[] {
+  if (!referenceAddOnOnly(viewModel, row)) return [];
+  return viewModel.plans
+    .map((plan) => plan.id)
+    .filter((planId) => referenceBuyable(viewModel, row, planId));
+}
+
+interface RenderedRow {
+  row: PricingComparisonRow;
+  cells: string[];
+}
+
+// Pairs each view-model row with its rendered chunk by the rendered name (a name used by two rows
+// pairs in order) and splits the chunk into one entry per plan cell.
+function renderedRows(viewModel: PricingViewModel, compact: boolean, text: string): RenderedRow[] {
+  // Without plans the comparison renders an empty-state text and no row.
+  if (viewModel.plans.length === 0) return [];
+  const chunks = rowChunks(text);
+  const byName = new Map<string, string[]>();
+  const used = new Map<string, number>();
+  return rowsOf(viewModel).map((row) => {
+    const needle = compact ? `<h5>${row.name}</h5>` : `<span>${row.name}</span`;
+    let matching = byName.get(needle);
+    if (!matching) {
+      matching = chunks.filter((chunk) => chunk.includes(needle));
+      byName.set(needle, matching);
+    }
+    const position = used.get(needle) ?? 0;
+    used.set(needle, position + 1);
+    const chunk = matching[position];
+    if (chunk === undefined) throw new Error(`No rendered chunk for the row ${row.id}`);
+    const cells = cellsOf(chunk, compact);
+    if (cells.length < row.values.length) throw new Error(`Too few cells for the row ${row.id}`);
+    return { row, cells: cells.slice(0, row.values.length) };
+  });
+}
+
+// Marker cells in a plan that cannot buy any add-on providing the row.
+function misleadingMarkerCells(viewModel: PricingViewModel, compact: boolean): number {
+  const text = flatten(renderComparison(stateFor(viewModel, compact)));
+  return misleadingIn(viewModel, renderedRows(viewModel, compact, text));
+}
+
+function misleadingIn(viewModel: PricingViewModel, rendered: RenderedRow[]): number {
+  let total = 0;
+  for (const { row, cells } of rendered) {
+    row.values.forEach((cell, index) => {
+      const marked = cells[index]!.includes('pr-value--addon');
+      if (marked && !referenceBuyable(viewModel, row, cell.planId)) total += 1;
+    });
+  }
+  return total;
+}
+
+// Rows whose marker count differs from the number of plans the reference marks.
+function markerCountMismatches(
+  viewModel: PricingViewModel,
+  compact: boolean,
+  rendered: RenderedRow[],
+): string[] {
+  const layout = compact ? 'compact' : 'table';
+  return rendered.flatMap(({ row, cells }) => {
+    const markers = cells.reduce((total, cell) => total + count(cell, MARKER), 0);
+    const wanted = referenceMarkerPlans(viewModel, row).length;
+    return markers === wanted ? [] : [`${layout} ${row.id}: ${markers} markers, ${wanted} wanted`];
+  });
 }
 
 function listFixtures(): string[] {
@@ -551,7 +766,10 @@ interface FixtureResult {
   detected: number;
   markedTable: number;
   markedCompact: number;
-  markersPerMarkedRow: number[];
+  referenceMarkedRows: number;
+  misleadingTable: number;
+  misleadingCompact: number;
+  markerMismatches: string[];
 }
 
 describe('SPECTRA fixtures', () => {
@@ -565,24 +783,34 @@ describe('SPECTRA fixtures', () => {
     results = listFixtures().map((fixture) => {
       const viewModel = viewModelFromYaml(readFileSync(join(repoRoot, fixture), 'utf8'));
       const rows = rowsOf(viewModel);
-      const marked = (compact: boolean): string[] => {
+      const referenceMarked = rows.filter((row) => referenceMarkerPlans(viewModel, row).length > 0);
+      const render = (compact: boolean) => {
         const text = flatten(renderComparison(stateFor(viewModel, compact)));
-        return rowChunks(text).filter((chunk) => chunk.includes('pr-value--addon'));
+        return {
+          marked: rowChunks(text).filter((chunk) => chunk.includes('pr-value--addon')),
+          rendered: renderedRows(viewModel, compact, text),
+        };
       };
-      const table = marked(false);
-      const compact = marked(true);
+      const table = render(false);
+      const compact = render(true);
       return {
         fixture,
         saas: fixture.split('/')[3]!,
         plans: viewModel.plans.length,
         reference: rows.filter((row) => referenceAddOnOnly(viewModel, row)).length,
         detected: rows.filter((row) => isAddOnOnlyRow(viewModel, row)).length,
-        markedTable: table.length,
-        markedCompact: compact.length,
-        markersPerMarkedRow: [...table, ...compact].map((chunk) => count(chunk, MARKER)),
+        markedTable: table.marked.length,
+        markedCompact: compact.marked.length,
+        referenceMarkedRows: referenceMarked.length,
+        misleadingTable: misleadingIn(viewModel, table.rendered),
+        misleadingCompact: misleadingIn(viewModel, compact.rendered),
+        markerMismatches: [
+          ...markerCountMismatches(viewModel, false, table.rendered),
+          ...markerCountMismatches(viewModel, true, compact.rendered),
+        ],
       };
     });
-  });
+  }, 120_000);
 
   const withoutOkta = (): FixtureResult[] => results.filter((item) => item.saas !== 'okta');
   const sum = (values: number[]): number => values.reduce((total, value) => total + value, 0);
@@ -613,16 +841,30 @@ describe('SPECTRA fixtures', () => {
     expect(sum(withoutOkta().map((item) => item.markedCompact))).toBe(166);
   });
 
-  it('renders one marker per plan in every marked row', () => {
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('renders one marker per plan that can buy a providing add-on in every row', () => {
     for (const item of withoutOkta()) {
       expect(item.plans, item.fixture).toBeGreaterThan(0);
+      expect(item.markerMismatches, item.fixture).toEqual([]);
     }
-    const plansByCount = new Map(withoutOkta().map((item) => [item.fixture, item.plans]));
-    for (const item of withoutOkta().filter((candidate) => candidate.markedTable > 0)) {
-      const perRow = item.markersPerMarkedRow;
-      expect(perRow.length, item.fixture).toBe(item.markedTable + item.markedCompact);
-      expect(new Set(perRow), item.fixture).toEqual(new Set([plansByCount.get(item.fixture)]));
+  });
+
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('renders no marker cell in a plan that cannot buy a providing add-on', () => {
+    for (const item of results) {
+      expect(item.misleadingTable, `${item.fixture} table`).toBe(0);
+      expect(item.misleadingCompact, `${item.fixture} compact`).toBe(0);
     }
+  });
+
+  // Q1: R9 keeps its marked-row counts only if every add-on-only row stays marked in some plan.
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('keeps a marker in as many rows as metrics.json counts add-on-only rows', () => {
+    const wanted = (item: FixtureResult): number => expected.get(item.fixture)!;
+    const below = withoutOkta()
+      .filter((item) => item.referenceMarkedRows < wanted(item))
+      .map((item) => `${item.fixture}: ${item.referenceMarkedRows} marked < ${wanted(item)}`);
+    expect(below).toEqual([]);
   });
 
   it('has the per-fixture counts of the report', () => {
@@ -651,4 +893,30 @@ describe('SPECTRA fixtures', () => {
       expect(item.markedCompact, item.fixture).toBe(0);
     }
   });
+});
+
+describe('stress fixtures', () => {
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('renders no marker cell in a plan that cannot buy a providing add-on', () => {
+    expect(stressFixtures).not.toHaveLength(0);
+    for (const fixture of stressFixtures) {
+      const viewModel = viewModelFromYaml(buildStressYaml(fixture));
+      for (const compact of [false, true]) {
+        const layout = compact ? 'compact' : 'table';
+        expect(misleadingMarkerCells(viewModel, compact), `${fixture.id} ${layout}`).toBe(0);
+      }
+    }
+  }, 120_000);
+
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('renders one marker per plan that can buy a providing add-on in each row', () => {
+    for (const fixture of stressFixtures) {
+      const viewModel = viewModelFromYaml(buildStressYaml(fixture));
+      for (const compact of [false, true]) {
+        const text = flatten(renderComparison(stateFor(viewModel, compact)));
+        const rendered = renderedRows(viewModel, compact, text);
+        expect(markerCountMismatches(viewModel, compact, rendered), fixture.id).toEqual([]);
+      }
+    }
+  }, 120_000);
 });
