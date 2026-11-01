@@ -121,16 +121,54 @@ describe('applySelectionInput', () => {
     expect(result.selection.addOns).toEqual({ extraStorage: { selected: true, quantity: 2 } });
   });
 
-  // [utest->req~apply-input-unknown-addons~1]
-  it('does not throw on a null entry of a known add-on', () => {
-    const current = currentOf(acme, {
+  const malformedCurrent = () =>
+    currentOf(acme, {
       planId: 'growth',
       addOns: { extraStorage: { selected: true, quantity: 3 } },
     });
-    const input = { planId: 'growth', addOns: { extraStorage: null } } as never;
+
+  for (const [label, entry] of [
+    ['null', null],
+    ['number', 2],
+  ] as const) {
+    // [utest->req~apply-input-malformed-entries~1]
+    it(`treats a ${label} entry of a known add-on as omitted`, () => {
+      const input = { planId: 'growth', addOns: { extraStorage: entry } } as never;
+      const apply = () => applySelectionInput(acme, malformedCurrent(), input);
+      expect(apply).not.toThrow();
+      expect(apply().selection.addOns).toEqual({});
+    });
+  }
+
+  // [utest->req~apply-input-malformed-entries~1]
+  it('treats addOns null as omitted', () => {
+    const input = { planId: 'growth', addOns: null } as never;
+    const apply = () => applySelectionInput(acme, malformedCurrent(), input);
+    expect(apply).not.toThrow();
+    expect(apply().selection.planId).toBe('growth');
+    expect(apply().selection.addOns).toEqual({});
+  });
+
+  // [utest->req~apply-input-malformed-entries~1]
+  it('treats variables null as omitted', () => {
+    const current = currentOf(acme, {
+      variables: { ...defaultVariables, seats: 40 },
+    });
+    const input = { planId: 'starter', variables: null } as never;
     const apply = () => applySelectionInput(acme, current, input);
     expect(apply).not.toThrow();
-    expect(apply().selection.addOns.extraStorage).toEqual(current.addOns.extraStorage);
+    expect(apply().selection.variables).toEqual(acmeDefaults.variables);
+  });
+
+  // [utest->req~apply-input-quantities~1]
+  it('keeps NaN and Infinity quantities of an unselected entry', () => {
+    const quantityOf = (quantity: number) =>
+      applySelectionInput(acme, acmeDefaults, {
+        planId: 'growth',
+        addOns: { extraStorage: { selected: false, quantity } },
+      }).selection.addOns.extraStorage?.quantity;
+    expect(Number.isNaN(quantityOf(Number.NaN))).toBe(true);
+    expect(quantityOf(Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY);
   });
 
   // [utest->req~apply-input-warnings~1]

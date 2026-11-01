@@ -376,9 +376,34 @@ describe('selection helpers', () => {
       delete (Object.prototype as Record<string, unknown>).polluted;
     });
 
-    const paths = ['__proto__.polluted', 'a.__proto__.polluted', 'constructor.prototype.polluted'];
+    // [utest->req~core-selection-variable-path-safe~1]
+    it('treats constructor and prototype as ordinary names', () => {
+      let next: PricingSelection | undefined;
+      try {
+        expect(() => {
+          next = api.selectionWithVariable(defaults, 'constructor.prototype.polluted', 1);
+        }).not.toThrow();
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        const variables = next!.variables;
+        expect(Object.hasOwn(variables, 'constructor')).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(variables, 'constructor')?.value).toEqual({
+          prototype: { polluted: 1 },
+        });
+      } finally {
+        delete (Object.prototype as Record<string, unknown>).polluted;
+      }
+    });
+
+    // [utest->req~core-selection-variable-path-safe~1]
+    it('updates an own variable named prototype', () => {
+      const selection = { ...defaults, variables: { prototype: 1 } };
+      const next = api.selectionWithVariable(selection, 'prototype', 2);
+      expect(next.variables).toEqual({ prototype: 2 });
+    });
+
+    const paths = ['__proto__.polluted', 'a.__proto__.polluted'];
     for (const path of paths) {
-      // [utest->req~core-selection-with-variable~1]
+      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the path ${path}`, () => {
         let next: PricingSelection | undefined;
         try {
@@ -387,6 +412,14 @@ describe('selection helpers', () => {
           }).not.toThrow();
           expect(({} as Record<string, unknown>).polluted).toBeUndefined();
           expect(next?.variables).toEqual(defaults.variables);
+          const copy = structuredClone(defaults.variables);
+          (core as unknown as { setAtPath: (t: unknown, p: string, v: unknown) => void }).setAtPath(
+            copy,
+            path,
+            1,
+          );
+          expect(copy).toEqual(defaults.variables);
+          expect(({} as Record<string, unknown>).polluted).toBeUndefined();
         } finally {
           delete (Object.prototype as Record<string, unknown>).polluted;
         }
@@ -396,7 +429,7 @@ describe('selection helpers', () => {
 
   describe('array index cap', () => {
     for (const path of ['a[4294967294]', 'list[1001]']) {
-      // [utest->req~core-selection-with-variable~1]
+      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the path ${path}`, () => {
         const started = performance.now();
         const next = api.selectionWithVariable(defaults, path, 1);
@@ -406,18 +439,40 @@ describe('selection helpers', () => {
       });
     }
 
-    // [utest->req~core-selection-with-variable~1]
+    // [utest->req~core-selection-variable-path-safe~1]
     it('still writes list[1000]', () => {
       const list = api.selectionWithVariable(defaults, 'list[1000]', 1).variables.list;
       expect(Array.isArray(list)).toBe(true);
       expect((list as unknown[])[1000]).toBe(1);
     });
 
-    // [utest->req~core-selection-with-variable~1]
+    // [utest->req~core-selection-variable-path-safe~1]
     it('still writes list[0].x', () => {
       const next = api.selectionWithVariable(defaults, 'list[0].x', 1);
       expect(next.variables.list).toEqual([{ x: 1 }]);
     });
+
+    for (const path of ['tiers.1e9', 'tiers.abc', 'tiers.-1', 'tiers.0x10']) {
+      // [utest->req~core-selection-variable-path-safe~1]
+      it(`refuses the non-canonical index ${path} on an existing array`, () => {
+        const tiers: unknown[] = [];
+        const selection = { ...defaults, variables: { tiers } };
+        const next = api.selectionWithVariable(selection, path, 1);
+        expect((next.variables.tiers as unknown[]).length).toBe(0);
+        expect(next.variables).toEqual({ tiers: [] });
+        expect(tiers.length).toBe(0);
+      });
+    }
+  });
+
+  // [utest->req~core-selection-variable-path-safe~1]
+  it('reads own properties only with getAtPath', () => {
+    const getAtPath = (core as unknown as { getAtPath: (s: unknown, p: string) => unknown })
+      .getAtPath;
+    expect(getAtPath({ a: 1 }, 'constructor')).toBeUndefined();
+    expect(getAtPath({ a: 1 }, 'toString')).toBeUndefined();
+    expect(getAtPath({ a: 1 }, '__proto__')).toBeUndefined();
+    expect(getAtPath({ a: 1 }, 'a')).toBe(1);
   });
 
   // [utest->req~core-selection-with-addon-quantity~1]
