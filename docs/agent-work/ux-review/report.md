@@ -527,9 +527,9 @@ The SPECTRA report ranked 11 items (`report.md:108-121`). State per `ROADMAP.md:
 ### UX-9 Filler descriptions for plans and add-ons
 
 - Objective: apply the item 11 rule to the other two description sites.
-- Change: extract the check of `rowDescription` (`renderers.ts:218-223`) into a helper used for the plan
-  description (`renderers.ts:388`) and the add-on description (`renderers.ts:1049`, and the add-on search
-  `:1166-1167` keeps matching the raw text). Case-insensitive, trimmed, equal to the name means hidden.
+- Change: extract the check of `rowDescription` (`renderers.ts:253-257`) into a helper used for the plan
+  description (`renderers.ts:498`) and the add-on description (`renderers.ts:1165`, and the add-on search
+  `:1282-1283` keeps matching the raw text). Case-insensitive, trimmed, equal to the name means hidden.
   No clamp.
 - Files: `src/element/renderers.ts`; `tests/unit/row-descriptions.test.ts` (extend).
 - Proof: unit test of a plan and an add-on whose description equals the name: no paragraph.
