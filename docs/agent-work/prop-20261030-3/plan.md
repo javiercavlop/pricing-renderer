@@ -1,0 +1,1 @@
+1. V1-spec task 21ec890c1bea4a48 writes tests/browser/visual-variants.spec.ts only (no baselines). 2. Integrate it, then park for the coordinator's note with the owner's answer on crp-pr-visual-baselines-route. 3. After the answer: add the 4 -linux PNGs by the chosen route, ui-qa on the 4 images (G12) plus a reviewer, push, PR, ready. D1 / INTENT.md is out of scope.
