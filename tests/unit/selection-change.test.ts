@@ -394,6 +394,32 @@ describe('selection helpers', () => {
     }
   });
 
+  describe('array index cap', () => {
+    for (const path of ['a[4294967294]', 'list[1001]']) {
+      // [utest->req~core-selection-with-variable~1]
+      it(`refuses the path ${path}`, () => {
+        const started = performance.now();
+        const next = api.selectionWithVariable(defaults, path, 1);
+        expect(performance.now() - started).toBeLessThan(500);
+        expect(next.variables).toEqual(defaults.variables);
+        expect(next.variables).not.toHaveProperty(path.slice(0, path.indexOf('[')));
+      });
+    }
+
+    // [utest->req~core-selection-with-variable~1]
+    it('still writes list[1000]', () => {
+      const list = api.selectionWithVariable(defaults, 'list[1000]', 1).variables.list;
+      expect(Array.isArray(list)).toBe(true);
+      expect((list as unknown[])[1000]).toBe(1);
+    });
+
+    // [utest->req~core-selection-with-variable~1]
+    it('still writes list[0].x', () => {
+      const next = api.selectionWithVariable(defaults, 'list[0].x', 1);
+      expect(next.variables.list).toEqual([{ x: 1 }]);
+    });
+  });
+
   // [utest->req~core-selection-with-addon-quantity~1]
   it('caps an add-on quantity at the maximum', () => {
     const next = api.selectionWithAddOnQuantity(acme, defaults, 'extraStorage', 40);
