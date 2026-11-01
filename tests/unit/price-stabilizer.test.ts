@@ -149,6 +149,47 @@ describe('last valid price', () => {
   });
 });
 
+describe('latest valid price', () => {
+  const amountOf = (amount: number): ResolvedPrice => ({
+    kind: 'amount',
+    amount,
+    baseAmount: amount,
+    billingMultiplier: 1,
+    quantity: 1,
+  });
+
+  // [utest->req~price-stabilizer-last-valid~1]
+  it('keeps the newest plan price over an error', () => {
+    const stabilizer = keptStarter();
+    stabilizer.stabilize(viewModel({ planPrices: { starter: amountOf(30) } }));
+    const result = stabilizer.stabilize(viewModel({ planPrices: { starter: { ...errorPrice } } }));
+    expect(result.resolved.planPrices.starter).toEqual(amountOf(30));
+  });
+
+  // [utest->req~price-stabilizer-last-valid~1]
+  it('keeps the newest add-on price over an error', () => {
+    const stabilizer = createPriceStabilizer();
+    stabilizer.stabilize(viewModel({ addOnPrices: { extraStorage: amountOf(20) } }));
+    stabilizer.stabilize(viewModel({ addOnPrices: { extraStorage: amountOf(30) } }));
+    const result = stabilizer.stabilize(
+      viewModel({ addOnPrices: { extraStorage: { ...errorPrice } } }),
+    );
+    expect(result.resolved.addOnPrices.extraStorage).toEqual(amountOf(30));
+  });
+
+  // [utest->req~price-stabilizer-last-valid~1]
+  it('keeps an error for ids that name Object.prototype members', () => {
+    const result = createPriceStabilizer().stabilize(
+      viewModel({
+        planPrices: { constructor: { ...errorPrice } },
+        addOnPrices: { toString: { ...errorPrice } },
+      }),
+    );
+    expect(result.resolved.planPrices.constructor?.kind).toBe('error');
+    expect(result.resolved.addOnPrices.toString?.kind).toBe('error');
+  });
+});
+
 describe('records', () => {
   // [utest->req~price-stabilizer-records~1]
   it('records the prices of a call whose result is dropped', () => {

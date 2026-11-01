@@ -121,6 +121,18 @@ describe('applySelectionInput', () => {
     expect(result.selection.addOns).toEqual({ extraStorage: { selected: true, quantity: 2 } });
   });
 
+  // [utest->req~apply-input-unknown-addons~1]
+  it('does not throw on a null entry of a known add-on', () => {
+    const current = currentOf(acme, {
+      planId: 'growth',
+      addOns: { extraStorage: { selected: true, quantity: 3 } },
+    });
+    const input = { planId: 'growth', addOns: { extraStorage: null } } as never;
+    const apply = () => applySelectionInput(acme, current, input);
+    expect(apply).not.toThrow();
+    expect(apply().selection.addOns.extraStorage).toEqual(current.addOns.extraStorage);
+  });
+
   // [utest->req~apply-input-warnings~1]
   it('warns about an unknown plan', () => {
     const result = applySelectionInput(acme, currentOf(acme, { planId: 'growth' }), {

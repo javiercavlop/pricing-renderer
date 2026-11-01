@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import * as core from '../../src/core/index.js';
 import { createDefaultSelection, normalizePricing } from '../../src/core/index.js';
 import type { NormalizedPricing, PricingSelection } from '../../src/core/index.js';
@@ -205,6 +205,15 @@ describe('planSelectionChange', () => {
   });
 
   // [utest->req~core-addon-deselect-change~1]
+  it('removes only the selected dependents of a deselected add-on', () => {
+    const selection = selectionOf(chain, 'basic', { base: 1, middle: 1 });
+    const pending = confirmOf(
+      api.planSelectionChange(chain, selection, addOnIntent('base', false)),
+    );
+    expect(pending.removeIds).toEqual(['middle']);
+  });
+
+  // [utest->req~core-addon-deselect-change~1]
   it('removes transitive dependents of a deselected add-on', () => {
     const selection = selectionOf(chain, 'basic', { base: 1, middle: 1, top: 1 });
     const pending = confirmOf(
@@ -233,11 +242,67 @@ describe('planSelectionChange', () => {
     );
   });
 
+  // [utest->req~core-addon-change-direct~1]
+  it('applies the selection of an add-on whose dependency is already selected', () => {
+    const selection = selectionOf(acme, 'growth', { extraStorage: 1 });
+    const result = api.planSelectionChange(acme, selection, addOnIntent('prioritySuccess', true));
+    expect(result.kind).toBe('apply');
+    const applied = (result as Applied).selection;
+    expect(applied.addOns.prioritySuccess).toEqual({ selected: true, quantity: 1 });
+  });
+
+  // [utest->req~core-addon-change-direct~1]
+  it('applies the deselection of an add-on that nothing depends on', () => {
+    const selection = selectionOf(acme, 'growth', { extraStorage: 1 });
+    const result = api.planSelectionChange(acme, selection, addOnIntent('extraStorage', false));
+    expect(result.kind).toBe('apply');
+    expect((result as Applied).selection.addOns.extraStorage?.selected).toBe(false);
+  });
+
   // [utest->req~core-addon-change-unknown~1]
   it('changes nothing for an unknown add-on', () => {
     const result = api.planSelectionChange(acme, defaults, addOnIntent('ghost', true));
     expect(result.kind).toBe('apply');
     expect((result as { selection: PricingSelection }).selection).toEqual(defaults);
+  });
+
+  // [utest->req~core-plan-change-pending~1]
+  it('lists the removed add-ons in the order of the pricing', () => {
+    const selection = selectionOf(acme, 'enterprise', { compliance: 1, extraStorage: 1 });
+    const pending = confirmOf(
+      api.planSelectionChange(acme, selection, { type: 'plan', planId: 'starter' }),
+    );
+    expect(pending.removeIds).toEqual(['extraStorage', 'compliance']);
+  });
+
+  const cycleOf = (addOns: Record<string, unknown>): NormalizedPricing =>
+    normalizePricing({
+      syntaxVersion: '3.1',
+      saasName: 'Cycle',
+      currency: 'EUR',
+      plans: { basic: { price: 10 } },
+      addOns,
+    } as never).value!;
+  const addIdsOf = (result: Result): string[] =>
+    result.kind === 'confirm' ? result.pending.addIds : [];
+
+  // [utest->req~core-addon-select-change~1]
+  it('never lists the selected add-on among the dependencies of a cycle', () => {
+    const cycle = cycleOf({
+      a: { price: 1, dependsOn: ['b'] },
+      b: { price: 1, dependsOn: ['a'] },
+    });
+    const selection = selectionOf(cycle, 'basic');
+    const result = api.planSelectionChange(cycle, selection, addOnIntent('a', true));
+    expect(addIdsOf(result)).toEqual(['b']);
+  });
+
+  // [utest->req~core-addon-select-change~1]
+  it('never lists an add-on that depends on itself', () => {
+    const cycle = cycleOf({ a: { price: 1, dependsOn: ['a'] } });
+    const selection = selectionOf(cycle, 'basic');
+    const result = api.planSelectionChange(cycle, selection, addOnIntent('a', true));
+    expect(addIdsOf(result)).not.toContain('a');
   });
 });
 
@@ -265,6 +330,37 @@ describe('applySelectionChange', () => {
     expect(next.addOns.extraStorage).toEqual({ selected: false, quantity: 2 });
     expect(next.addOns.prioritySuccess).toEqual({ selected: false, quantity: 1 });
   });
+
+  const quantityPricing = (constraints?: Record<string, unknown>): NormalizedPricing =>
+    normalizePricing({
+      syntaxVersion: '3.1',
+      saasName: 'Quantity',
+      currency: 'EUR',
+      plans: { basic: { price: 10 } },
+      addOns: {
+        seat: {
+          price: 1,
+          ...(constraints ? { subscriptionConstraints: constraints } : {}),
+        },
+      },
+    } as never).value!;
+  const seatChange: Pending = { addOnId: 'seat', select: true, addIds: [], removeIds: [] };
+
+  // [utest->req~core-apply-selection-change~1]
+  it('starts a new entry at the minimum quantity of the add-on', () => {
+    const pricing = quantityPricing({ minQuantity: 3 });
+    const selection = { ...createDefaultSelection(pricing), addOns: {} };
+    const next = api.applySelectionChange(pricing, selection, seatChange);
+    expect(next.addOns.seat).toEqual({ selected: true, quantity: 3 });
+  });
+
+  // [utest->req~core-apply-selection-change~1]
+  it('starts a new entry at quantity 1 without a minimum', () => {
+    const pricing = quantityPricing();
+    const selection = { ...createDefaultSelection(pricing), addOns: {} };
+    const next = api.applySelectionChange(pricing, selection, seatChange);
+    expect(next.addOns.seat).toEqual({ selected: true, quantity: 1 });
+  });
 });
 
 describe('selection helpers', () => {
@@ -273,6 +369,29 @@ describe('selection helpers', () => {
     const next = api.selectionWithVariable(defaults, 'priceByRegion.us-price', 12);
     expect(next.variables.priceByRegion).toEqual({ 'eu-price': 8, 'us-price': 12 });
     expect(next.variables.seats).toBe(5);
+  });
+
+  describe('prototype paths', () => {
+    afterEach(() => {
+      delete (Object.prototype as Record<string, unknown>).polluted;
+    });
+
+    const paths = ['__proto__.polluted', 'a.__proto__.polluted', 'constructor.prototype.polluted'];
+    for (const path of paths) {
+      // [utest->req~core-selection-with-variable~1]
+      it(`refuses the path ${path}`, () => {
+        let next: PricingSelection | undefined;
+        try {
+          expect(() => {
+            next = api.selectionWithVariable(defaults, path, 1);
+          }).not.toThrow();
+          expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+          expect(next?.variables).toEqual(defaults.variables);
+        } finally {
+          delete (Object.prototype as Record<string, unknown>).polluted;
+        }
+      });
+    }
   });
 
   // [utest->req~core-selection-with-addon-quantity~1]
@@ -288,6 +407,14 @@ describe('selection helpers', () => {
     const on = api.selectionInEffect(acme, selection, { variablesEnabled: true });
     expect(off.variables.seats).toBe(5);
     expect(on.variables.seats).toBe(40);
+    expect(off.variables).not.toBe(acme.variables);
+    expect(on.variables).not.toBe(selection.variables);
+  });
+
+  // [utest->req~core-selection-in-effect~1]
+  it('keeps the variables of the selection by default', () => {
+    const selection = api.selectionWithVariable(defaults, 'seats', 40);
+    expect(api.selectionInEffect(acme, selection).variables.seats).toBe(40);
   });
 });
 
@@ -307,17 +434,28 @@ describe('no mutation', () => {
     });
     const planIntent = deepFreeze<Intent>({ type: 'plan', planId: 'starter' });
     const addOn = deepFreeze<Intent>(addOnIntent('extraStorage', false));
-    const copies = structuredClone({ pricing, selection, pending, planIntent, addOn });
+    const applyIntent = deepFreeze<Intent>({ type: 'plan', planId: 'enterprise' });
+    const withDependency = deepFreeze<Pending>({
+      addOnId: 'prioritySuccess',
+      select: true,
+      addIds: ['extraStorage'],
+      removeIds: [],
+    });
+    const all = { pricing, selection, pending, planIntent, addOn, applyIntent, withDependency };
+    const copies = structuredClone(all);
 
     expect(() => {
       api.planSelectionChange(pricing, selection, planIntent);
       api.planSelectionChange(pricing, selection, addOn);
+      api.planSelectionChange(pricing, selection, applyIntent);
       api.applySelectionChange(pricing, selection, pending);
-      api.selectionWithVariable(selection, 'seats', 9);
+      api.applySelectionChange(pricing, selection, withDependency);
+      api.selectionWithVariable(selection, 'priceByRegion.us-price', 9);
       api.selectionWithAddOnQuantity(pricing, selection, 'extraStorage', 4);
       api.selectionInEffect(pricing, selection, { variablesEnabled: false });
+      api.selectionInEffect(pricing, selection, { variablesEnabled: true });
     }).not.toThrow();
-    expect({ pricing, selection, pending, planIntent, addOn }).toEqual(copies);
+    expect(all).toEqual(copies);
   });
 });
 
