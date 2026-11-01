@@ -5,6 +5,18 @@ export {
   getPricingRendererConfig,
 } from './config.js';
 export { compareSelections } from './compare.js';
+// [impl->req~apply-input-exported~1]
+export { applySelectionInput } from './apply-selection.js';
+export type { ApplySelectionInputResult } from './apply-selection.js';
+// [impl->req~selection-logic-exported~1]
+export {
+  applySelectionChange,
+  planSelectionChange,
+  selectionInEffect,
+  selectionWithAddOnQuantity,
+  selectionWithVariable,
+} from './selection-change.js';
+export { createPriceStabilizer } from './price-stabilizer.js';
 export { collectExpressionDependencies, evaluatePriceExpression } from './expression.js';
 export {
   enUS,
@@ -70,9 +82,11 @@ export type {
   NormalizedPricing,
   NormalizedUsageLimit,
   NormalizePricingOptions,
+  PendingAddOnChange,
   PriceBreakdown,
   PriceBreakdownLine,
   PriceSource,
+  PriceStabilizer,
   PricingComparisonGroup,
   PricingComparisonRow,
   PricingCta,
@@ -107,6 +121,8 @@ export type {
   ResolvedPrice,
   ResolvedPricing,
   ResolvePricingOptions,
+  SelectionChangeIntent,
+  SelectionChangeResult,
   SelectionComparison,
   SelectionComparisonInput,
   SelectionComparisonSide,
