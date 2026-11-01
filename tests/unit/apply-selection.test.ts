@@ -171,6 +171,90 @@ describe('applySelectionInput', () => {
     expect(quantityOf(Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY);
   });
 
+  const entryOf = (entry: unknown, selection = acmeDefaults) =>
+    applySelectionInput(acme, selection, {
+      planId: 'growth',
+      addOns: { extraStorage: entry },
+    } as never).selection.addOns.extraStorage;
+
+  // [utest->req~apply-input-quantities~1]
+  it('keeps an unselected entry without a quantity as it is', () => {
+    const entry = entryOf({ selected: false });
+    expect(entry).toEqual({ selected: false });
+    expect(entry).not.toHaveProperty('quantity');
+  });
+
+  // [utest->req~apply-input-quantities~1]
+  it('keeps a non-numeric quantity of an unselected entry', () => {
+    expect(entryOf({ selected: false, quantity: 'abc' })?.quantity).toBe('abc');
+  });
+
+  // [utest->req~apply-input-quantities~1]
+  it('keeps extra keys of an unselected entry', () => {
+    expect(entryOf({ selected: false, quantity: 2, note: 'x' })).toEqual({
+      selected: false,
+      quantity: 2,
+      note: 'x',
+    });
+  });
+
+  // [utest->req~apply-input-quantities~1]
+  it('keeps extra keys of a selected entry and normalizes its quantity', () => {
+    expect(entryOf({ selected: true, quantity: 25, note: 'x' })).toEqual({
+      selected: true,
+      quantity: 10,
+      note: 'x',
+    });
+  });
+
+  // [utest->req~apply-input-quantities~1]
+  it('counts a truthy selected value as selected', () => {
+    const entry = entryOf({ selected: 1, quantity: 25 });
+    expect(entry?.selected).toBeTruthy();
+    expect(entry?.quantity).toBe(10);
+  });
+
+  for (const [label, entry] of [
+    ['array', []],
+    ['string', 'x'],
+    ['boolean', true],
+  ] as const) {
+    // [utest->req~apply-input-malformed-entries~1]
+    it(`treats a ${label} entry of a known add-on as omitted`, () => {
+      const input = { planId: 'growth', addOns: { extraStorage: entry } } as never;
+      const apply = () => applySelectionInput(acme, malformedCurrent(), input);
+      expect(apply).not.toThrow();
+      expect(apply().selection.addOns).toEqual({});
+    });
+  }
+
+  for (const [label, variables] of [
+    ['an array', []],
+    ['a number', 7],
+  ] as const) {
+    // [utest->req~apply-input-malformed-entries~1]
+    it(`treats variables as omitted when it is ${label}`, () => {
+      const current = currentOf(acme, { variables: { ...defaultVariables, seats: 40 } });
+      const input = { planId: 'starter', variables } as never;
+      const apply = () => applySelectionInput(acme, current, input);
+      expect(apply).not.toThrow();
+      expect(apply().selection.variables).toEqual(acmeDefaults.variables);
+    });
+  }
+
+  for (const [label, addOns] of [
+    ['a string', 'x'],
+    ['an array', []],
+  ] as const) {
+    // [utest->req~apply-input-malformed-entries~1]
+    it(`treats addOns as omitted when it is ${label}`, () => {
+      const input = { planId: 'growth', addOns } as never;
+      const apply = () => applySelectionInput(acme, malformedCurrent(), input);
+      expect(apply).not.toThrow();
+      expect(apply().selection.addOns).toEqual({});
+    });
+  }
+
   // [utest->req~apply-input-warnings~1]
   it('warns about an unknown plan', () => {
     const result = applySelectionInput(acme, currentOf(acme, { planId: 'growth' }), {
