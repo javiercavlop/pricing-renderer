@@ -608,15 +608,32 @@ function isEmptyCell(value: unknown): boolean {
   return value === false || value === null || value === undefined;
 }
 
+// [impl->req~addon-marker-per-plan-availability~1]
+function addOnProvidesRow(addOn: PricingViewModel['addOns'][number], row: PricingComparisonRow) {
+  if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
+  return (
+    !isEmptyCell(unwrapValue(addOn.usageLimits[row.id])) ||
+    !isEmptyCell(unwrapValue(addOn.usageLimitsExtensions[row.id]))
+  );
+}
+
 export function isAddOnOnlyRow(viewModel: PricingViewModel, row: PricingComparisonRow): boolean {
   if (!row.values.every((cell) => isEmptyCell(cell.value))) return false;
-  return viewModel.addOns.some((addOn) => {
-    if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
-    return (
-      !isEmptyCell(unwrapValue(addOn.usageLimits[row.id])) ||
-      !isEmptyCell(unwrapValue(addOn.usageLimitsExtensions[row.id]))
-    );
-  });
+  return viewModel.addOns.some((addOn) => addOnProvidesRow(addOn, row));
+}
+
+// [impl->req~addon-marker-per-plan-availability~1]
+// [impl->req~addon-marker-helper-internal~1]
+export function addOnProvidesForPlan(
+  viewModel: PricingViewModel,
+  row: PricingComparisonRow,
+  planId: string,
+): boolean {
+  return viewModel.addOns.some(
+    (addOn) =>
+      addOnProvidesRow(addOn, row) &&
+      (addOn.availableFor.length === 0 || addOn.availableFor.includes(planId)),
+  );
 }
 
 export function getCustomDetails(pricing: NormalizedPricing): UnknownRecord {
