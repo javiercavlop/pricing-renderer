@@ -46,8 +46,7 @@ Checks (the coordinator registers them; names are the commands):
 
 ## I1: per-plan marker in both layouts
 
-- [ ] I1 Implementation (implementer, after T1 is frozen; serialized with other owners of
-  `src/element/renderers.ts`).
+- [ ] I1 Implementation (implementer, after T1 is frozen; serialized with other owners of `src/element/renderers.ts`).
   - Files: `src/core/view-model.ts`, `src/element/renderers.ts`,
     `.changeset/addon-marker-availability.md` (patch).
   - Change: design.md D1 and D2. Tags: `// [impl->req~addon-marker-per-plan-availability~1]` at the
@@ -60,11 +59,11 @@ Checks (the coordinator registers them; names are the commands):
 
 ## Ownership and order
 
-| Order | Task | Owns                                                                 | Parallel with |
-| ----- | ---- | -------------------------------------------------------------------- | ------------- |
-| 1     | S0   | `openspec/changes/addon-marker-available-for/**`, item 6 spec        | none          |
-| 2     | T1   | the three test files                                                 | none          |
-| 3     | I1   | `src/core/view-model.ts`, `src/element/renderers.ts`, I1 changeset   | none          |
+| Order | Task | Owns                                                               | Parallel with |
+| ----- | ---- | ------------------------------------------------------------------ | ------------- |
+| 1     | S0   | `openspec/changes/addon-marker-available-for/**`, item 6 spec      | none          |
+| 2     | T1   | the three test files                                               | none          |
+| 3     | I1   | `src/core/view-model.ts`, `src/element/renderers.ts`, I1 changeset | none          |
 
 ## Traceability checklist
 
