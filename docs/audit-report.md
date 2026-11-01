@@ -97,10 +97,12 @@ npm@11.18.0` (line 89) installs a version-pinned CLI with no integrity or
    (dev dependencies, install scripts, browser tooling) runs next to the
    publish credentials. Splitting build/test from publish would reduce the
    exposure.
-3. **`prepublishOnly` repeats work. Resolved.** `package.json` defined
-   `prepublishOnly` as `pnpm test && pnpm package:check`, so the unit tests ran
-   twice. It is now `pnpm package:check`, and the workflow runs `pnpm test`
-   once.
+3. **`prepublishOnly` ran the unit tests a second time. Resolved.**
+   `package.json` defined `prepublishOnly` as `pnpm test && pnpm package:check`,
+   so the unit tests ran twice. It is now `pnpm package:check`, and the
+   workflow runs `pnpm test` once. `package:check` (build, publint, attw) still
+   runs in the workflow and again through `prepublishOnly` during publish, and
+   the build also runs in `prepack`.
 4. **`dist_tag` interpolated into `run`. Resolved.** The last step used
    `--tag "${{ steps.release.outputs.dist_tag }}"` directly in the script. The
    value now reaches the step through `env` (`DIST_TAG`), a guard rejects
@@ -108,8 +110,8 @@ npm@11.18.0` (line 89) installs a version-pinned CLI with no integrity or
    script of the publish job contains a template expression.
 
 The changed workflow is not exercised until the owner's next release. The
-static test `tests/unit/release-workflow.test.ts` guards both fixes (items 3
-and 4).
+static test `tests/unit/release-workflow.test.ts` checks both fixes (items 3
+and 4); it checks that the guard text is present and anchored on `DIST_TAG`.
 
 ## Open items
 
@@ -127,11 +129,17 @@ and 4).
   accepted risk: a comment in `release.yml` records that it is accepted
   deliberately, gated by the protected `npm` environment and the immutable
   release tag, and that splitting the job has not been approved.
-- Release workflow items 3 (`prepublishOnly` repeats work) and 4 (`dist_tag`
-  interpolated into `run`) are **resolved**: `prepublishOnly` is now
-  `pnpm package:check`, and the dist-tag passes through `env` with a guard
-  before publish. The workflow is not exercised until the owner's next
-  release; `tests/unit/release-workflow.test.ts` guards both fixes.
+- Release workflow items 3 (`prepublishOnly` ran the unit tests a second time)
+  and 4 (`dist_tag` interpolated into `run`) are **resolved**:
+  `prepublishOnly` is now `pnpm package:check`, and the dist-tag passes through
+  `env` with a guard before publish. The workflow is not exercised until the
+  owner's next release; `tests/unit/release-workflow.test.ts` checks that the
+  guard text is present and anchored on `DIST_TAG`, and that the unit tests run
+  once.
+- The step that picks the dist-tag (`release.yml`, step "Verify the published
+  GitHub Release") selects `latest` for any `isPrerelease` value other than
+  `true`, including a failed `jq` read. The new guard cannot catch this because
+  `latest` is allowed. Noted, not changed here; a possible follow-up.
 - Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
   copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
   (checked against both upstream `LICENSE` files).

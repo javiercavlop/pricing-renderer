@@ -35,7 +35,7 @@ Checks (the coordinator registers them; names are the commands):
 Requirements: `req~release-dist-tag-env~1`, `req~release-single-unit-test-run~1`,
 `req~release-check-substrings-kept~1`. Risk medium (intake, I1: score 4).
 
-- [ ] T1 Tests (test-designer).
+- [x] T1 Tests (test-designer).
   - Files: `tests/unit/release-workflow.test.ts` (new).
   - Read only: `specs/release-workflow/spec.md`, `.github/workflows/release.yml`, `package.json`,
     `scripts/check-release-ready.mjs`.
@@ -48,7 +48,7 @@ Requirements: `req~release-dist-tag-env~1`, `req~release-single-unit-test-run~1`
   - Tags: `// [utest->req~release-dist-tag-env~1]`, `// [utest->req~release-single-unit-test-run~1]`,
     `// [utest->req~release-check-substrings-kept~1]`.
   - Checks: `red_before`, `release-test` (after I1), `lint`, `format`.
-- [ ] I1 Implementation (implementer, after T1 is frozen).
+- [x] I1 Implementation (implementer, after T1 is frozen).
   - Files: `.github/workflows/release.yml` (the publish step, `:130-131`), `package.json`
     (`scripts.prepublishOnly` only, `:147`), `docs/audit-report.md` (findings 3 and 4 resolved,
     "Open items" updated; finding 1 stays open, finding 2 stays accepted; the workflow is not
