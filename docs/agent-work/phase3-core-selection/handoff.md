@@ -1,6 +1,15 @@
 Goal: Phase 3 PR2 (PR 74), core selection logic P3-1T/P3-1I.
-State: head 2470e3b7 = all tasks integrated (tests d780e9c0, source b1f422a7 green: 1429 unit tests, typecheck, lint, format). Explorer 25400912 was blocked (no Bash) and analysed the pre-fix code, so its spec findings are stale (already fixed by b1f422a7); its 0.1.0 premise was wrong: applySelection post-dates tag v0.1.0, the 'before' code is the inline element code in develop at fork 09363ed7 (git show 09363ed7:src/element/pricing-renderer-element.ts). Unverified vs that code: selected stored as boolean, unselected-entry quantity fallback 0. Panel round 3 reviewer is asked to check this against git.
-Decisions: no more comparison tasks by workers without Bash; the reviewer verifies. Followups: tests for 'x.01' and non-numeric unselected quantity once confirmed.
-Next: push, pr_update body (accepted risks: clone depth/cycles from host input throw a catchable RangeError; __proto__ ids in plain records in resolve.ts as followup; open owner points G4 and size), panel round 3 on the pushed head, set_review_package, lead_ready.
+
+State: pushed head 1df7d3ce failed CI only on format:check of this handoff.md (the double-underscore proto id was read as bold markup; it is now written in backticks). Panel round 3 (head 1df7d3ce): reviewer found R3-REV-001 major (applySelectionInput turns selected into a boolean and sets the quantity of an unselected entry to 0; the pre-change inline element code kept both as they were), test-reviewer found untested leading-zero and index-cap paths, security-auditor and arch-reviewer found no blocker.
+
+Tasks 2e789e62 (apply-selection.test.ts) and 395912ef (selection-change.test.ts) were blocked only by that format failure on a file outside their scope; their diffs are right, but blocked tasks cannot be integrated, so they are replaced by new tasks with the same tests.
+
+Baseline: applySelectionInput known entry was entry.selected ? {...entry, quantity: normalizeAddOnQuantity(pricing, id, entry)} : entry. getAtPath on arrays read Number(segment).
+
+Decisions: no comparison tasks by workers without Bash. Write handoff text so that prettier accepts it (no bare double underscores).
+
+Next: integrate both replacement test tasks; submit the source task on src/core/apply-selection.ts only (selected truthy keeps the entry with a normalized quantity, unselected stays as is, keep isRecord guards, drop Boolean coercion and the quantity-0 fallback); push; update PR body; round 4 panel (reviewer, test-reviewer, short security and arch re-check); set_review_package; lead_ready. A failing round 4 means escalate.
+
 Open owner decisions (CRP crp-pr-phase3-g4-size; not waived): G4 T/I separation, size.
+
 Note: prop-20261101-1 waits for this merge.
