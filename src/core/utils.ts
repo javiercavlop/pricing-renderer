@@ -69,23 +69,35 @@ export function cloneValue<T>(value: T): T {
   return value;
 }
 
-export function getAtPath(source: unknown, path: string): unknown {
-  const segments = path
+const MAX_ARRAY_INDEX = 1000;
+const CANONICAL_INDEX = /^(0|[1-9]\d*)$/;
+
+function hasOwn(target: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}
+
+function pathSegments(path: string): string[] {
+  return path
     .replace(/\[(\d+)\]/g, '.$1')
     .split('.')
     .filter(Boolean);
+}
+
+function ownValue(container: object, key: string): unknown {
+  return hasOwn(container, key) ? (container as Record<string, unknown>)[key] : undefined;
+}
+
+// [impl->req~core-selection-variable-path-safe~1]
+export function getAtPath(source: unknown, path: string): unknown {
   let current = source;
-  for (const segment of segments) {
+  for (const segment of pathSegments(path)) {
     if (Array.isArray(current)) {
-      if (!hasOwn(current, segment)) {
+      if (!CANONICAL_INDEX.test(segment)) {
         return undefined;
       }
-      current = (current as unknown as Record<string, unknown>)[segment];
+      current = ownValue(current, segment);
     } else if (isRecord(current)) {
-      if (!hasOwn(current, segment)) {
-        return undefined;
-      }
-      current = current[segment];
+      current = ownValue(current, segment);
     } else {
       return undefined;
     }
@@ -93,41 +105,50 @@ export function getAtPath(source: unknown, path: string): unknown {
   return current;
 }
 
-const FORBIDDEN_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
-const MAX_ARRAY_INDEX = 1000;
-
-function hasOwn(target: object, key: PropertyKey): boolean {
-  return Object.prototype.hasOwnProperty.call(target, key);
-}
-
-// True when writing the path would touch a prototype or build an oversized sparse array.
+// True when writing the path would touch a prototype or build an oversized or invalid array.
 function isUnsafePath(source: unknown, segments: string[]): boolean {
-  if (segments.some((segment) => FORBIDDEN_SEGMENTS.has(segment))) {
-    return true;
-  }
-  // a missing container is created as an array exactly when its segment is numeric
   let current: unknown = source;
   for (const segment of segments) {
-    const numeric = /^\d+$/.test(segment);
-    const isArray = current === undefined ? numeric : Array.isArray(current);
-    if (isArray && numeric && Number(segment) > MAX_ARRAY_INDEX) {
+    if (segment === '__proto__') {
       return true;
     }
-    if (current !== undefined && typeof current === 'object' && current !== null) {
-      const key = Array.isArray(current) ? Number(segment) : segment;
-      current = hasOwn(current, key) ? (current as Record<PropertyKey, unknown>)[key] : undefined;
+    const canonical = CANONICAL_INDEX.test(segment);
+    if (current === undefined) {
+      // a missing container would be an array when its segment is all digits (design.md D4)
+      if (/^\d+$/.test(segment) && (!canonical || Number(segment) > MAX_ARRAY_INDEX)) {
+        return true;
+      }
+    } else if (Array.isArray(current)) {
+      if (!canonical || (!hasOwn(current, segment) && Number(segment) > MAX_ARRAY_INDEX)) {
+        return true;
+      }
+      current = ownValue(current, segment);
+    } else if (isRecord(current)) {
+      current = ownValue(current, segment);
     } else {
-      current = undefined;
+      return false;
     }
   }
   return false;
 }
 
+// Assigns an own property, so an inherited setter is never reached.
+function assignOwn(container: object, key: string, value: unknown): void {
+  if (hasOwn(container, key)) {
+    (container as Record<string, unknown>)[key] = value;
+  } else {
+    Object.defineProperty(container, key, {
+      value,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+}
+
+// [impl->req~core-selection-variable-path-safe~1]
 export function setAtPath(source: Record<string, unknown>, path: string, value: unknown): void {
-  const segments = path
-    .replace(/\[(\d+)\]/g, '.$1')
-    .split('.')
-    .filter(Boolean);
+  const segments = pathSegments(path);
   if (segments.length === 0 || isUnsafePath(source, segments)) {
     return;
   }
@@ -135,26 +156,17 @@ export function setAtPath(source: Record<string, unknown>, path: string, value: 
   let current: unknown = source;
   for (let index = 0; index < segments.length - 1; index += 1) {
     const segment = segments[index]!;
-    const next = segments[index + 1]!;
-    if (Array.isArray(current)) {
-      const numericIndex = Number(segment);
-      if (!hasOwn(current, numericIndex) || current[numericIndex] === undefined) {
-        current[numericIndex] = /^\d+$/.test(next) ? [] : {};
-      }
-      current = current[numericIndex];
-    } else if (isRecord(current)) {
-      if (!hasOwn(current, segment) || current[segment] === undefined) {
-        current[segment] = /^\d+$/.test(next) ? [] : {};
-      }
-      current = current[segment];
+    if (!Array.isArray(current) && !isRecord(current)) {
+      return;
     }
+    if (ownValue(current, segment) === undefined) {
+      assignOwn(current, segment, CANONICAL_INDEX.test(segments[index + 1]!) ? [] : {});
+    }
+    current = ownValue(current, segment);
   }
 
-  const finalSegment = segments[segments.length - 1]!;
-  if (Array.isArray(current)) {
-    current[Number(finalSegment)] = value;
-  } else if (isRecord(current)) {
-    current[finalSegment] = value;
+  if (Array.isArray(current) || isRecord(current)) {
+    assignOwn(current, segments[segments.length - 1]!, value);
   }
 }
 

@@ -5,7 +5,7 @@ import type {
   PricingDiagnostic,
   PricingSelection,
 } from './types.js';
-import { asFiniteNumber, cloneValue, isRecord } from './utils.js';
+import { cloneValue, isRecord } from './utils.js';
 
 export interface ApplySelectionInputResult {
   selection: PricingSelection;
@@ -14,6 +14,7 @@ export interface ApplySelectionInputResult {
 }
 
 // [impl->req~apply-input-result~1] [impl->req~apply-input-no-mutation~1]
+// [impl->req~apply-input-malformed-entries~1]
 export function applySelectionInput(
   pricing: NormalizedPricing,
   current: PricingSelection,
@@ -53,15 +54,18 @@ export function applySelectionInput(
     }
   }
 
-  if (copy.variables !== undefined) {
+  // [impl->req~apply-input-malformed-entries~1]
+  if (isRecord(copy.variables)) {
     validated.variables = copy.variables;
   }
 
   // [impl->req~apply-input-unknown-addons~1] [impl->req~apply-input-quantities~1]
-  if (copy.addOns !== undefined) {
+  // [impl->req~apply-input-malformed-entries~1]
+  if (isRecord(copy.addOns)) {
+    const inputAddOns: Record<string, unknown> = copy.addOns;
     const addOns: Record<string, AddOnSelection> = {};
-    for (const id of Object.keys(copy.addOns)) {
-      const entry = copy.addOns[id];
+    for (const id of Object.keys(inputAddOns)) {
+      const entry = inputAddOns[id];
       if (!pricing.addOns.some((addOn) => addOn.id === id)) {
         diagnostics.push({
           code: 'PR_SELECTION_UNKNOWN_ADDON',
@@ -71,21 +75,15 @@ export function applySelectionInput(
         });
         continue;
       }
-      if (entry === undefined) continue;
-      if (!isRecord(entry)) {
-        // not an add-on record: the current entry stays
-        const currentEntry = Object.prototype.hasOwnProperty.call(current.addOns, id)
-          ? current.addOns[id]
-          : undefined;
-        if (currentEntry !== undefined) addOns[id] = currentEntry;
-        continue;
-      }
-      const quantity = asFiniteNumber(entry.quantity);
-      if (entry.selected === true) {
-        const accepted: AddOnSelection = { selected: true, quantity: quantity ?? Number.NaN };
+      // a known add-on without a plain-object entry counts as omitted: the default applies
+      if (!isRecord(entry)) continue;
+      const selected = Boolean(entry.selected);
+      if (selected) {
+        const accepted = { ...entry, selected, quantity: entry.quantity } as AddOnSelection;
         addOns[id] = { ...accepted, quantity: normalizeAddOnQuantity(pricing, id, accepted) };
       } else {
-        addOns[id] = { selected: false, quantity: quantity ?? 0 };
+        const quantity = typeof entry.quantity === 'number' ? entry.quantity : 0;
+        addOns[id] = { ...entry, selected, quantity } as AddOnSelection;
       }
     }
     validated.addOns = addOns;
