@@ -1,1 +1,1 @@
-Push + PR, CI, panel (reviewer), ready.
+Done: S0, T1, I1, review round 1 fixes. Remaining: push, CI, round 2 review (reviewer) on the new head, pr_ready, set_review_package, lead_ready. Coordinator note: PR dirty only on handoff.md; coordinator syncs it after ready. Do not merge develop.
