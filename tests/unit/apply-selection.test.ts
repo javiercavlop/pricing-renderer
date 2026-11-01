@@ -66,10 +66,10 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(acme, result.selection).subtotal).toBe(80);
   });
 
-  // [utest->req~apply-input-internal~1]
-  it('is not exported from the core entry point', () => {
-    expect(Object.keys(core)).not.toContain('applySelectionInput');
-    expect(typeof applySelectionInput).toBe('function');
+  // [utest->req~apply-input-exported~1]
+  it('is exported from the core entry point', () => {
+    expect(Object.keys(core)).toContain('applySelectionInput');
+    expect((core as Record<string, unknown>).applySelectionInput).toBe(applySelectionInput);
   });
 
   // [utest->req~apply-input-unknown-plan~1]
