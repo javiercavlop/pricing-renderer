@@ -123,9 +123,23 @@ moved inside:
   (`req~search-params-read-addon-quantity-nan~1`). A `var.<path>` value is set on a copy of
   `pricing.variables` at the segments of the path split below; text that is not JSON stays a
   string, so a hand-written `var.region=us` works.
-- URL text is untrusted. `setAtPath` walks into an existing `__proto__` (`src/core/utils.ts:110-121`),
-  and creates an array for a missing parent of a digit segment (`:110-111`), which `cloneValue`
-  then walks index by index (`src/core/apply-selection.ts:22`). So the reader splits the path once
+- URL text is untrusted. The shared `setAtPath` (`src/core/utils.ts`, used by
+  `selectionWithVariable` and the element's `_updateVariable`) no longer walks into `__proto__`, and
+  ignores a non-canonical array index or a new index above 1000; `getAtPath` (the element's variable
+  controls) reads own properties only (`req~core-selection-variable-path-safe~1`, hardening from the
+  PR 74 review). Terms of that requirement: a path is split with `[<digits>]` read as `.<digits>`; a
+  segment addresses an array when its parent (the value the earlier segments reach) is an array, or
+  when its parent is missing and the segment is all decimal digits, so the parent would be created
+  as an array; canonical decimal digits are `0` or a digit run without a leading zero
+  (`/^(0|[1-9]\d*)$/`); a new index is one that is not already an own index of that array. "Not a
+  plain object" in `req~apply-input-malformed-entries~1` means `null`, an array or a primitive. The
+  hardening changes the element's variable controls and `applySelection` (`applySelectionInput`,
+  which now ignores malformed `addOns` and `variables` fields and non-object add-on entries,
+  `req~apply-input-malformed-entries~1`) only for invalid paths or values; valid paths and inputs
+  behave as before. `setAtPath` still treats `constructor` and `prototype` as ordinary own keys and
+  still creates an array for a missing parent of a digit segment, up to index 1000, which
+  `cloneValue` then walks index by index (`src/core/apply-selection.ts:22`). These checks are not
+  the reader's rules, so the reader keeps its own stricter ones. So the reader splits the path once
   (`[<digits>]` read as `.<digits>`, empty segments dropped; other bracket text stays part of a
   record key) and writes the value at exactly those segments, so the check and the write cannot
   disagree (`req~search-params-var-path-split~1`). It ignores the entry when a segment is
@@ -156,7 +170,7 @@ moved inside:
   selections: the reader normalizes quantities through `applySelectionInput`, fills missing
   defaults and reads `.` as a path; the writer does neither.
 - The read input is relative to the defaults: `applySelectionInput` merges with
-  `createDefaultSelection` (`src/core/apply-selection.ts:83-86`); `current` (option, default
+  `createDefaultSelection` (its `mergeSelection` call in `src/core/apply-selection.ts`); `current` (option, default
   `createDefaultSelection(pricing)`) only replaces an unknown plan or billing period. So one URL
   gives one selection.
 - Keys without the prefix and unknown keys are ignored. No new diagnostic code.

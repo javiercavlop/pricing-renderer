@@ -143,6 +143,86 @@ Needs: impl, utest
 - **WHEN** `selectionWithVariable(selection, 'priceByRegion.us-price', 12)` is called
 - **THEN** `variables.priceByRegion` deeply equals `{ 'eu-price': 8, 'us-price': 12 }` and `variables.seats` is 5
 
+### Requirement: Variable paths are written and read safely
+
+`req~core-selection-variable-path-safe~1`
+WHEN `selectionWithVariable` or `setAtPath` writes at a dot path, the core SHALL leave the variables unchanged if a segment is `__proto__`, or addresses an array and is not canonical digits or is a new index above 1000 (design.md D4), and else walk and write own properties only, never `Object.prototype`; `getAtPath` reads own properties only.
+
+Needs: impl, utest
+
+#### Scenario: Prototype key segments are ignored
+
+- **GIVEN** the acme fixture and its default selection
+- **WHEN** `selectionWithVariable(selection, '__proto__.polluted', 1)` and `selectionWithVariable(selection, 'a.__proto__.polluted', 1)` are called
+- **THEN** neither call throws and the `variables` of each result deeply equal the default `variables`
+- **AND** `({}).polluted` is `undefined`
+- **AND** `setAtPath` called with the same paths on a copy of the default `variables` leaves that copy deeply equal to the default `variables`
+
+#### Scenario: constructor and prototype are ordinary names
+
+- **GIVEN** the acme fixture and its default selection, whose `variables` have no own key `constructor`
+- **WHEN** `selectionWithVariable(selection, 'constructor.prototype.polluted', 1)` is called
+- **THEN** `variables.constructor` is an own property that deeply equals `{ prototype: { polluted: 1 } }`
+- **AND** `({}).polluted` is `undefined`
+
+#### Scenario: Index cap on a new array
+
+- **GIVEN** the acme fixture and its default selection, whose `variables` have no keys `list` and `a`
+- **WHEN** `selectionWithVariable(selection, 'list[1001]', 1)` and `selectionWithVariable(selection, 'a[4294967294]', 1)` are called
+- **THEN** the `variables` of each result deeply equal the default `variables`
+- **AND** `selectionWithVariable(selection, 'list[1000]', 1)` gives an array `variables.list` whose index 1000 is 1
+- **AND** `selectionWithVariable(selection, 'list[0].x', 1)` gives `variables.list` deeply equal to `[{ x: 1 }]`
+
+#### Scenario: Non-canonical index into an existing array
+
+- **GIVEN** a selection whose `variables` are `{ tiers: [] }`
+- **WHEN** `selectionWithVariable` is called with the path `tiers.1e9`, then `tiers.abc`, then `tiers.-1`, each with the value 1
+- **THEN** the `variables` of each result deeply equal `{ tiers: [] }`
+
+#### Scenario: Own variable named prototype
+
+- **GIVEN** a selection whose `variables` are `{ prototype: 1 }`, `prototype` being an own key
+- **WHEN** `selectionWithVariable(selection, 'prototype', 2)` is called
+- **THEN** the result's `variables` deeply equal `{ prototype: 2 }`
+
+#### Scenario: Inherited properties are not read
+
+- **GIVEN** the source `{ a: 1 }`
+- **WHEN** `getAtPath(source, 'constructor')`, `getAtPath(source, 'toString')` and `getAtPath(source, '__proto__')` are called
+- **THEN** each returns `undefined`
+- **AND** `getAtPath(source, 'a')` returns 1
+
+### Requirement: Malformed input entries are ignored
+
+`req~apply-input-malformed-entries~1`
+IF `input.addOns` or `input.variables` of `applySelectionInput` is not a plain object, or the `input.addOns` entry of an id in `pricing.addOns` is not a plain object, THEN `applySelectionInput` SHALL treat that field or entry as omitted, without throwing, so the default of `createDefaultSelection(pricing)` applies and not `current`, as for omitted fields in `req~apply-input-merge-defaults~1`.
+
+Needs: impl, utest
+
+#### Scenario: addOns is null
+
+- **GIVEN** the acme fixture, `current` with plan `growth` and `extraStorage` `{ selected: true, quantity: 3 }`, and `input` `{ planId: 'growth', addOns: null }`
+- **WHEN** `applySelectionInput` is called
+- **THEN** it does not throw, `selection.planId` is `growth` and `selection.addOns` deeply equals `{}`, the acme default
+
+#### Scenario: variables is null
+
+- **GIVEN** the acme fixture, `current` whose `variables.seats` is 40, and `input` `{ planId: 'starter', variables: null }`
+- **WHEN** `applySelectionInput` is called
+- **THEN** it does not throw and `selection.variables` deeply equals `createDefaultSelection(acme).variables`
+
+#### Scenario: Known add-on with a null entry
+
+- **GIVEN** the acme fixture, `current` with plan `growth` and `extraStorage` `{ selected: true, quantity: 3 }`, and `input` `{ planId: 'growth', addOns: { extraStorage: null } }`
+- **WHEN** `applySelectionInput` is called
+- **THEN** it does not throw and `selection.addOns` deeply equals `{}`, so the entry of `current` is not kept
+
+#### Scenario: Known add-on with a number entry
+
+- **GIVEN** the acme fixture, `current` with plan `growth` and `extraStorage` `{ selected: true, quantity: 3 }`, and `input` `{ planId: 'growth', addOns: { extraStorage: 2 } }`
+- **WHEN** `applySelectionInput` is called
+- **THEN** it does not throw and `selection.addOns` deeply equals `{}`
+
 ### Requirement: Add-on quantity helper
 
 `req~core-selection-with-addon-quantity~1`

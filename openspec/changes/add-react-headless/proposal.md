@@ -42,7 +42,8 @@ across requests (intake, item 3).
 - **Core selection logic** (`pricing-renderer`): `planSelectionChange`, `applySelectionChange`,
   `selectionWithVariable`, `selectionWithAddOnQuantity`, `selectionInEffect` and
   `createPriceStabilizer`, with the element's exact behaviour; `PendingAddOnChange` moves to the
-  core; `applySelectionInput` and `ApplySelectionInputResult` become public.
+  core; `applySelectionInput` and `ApplySelectionInputResult` become public. Variable paths with
+  `__proto__` or invalid array indexes and malformed `applySelectionInput` entries are ignored.
 - **Search params** (`pricing-renderer`): `selectionToSearchParams` and `selectionFromSearchParams`
   over `[string, string]` pairs; keys `plan`, `billing`, `addon`, `var.<path>`, optional prefix.
 - **Shared source load** (`pricing-renderer/yaml`): `loadPricingSource`, the element's one-source
