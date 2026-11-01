@@ -77,14 +77,10 @@ export function applySelectionInput(
       }
       // a known add-on without a plain-object entry counts as omitted: the default applies
       if (!isRecord(entry)) continue;
-      const selected = Boolean(entry.selected);
-      if (selected) {
-        const accepted = { ...entry, selected, quantity: entry.quantity } as AddOnSelection;
-        addOns[id] = { ...accepted, quantity: normalizeAddOnQuantity(pricing, id, accepted) };
-      } else {
-        const quantity = typeof entry.quantity === 'number' ? entry.quantity : 0;
-        addOns[id] = { ...entry, selected, quantity } as AddOnSelection;
-      }
+      const accepted = entry as unknown as AddOnSelection;
+      addOns[id] = entry.selected
+        ? { ...accepted, quantity: normalizeAddOnQuantity(pricing, id, accepted) }
+        : accepted;
     }
     validated.addOns = addOns;
   }
