@@ -10,7 +10,7 @@ import type {
   PricingViewModel,
   ViewModelOptions,
 } from '../../src/core/index.js';
-import { isAddOnOnlyRow } from '../../src/core/view-model.js';
+import { addOnProvidesForPlan, isAddOnOnlyRow } from '../../src/core/view-model.js';
 import { renderAddOns, renderComparison, renderPlans } from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
@@ -489,6 +489,132 @@ describe('add-on marker per plan availability', () => {
     expect(planA).toContain('—');
     expect(planA).toContain(getMessages('es')['pricing.notIncluded']!);
     expect(count(planA, MARKER)).toBe(0);
+  });
+
+  const SEATS = `usageLimits:
+  seats:
+    name: Row Seats
+    tag: Usage
+    type: renewable
+    period: monthly
+    valueType: NUMERIC
+    defaultValue: null
+    unit: seat
+`;
+
+  for (const compact of [false, true]) {
+    const layout = compact ? 'compact' : 'table';
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`takes availability and provision from the same add-on (${layout})`, () => {
+      const other = `  other:
+    name: Pack other
+    availableFor: [planA]
+    price: 5
+    unit: month
+    features:
+      alpha:
+        value: false
+`;
+      const viewModel = viewModelFromYaml(TWO_PLANS + alphaAddOn('packB', ['planB']) + other);
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const [planA, planB] = cellsOf(chunkFor(text, 'Row Alpha'), compact) as [string, string];
+      expect(count(planA, MARKER)).toBe(0);
+      expect(count(planA, EXCLUDED)).toBe(1);
+      expect(count(planB, MARKER)).toBe(1);
+      expect(count(planB, EXCLUDED)).toBe(0);
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`marks a usage-limit row only in the plan its restricted extension is for (${layout})`, () => {
+      const extension = `  seatPack:
+    name: Seat pack
+    availableFor: [planB]
+    price: 5
+    unit: month
+    usageLimitsExtensions:
+      seats:
+        value: 5
+`;
+      const yaml = (TWO_PLANS + extension).replace('plans:\n', `${SEATS}plans:\n`);
+      const viewModel = viewModelFromYaml(yaml);
+      expect(rowById(viewModel, 'seats').kind).toBe('usage-limit');
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const [planA, planB] = cellsOf(chunkFor(text, 'Row Seats'), compact) as [string, string];
+      expect(count(planB, MARKER)).toBe(1);
+      expect(count(planA, MARKER)).toBe(0);
+      expect(count(planA, EXCLUDED)).toBe(1);
+      expect(planA).toContain('Not included');
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`keeps the em dash in a mixed row (${layout})`, () => {
+      const planB = '  planB:\n    name: Plan B\n    price: 20\n    unit: month\n    features:\n';
+      const alphaTrue = `${planB}      alpha:\n        value: true\n`;
+      const yaml = (TWO_PLANS + alphaAddOn('packA', ['planA'])).replace(planB, alphaTrue);
+      const viewModel = viewModelFromYaml(yaml);
+      expect(rowById(viewModel, 'alpha').values.map((cell) => cell.value)).toEqual([false, true]);
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const chunk = chunkFor(text, 'Row Alpha');
+      const [planA] = cellsOf(chunk, compact) as [string, string];
+      expect(count(planA, EXCLUDED)).toBe(1);
+      expect(planA).toContain('Not included');
+      expect(count(chunk, MARKER)).toBe(0);
+    });
+
+    // [utest->req~addon-marker-per-plan-availability~1]
+    it(`shows no marker in the Mailchimp FREE column (${layout})`, () => {
+      const source = readFileSync(join(fixturesRoot, 'mailchimp/2024.yml'), 'utf8');
+      const viewModel = viewModelFromYaml(source);
+      expect(viewModel.plans.map((plan) => plan.id)).toContain('FREE');
+      const free = viewModel.plans.findIndex((plan) => plan.id === 'FREE');
+      const text = flatten(renderComparison(stateFor(viewModel, compact)));
+      const rendered = renderedRows(viewModel, compact, text).filter(({ row }) =>
+        isAddOnOnlyRow(viewModel, row),
+      );
+      expect(rendered.length).toBeGreaterThan(0);
+      for (const { row, cells } of rendered) {
+        const cell = cells[free]!;
+        expect(count(cell, MARKER), row.id).toBe(0);
+        expect(count(cell, EXCLUDED), row.id).toBe(1);
+        expect(cell, row.id).toContain('Not included');
+      }
+    });
+  }
+});
+
+describe('per-plan helper', () => {
+  const yaml = TWO_PLANS + alphaAddOn('packB', ['planB']);
+
+  // [utest->req~addon-marker-helper-internal~1]
+  it('is a function exported from the view model module', () => {
+    expect(typeof addOnProvidesForPlan).toBe('function');
+  });
+
+  // [utest->req~addon-marker-helper-internal~1]
+  it('answers per plan for a restricted add-on', () => {
+    const viewModel = viewModelFromYaml(yaml);
+    const row = rowById(viewModel, 'alpha');
+    expect(addOnProvidesForPlan(viewModel, row, 'planB')).toBe(true);
+    expect(addOnProvidesForPlan(viewModel, row, 'planA')).toBe(false);
+  });
+
+  // [utest->req~addon-marker-helper-internal~1]
+  it('renders no data-pr-part value or attribute name that the unrestricted pricing lacks', () => {
+    const hooks = (source: string): { parts: Set<string>; attributes: Set<string> } => {
+      const viewModel = viewModelFromYaml(source);
+      const text = flatten(renderComparison(stateFor(viewModel)));
+      return {
+        parts: new Set(Array.from(text.matchAll(/data-pr-part="([^"]*)"/g), (m) => m[1]!)),
+        attributes: new Set(Array.from(text.matchAll(/\s([a-zA-Z][\w:.-]*)=/g), (m) => m[1]!)),
+      };
+    };
+    const restricted = hooks(yaml);
+    const plain = hooks(TWO_PLANS + alphaAddOn('packB', []));
+    const newParts = [...restricted.parts].filter((part) => !plain.parts.has(part));
+    const newAttributes = [...restricted.attributes].filter((name) => !plain.attributes.has(name));
+    expect(newParts).toEqual([]);
+    expect(newAttributes).toEqual([]);
   });
 });
 

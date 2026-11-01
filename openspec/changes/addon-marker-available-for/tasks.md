@@ -28,7 +28,7 @@ Checks (the coordinator registers them; names are the commands):
 
 ## T1: tests for the per-plan marker
 
-- [ ] T1 Tests (test-designer, after S0).
+- [x] T1 Tests (test-designer, after S0).
   - Files: `tests/unit/addon-marker.test.ts`, `tests/unit/ux-counts.test.ts`,
     `tests/browser/spectra-addon-marker.spec.ts`.
   - Read only: `specs/addon-marker/spec.md`, `src/element/renderers.ts`, `src/core/view-model.ts`,
@@ -46,7 +46,7 @@ Checks (the coordinator registers them; names are the commands):
 
 ## I1: per-plan marker in both layouts
 
-- [ ] I1 Implementation (implementer, after T1 is frozen; serialized with other owners of `src/element/renderers.ts`).
+- [x] I1 Implementation (implementer, after T1 is frozen; serialized with other owners of `src/element/renderers.ts`).
   - Files: `src/core/view-model.ts`, `src/element/renderers.ts`,
     `.changeset/addon-marker-availability.md` (patch).
   - Change: design.md D1 and D2. Tags: `// [impl->req~addon-marker-per-plan-availability~1]` at the

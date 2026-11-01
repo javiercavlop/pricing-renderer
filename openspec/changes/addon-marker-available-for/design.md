@@ -6,17 +6,17 @@ answers CRP-U7 with Q-D "keep R6". Line numbers are at `09363ed`.
 
 ## Context
 
-- `isAddOnOnlyRow(viewModel, row)` (`src/core/view-model.ts:611-620`): every plan cell is empty
+- `isAddOnOnlyRow(viewModel, row)` (`src/core/view-model.ts:620-623`): every plan cell is empty
   (`false`, `null`, `undefined`) and some add-on of `viewModel.addOns` provides the row (a non-empty
   `features[row.id]`, or for a usage-limit row a non-empty `usageLimits[row.id]` or
   `usageLimitsExtensions[row.id]`, after `unwrapValue`).
 - `renderComparison` computes `addOnOnly` once per row in the compact layout
-  (`src/element/renderers.ts:804`) and in the table layout (`:907`), and passes it to
-  `renderValue` for every cell (`:826`, `:922`).
-- `renderValue` (`:199-222`) renders the marker for an empty value when `addOnOnly` is true, else
+  (`src/element/renderers.ts:804`) and in the table layout (`:915`), and passes it, combined with
+  `addOnProvidesForPlan`, to `renderValue` for every cell (`:832`, `:935`).
+- `renderValue` (`:199`) renders the marker for an empty value when `addOnOnly` is true, else
   the em dash with `pricing.notIncluded`.
 - The availability rule "`availableFor` empty means every plan" already exists in
-  `src/core/resolve.ts:116-118`, `src/element/renderers.ts:992-996` (`addOnAvailability`) and
+  `src/core/resolve.ts:116-118`, `src/element/renderers.ts:1006-1009` (`addOnAvailability`) and
   `tests/unit/ux-counts.test.ts:57-59`.
 - `src/core/index.ts:27-35` re-exports named members of `view-model.ts` only, with no `export *`.
 
@@ -68,10 +68,12 @@ architecture, dependency or public format.
 
 T1 writes the failing cases and amends the R3-derived assertions (intake E8):
 
-- `tests/unit/addon-marker.test.ts:616-626` ("one marker per plan" in every marked SPECTRA row) and
-  `:306-343` stay true only for add-ons with an unrestricted or full `availableFor`.
-- `tests/browser/spectra-addon-marker.spec.ts:224-227,236-238,250` expect `markers === plans` and
-  `32 × plans` for GitHub; they become per-row expectations from an independent reference.
+- `tests/unit/addon-marker.test.ts:308-320` ("marks every plan cell of an add-on-only row") and the
+  SPECTRA fixtures block (`:903`, per-row marker counts from `referenceMarkerPlans`) stay true only
+  for add-ons with an unrestricted or full `availableFor`.
+- `tests/browser/spectra-addon-marker.spec.ts` (`expectedRows = 32`, `:18`, used at `:287-293`)
+  expected `markers === plans` for GitHub; it became a per-row expectation from an independent
+  reference.
 - `tests/unit/ux-counts.test.ts` gets a cell-level metric `addOnMarkerCellsMisleading`, which must
   be 0. The existing `addOnOnlyRowsMisleading` stays and keeps printing 81, because it calls
   `isAddOnOnlyRow`, which does not change.
