@@ -1,6 +1,6 @@
 Goal: Phase 3 PR2 (PR 74), core selection logic P3-1T/P3-1I.
-State: head a74f31ae plus this checkpoint commit: tests 0370efd1, source fixes cb68d418 (prototype-safe paths, Map stabilizer, null add-on entries, changeset sentence, P3-2 notes), index-cap tests a4bb7a92. All green by task checks; CI of the new head pending after push.
-Open owner decisions (CRP crp-pr-phase3-g4-size, no default; not waived by me): G4 T/I separation (implementer-role tests in a separate task, red check before code, test-reviewer review) and size above the 300-line split rule (~950 lines with tests, ~290 source).
-Decisions: transitive closure in core, element fixed in P3-2 (patch changeset, mandatory two-level element test, Boolean(variablesEnabled)).
-Next: push, pr_update body with the two open points, panel round 2 (reviewer, test-reviewer, security-auditor, arch-reviewer) on the pushed head, then set_review_package and lead_ready (state the open owner points in the summary).
+State: head 2470e3b7 = all tasks integrated (tests d780e9c0, source b1f422a7 green: 1429 unit tests, typecheck, lint, format). Explorer 25400912 was blocked (no Bash) and analysed the pre-fix code, so its spec findings are stale (already fixed by b1f422a7); its 0.1.0 premise was wrong: applySelection post-dates tag v0.1.0, the 'before' code is the inline element code in develop at fork 09363ed7 (git show 09363ed7:src/element/pricing-renderer-element.ts). Unverified vs that code: selected stored as boolean, unselected-entry quantity fallback 0. Panel round 3 reviewer is asked to check this against git.
+Decisions: no more comparison tasks by workers without Bash; the reviewer verifies. Followups: tests for 'x.01' and non-numeric unselected quantity once confirmed.
+Next: push, pr_update body (accepted risks: clone depth/cycles from host input throw a catchable RangeError; __proto__ ids in plain records in resolve.ts as followup; open owner points G4 and size), panel round 3 on the pushed head, set_review_package, lead_ready.
+Open owner decisions (CRP crp-pr-phase3-g4-size; not waived): G4 T/I separation, size.
 Note: prop-20261101-1 waits for this merge.
