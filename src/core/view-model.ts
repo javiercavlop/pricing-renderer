@@ -601,6 +601,8 @@ export function isSafeLink(value: string | undefined): boolean {
   if (!value) return false;
   const normalized = value.trim().toLowerCase();
   if (!normalized || /^(?:javascript|data|vbscript|file):/.test(normalized)) return false;
+  // Browsers read `//host` and `/\host` as another host and drop tab, CR and LF.
+  if (/^[/\\]{2}/.test(normalized.replace(/[\t\n\r]/g, ''))) return false;
   return /^(?:https?:|mailto:|\/|\.\/|\.\.\/|#)/.test(normalized);
 }
 

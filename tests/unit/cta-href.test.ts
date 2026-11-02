@@ -14,18 +14,36 @@ describe('expandCtaHref in one pass', () => {
 
 describe('isSafeLink as docs/events.md describes it', () => {
   // [utest->req~cta-href-template-unsafe~1]
-  it('accepts http, https, mailto, a leading slash (also //host), ./, ../ and #', () => {
+  it('accepts http, https, mailto, a single leading slash, ./, ../ and #', () => {
     for (const href of [
       'http://example.com',
       'https://example.com/signup',
       'mailto:sales@example.com',
       '/checkout/growth',
-      '//evil.example',
+      '/checkout//x',
+      '/a\\b',
       './checkout',
       '../checkout',
       '#plans',
     ]) {
       expect(isSafeLink(href), href).toBe(true);
+    }
+  });
+
+  // [utest->req~cta-href-template-unsafe~1]
+  it('rejects values that browsers read as another host', () => {
+    for (const href of [
+      '//evil.example',
+      '//evil.example/path',
+      '/\\evil.example',
+      '\\/evil.example',
+      '\\\\evil.example',
+      '/\t/evil.example',
+      '/\n/evil.example',
+      '/\r\\evil.example',
+      '  //evil.example',
+    ]) {
+      expect(isSafeLink(href), JSON.stringify(href)).toBe(false);
     }
   });
 
