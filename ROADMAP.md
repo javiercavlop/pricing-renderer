@@ -96,19 +96,23 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
   - Objective: O1. State: partly done. Priority P8, about 250 lines, risk low. Owner CRP: no.
   - U1a is merged (#72, `07f10bf`): `tests/fixtures/stress/metrics.ts` (`loneLastCard`),
     `tests/unit/ux-stress-metrics.test.ts`, and `tests/browser/ux-stress.spec.ts` (`firstCtaBottom`,
-    `layoutBreakdown`, `loneLastCard`).
-  - U1b (`measureText`, section heights; `docs/agent-work/pending-phases/plan.md:347-358`) is not in
-    the tree: `measureText` is absent from `tests/browser/ux-stress.spec.ts`.
+    `layoutBreakdown`, `loneLastCard`, `sectionHeightsInViewports`, `cardWidths`).
+  - U1b (`docs/agent-work/pending-phases/plan.md:347-358`: `measureText`, the expanded height, add-on
+    rows, summary visibility, `visiblePlanColumns`, the contrast scan, `layout="table"` and the
+    variants) is not in the tree: `measureText` is absent from `tests/browser/ux-stress.spec.ts`.
+    The section height values are still unrecorded (M1, the browser half of `measurements.md`).
 - UX-2, unit-level counts on the stress fixtures and the 37 real pricings (`ux-report.md:373`)
   - Objective: O1. State: partly done. Priority P8, about 200 lines, risk low. Owner CRP: no.
   - Merged in #72 (`07f10bf`): `tests/unit/ux-counts.test.ts`, which prints one `UX_COUNTS` line per
-    fixture (62 fixtures).
+    fixture (62 fixtures), with the parts listed next except `addOnMarkerCellsMisleading`, which was
+    added with UX-7 (#76).
   - Present, against `ux-report.md:373-393`: part (d), `addOnsNotAvailableForSelectedPlan`; part of
     (b), `addOnOnlyRows`, `addOnOnlyRowsMisleading` and `addOnMarkerCellsMisleading`; part of (c),
     plan and add-on descriptions missing and equal to the name. The file also counts rows above the
     row caps, which the spec does not list.
   - Missing: (a), all unit counts for singular and plural and the reasons a unit stays as written;
-    (b), rows that mix empty and filled cells that an add-on provides; (c), rows with no
+    (b), rows that mix empty and filled cells that an add-on provides, and the total number of cells
+    shown with the add-on marker (the file counts marker rows and only the misleading cells); (c), rows with no
     description, rows filtered as filler, and the maximum and median description length.
   - Measurements: `docs/agent-work/ux-review/measurements.md` holds the unit half (62 fixtures;
     UX-7 go, UX-9 no-go; #78, `112428e`). The browser half is pending a dispatch (M1).
@@ -163,8 +167,8 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
 Owner decision of 2026-10-27, which replaces the postponement of Q6:
 
 - There is NO release of pricing-renderer until further notice. All work accumulates in `develop`.
-- The next version is ONE single release. It carries the 45 pending changesets (at `47a7b05`; 54 pending at `f3302b2`) plus everything
-  requested on 2026-10-27.
+- The next version is ONE single release. It carries the 45 pending changesets (at `47a7b05`) plus
+  everything requested on 2026-10-27. At `f3302b2`, 54 are pending.
 - It goes out only when the owner says that the companion PRs to SPACE, SPHERE and the SPACE
   clients (space-node-client, space-python-client, space-java-client, space-react-client) are
   merged.

@@ -1,7 +1,7 @@
 # Handoff: prop-20261031-1b
 
-- Status: waiting-review · Updated: 2026-11-02
-- Branch / head: chore/roadmap-intent-refresh-2 / base `f3302b2` · PR: none yet
+- Status: review round 1 fixed, waiting round 2 · Updated: 2026-11-02
+- Branch / head: chore/roadmap-intent-refresh-2 / base `f3302b2` · PR: 80
 
 ## Goal
 
@@ -16,12 +16,15 @@ already in develop and stay as they are.
   changesets), ROADMAP Release (appended) and ROADMAP Backlog.
 - ROADMAP UX review:
   - Intro: U1a and U2 merged (#72, `07f10bf`); UX-7 done; unit measurements recorded (#78, `112428e`).
-  - UX-1 partly done: U1a present; U1b absent (`measureText` is not in
-    `tests/browser/ux-stress.spec.ts`, grep).
+  - UX-1 partly done: U1a present (with `sectionHeightsInViewports` and `cardWidths`); U1b absent
+    (`measureText` is not in `tests/browser/ux-stress.spec.ts`, grep). Section height values are
+    unrecorded (M1).
   - UX-2 partly done. Present: part (d), part of (b) (`addOnOnlyRows`, `addOnOnlyRowsMisleading`,
-    `addOnMarkerCellsMisleading`), part of (c) (descriptions missing and filler). Missing: (a) all
-    unit counts, (b) mixed rows, (c) rows with no description, rows filtered as filler, length
-    maximum and median. Checked against `ux-report.md:373-393` and `tests/unit/ux-counts.test.ts:20-37,188-202`.
+    `addOnMarkerCellsMisleading`, added with UX-7 in #76), part of (c) (descriptions missing and
+    filler). Missing: (a) all unit counts, (b) mixed rows and the total of cells shown with the
+    marker, (c) rows with no description, rows filtered as filler, length maximum and median.
+    Checked against `ux-report.md:373-393` and `tests/unit/ux-counts.test.ts:21-38` (`UxCounts`) and
+    `:186-203` (returned fields).
   - UX-7 done: #76 `9c0551e`, `.changeset/addon-marker-availability.md`, tagged test in
     `tests/unit/ux-counts.test.ts:268`.
   - UX-9 stays not started, with the no-go gate (`measurements.md`, #78).
@@ -60,9 +63,10 @@ already in develop and stay as they are.
 
 ## Next three steps
 
-1. Reviewer (G11): check every sha and state against `git show --stat <sha>` and the count with
-   `ls .changeset/*.md` without `README.md`.
-2. CI green on the PR (`format:check`).
+1. Reviewer round 1 (G11) found: U1b wrongly listed as "section heights"; UX-2 part (b) lacked the
+   total of marker cells and credited `addOnMarkerCellsMisleading` to #72; the Release line altered
+   the owner's text; this handoff had wrong PR and line ranges. All fixed. Round 2: re-check.
+2. CI was green on `3756c6b` (before these fixes); it must pass again.
 3. The owner merges, because `INTENT.md` changes.
 
 ## Evidence
