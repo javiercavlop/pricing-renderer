@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeLink } from '../../src/core/index.js';
-import { expandCtaHref } from '../../src/element/cta.js';
+import {
+  createPricingViewModel,
+  isSafeLink,
+  normalizePricing,
+  type PricingCta,
+} from '../../src/core/index.js';
+import { expandCtaHref, planCtaView } from '../../src/element/cta.js';
 
 describe('expandCtaHref in one pass', () => {
   // [utest->req~cta-href-template~1]
@@ -12,6 +17,36 @@ describe('expandCtaHref in one pass', () => {
   });
 });
 
+describe('planCtaView with a link to another host', () => {
+  const header = { syntaxVersion: '3.1', version: '1', createdAt: '2026-01-01', currency: 'EUR' };
+  const pricing = normalizePricing({
+    ...header,
+    saasName: 'Slash',
+    plans: { 'pro plus/x': { price: 5 } },
+  } as never).value!;
+
+  function viewOf(href: string): ReturnType<typeof planCtaView> {
+    const ctas = [{ id: 'go', label: 'Go', planId: 'pro plus/x', href }] as unknown as PricingCta[];
+    const viewModel = createPricingViewModel(pricing, undefined, {
+      locale: 'en-US',
+      presentation: { ctas },
+    });
+    return planCtaView(viewModel, viewModel.plans[0]!, {});
+  }
+
+  // [utest->req~cta-href-template-unsafe~1]
+  it('renders it as a button and keeps the raw value for the event', () => {
+    const view = viewOf('//evil.example/{planId}');
+    expect(view.href).toBeUndefined();
+    expect(view.eventHref).toBe('//evil.example/pro%20plus%2Fx');
+  });
+
+  // [utest->req~cta-href-template-unsafe~1]
+  it('keeps the href of a single-slash path', () => {
+    expect(viewOf('/checkout/{planId}').href).toBe('/checkout/pro%20plus%2Fx');
+  });
+});
+
 describe('isSafeLink as docs/events.md describes it', () => {
   // [utest->req~cta-href-template-unsafe~1]
   it('accepts http, https, mailto, a single leading slash, ./, ../ and #', () => {
@@ -20,6 +55,7 @@ describe('isSafeLink as docs/events.md describes it', () => {
       'https://example.com/signup',
       'mailto:sales@example.com',
       '/checkout/growth',
+      '  /checkout/growth',
       '/checkout//x',
       '/a\\b',
       './checkout',
@@ -42,6 +78,9 @@ describe('isSafeLink as docs/events.md describes it', () => {
       '/\n/evil.example',
       '/\r\\evil.example',
       '  //evil.example',
+      '\t//evil.example',
+      '\n//evil.example',
+      '/\t\t/evil.example',
     ]) {
       expect(isSafeLink(href), JSON.stringify(href)).toBe(false);
     }
@@ -54,6 +93,9 @@ describe('isSafeLink as docs/events.md describes it', () => {
       '?plan=x',
       'javascript:alert(1)',
       ' JavaScript:alert(1)',
+      'jav\tascript:alert(1)',
+      '\x01javascript:alert(1)',
+      '\x01//evil.example',
       'data:text/html,x',
       '',
       undefined,
