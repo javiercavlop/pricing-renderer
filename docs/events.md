@@ -167,9 +167,10 @@ Clear the property when the host work is done.
 ### Cancel the default navigation
 
 The event is `cancelable`. A CTA with a safe `href` (`http:`, `https:`,
-`mailto:`, a value starting with `/` (this includes `//host` URLs), `./` or `../`, or a
-`#` fragment) renders
-as a link. When a listener calls `event.preventDefault()`, the element cancels
+`mailto:`, a value starting with a single `/` (a path on the same host; `//host` and
+`/\host` are not safe, also with tab or newline characters between them), `./` or `../`,
+or a `#` fragment) renders as a link. An absolute `https://` link to another host is
+still safe, so a host that needs same-host links checks the `href` itself. When a listener calls `event.preventDefault()`, the element cancels
 the click, so the browser does not follow the link. A CTA without an `href`, or
 with one that is not safe (such as `checkout/growth` or `?plan=x`), renders as a
 button and has no default navigation. Either way, calling

@@ -98,7 +98,7 @@ Supporting functions:
 | `getPlanCta`               | Resolve the CTA associated with a plan                      |
 | `getPricingRendererCustom` | Read the renderer-specific `custom` extension               |
 | `getCustomDetails`         | Return preserved custom details                             |
-| `isSafeLink`               | Validate a renderable link scheme                           |
+| `isSafeLink`               | Validate a link: safe scheme or same-host path              |
 
 ### Expression functions
 
