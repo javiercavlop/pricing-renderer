@@ -1,0 +1,1 @@
+Done: S0 spec, T1 red test, I1 fix (findings 3 and 4). Now: push, open PR, medium panel (reviewer, test-reviewer, security-auditor), ready. T2/I2 (finding 1) not started: waits for the owner decision sent by the coordinator.

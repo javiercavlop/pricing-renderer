@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { createPricingViewModel, unwrapValue } from '../../src/core/index.js';
 import type { NormalizedAddOn, PricingViewModel } from '../../src/core/index.js';
 import { isAddOnOnlyRow } from '../../src/core/view-model.js';
+import { renderComparison } from '../../src/element/renderers.js';
+import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 import { buildStressYaml, findStressFixture, stressFixtures } from '../fixtures/stress/build.js';
 
@@ -27,6 +29,7 @@ interface UxCounts {
   rowsAboveRendererCapInGroups: number;
   addOnOnlyRows: number;
   addOnOnlyRowsMisleading: number;
+  addOnMarkerCellsMisleading: number;
   planDescriptionsMissing: number;
   planDescriptionsFiller: number;
   addOnDescriptionsMissing: number;
@@ -67,6 +70,82 @@ function providesRow(addOn: NormalizedAddOn, row: { id: string; kind: string }):
   return filled(addOn.usageLimits[row.id]) || filled(addOn.usageLimitsExtensions[row.id]);
 }
 
+const noop = (): void => undefined;
+const actions: RenderActions = {
+  selectPlan: noop,
+  selectBilling: noop,
+  updateVariable: noop,
+  resetVariables: noop,
+  toggleAddOn: noop,
+  updateAddOnQuantity: noop,
+  triggerAction: () => false,
+  updateSearch: noop,
+  updateOnlyDifferences: noop,
+  toggleGroup: noop,
+  setAllGroups: noop,
+  revealGroup: noop,
+  confirmAddOnChange: noop,
+  cancelAddOnChange: noop,
+  toggleBreakdown: noop,
+};
+
+function tableState(viewModel: PricingViewModel): RenderState {
+  const all = new Set(viewModel.comparisonGroups.map((group) => group.id));
+  return {
+    viewModel,
+    selection: viewModel.resolved.selection,
+    compact: false,
+    search: '',
+    onlyDifferences: false,
+    selectionEnabled: true,
+    ctaEnabled: true,
+    variablesEnabled: true,
+    expandedGroups: all,
+    revealedGroups: all,
+    breakdownOpen: false,
+    breakdownId: 'breakdown',
+    actions,
+  };
+}
+
+// Flattens a lit template (strings and values, nested templates and arrays) into plain text.
+function flatten(template: unknown): string {
+  if (Array.isArray(template)) return template.map(flatten).join('');
+  if (typeof template === 'string' || typeof template === 'number') return String(template);
+  if (typeof template === 'object' && template !== null && 'strings' in template) {
+    const { strings, values } = template as { strings: string[]; values: unknown[] };
+    return strings
+      .map((text, index) => text + (index < values.length ? flatten(values[index]) : ''))
+      .join('');
+  }
+  return '';
+}
+
+// Table-layout cells that show the "Add-on" marker in a plan column where no add-on providing the
+// row can be bought. Rows and rendered row chunks pair by position: every group is revealed.
+function markerCellsMisleading(viewModel: PricingViewModel): number {
+  if (viewModel.plans.length === 0) return 0;
+  const rows = viewModel.comparisonGroups.flatMap((group) => group.rows);
+  const chunks = flatten(renderComparison(tableState(viewModel)))
+    .split('data-pr-part="comparison-row"')
+    .slice(1);
+  if (chunks.length !== rows.length) {
+    throw new Error(`Rendered ${chunks.length} rows for ${rows.length} view-model rows`);
+  }
+  let misleading = 0;
+  rows.forEach((row, position) => {
+    const cells = chunks[position]!.split('<td').slice(1);
+    row.values.forEach((cell, index) => {
+      if (!cells[index]?.includes('pr-value--addon')) return;
+      const buyable = viewModel.addOns.some(
+        (addOn) => providesRow(addOn, row) && availableForPlan(addOn, cell.planId),
+      );
+      if (!buyable) misleading += 1;
+    });
+  });
+  return misleading;
+}
+
 function rowsOver(groupSizes: number[], cap: number): number {
   return groupSizes.reduce((sum, n) => sum + Math.max(0, n - cap), 0);
 }
@@ -91,7 +170,10 @@ function countFixture(source: Source, viewModel = buildViewModel(source)): UxCou
   const planId = viewModel.resolved.selection.planId;
   const rows = viewModel.comparisonGroups.flatMap((group) => group.rows);
 
-  // A marker is misleading when no add-on that provides the row can be bought on the selected plan.
+  // A data property: add-on-only rows where no providing add-on can be bought on the selected plan,
+  // that is, the rows the old R3 rule marked wrongly at the selected plan. It does not depend on how
+  // the renderer draws the marker, so it stays above 0. The rendered cells are counted by
+  // addOnMarkerCellsMisleading.
   const markerRows = rows.filter((row) => isAddOnOnlyRow(viewModel, row));
   const buyable = (row: { id: string; kind: string }): boolean =>
     viewModel.addOns.some((addOn) => providesRow(addOn, row) && availableForPlan(addOn, planId));
@@ -112,6 +194,7 @@ function countFixture(source: Source, viewModel = buildViewModel(source)): UxCou
     rowsAboveRendererCapInGroups: rowsOver(groupSizes, RENDERER_ROWS_CAP),
     addOnOnlyRows: markerRows.length,
     addOnOnlyRowsMisleading: misleading.length,
+    addOnMarkerCellsMisleading: markerCellsMisleading(viewModel),
     planDescriptionsMissing: count(plans, (plan) => isBlank(plan.description)),
     planDescriptionsFiller: count(plans, (plan) => isFiller(plan.description, plan.name)),
     addOnDescriptionsMissing: count(addOns, (addOn) => isBlank(addOn.description)),
@@ -180,6 +263,13 @@ describe('UX-2 unit-level counts', () => {
 
   it('is deterministic', () => {
     expect(sources.map((source) => countFixture(source))).toEqual(counts);
+  }, 60_000);
+
+  // [utest->req~addon-marker-per-plan-availability~1]
+  it('renders no add-on marker cell in a plan that cannot buy a providing add-on', () => {
+    for (const item of counts) {
+      expect(item.addOnMarkerCellsMisleading, item.fixture).toBe(0);
+    }
   });
 
   it('counts the acme fixture as known values', () => {

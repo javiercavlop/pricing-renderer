@@ -106,6 +106,7 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # [impl->req~release-single-unit-test-run~1]
       - name: Run unit tests
         run: pnpm test
 
@@ -127,5 +128,17 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      # [impl->req~release-dist-tag-env~1]
+      # [impl->req~release-check-substrings-kept~1]
       - name: Publish stable releases to latest and prereleases to next
-        run: npm publish --access public --provenance --tag "${{ steps.release.outputs.dist_tag }}"
+        env:
+          DIST_TAG: ${{ steps.release.outputs.dist_tag }}
+        run: |
+          case "$DIST_TAG" in
+            latest|next) ;;
+            *)
+              echo "::error::Unexpected npm dist-tag: $DIST_TAG"
+              exit 1
+              ;;
+          esac
+          npm publish --access public --provenance --tag "$DIST_TAG"
