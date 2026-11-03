@@ -25,7 +25,7 @@ for (const { name, variant, width, height, maxDiffPixelRatio } of cases) {
     await expect(cards).toHaveCount(3);
 
     if (variant === 'dark') {
-      await page.getByLabel('Theme', { exact: true }).selectOption('dark');
+      await page.locator('#theme').selectOption('dark');
     } else {
       await page.evaluate(() => {
         document.documentElement.dir = 'rtl';
