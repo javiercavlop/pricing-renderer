@@ -601,6 +601,8 @@ export function isSafeLink(value: string | undefined): boolean {
   if (!value) return false;
   const normalized = value.trim().toLowerCase();
   if (!normalized || /^(?:javascript|data|vbscript|file):/.test(normalized)) return false;
+  // Browsers read `//host` and `/\host` as another host and drop tab, CR and LF.
+  if (/^[/\\]{2}/.test(normalized.replace(/[\t\n\r]/g, ''))) return false;
   return /^(?:https?:|mailto:|\/|\.\/|\.\.\/|#)/.test(normalized);
 }
 
@@ -608,15 +610,32 @@ function isEmptyCell(value: unknown): boolean {
   return value === false || value === null || value === undefined;
 }
 
+// [impl->req~addon-marker-per-plan-availability~1]
+function addOnProvidesRow(addOn: PricingViewModel['addOns'][number], row: PricingComparisonRow) {
+  if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
+  return (
+    !isEmptyCell(unwrapValue(addOn.usageLimits[row.id])) ||
+    !isEmptyCell(unwrapValue(addOn.usageLimitsExtensions[row.id]))
+  );
+}
+
 export function isAddOnOnlyRow(viewModel: PricingViewModel, row: PricingComparisonRow): boolean {
   if (!row.values.every((cell) => isEmptyCell(cell.value))) return false;
-  return viewModel.addOns.some((addOn) => {
-    if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
-    return (
-      !isEmptyCell(unwrapValue(addOn.usageLimits[row.id])) ||
-      !isEmptyCell(unwrapValue(addOn.usageLimitsExtensions[row.id]))
-    );
-  });
+  return viewModel.addOns.some((addOn) => addOnProvidesRow(addOn, row));
+}
+
+// [impl->req~addon-marker-per-plan-availability~1]
+// [impl->req~addon-marker-helper-internal~1]
+export function addOnProvidesForPlan(
+  viewModel: PricingViewModel,
+  row: PricingComparisonRow,
+  planId: string,
+): boolean {
+  return viewModel.addOns.some(
+    (addOn) =>
+      addOnProvidesRow(addOn, row) &&
+      (addOn.availableFor.length === 0 || addOn.availableFor.includes(planId)),
+  );
 }
 
 export function getCustomDetails(pricing: NormalizedPricing): UnknownRecord {

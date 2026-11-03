@@ -24,7 +24,7 @@ import {
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
-import { isAddOnOnlyRow } from '../core/view-model.js';
+import { addOnProvidesForPlan, isAddOnOnlyRow } from '../core/view-model.js';
 import { formatUnit } from '../core/units.js';
 import { isPendingActionId, planCtaView, type SummaryActionState } from './cta.js';
 import type { PendingAddOnChange } from './events.js';
@@ -823,7 +823,15 @@ function renderCompactComparison(
                             );
                             return html`<div>
                               <dt>${plan?.name ?? cell.planId}</dt>
-                              <dd>${renderValue(viewModel, cell.value, row.unit, addOnOnly)}</dd>
+                              <dd>
+                                ${renderValue(
+                                  viewModel,
+                                  cell.value,
+                                  row.unit,
+                                  // [impl->req~addon-marker-per-plan-availability~1]
+                                  addOnOnly && addOnProvidesForPlan(viewModel, row, cell.planId),
+                                )}
+                              </dd>
                             </div>`;
                           })}
                         </dl>
@@ -919,7 +927,13 @@ function renderTableComparison(
                           ${row.values.map(
                             (cell) =>
                               html`<td>
-                                ${renderValue(viewModel, cell.value, row.unit, addOnOnly)}
+                                ${renderValue(
+                                  viewModel,
+                                  cell.value,
+                                  row.unit,
+                                  // [impl->req~addon-marker-per-plan-availability~1]
+                                  addOnOnly && addOnProvidesForPlan(viewModel, row, cell.planId),
+                                )}
                               </td>`,
                           )}
                         </tr>

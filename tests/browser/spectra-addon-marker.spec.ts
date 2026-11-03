@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { parse } from 'yaml';
 import {
   applyPricing,
   openRenderer,
@@ -10,11 +11,83 @@ import {
 
 // Spectra item 6 (docs/agent-work/spectra-item6-addon-marker/spec.md): comparison rows that only an
 // add-on provides show an "Add-on" marker instead of an em dash. GitHub has 32 such rows (R9).
+// Since P-20261101-1 (CRP-U7) a cell shows the marker only in a plan where a providing add-on can
+// be bought; every other cell of the row keeps the em dash.
 
 const saas = 'github';
 const expectedRows = 32;
 const marker = '.pr-value--addon';
 const rowsWithMarker = `[data-pr-part="comparison-row"]:has(${marker})`;
+
+interface RawDocument {
+  features?: Record<string, { defaultValue?: unknown } | null>;
+  usageLimits?: Record<string, { defaultValue?: unknown } | null>;
+  plans?: Record<
+    string,
+    { features?: Record<string, unknown>; usageLimits?: Record<string, unknown> } | null
+  > | null;
+  addOns?: Record<
+    string,
+    {
+      private?: boolean;
+      availableFor?: string[] | null;
+      features?: Record<string, unknown>;
+      usageLimits?: Record<string, unknown>;
+      usageLimitsExtensions?: Record<string, unknown>;
+    } | null
+  > | null;
+}
+
+function isEmpty(value: unknown): boolean {
+  return value === false || value === null || value === undefined;
+}
+
+function unwrap(value: unknown): unknown {
+  if (value && typeof value === 'object' && !Array.isArray(value) && 'value' in value) {
+    return (value as { value: unknown }).value;
+  }
+  return value;
+}
+
+// Independent of the renderer: for every feature and usage-limit row that no plan fills (a plan
+// without an entry takes the default value) and that a public add-on provides, the number of plans
+// for which a providing add-on is available (an empty availableFor means every plan). Rows with 0
+// are not marked. Sorted ascending.
+function referenceMarkerCounts(name: string): number[] {
+  const document = (parse(readFixture(name)) ?? {}) as RawDocument;
+  const planEntries = Object.entries(document.plans ?? {});
+  const addOns = Object.values(document.addOns ?? {}).filter((addOn) => addOn && !addOn.private);
+  const counts: number[] = [];
+  for (const kind of ['features', 'usageLimits'] as const) {
+    for (const [id, definition] of Object.entries(document[kind] ?? {})) {
+      const filledByPlan = planEntries.some(([, plan]) => {
+        const entry = plan?.[kind]?.[id];
+        const value = entry === undefined ? definition?.defaultValue : unwrap(entry);
+        return !isEmpty(value);
+      });
+      if (filledByPlan) continue;
+      const providers = addOns.filter((addOn) => {
+        const provided =
+          kind === 'features'
+            ? [addOn?.features?.[id]]
+            : [addOn?.usageLimits?.[id], addOn?.usageLimitsExtensions?.[id]];
+        return provided.some((value) => !isEmpty(unwrap(value)));
+      });
+      if (providers.length === 0) continue;
+      const plans = planEntries.filter(([planId]) =>
+        providers.some((addOn) => {
+          const availableFor = addOn?.availableFor ?? [];
+          return availableFor.length === 0 || availableFor.includes(planId);
+        }),
+      ).length;
+      if (plans > 0) counts.push(plans);
+    }
+  }
+  return counts.sort((a, b) => a - b);
+}
+
+const referenceCounts = referenceMarkerCounts(saas);
+const referenceTotal = referenceCounts.reduce((total, markers) => total + markers, 0);
 
 const viewports: Viewport[] = [
   { width: 1440, height: 900 }, // table layout
@@ -202,11 +275,17 @@ test.describe('spectra add-on marker', () => {
 
     test.describe(`${layout} layout (${viewport.width}px)`, () => {
       // [utest->spectra-item6:AC7] [utest->spectra-item6:AC2]
-      test('marks every add-on-only row, one marker per plan, no em dash', async ({ page }) => {
+      // [utest->req~addon-marker-per-plan-availability~1]
+      test('marks each add-on-only row in the plans that can buy an add-on, a dash elsewhere', async ({
+        page,
+      }) => {
         test.setTimeout(60_000);
         await openComparison(page, viewport, 'en');
         const plans = planCount(saas);
         expect(plans, 'the github fixture should have plans').toBeGreaterThan(0);
+        expect(referenceCounts, 'the reference should find the marked rows').toHaveLength(
+          expectedRows,
+        );
 
         await expect(
           page.locator(rowsWithMarker),
@@ -221,21 +300,21 @@ test.describe('spectra add-on marker', () => {
             })),
           marker,
         );
-        const badMarkers = rows.filter((row) => row.markers !== plans);
-        expect(badMarkers, `rows without exactly ${plans} markers`).toEqual([]);
-        const withExcluded = rows.filter((row) => row.excluded !== 0);
-        expect(withExcluded, 'add-on-only rows must not contain .pr-value--excluded').toEqual([]);
+        const uncovered = rows.filter((row) => row.markers + row.excluded !== plans);
+        expect(uncovered, `rows whose cells are not all a marker or a dash of ${plans}`).toEqual(
+          [],
+        );
+        const counts = rows.map((row) => row.markers).sort((a, b) => a - b);
+        expect(counts, 'markers per row, sorted').toEqual(referenceCounts);
       });
 
       for (const theme of ['light', 'dark']) {
-        // [utest->spectra-item6:AC6]
+        // [utest->spectra-item6:AC6] [utest->req~addon-marker-per-plan-availability~1]
         test(`marker contrast is at least 4.5:1 in the ${theme} theme`, async ({ page }) => {
           test.setTimeout(60_000);
           await openComparison(page, viewport, 'en', theme);
           const contrast = await measureContrast(page);
-          expect(contrast.count, `markers found in the ${theme} theme`).toBe(
-            expectedRows * planCount(saas),
-          );
+          expect(contrast.count, `markers found in the ${theme} theme`).toBe(referenceTotal);
           expect(contrast.failures, `contrast failures in the ${theme} theme`).toEqual([]);
           expect(contrast.worst, 'worst contrast ratio').toBeGreaterThanOrEqual(4.5);
         });
@@ -243,11 +322,12 @@ test.describe('spectra add-on marker', () => {
 
       for (const locale of ['en', 'es'] as const) {
         // [utest->spectra-item6:AC2] [utest->spectra-item6:AC3]
+        // [utest->req~addon-marker-per-plan-availability~1]
         test(`marker text and single line in ${locale}`, async ({ page }) => {
           test.setTimeout(60_000);
           await openComparison(page, viewport, locale);
           const shape = await measureMarkers(page, texts[locale], compact);
-          expect(shape.markerCount, 'markers rendered').toBe(expectedRows * planCount(saas));
+          expect(shape.markerCount, 'markers rendered').toBe(referenceTotal);
           const wanted = texts[locale].visible;
           expect(shape.mismatches, `markers whose texts differ from ${wanted}`).toEqual([]);
           expect(shape.tooTall, 'markers taller than two line heights').toEqual([]);
