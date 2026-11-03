@@ -70,3 +70,17 @@ measured count in the O2 "Visual baselines" signal (`INTENT.md:56-57`).
   test fails). Confidence medium. Sources: playwright.dev/docs/api/class-testconfig and
   playwright.dev/docs/test-snapshots.
 - No checks were registered for this task; none was run.
+
+## State after M1
+
+- The four `-linux` baselines (dark and rtl, at 375 and 1440 px) exist on branch
+  `feat/visual-baselines-dark-rtl` (draft PR 81), at the runner commit `1ee4c1c`.
+- The second one-off CI run passed 4 of 4, including the overflow assertion.
+- No RTL or dark finding.
+- Keep the four PNGs untouched.
+
+Next steps:
+
+1. ui-qa on the four PNGs.
+2. Remove `.github/workflows/visual-baselines-once.yml`.
+3. Close draft PR 81 and open the clean PR.
