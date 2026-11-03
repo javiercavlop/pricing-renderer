@@ -84,3 +84,5 @@ Next steps:
 1. ui-qa on the four PNGs.
 2. Remove `.github/workflows/visual-baselines-once.yml`.
 3. Close draft PR 81 and open the clean PR.
+
+The temporary workflow `.github/workflows/visual-baselines-once.yml` was removed (step 2 done).
