@@ -1,1 +1,1 @@
-Done: unit counts, spec extension. Browser half cannot run in the lab (Chromium not installed, no registered install check); needs a CI dispatch of on-demand-specs (PW_UX_STRESS=1). Next: push, PR, reviewer + test-reviewer panel, ready.
+Round 1 fixes integrated. Push, CI, second review (reviewer, plus test-reviewer optional for low risk: reviewer only), ready.
