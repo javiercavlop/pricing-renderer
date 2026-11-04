@@ -134,8 +134,11 @@ function overrideFor(labels: PricingUnitLabels | undefined, unit: string, locale
       (key) => key.replace(/_/g, '-').toLowerCase() === scope,
     );
     for (const key of keys.reverse()) {
-      const entry = labels[key]?.[unit];
-      if (entry) return entry;
+      const units = labels[key];
+      if (!units || !Object.prototype.hasOwnProperty.call(units, unit)) continue;
+      const entry = units[unit] as { one?: unknown; other?: unknown } | undefined;
+      const valid = (text: unknown) => typeof text === 'string' && text.trim() !== '';
+      if (entry && valid(entry.one) && valid(entry.other)) return entry;
     }
   }
   return undefined;
@@ -706,7 +709,7 @@ custom:
       plans: 2,
       addOns: 1,
       rows: 10,
-      // rows: shared (filler), bare/storage/cards (missing), transfer (filler), four described
+      // rows: shared (filler), bare/storage/cards/extra (missing), transfer (filler), four described
       rowDescriptionsMissing: 4,
       rowDescriptionsFiller: 2,
       rowDescriptionsDescribed: 4,

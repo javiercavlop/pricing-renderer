@@ -174,6 +174,10 @@ A sum of maxima or medians means nothing, so the TOTAL line does not sum the two
 - `rowDescriptionLengthMax` is the largest per-fixture maximum.
 - `rowDescriptionLengthMedian` is the lower median of the per-fixture medians, taken over the
   fixtures that have at least one described row. It is not the median of all descriptions.
+  The TOTAL value 132 is taken over all 51 fixtures with described rows: 27 real pricings and 24
+  stress fixtures (6 shapes, each counted 4 times, with medians of 225 or more). The stress fixtures
+  lift it. Over the 27 real pricings only, the lower median is 72 (the 14th of 27 sorted per-fixture
+  medians, read from the per-fixture lines above).
 
 ## Sanity check of the TOTAL line
 

@@ -53,7 +53,6 @@ const allShapes = [
 const axeMs = 20_000;
 const openMs = 15_000;
 const applyPricingMs = 25_000;
-const resizeMs = 8_000;
 const measureMs = 8_000;
 const pageTimeoutMs = 8_000;
 const navigationTimeoutMs = 15_000;
@@ -280,14 +279,13 @@ async function measureContrast(page: Page) {
   };
 }
 
-// Sets (or, with null, removes) the layout attribute and waits for the re-render.
-async function setLayout(page: Page, layout: string | null): Promise<void> {
+// Sets the layout attribute and waits for the re-render.
+async function setLayout(page: Page, layout: string): Promise<void> {
   await page.evaluate(async (value) => {
     const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
       updateComplete: Promise<unknown>;
     };
-    if (value === null) renderer.removeAttribute('layout');
-    else renderer.setAttribute('layout', value);
+    renderer.setAttribute('layout', value);
     await renderer.updateComplete;
     for (let frame = 0; frame < 3; frame += 1) {
       await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -296,7 +294,7 @@ async function setLayout(page: Page, layout: string | null): Promise<void> {
 }
 
 // Height of the renderer in viewports after every group and "show more" is open. It mutates the
-// page, so it runs last in a pass; the next pass applies the pricing again.
+// page, so it runs last in a pass; the next pass opens a fresh page.
 async function measureExpanded(page: Page) {
   const finished = await revealAllRows(page);
   const height = await page.evaluate(() => {
@@ -308,9 +306,15 @@ async function measureExpanded(page: Page) {
 
 const fixtureIds = process.env.UX_STRESS_ALL === '1' ? allShapes : subset;
 
-// open + (variants + the table pass) passes, each pass with about eight bounded steps.
-const passBudgetMs = 45_000;
-const testTimeoutMs = openMs + (variants.length + 1) * passBudgetMs;
+// A normal pass has 11 bounded steps (open, apply, six measures, axe, expand, visible check) whose
+// limits sum to 124 s; the table pass has 13 steps (set and restore the layout) and 140 s. Those
+// are limits for a stuck step, not the expected time. The test timeout is a cumulative cap sized on the typical
+// time of a pass (open, apply and the measures take well under 20 s), with room: 30 s per pass.
+// Six passes give 180 s. CI budget: 3 fixtures, and with retries 2 a test that times out runs 3
+// times, so the worst case is 3 x 3 x 180 s = 27 min, below the 40 min --global-timeout
+// (2400000 ms) and the 50 min job timeout of .github/workflows/ci.yml.
+const passBudgetMs = 30_000;
+const testTimeoutMs = (variants.length + 1) * passBudgetMs;
 
 test.describe('ux stress summary', () => {
   for (const id of fixtureIds) {
@@ -322,7 +326,6 @@ test.describe('ux stress summary', () => {
       const yaml = buildStressYaml(fixture);
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await bounded('open the renderer', openMs, openRenderer(page, variants[0]!.viewport));
       const startedTotal = Date.now();
 
       // One pass: apply the pricing, measure everything, print one line. layoutVariant is "auto"
@@ -330,7 +333,10 @@ test.describe('ux stress summary', () => {
       const runPass = async (variant: Variant, layoutVariant: 'auto' | 'table') => {
         const name = `${id} ${variant.viewport.width} ${variant.theme} ${variant.locale} ${layoutVariant}`;
         const startedAt = Date.now();
-        await bounded(`${name}: resize`, resizeMs, page.setViewportSize(variant.viewport));
+        // A fresh page state per pass: the renderer keeps revealed groups across a reload, so a pass
+        // that follows revealAllRows would otherwise measure expanded rows. openRenderer also sets
+        // the viewport.
+        await bounded(`${name}: open the renderer`, openMs, openRenderer(page, variant.viewport));
         const state = await bounded(
           `${name}: apply the pricing`,
           applyPricingMs,
@@ -367,7 +373,7 @@ test.describe('ux stress summary', () => {
         // Last: it opens every group, so nothing after it sees the collapsed page.
         const expanded = await bounded(`${name}: expand`, measureMs, measureExpanded(page));
         if (layoutVariant === 'table') {
-          await bounded(`${name}: restore the layout`, measureMs, setLayout(page, null));
+          await bounded(`${name}: restore the layout`, measureMs, setLayout(page, 'auto'));
         }
 
         const rows = grid.cardsPerRow;
