@@ -15,9 +15,7 @@ const reporter = process.env.CI ? ciReporter : 'list';
 // PW_UX_STRESS=1, set only by the manual on-demand-specs job of ci.yml, runs both.
 // TEMP (UX-3 measurement): reverted before the change is ready.
 const testIgnore =
-  process.env.CI && process.env.PW_UX_STRESS !== '1'
-    ? ['**/spectra-review.spec.ts']
-    : undefined;
+  process.env.CI && process.env.PW_UX_STRESS !== '1' ? ['**/spectra-review.spec.ts'] : undefined;
 
 export default defineConfig({
   testDir: './tests/browser',

@@ -22,7 +22,8 @@ import {
 // and prints one SPECTRA_UX_SUMMARY JSON line per fixture and variant. It records the
 // state of today's renderer and asserts only what holds today: the page does not throw and the
 // component renders. A known problem (a long page, a hidden call to action, a lone last card)
-// shows up in the printed numbers and never fails the test.
+// shows up in the printed numbers and never fails the test. The one layout assertion is UX-3: the
+// first plan price of clickup is in the first viewport at 375px.
 
 // Three fixtures cover the extremes: no plans (okta), many usage limits (clickup) and 15 plans
 // (webflow). The whole summary has to stay far below the CI job budget, so every await
@@ -429,6 +430,17 @@ test.describe('ux stress summary', () => {
           contrast,
         };
         console.info(`SPECTRA_UX_SUMMARY ${JSON.stringify(summary)}`);
+
+        if (
+          id === 'clickup-usd-monthly' &&
+          variant.viewport.width === 375 &&
+          layoutVariant === 'auto'
+        ) {
+          expect(
+            ux.rendererTop.priceVisible,
+            `${name}: UX-3, the first plan price is in the first viewport at 375px`,
+          ).toBe(true);
+        }
 
         // Only what holds today: the component renders.
         await bounded(

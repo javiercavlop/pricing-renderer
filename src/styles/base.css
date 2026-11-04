@@ -1416,6 +1416,26 @@
     }
   }
 
+  /* Below 840px the space above the plans gets the same caps as from 840px (UX-3, report item in
+     docs/agent-work/ux-review/report.md), so the first plan price fits in the first screen of a
+     phone. Smaller host tokens still win through min(); the space after the plans is unchanged. */
+  @container pricing-renderer (max-width: 839.98px) {
+    pricing-renderer[data-pr-root] .pr-content {
+      gap: min(var(--pr-space-section), var(--pr-space-5));
+      padding-block-start: min(var(--pr-shell-padding), var(--pr-space-4));
+    }
+
+    pricing-renderer[data-pr-root] .pr-content > [data-pr-part='plans'] ~ * {
+      margin-block-start: calc(
+        var(--pr-space-section) - min(var(--pr-space-section), var(--pr-space-5))
+      );
+    }
+
+    pricing-renderer[data-pr-root] [data-pr-part='plans'] > .pr-section__heading {
+      margin-block-end: var(--pr-space-3);
+    }
+  }
+
   @container pricing-renderer (min-width: 840px) {
     /* Plan columns by plan count (table in docs/agent-work/spectra-item8-grid/spec.md). The
        generic rule sets the band maximum; the :where() rules after it keep the same specificity
