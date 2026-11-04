@@ -36,6 +36,7 @@ jobs:
     env:
       RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
     steps:
+      # [impl->req~release-dist-tag-prerelease-map~1]
       - name: Verify the published GitHub Release
         id: release
         env:
@@ -55,11 +56,16 @@ jobs:
             exit 1
           fi
 
-          if [ "$(jq -r '.isPrerelease' <<<"$release_json")" = "true" ]; then
-            echo "dist_tag=next" >>"$GITHUB_OUTPUT"
-          else
-            echo "dist_tag=latest" >>"$GITHUB_OUTPUT"
-          fi
+          is_prerelease="$(jq -r '.isPrerelease' <<<"$release_json")"
+          case "$is_prerelease" in
+            true) dist_tag=next ;;
+            false) dist_tag=latest ;;
+            *)
+              echo "::error::Unexpected isPrerelease value in the GitHub Release: $is_prerelease"
+              exit 1
+              ;;
+          esac
+          echo "dist_tag=$dist_tag" >>"$GITHUB_OUTPUT"
 
       - name: Check out the immutable release tag
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
