@@ -433,6 +433,31 @@ describe('usePricingSource: reload loads the current source again', () => {
     expect(signals[1]?.aborted).toBe(false);
   });
 
+  it('shows loading with the old pricing as soon as start() loads after a stopped reload()', async () => {
+    const gate = deferred<string>();
+    let calls = 0;
+    const loadPricing = vi.fn<Loader>(() => {
+      calls += 1;
+      return calls === 1 ? Promise.resolve(acmeYaml) : gate.promise;
+    });
+    const store = createStore();
+    store.setInput({ src: ACME_URL }, { loadPricing });
+    store.start();
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    store.stop();
+    store.reload();
+    const statuses: string[] = [];
+    store.subscribe(() => statuses.push(store.getSnapshot().status));
+    store.start();
+    expect(loadPricing).toHaveBeenCalledTimes(2);
+    expect(store.getSnapshot().status).toBe('loading');
+    expect(nameOf(store)).toBe('Acme Cloud');
+    gate.resolve(yamlNamed('Second'));
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    expect(nameOf(store)).toBe('Second');
+    expect(statuses.at(-1)).toBe('ready');
+  });
+
   it('starts no load for reload() after stop() of a load still in flight', async () => {
     const loadPricing = vi.fn<Loader>(() => new Promise<string>(() => {}));
     const store = createStore();
@@ -546,6 +571,24 @@ describe('usePricingSource: a failed load keeps the last pricing', () => {
     await vi.waitFor(() => expect(codesOf(store)).toContain('PR_SOURCE_LOAD_FAILED'));
     expect(store.getSnapshot().status).toBe('ready');
     expect(nameOf(store)).toBe('Acme Cloud');
+  });
+
+  it('keeps the identical pricing object after a failed reload', async () => {
+    let fail = false;
+    const loadPricing = vi.fn<Loader>(async () => {
+      if (fail) throw new Error('network down');
+      return acmeYaml;
+    });
+    const store = createStore();
+    store.setInput({ src: ACME_URL }, { loadPricing });
+    store.start();
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    const loaded = store.getSnapshot().pricing;
+    expect(loaded).toBeDefined();
+    fail = true;
+    store.reload();
+    await vi.waitFor(() => expect(codesOf(store)).toContain('PR_SOURCE_LOAD_FAILED'));
+    expect(Object.is(store.getSnapshot().pricing, loaded)).toBe(true);
   });
 
   it('is error with no pricing when the first load fails', async () => {

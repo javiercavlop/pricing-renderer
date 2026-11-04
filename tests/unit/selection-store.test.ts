@@ -617,6 +617,128 @@ describe('review from the hooks', () => {
   });
 });
 
+// [utest->req~use-pricing-selection-pending~1]
+describe('a pending change does not survive a direct commit', () => {
+  function withPending(): Store {
+    const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
+    store.toggleAddOn('prioritySuccess', true);
+    pendingOf(store);
+    return store;
+  }
+
+  it('drops it when the billing period changes', () => {
+    const store = withPending();
+    store.setBillingPeriod('yearly');
+    expect(store.getSnapshot().pending).toBeUndefined();
+    expect(selectionOf(store).billingPeriod).toBe('yearly');
+  });
+
+  it('drops it when a variable or a quantity changes', () => {
+    const variable = withPending();
+    variable.setVariable('seats', 12);
+    expect(variable.getSnapshot().pending).toBeUndefined();
+    const quantity = withPending();
+    quantity.setAddOnQuantity('extraStorage', 2);
+    expect(quantity.getSnapshot().pending).toBeUndefined();
+  });
+
+  it('drops it when a plan change applies at once', () => {
+    const store = withPending();
+    store.selectPlan('enterprise');
+    expect(selectionOf(store).planId).toBe('enterprise');
+    expect(store.getSnapshot().pending).toBeUndefined();
+  });
+});
+
+// [utest->req~use-pricing-selection-notify~1]
+describe('an add-on that the pricing does not have', () => {
+  it('reports the unchanged selection once and sets no pending change', () => {
+    const onSelectionChange = spy();
+    const store = newStore(acme, { onSelectionChange });
+    const before = store.getSnapshot();
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.toggleAddOn('ghost', true);
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(reported(onSelectionChange).selection).toEqual(before.selection);
+    expect(store.getSnapshot().pending).toBeUndefined();
+    expect(Object.is(store.getSnapshot(), before)).toBe(true);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('reports it once and drops a pending change that was waiting', () => {
+    const onSelectionChange = spy();
+    const store = newStore(acme, { defaultSelection: { planId: 'growth' }, onSelectionChange });
+    store.toggleAddOn('prioritySuccess', true);
+    pendingOf(store);
+    const before = selectionOf(store);
+    store.toggleAddOn('ghost', true);
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(reported(onSelectionChange).selection).toEqual(before);
+    expect(store.getSnapshot().pending).toBeUndefined();
+    expect(selectionOf(store)).toEqual(before);
+  });
+});
+
+// [utest->req~use-pricing-selection-controlled~1] [utest->req~use-pricing-selection-uncontrolled~1]
+describe('a store that goes from controlled to uncontrolled', () => {
+  it('keeps no selection of its own while controlled and holds the next ones after', () => {
+    const onSelectionChange = spy();
+    const controlled: PricingSelection = { ...createDefaultSelection(acme), planId: 'growth' };
+    const store = newStore(acme, { selection: controlled, onSelectionChange });
+    store.selectPlan('enterprise');
+    expect(reported(onSelectionChange).selection.planId).toBe('enterprise');
+    expect(selectionOf(store).planId).toBe('growth');
+
+    store.setInput(acme, { onSelectionChange });
+    // nothing was held while controlled, so the store has its own selection from the start
+    expect(selectionOf(store).planId).toBe('starter');
+    onSelectionChange.mockClear();
+    store.selectPlan('enterprise');
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(reported(onSelectionChange).selection.planId).toBe('enterprise');
+    expect(selectionOf(store).planId).toBe('enterprise');
+  });
+
+  it('follows a controlled selection again after it held its own', () => {
+    const store = newStore(acme, {});
+    store.selectPlan('growth');
+    const controlled: PricingSelection = { ...createDefaultSelection(acme), planId: 'enterprise' };
+    store.setInput(acme, { selection: controlled });
+    expect(selectionOf(store).planId).toBe('enterprise');
+    store.setInput(acme, {});
+    expect(selectionOf(store).planId).toBe('growth');
+  });
+});
+
+// [utest->req~use-pricing-selection-pricing-change~1]
+describe('the same pricing object keeps the selection', () => {
+  it('does not restart the selection or report when other options change', () => {
+    const onSelectionChange = spy();
+    const store = newStore(acme, { onSelectionChange });
+    store.selectPlan('growth');
+    onSelectionChange.mockClear();
+    store.setInput(acme, { onSelectionChange, locale: 'es-ES' });
+    expect(selectionOf(store).planId).toBe('growth');
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+});
+
+// [utest->req~use-pricing-selection-view-model~2]
+describe('the resolved prices of the snapshot', () => {
+  it('keeps the identical object for an equal selection and replaces it for a price change', () => {
+    const store = newStore(acme, {});
+    const first = store.getSnapshot().resolved;
+    store.selectPlan('starter');
+    expect(Object.is(store.getSnapshot().resolved, first)).toBe(true);
+    store.setVariable('seats', 12);
+    const changed = store.getSnapshot().resolved;
+    expect(Object.is(changed, first)).toBe(false);
+    expect(changed?.subtotal).not.toBe(first?.subtotal);
+    expect(Object.is(changed, store.getSnapshot().viewModel?.resolved)).toBe(true);
+  });
+});
+
 // A scan of module scope, with the TypeScript compiler API, over the text of every module under
 // src/react. It imports no src/react module.
 const reactRoot = fileURLToPath(new URL('../../src/react/', import.meta.url));
