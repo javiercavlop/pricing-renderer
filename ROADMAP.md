@@ -102,20 +102,23 @@ for UX-4, UX-5, UX-6, UX-7, UX-8 and UX-11; UX-1, UX-2, UX-3, UX-9 and UX-10 nee
     variants) is not in the tree: `measureText` is absent from `tests/browser/ux-stress.spec.ts`.
     The section height values are still unrecorded (M1, the browser half of `measurements.md`).
 - UX-2, unit-level counts on the stress fixtures and the 37 real pricings (`ux-report.md:373`)
-  - Objective: O1. State: partly done. Priority P8, about 200 lines, risk low. Owner CRP: no.
+  - Objective: O1. State: done. Priority P8, about 200 lines, risk low. Owner CRP: no.
   - Merged in #72 (`07f10bf`): `tests/unit/ux-counts.test.ts`, which prints one `UX_COUNTS` line per
-    fixture (62 fixtures), with the parts listed next except `addOnMarkerCellsMisleading`, which was
-    added with UX-7 (#76).
-  - Present, against `ux-report.md:373-393`: part (d), `addOnsNotAvailableForSelectedPlan`; part of
-    (b), `addOnOnlyRows`, `addOnOnlyRowsMisleading` and `addOnMarkerCellsMisleading`; part of (c),
-    plan and add-on descriptions missing and equal to the name. The file also counts rows above the
-    row caps, which the spec does not list.
-  - Missing: (a), all unit counts for singular and plural and the reasons a unit stays as written;
-    (b), rows that mix empty and filled cells that an add-on provides, and the total number of cells
-    shown with the add-on marker (the file counts marker rows and only the misleading cells); (c), rows with no
-    description, rows filtered as filler, and the maximum and median description length.
+    fixture (62 fixtures), with part (d), `addOnsNotAvailableForSelectedPlan`; part of (b),
+    `addOnOnlyRows` and `addOnOnlyRowsMisleading`; part of (c), plan and add-on descriptions missing
+    and equal to the name; and the rows above the row caps. `addOnMarkerCellsMisleading` was added
+    with UX-7 (#76).
+  - Merged in #92 (`0b7593d`), against `ux-report.md:373-393`: part (a), singular and plural unit
+    counts and the reasons a unit stays as written, with `unitsLeftNonEnglish` as a second view;
+    part (b), `mixedRowsProvidedByAddOn` and `addOnMarkerCellsTotal`; part (c),
+    `rowDescriptionsMissing`, `rowDescriptionsFiller`, `rowDescriptionsDescribed`,
+    `rowDescriptionLengthMax` and `rowDescriptionLengthMedian`. The 62 fixtures print one
+    `UX_COUNTS` line each plus a `TOTAL` line.
   - Measurements: `docs/agent-work/ux-review/measurements.md` holds the unit half (62 fixtures;
     UX-7 go, UX-9 no-go; #78, `112428e`). The browser half is pending a dispatch (M1).
+  - Finding: the new row-level count finds 24 filler row descriptions (buffer 10, canva 14), but plan
+    and add-on fillers stay 0, so UX-9 stays no-go (the renderer already drops filler row
+    descriptions).
 - UX-3, narrow top compaction (`ux-report.md:395`)
   - Objective: O1. State: not started. Priority P2, about 60 lines, risk low. Owner CRP: no.
     Depends on UX-1.
