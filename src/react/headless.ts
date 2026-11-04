@@ -12,3 +12,11 @@ export type {
   UsePricingSourceProps,
   UsePricingSourceResult,
 } from './use-pricing-source.js';
+export { usePricingSelection } from './use-pricing-selection.js';
+export type {
+  UsePricingSelectionChange,
+  UsePricingSelectionOptions,
+  UsePricingSelectionResult,
+} from './use-pricing-selection.js';
+export { usePricingRendererState } from './use-renderer-state.js';
+export type { RendererState } from './use-renderer-state.js';
