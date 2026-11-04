@@ -523,8 +523,11 @@ describe('usePricingSource: a failed load keeps the last pricing', () => {
 
 // [utest->req~load-source-request-bounds~1]
 describe('createSourceStore: request bounds', () => {
+  // A small document, so that it fits the 4096-byte limits some cases send.
+  const smallYaml = JSON.stringify({ ...inlinePricing, saasName: 'Acme Cloud' });
+
   async function loadedRequest(request: Loose): Promise<LoaderCall['request']> {
-    const loadPricing = vi.fn<Loader>(async () => acmeYaml);
+    const loadPricing = vi.fn<Loader>(async () => smallYaml);
     const store = createStore();
     store.setInput({ src: ACME_URL }, { loadPricing, request });
     store.start();
