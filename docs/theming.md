@@ -117,7 +117,15 @@ Stable values:
 `comparison-empty`, `add-ons`, `add-on-card`, `add-on-quantity`,
 `addon-toolbar`, `addon-empty`, `summary`, `breakdown`, `breakdown-line`,
 `breakdown-toggle`, `metadata`, `diagnostics`, `current-badge`,
-`current-add-on-badge`, `summary-action`, and `cta-pending`.
+`current-add-on-badge`, `summary-action`, `cta-pending`, `plan-cta-slot`,
+`summary-actions-slot`, `loading-slot`, and `error-slot`.
+
+`plan-cta-slot`, `summary-actions-slot`, `loading-slot` and `error-slot` are the
+empty `div` nodes (`[data-pr-slot]`) that the element renders in place of its own
+controls when the `slots` property asks for them. They exist only then. Context
+strings such as the plan name, the label and a diagnostic message may carry text
+from the pricing document: they are plain text and must be rendered as text, never passed
+to an HTML sink such as `dangerouslySetInnerHTML` or `innerHTML`.
 
 `diagnostics` is the closed `details` element that lists diagnostics: the warnings
 above the pricing and, in the error state, the codes behind the error sentence.

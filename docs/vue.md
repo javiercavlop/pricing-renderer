@@ -112,6 +112,7 @@ import type {
   PricingDiagnosticEvent,
   PricingReadyEvent,
   PricingSelectionChangeEvent,
+  PricingSlotsChangeEvent,
 } from 'pricing-renderer/element';
 
 function onReady(event: PricingReadyEvent) {
@@ -132,6 +133,10 @@ function onAction(event: PricingActionEvent) {
   event.preventDefault(); // the host owns checkout and navigation
   startCheckout(event.detail.actionId, event.detail.planId, event.detail.selection);
 }
+
+function onSlotsChange(event: PricingSlotsChangeEvent) {
+  console.info(event.detail.nodes.length); // the slot nodes the element rendered
+}
 </script>
 
 <template>
@@ -141,6 +146,7 @@ function onAction(event: PricingActionEvent) {
     @pricing-selection-change="onSelectionChange"
     @pricing-diagnostic="onDiagnostic"
     @pricing-action="onAction"
+    @pricing-slots-change="onSlotsChange"
   />
 </template>
 ```
@@ -155,12 +161,14 @@ function onAction(event: PricingActionEvent) {
   `selection` and `resolved`.
 - `pricing-diagnostic` carries `diagnostics`, a list of objects with `code`,
   `severity`, `message` and `path`.
+- `pricing-slots-change` carries `nodes`, the slot nodes the element rendered for
+  the `slots` property, in document order. Without `slots` it is never emitted.
 
 The types are exported from `pricing-renderer/element`, together with the
 `PricingRendererElement` class. Vue's template type checker may type `@` handlers
 as `Event`; annotate the handler parameter as above, or cast inside the
 handler, when your tooling does so. Imperative listeners need no cast:
-`pricing-renderer/define` and `pricing-renderer/element` declare the four events
+`pricing-renderer/define` and `pricing-renderer/element` declare the five events
 in the global `HTMLElementEventMap`, so
 `element.addEventListener('pricing-action', (event) => event.detail.actionId)`
 is typed.
@@ -211,8 +219,8 @@ for the contract mapping, the billing period, diagnostics and reloads.
   `:selection.prop="selection"` and the same for every object property in the
   list above.
 - **The listener never runs.** Check the spelling: the names are
-  `pricing-ready`, `pricing-selection-change`, `pricing-action` and
-  `pricing-diagnostic`.
+  `pricing-ready`, `pricing-selection-change`, `pricing-action`,
+  `pricing-diagnostic` and `pricing-slots-change`.
 - **`pricing-ready` does not fire for a listener added later.** The event fires
   at most once per load. If you attach the listener after the first load, read
   `renderer.value?.resolvedState` for the current state.

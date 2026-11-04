@@ -196,6 +196,10 @@ export function createSourceStore(): SourceStore {
     start() {
       active = true;
       if (held === undefined || !isRemote(held) || loadState !== 'idle') return;
+      if (snapshot.status !== 'loading' || snapshot.diagnostics.length > 0) {
+        snapshot = loadingSnapshot();
+        notify();
+      }
       load(held);
     },
     // [impl->req~use-pricing-source-abort~1]

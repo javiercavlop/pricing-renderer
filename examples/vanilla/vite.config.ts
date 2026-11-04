@@ -18,6 +18,7 @@ export default defineConfig({
       input: {
         main: resolve(root, 'index.html'),
         themeBuilder: resolve(root, 'theme-builder.html'),
+        reactSlots: resolve(root, 'react-slots.html'),
       },
     },
   },

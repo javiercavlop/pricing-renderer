@@ -32,7 +32,7 @@ import {
   type ViewModelOptions,
 } from '../core/index.js';
 import { applySelectionInput } from '../core/apply-selection.js';
-import { summaryActionState, type SummaryActionState } from './cta.js';
+import { planCtaView, summaryActionState, type SummaryActionState } from './cta.js';
 import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
 import { inputChanged } from './same-input.js';
 import {
@@ -49,6 +49,8 @@ import type {
   PricingDiagnosticDetail,
   PricingReadyDetail,
   PricingSelectionChangeDetail,
+  PricingSlotName,
+  PricingSlotsChangeDetail,
 } from './events.js';
 import {
   comparisonRowTotal,
@@ -58,7 +60,9 @@ import {
   renderBilling,
   renderCatalogMetadata,
   renderComparison,
+  renderErrorSlotShell,
   renderHeader,
+  renderLoadingSlotShell,
   renderPendingDialog,
   renderPlans,
   renderSummary,
@@ -67,7 +71,11 @@ import {
   toolbarThresholdOf,
   addOnFilterThresholdOf,
   instanceId,
+  heroTitle,
+  PRICING_SECTION_NAMES,
+  PRICING_SLOT_NAMES,
   type ActionOrigin,
+  type PricingSectionName,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -82,10 +90,17 @@ import {
 // bottom bar is still the summary position (RenderState lives in renderers.ts and has no such field).
 export function renderAfterPlans(state: RenderState, wide = true): TemplateResult {
   const { viewModel, selection, compact } = state;
-  const withoutAddOns = viewModel.addOns.length === 0;
+  const hidden = state.hiddenSections;
+  // [impl->req~hide-sections-addons-summary~1] hidden add-ons count as no add-ons, so the summary
+  // keeps a place outside the add-on layout
+  const withoutAddOns = viewModel.addOns.length === 0 || Boolean(hidden?.has('addOns'));
   const docked = withoutAddOns && !compact && wide && selection.planId !== undefined;
-  const summary = withoutAddOns ? renderSummary(state) : nothing;
-  const parts = [docked ? summary : nothing, renderComparison(state), renderAddOns(state)];
+  const summary = withoutAddOns && !hidden?.has('summary') ? renderSummary(state) : nothing;
+  const parts = [
+    docked ? summary : nothing,
+    hidden?.has('comparison') ? nothing : renderComparison(state),
+    renderAddOns(state),
+  ];
   return html`<div class="pr-flow">${parts}</div>
     ${docked ? nothing : summary}`;
 }
@@ -117,6 +132,54 @@ export const onlyDifferencesConverter = {
     return value !== 'false';
   },
 };
+
+// [impl->req~hide-sections-attribute-converter~1] [impl->req~hide-sections-unknown~2]
+// Whitespace separated; only tokens that exactly match a section name are kept, in order.
+export const hideSectionsConverter = {
+  fromAttribute(value: string | null): PricingSectionName[] | undefined {
+    if (value === null) return undefined;
+    return value
+      .split(/[\t\n\f\r ]+/)
+      .filter((token): token is PricingSectionName =>
+        (PRICING_SECTION_NAMES as readonly string[]).includes(token),
+      );
+  },
+};
+
+// A value that is not an array hides nothing, and neither does an item that is not a section name.
+function hiddenSectionsOf(value: unknown): ReadonlySet<PricingSectionName> {
+  const names = new Set<PricingSectionName>();
+  if (!Array.isArray(value)) return names;
+  for (const item of value) {
+    if ((PRICING_SECTION_NAMES as readonly unknown[]).includes(item)) {
+      names.add(item as PricingSectionName);
+    }
+  }
+  return names;
+}
+
+// [impl->req~slots-not-array~1] [impl->req~slots-default-markup~1]
+// A value that is not an array requests nothing, and neither does an item that is not a slot name.
+function requestedSlotsOf(value: unknown): ReadonlySet<PricingSlotName> {
+  const names = new Set<PricingSlotName>();
+  if (!Array.isArray(value)) return names;
+  for (const item of value) {
+    if ((PRICING_SLOT_NAMES as readonly unknown[]).includes(item)) {
+      names.add(item as PricingSlotName);
+    }
+  }
+  return names;
+}
+
+// What the last pricing-slots-change event reported, to tell a change from an update without one.
+interface SlotsDispatch {
+  nodes: HTMLElement[];
+  data: string[];
+  summary?: PricingSelectionChangeDetail;
+}
+
+const slotNodeSelector = '[data-pr-slot]';
+const slotOwnerSelector = '[data-pr-root], [data-pr-slot]';
 
 export class PricingRendererElement extends LitElement {
   static properties = {
@@ -157,7 +220,21 @@ export class PricingRendererElement extends LitElement {
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
     addOnFilterThreshold: { type: Number, attribute: 'add-on-filter-threshold' },
+    // [impl->req~hide-sections-property~1] a host that builds the array in its render function does
+    // not re-render on every render
+    hideSections: {
+      attribute: 'hide-sections',
+      converter: hideSectionsConverter,
+      hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
+    },
+    // [impl->req~slots-property~1] the slot names the host fills; no attribute
+    slots: { attribute: false },
   };
+
+  static {
+    // elementProperties is complete without defining the tag
+    this.finalize();
+  }
 
   declare pricing?: IPricingLike;
   declare yaml?: string;
@@ -186,7 +263,12 @@ export class PricingRendererElement extends LitElement {
   declare toolbarThreshold: number;
   // [impl->req~addon-grid-threshold-attribute~1]
   declare addOnFilterThreshold: number;
+  // [impl->req~hide-sections-property~1]
+  declare hideSections?: readonly PricingSectionName[];
+  // [impl->req~slots-property~1]
+  declare slots?: readonly PricingSlotName[];
 
+  private _lastSlotsDispatch: SlotsDispatch = { nodes: [], data: [] };
   private _status: LoadStatus = 'idle';
   private readonly _projectPresentation: PricingPresentation;
   private _normalized?: NormalizedPricing;
@@ -349,6 +431,60 @@ export class PricingRendererElement extends LitElement {
       this._updateCompactLayout(this.getBoundingClientRect().width);
     }
     this._reportCurrentSelection();
+    this._reportSlots();
+  }
+
+  // [impl->req~slots-change-event~3] [impl->req~slots-change-event-own-nodes~1]
+  // [impl->req~slots-change-event-summary~1]
+  // Once per change of the slot nodes this element rendered, of their data-* values or, while a
+  // summary slot node exists, of the selection and the resolved prices. A node that the host or a
+  // nested renderer put inside a slot node has another owner and is not listed.
+  private _reportSlots(): void {
+    const nodes = [...this.querySelectorAll<HTMLElement>(slotNodeSelector)].filter(
+      (node) => node.isConnected && node.parentElement?.closest(slotOwnerSelector) === this,
+    );
+    const data = nodes.map((node) => JSON.stringify(Object.entries(node.dataset)));
+    const summary = nodes.some((node) => node.dataset.prSlot === 'summary-actions')
+      ? this._snapshot()
+      : undefined;
+    const last = this._lastSlotsDispatch;
+    if (
+      nodes.length === last.nodes.length &&
+      nodes.every(
+        (node, index) => node === last.nodes[index] && data[index] === last.data[index],
+      ) &&
+      deepEqual(summary, last.summary)
+    ) {
+      return;
+    }
+    this._lastSlotsDispatch = { nodes, data, ...(summary ? { summary } : {}) };
+    this.dispatchEvent(
+      new CustomEvent<PricingSlotsChangeDetail>('pricing-slots-change', {
+        detail: { nodes: [...nodes] },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  // [impl->req~trigger-plan-action~1] [impl->req~trigger-plan-action-guard~1]
+  // The same pricing-action as a click on the plan's built-in CTA, for a host that draws its own.
+  public triggerPlanAction(planId: string): boolean {
+    if (!this.ctaEnabled || this.pendingActionId || !this._isReady()) return false;
+    if (hiddenSectionsOf(this.hideSections).has('plans')) return false;
+    const viewModel = this._viewModel();
+    const plan = viewModel?.plans.find((candidate) => candidate.id === planId);
+    if (!viewModel || !plan) return false;
+    const current = deriveCurrentContext(this._normalized!, this._currentSelection);
+    const cta = planCtaView(viewModel, plan, {
+      currentPlanId: current?.planId,
+      pendingActionId: this.pendingActionId,
+    });
+    if (cta.disabled) return false;
+    const origin: ActionOrigin | undefined = cta.relation
+      ? { relation: cta.relation, source: 'plan' }
+      : undefined;
+    return this._triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   }
 
   // [impl->req~current-selection-diagnostics~1]
@@ -916,11 +1052,13 @@ export class PricingRendererElement extends LitElement {
   };
 
   protected render(): TemplateResult {
+    const slots = requestedSlotsOf(this.slots);
     if (this._status === 'loading' || this._status === 'idle') {
       const loadingTitleId = `${this._idPrefix}-loading-title`;
       // [impl->req~loading-label-localized~1]
       const loadingLabel =
         this.loadingLabel ?? translate(getMessages(this.locale, this.messages), 'pricing.loading');
+      if (slots.has('loading')) return renderLoadingSlotShell(loadingTitleId, loadingLabel);
       return html`
         <section class="pr-shell pr-shell--loading" aria-labelledby=${loadingTitleId}>
           <h2 id=${loadingTitleId} class="pr-sr-only">${loadingLabel}</h2>
@@ -934,6 +1072,7 @@ export class PricingRendererElement extends LitElement {
       `;
     }
     if (!this._normalized || this._status === 'error') {
+      if (slots.has('error')) return renderErrorSlotShell(this._diagnostics);
       const messages = getMessages(this.locale, this.messages);
       // [impl->req~error-state-human-message~1] the codes and messages stay inside a closed details
       return html`
@@ -979,8 +1118,11 @@ export class PricingRendererElement extends LitElement {
       resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold);
     // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
     const current = deriveCurrentContext(this._normalized, this._currentSelection);
+    const hidden = hiddenSectionsOf(this.hideSections);
     const state: RenderState = {
       viewModel,
+      ...(hidden.size > 0 ? { hiddenSections: hidden } : {}),
+      ...(slots.size > 0 ? { slots } : {}),
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: toolbarShown ? this._search : '',
@@ -1031,8 +1173,20 @@ export class PricingRendererElement extends LitElement {
                 </details>`
               : nothing
           }
-          ${renderHeader(state)} ${renderCatalogMetadata(state)} ${renderBilling(state)}
-          ${renderVariables(state)} ${renderPlans(state)} ${renderAfterPlans(state, this._wide)}
+          ${
+            // [impl->req~hide-sections-render~1] [impl->req~hide-sections-hero-name~1]
+            // the shell stays labelled by the title when the hero is hidden
+            hidden.has('hero')
+              ? html`<h2 class="pr-sr-only" id=${instanceId(state, 'title')}>
+                  ${heroTitle(viewModel)}
+                </h2>`
+              : renderHeader(state)
+          }
+          ${hidden.has('metadata') ? nothing : renderCatalogMetadata(state)}
+          ${hidden.has('billing') ? nothing : renderBilling(state)}
+          ${hidden.has('variables') ? nothing : renderVariables(state)}
+          ${hidden.has('plans') ? nothing : renderPlans(state)}
+          ${renderAfterPlans(state, this._wide)}
         </div>
         ${renderPendingDialog(state)}
         <p class="pr-sr-only" aria-live="polite">
