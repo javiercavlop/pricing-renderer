@@ -405,10 +405,13 @@ No documented incompatibility between `upload-artifact` v6 and
 ```
 <!-- prettier-ignore-end -->
 
-The diff was written by hand and checked by reading against the current file;
-it was not applied to a copy and parsed, because no shell was available in
-this revision (**not verified** as valid YAML). Parse the result with the
-`yaml` package before applying.
+The diff was written by hand. A scripted check applied it with
+`git apply --recount` to a temporary copy of `release.yml` at this head: it
+applied cleanly, the result parses as YAML with the jobs `verify` and
+`publish`, `publish` needs `verify`, `verify` has no `id-token` permission and
+no environment, `publish` has `id-token: write` and no checkout or install
+step. The behaviour of the workflow was **not exercised** (no run of the
+release workflow).
 
 Deviation from the brief: the tarball is passed after the flags
 (`npm publish --access public --provenance --tag "$DIST_TAG" <path>`), not as
