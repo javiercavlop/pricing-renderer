@@ -1,19 +1,26 @@
 ## State
-- Integrated: Next example (7fb7b819aa7d4c79), docs/react.md + README (29721ca8bb8e42c4), reference docs + empty PENDING (32883cb327df41f3), docs alignment (085d1d98027c480b).
-- Checks in workers: install, typecheck, lint, test (94 files, 2002 tests), format:check, package:check, next-demo build all passed.
+
+- PR 91 (feat/react-headless-e) open, head 71ea21e before this checkpoint. Panel round 1: reviewer changes-requested (0 blocker, 3 major, 6 minor, 2 nit), test-reviewer approve (4 minor followups), security-auditor approve (3 minor, 3 nit).
+- CI on 71ea21e: format:check failed on this handoff file; fixed by running prettier on the agent-work files in the next task.
+
+## Round 1 majors
+
+- R1-REV-001: docs must say a relative src gets no provider headers or credentials (the origin filter needs an absolute URL; the loader needs one too).
+- R1-REV-002: docs/react.md says hydration cannot mismatch. The reviewer suspects a mismatch when the element is defined and Lit has rendered before hydration. To be tested in a browser spec first.
+- R1-REV-003: format:check.
 
 ## Decisions
-- P3-13 React example is NOT in this PR (coordinator option C): react-router changes pnpm-lock.yaml, owned by ci-health-audit-ts-release. Pending as its own change after that merge; owner decision CRP-P3-D (a) stands: react-router exact pin in examples/react, pnpm audit and licence report recorded.
-- No changeset: docs, private examples and a test list only; no published code changes.
-- Docs follow the code: isSafeLink rejects //host and /\host; absolute https links to other hosts remain accepted.
-- Wave-3 follow-ups done in docs/react.md: render-props section, react-dom note, upgrade/hydration ordering, render-prop context strings warning.
+
+- P3-13 React example is NOT in this PR (coordinator option C): react-router changes pnpm-lock.yaml, owned by ci-health-audit-ts-release. Own change after that merge; owner decision CRP-P3-D (a): react-router exact pin in examples/react, pnpm audit and licence report recorded.
+- Redirect wording, one text for both docs: fetch drops Authorization on a cross-origin redirect but keeps other custom headers (WHATWG Fetch HTTP-redirect fetch, via lookup, medium confidence).
+- No changeset: docs, private examples and tests only.
 
 ## Risks
-- Next example not exercised in a browser (build/prerender only).
-- Redirect note in docs/configuration.md says a redirect 'could carry' headers; fetch behaviour not verified.
-- Hydration-ordering text inferred from code, no dedicated test.
+
+- If the hydration mismatch is real, it is a library or integration defect (element light DOM rendered before React hydrates). Then decide: document the limit and the safe ordering, or escalate for a src change (outside this PR's intent).
 
 ## Next
-1. Push, open PR to develop, follow CI.
-2. Panel: reviewer + test-reviewer on pushed head.
-3. set_review_package, lead_ready (summary lists P3-13 pending).
+
+1. Integrate the fix tasks, push, wait for green CI.
+2. Panel round 2 on the new head.
+3. set_review_package, lead_ready; summary lists P3-13 pending.
