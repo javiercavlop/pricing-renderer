@@ -11,6 +11,27 @@
     <button id="set-pending" type="button">Set pending action</button>
     <button id="set-current" type="button">Set current plan</button>
     <button id="rerender-error" type="button">Re-render with a new renderError</button>
+    <script>
+      // Classic script, so it runs before the module graph. The static import of
+      // pricing-renderer/react defines the element at module load, before any harness code; for
+      // mode=hydrate-late&define=after the define calls are held until __releaseDefinitions().
+      (function () {
+        var params = new URLSearchParams(location.search);
+        window.__releaseDefinitions = function () {};
+        if (params.get('mode') !== 'hydrate-late' || params.get('define') !== 'after') return;
+        var held = [];
+        customElements.define = function (name, ctor, options) {
+          held.push([name, ctor, options]);
+        };
+        window.__releaseDefinitions = function () {
+          delete customElements.define;
+          held.forEach(function (call) {
+            if (!customElements.get(call[0])) customElements.define(call[0], call[1], call[2]);
+          });
+          held = [];
+        };
+      })();
+    </script>
     <script type="module" src="/src/react-slots.ts"></script>
   </body>
 </html>

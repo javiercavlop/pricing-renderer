@@ -72,7 +72,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 
 ## Wave 1: core extraction (item 1)
 
-- [ ] P3-1T Characterization tests (test-designer, risk medium; after P3-S1).
+- [x] P3-1T Characterization tests (test-designer, risk medium; after P3-S1).
   - Files: `tests/unit/selection-change.test.ts` (new), `tests/unit/price-stabilizer.test.ts` (new),
     `tests/unit/apply-selection.test.ts` (only the block at `:69-73`, flipped, design.md D2).
   - Requirements: every `req~core-*`, every `req~price-stabilizer-*`,
@@ -81,7 +81,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Checks: `install`,
     `red(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/apply-selection.test.ts)`,
     `lint`, `fmt`.
-- [ ] P3-1I Core functions (implementer, risk medium; same PR as P3-1T).
+- [x] P3-1I Core functions (implementer, risk medium; same PR as P3-1T).
   - Files: `src/core/selection-change.ts` (new), `src/core/price-stabilizer.ts` (new),
     `src/core/types.ts`, `src/core/index.ts`, `src/element/events.ts` (type re-export only),
     `src/core/utils.ts`, `src/core/apply-selection.ts`, `.changeset/core-selection-logic.md`.
@@ -101,7 +101,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     its export; every `req~price-stabilizer-*` and `req~selection-logic-exported~1`, which reads all
     six function names, `createPriceStabilizer` included. Later slices that wait for "P3-1I merged"
     (P3-2T, P3-2, P3-3, P3-7a) then wait for the second PR.
-- [ ] P3-2T Kept-line doc test (test-designer, risk low; after P3-1I merged; same PR as P3-2).
+- [x] P3-2T Kept-line doc test (test-designer, risk low; after P3-1I merged; same PR as P3-2).
   - Files: `tests/unit/phase0-docs.test.ts` only (the test at `:117-125`).
   - Why: that test reads `src/element/pricing-renderer-element.ts` and slices from
     `const keptLine`; once P3-2 moves `_stabilizeResolvedPrices` into the core, its `indexOf`
@@ -111,7 +111,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `[utest->req~breakdown-kept-price-doc~1]`. The test passes before and after P3-2, so it has no
     red-before check.
   - Checks: `install`, `unit(tests/unit/phase0-docs.test.ts)`, `lint`, `fmt`.
-- [ ] P3-2 The element uses the core (refactorer, risk high; after P3-1I merged; same PR as P3-2T).
+- [x] P3-2 The element uses the core (refactorer, risk high; after P3-1I merged; same PR as P3-2T).
   - Files: `src/element/pricing-renderer-element.ts`. The refactorer touches no test file.
   - Change: `:578-585`, `:598-649` and `:709-875` become calls to the core; focus, dialog and
     events stay. P3-2 requires a patch changeset that names the element fix for two-level `dependsOn`
@@ -126,7 +126,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Checks: `full`, `pkg`,
     `unit(tests/unit/selection-change.test.ts tests/unit/price-stabilizer.test.ts tests/unit/phase0-docs.test.ts)`; CI
     `browser-shards` green, in particular `tests/browser/pricing-renderer.spec.ts:125-432,1547-1600`.
-- [ ] P3-3 Search params (T/I, risk medium; after P3-1I merged, parallel with P3-2).
+- [x] P3-3 Search params (T/I, risk medium; after P3-1I merged, parallel with P3-2).
   - Files: `tests/unit/selection-search-params.test.ts` (new, test task),
     `src/core/search-params.ts` (new), `src/core/index.ts`, `.changeset/selection-search-params.md`.
   - Requirements: every `req~search-params-*`, that is `req~search-params-write~1`,
@@ -141,7 +141,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     prototype-key and no-throw rules ship with the first reader. Then
     `req~search-params-var-length-limit~1`, `-var-depth-limit~1`, `-entry-limit~1` and
     `-diagnostic-id-length~2`.
-- [ ] P3-4 Shared source load (T/I, risk medium; after P3-2 merged).
+- [x] P3-4 Shared source load (T/I, risk medium; after P3-2 merged).
   - Files: `tests/unit/load-source.test.ts` (new, test task), `src/yaml/source.ts` (new),
     `src/yaml/index.ts`, `src/element/pricing-renderer-element.ts` (`reload()` only),
     `.changeset/load-pricing-source.md`.
@@ -164,7 +164,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 
 ## Wave 2: provider and hooks (items 2, 3, 5)
 
-- [ ] P3-5 Headless entry and provider (T/I, risk medium; after P3-S1, parallel with wave 1).
+- [x] P3-5 Headless entry and provider (T/I, risk medium; after P3-S1, parallel with wave 1).
   - Files: `tests/unit/react-provider.test.ts` (new, test task), `tests/unit/ssr.test.ts` (test
     task), `tests/unit/density.test.ts`, `tests/unit/react-style-prop.test.ts` and
     `tests/unit/spectra-followups-react.test.ts` (test task, see the wrapper rule),
@@ -191,7 +191,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Checks: `full`, `pkg`,
     `red(tests/unit/react-provider.test.ts tests/unit/ssr.test.ts)`,
     `unit(tests/unit/density.test.ts tests/unit/react-style-prop.test.ts tests/unit/spectra-followups-react.test.ts)`.
-- [ ] P3-6 `usePricingSource` (T/I, risk medium; after P3-5 and P3-4).
+- [x] P3-6 `usePricingSource` (T/I, risk medium; after P3-5 and P3-4).
   - Files: `tests/unit/use-pricing-source.test.ts` and
     `tests/unit/use-pricing-source-mocked.test.ts` (new, test task),
     `src/react/use-pricing-source.ts` (new), `src/react/headless.ts`,
@@ -204,7 +204,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     origin gets no Authorization" and "Listed origin on a server", with the request filter of P3-5).
   - Checks: `full`, `pkg`,
     `red(tests/unit/use-pricing-source.test.ts tests/unit/use-pricing-source-mocked.test.ts)`.
-- [ ] P3-7a Selection store (T/I, risk high; after P3-1I merged).
+- [x] P3-7a Selection store (T/I, risk high; after P3-1I merged).
   - Files: `tests/unit/selection-store.test.ts` (new, test task), `src/react/selection-store.ts`
     (new, framework-free).
   - Requirements: `req~use-pricing-selection-changes~1`, `-notify~1`, `-controlled~1`,
@@ -216,7 +216,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     package entry exports and nothing imports yet, so the published API and behaviour do not
     change; P3-7b, which exposes it through `usePricingSelection`, adds the changeset.
   - Checks: `full`, `red(tests/unit/selection-store.test.ts)`.
-- [ ] P3-7b `usePricingSelection` and the review from hooks (T/I, risk medium).
+- [x] P3-7b `usePricingSelection` and the review from hooks (T/I, risk medium).
   - After: P3-7a and P3-6 merged.
   - Files: `tests/unit/use-pricing-selection.test.ts` (new, test task),
     `src/react/use-pricing-selection.ts` (new), `src/react/headless.ts`,
@@ -227,7 +227,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `req~provider-presentation-precedence~1`, `req~provider-messages-merge~1`,
     `req~provider-nearest~1`, `req~provider-no-global-write~1` and `req~provider-absent-global~1`.
   - Checks: `full`, `pkg`, `red(tests/unit/use-pricing-selection.test.ts)`.
-- [ ] P3-8 `usePricingRendererState(ref)` (T/I, risk medium).
+- [x] P3-8 `usePricingRendererState(ref)` (T/I, risk medium).
   - After: P3-7b merged.
   - Files: `tests/unit/renderer-state-store.test.ts` and
     `tests/unit/renderer-state-store-mocked.test.ts` (new, test task),
@@ -241,7 +241,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
 
 ## Wave 3: composition (item 4; after CRP-P3-C and P3-S2)
 
-- [ ] P3-10 `hideSections` (T/I, risk medium; after P3-4 and P3-5).
+- [x] P3-10 `hideSections` (T/I, risk medium; after P3-4 and P3-5).
   - Files: `tests/unit/hide-sections.test.ts` (new, test task),
     `tests/browser/hide-sections.spec.ts` (new, test task),
     `src/element/pricing-renderer-element.ts` (property, attribute and the exported
@@ -268,7 +268,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `RenderState` field for it; existing tests, which do not set it, render as before.
   - Checks: `full`, `pkg`, `red(tests/unit/hide-sections.test.ts)`,
     `unit(tests/unit/custom-elements.test.ts)`; CI `browser-shards` with the baselines unchanged.
-- [ ] P3-11 Element slots (T/I, risk high; after P3-10 merged).
+- [x] P3-11 Element slots (T/I, risk high; after P3-10 merged).
   - Files: `tests/unit/element-slots.test.ts` (new, test task),
     `tests/browser/element-slots.spec.ts` (new, test task), `tests/unit/docs-examples.test.ts` and
     `tests/unit/spectra-followups-parts.test.ts` (test task, docs-sync), `src/element/renderers.ts`
@@ -314,7 +314,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `unit(tests/unit/spectra-followups-parts.test.ts)`; CI `browser-shards` with the new spec green
     and the baselines unchanged. Split the loading and error slots into a follow-up PR if it grows
     past 300 lines.
-- [ ] P3-12 React render props through portals (T/I, risk high; after P3-11 merged).
+- [x] P3-12 React render props through portals (T/I, risk high; after P3-11 merged).
   - Files: `tests/unit/react-slots.test.ts` and `tests/unit/react-slots-mocked.test.ts` (new, test
     task); `tests/unit/density.test.ts`,
     `tests/unit/react-style-prop.test.ts` and `tests/unit/spectra-followups-react.test.ts` (test
@@ -348,7 +348,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `red(tests/unit/react-slots.test.ts tests/unit/react-slots-mocked.test.ts)`,
     `unit(tests/unit/density.test.ts tests/unit/react-style-prop.test.ts tests/unit/spectra-followups-react.test.ts)`,
     `react-demo`.
-- [ ] P3-12b React harness page and browser specs (T/I, risk medium; after P3-12 and P3-8 merged).
+- [x] P3-12b React harness page and browser specs (T/I, risk medium; after P3-12 and P3-8 merged).
   - Files: `tests/browser/react-slots.spec.ts` (new, test task),
     `tests/browser/react-renderer-state.spec.ts` (new, test task), `examples/vanilla/react-slots.html`
     (new), `examples/vanilla/src/react-slots.ts` (new: mounts `PricingRenderer` from
@@ -381,10 +381,11 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Content: the provider instead of the global config; a headless page with the hooks; a router
     `Link` CTA, `currentSelection` and the review flow (`compareWithCurrent`,
     `PricingChangeReview`) against an in-memory mock backend.
+  - Deferred out of the wave-4 PR (coordinator decision): react-router changes pnpm-lock.yaml, which the running change ci-health-audit-ts-release owns; P3-13 starts as its own change after that merge. Owner decision CRP-P3-D (a) stands: react-router at one exact version in examples/react, pnpm audit and licence report recorded.
   - Link note: the `href` of the plan context is checked by `isSafeLink`
-    only and may point to another host (a protocol-relative `//host` value is accepted today,
-    `docs/events.md:170`); the example does not present it as a same-site link. The `isSafeLink`
-    hardening stays a followup slice after an owner decision.
+    only. `isSafeLink` rejects `//host` and `/\host` (also with tab, CR or LF mixed in;
+    `src/core/view-model.ts:600-606`, `docs/events.md`) but accepts an absolute `https://` link to
+    another host, so it is not a same-site link; the example does not present it as one.
   - Supply chain (R1-SEC-009): `react-router` is pinned to one exact version (no range) in
     `examples/react/package.json`; before the lockfile is committed the implementer reads the
     output of `pnpm audit` and a licence report of the added packages and records both in the PR;
@@ -393,14 +394,14 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     no such entry; a package of the update that needs its script to work is reported, not allowed.
   - Checks: the lockfile update through a registered update check first, then `full`, `pkg`,
     `react-demo`.
-- [ ] P3-14 Next example (implementer, risk low; parallel with P3-13).
+- [x] P3-14 Next example (implementer, risk low; parallel with P3-13).
   - Files: `examples/next/app/**`.
   - Content: the provider in a client layout component; `next/link` in `renderPlanCta`; the current
     plan; the review flow with route handlers under `app/api/` holding in-memory state.
   - Link note: as in P3-13, the plan context `href` passes `isSafeLink` only and may point to
     another host; the example does not present it as a same-site link.
   - Checks: `full`, `pkg`, `next-demo`.
-- [ ] P3-15a React guide (doc-steward, risk low; after P3-13 and P3-14).
+- [x] P3-15a React guide (doc-steward, risk low; after P3-13 and P3-14; shipped before P3-13 by coordinator decision).
   - Files: `docs/react.md` (new), the "React and Next" section of `README.md` (`:224-263`) and its
     docs list (`:472-492`).
   - Content: the provider, the hooks, SSR rules, and the two limits of `usePricingRendererState`
@@ -409,7 +410,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     another host; the guide does not present it as a same-site link and says that a host needing
     same-site links checks it itself.
   - Checks: `docs`.
-- [ ] P3-15b Reference (doc-steward, risk low; parallel with P3-15a).
+- [x] P3-15b Reference (doc-steward, risk low; parallel with P3-15a).
   - Files: `docs/api-reference.md` (core functions, `pricing-renderer/react`, the new subpath,
     `hideSections`, slots and the event), `docs/configuration.md` (the provider layer in
     "Presentation precedence", `:279-290`), `docs/events.md` (the full reference of the slot event;
@@ -479,13 +480,15 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
 
 ## Follow-ups outside the slices
 
-- `isSafeLink` (`src/core/view-model.ts:600-605`) accepts `//host` and `/\host`, which browsers
-  read as links to another host, and it does not drop tab, CR and LF before the check, which
-  browsers remove from URLs. The React plan context re-checks `data-href` with it
-  (`req~react-slot-href-safe~1`), so it inherits the gap. A fix (reject both prefixes after
-  removing tab, CR and LF, with a unit test) changes how existing CTA, metadata and doc links
-  render, which the additive-only rule does not allow inside this change; it needs an owner
-  decision and its own slice.
+- `isSafeLink` (`src/core/view-model.ts:600-606`): the hardening is already in the code. It
+  rejects `//host` and `/\host`, also with tab, CR or LF mixed in. The same-site caveat stays: it
+  accepts an absolute `https://` link to another host, so a host that needs same-site links checks
+  `href` itself (`req~react-slot-href-safe~1`).
+
+- [ ] Wrapper SSR hydration fix (follow-up change). Open, not met here. The wrapper's server HTML
+      is an empty tag; hydrating after the element has rendered gives one recoverable hydration
+      error and a replaced host node (the final DOM is complete). Documented with a workaround in
+      `docs/react.md` and `docs/nextjs.md`; the fix changes `src/react`.
 
 ## Traceability checklist
 

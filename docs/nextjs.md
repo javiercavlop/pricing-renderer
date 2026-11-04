@@ -41,7 +41,48 @@ export function PricingView({ yaml }: { yaml: string }) {
 }
 ```
 
+## Hydration of the element
+
+Known limitation of the current wrapper: the server HTML of `PricingRenderer` is an empty tag, and
+the element renders its light DOM on the client before a normal Next.js page hydrates (the page
+defines the element when its client bundle loads and hydrates in a later task). React then logs one
+recoverable hydration error and regenerates the host node. The final DOM is complete; the cost is a
+console error and a client re-render of the tree up to the root or the nearest `Suspense` boundary.
+The orders that were measured are in the
+[React guide](./react.md#known-limitation-hydration-of-the-element). A follow-up change, "wrapper
+SSR hydration fix", is planned.
+
+Workaround: define the element after hydration. A Client Component loads the wrapper with
+`next/dynamic` and `ssr: false` (the App Router allows `ssr: false` only in Client Components) and a
+sized placeholder as the loading fallback:
+
+```tsx
+// app/pricing/pricing-island.tsx
+'use client';
+
+import dynamic from 'next/dynamic';
+
+const PricingView = dynamic(() => import('./pricing-view').then((mod) => mod.PricingView), {
+  ssr: false,
+  loading: () => <div aria-busy="true" style={{ minHeight: 640 }} />,
+});
+
+export function PricingIsland({ yaml }: { yaml: string }) {
+  return <PricingView yaml={yaml} />;
+}
+```
+
+The Server Component page imports `PricingIsland`. The wrapper then does not render on the server
+(it never did: the tag was empty), so the placeholder reserves the space.
+
+`examples/next` applies this on `/pricing`: `app/pricing-island.tsx` loads `app/pricing-client.tsx`
+this way. `/change` needs no change: `ChangeFlow` renders `PricingChangeReview` only after the
+subscription has loaded in the browser, so the server HTML holds no element tag to hydrate.
+
 ## Load the pricing on the server
+
+The later examples render `PricingView` directly for brevity. A real page should wrap it in the
+island above, the same way, to avoid the hydration error.
 
 A Server Component fetches the pricing with the key, which stays on the server, and passes the
 result to the client island as a `yaml` string or as a plain `pricing` object:
@@ -194,24 +235,26 @@ is constructed. A server process handles many requests, so a call made per reque
 request's settings into the next. A `'use client'` module is also evaluated on the server during
 SSR, so call it once at module top level with constant values. Never call it inside a component or
 with request-dependent values such as a locale from a prop or user data.
-`examples/next/app/pricing-client.tsx` does this:
+With constant values, this is safe:
 
 ```tsx
 'use client';
 
 import { configurePricingRenderer } from 'pricing-renderer';
-import { PricingRenderer } from 'pricing-renderer/react';
 
 configurePricingRenderer({
   locale: 'en-US',
-  pricingPath: '/pricing',
   selectionEnabled: true,
   ctaEnabled: true,
 });
 ```
 
 For settings that vary by request, tenant or locale, pass props to the instance instead
-([configuration](./configuration.md)).
+([configuration](./configuration.md)), or wrap the island in `PricingRendererProvider`, which
+writes no global (see the [React guide](./react.md#pricingrendererprovider)).
+`examples/next/app/providers.tsx` does the latter: its `Providers` client component wraps the
+layout in `PricingRendererProvider` with module-level constants and calls no
+`configurePricingRenderer`.
 
 ## Keep `request` and `loadPricing` stable
 
@@ -234,7 +277,7 @@ Reloads on every render:
 export function PricingView() {
   return (
     <PricingRenderer
-      src="/api/pricing"
+      src="https://app.example.com/api/pricing"
       // New function on every render: the pricing reloads each time.
       loadPricing={({ url, signal }) => fetch(url, { signal }).then((res) => res.text())}
     />
@@ -255,7 +298,7 @@ export function PricingView() {
     ({ url, signal }) => fetch(url, { signal }).then((res) => res.text()),
     [],
   );
-  return <PricingRenderer src="/api/pricing" loadPricing={loadPricing} />;
+  return <PricingRenderer src="https://app.example.com/api/pricing" loadPricing={loadPricing} />;
 }
 ```
 
@@ -292,6 +335,7 @@ Until then, use plain `fetch` as in this guide.
 
 ## Related
 
+- [React guide](./react.md) for the provider, the hooks and the render props.
 - [API reference](./api-reference.md) for the props, `request` and `loadPricing`.
 - [Private pricings](./private-pricings.md) for keys, routes and caching.
 - [Pricing versions](./pricing-versions.md) for which version to load.

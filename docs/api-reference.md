@@ -86,19 +86,187 @@ const { selection: next, removedAddOnIds } = reconcileSelection(pricing, {
 
 Supporting functions:
 
-| Function                   | Purpose                                                     |
-| -------------------------- | ----------------------------------------------------------- |
-| `createDefaultSelection`   | Build a complete selection from model defaults              |
-| `mergeSelection`           | Safely merge a partial selection                            |
-| `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                |
-| `reconcileSelection`       | Deselect add-ons unavailable for the plan and dependents    |
-| `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence |
-| `mergePresentationOptions` | Merge project and instance presentation maps                |
-| `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges  |
-| `getPlanCta`               | Resolve the CTA associated with a plan                      |
-| `getPricingRendererCustom` | Read the renderer-specific `custom` extension               |
-| `getCustomDetails`         | Return preserved custom details                             |
-| `isSafeLink`               | Validate a link: safe scheme or same-host path              |
+| Function                   | Purpose                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `createDefaultSelection`   | Build a complete selection from model defaults                                                                                      |
+| `mergeSelection`           | Safely merge a partial selection                                                                                                    |
+| `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                                                                                        |
+| `reconcileSelection`       | Deselect add-ons unavailable for the plan and dependents                                                                            |
+| `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence                                                                         |
+| `mergePresentationOptions` | Merge project and instance presentation maps                                                                                        |
+| `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges                                                                          |
+| `getPlanCta`               | Resolve the CTA associated with a plan                                                                                              |
+| `getPricingRendererCustom` | Read the renderer-specific `custom` extension                                                                                       |
+| `getCustomDetails`         | Return preserved custom details                                                                                                     |
+| `isSafeLink`               | Validate a link: http(s), mailto, a path starting with a single /, a relative ./ or ../ path or a # fragment; not a same-site check |
+
+### Selection functions
+
+These functions are pure and need no DOM. They never mutate their arguments and
+return new objects, so they are the logic behind the element's own selection
+handling and behind `usePricingSelection`.
+
+```ts
+planSelectionChange(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  intent: SelectionChangeIntent,
+): SelectionChangeResult
+
+applySelectionChange(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  pending: PendingAddOnChange,
+): PricingSelection
+```
+
+`SelectionChangeIntent` is `{ type: 'plan'; planId: string }` or
+`{ type: 'addOn'; addOnId: string; selected: boolean }`. `planSelectionChange`
+returns either `{ kind: 'apply', selection }`, when the change needs no
+confirmation, or `{ kind: 'confirm', pending }`, a `PendingAddOnChange`
+(`{ addOnId, select, addIds, removeIds, planId? }`) for a dialog.
+
+- A plan intent is reconciled with `reconcileSelection`. It needs confirmation
+  when add-ons would be removed; `pending.addOnId` is then `''`, `select` is
+  `false`, `removeIds` holds the removed ids and `planId` the target plan.
+- Selecting an add-on adds the add-ons it depends on, transitively, and removes
+  the selected add-ons that exclude it, that it excludes, or that its added
+  dependencies exclude. Deselecting removes the selected add-ons that depend on
+  it, transitively. Any addition or removal needs confirmation.
+- An unknown add-on id returns `apply` with a copy of the selection.
+
+`applySelectionChange` applies a `PendingAddOnChange` (the one from `confirm`, or
+one you build) and reconciles the result. A kept entry keeps its quantity; a new
+one gets the add-on's `minQuantity`, else `1`.
+
+```ts
+selectionWithVariable(
+  selection: PricingSelection,
+  path: string,
+  value: unknown,
+): PricingSelection
+
+selectionWithAddOnQuantity(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  addOnId: string,
+  quantity: number,
+): PricingSelection
+
+selectionInEffect(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  options?: { variablesEnabled?: boolean },
+): PricingSelection
+```
+
+- `selectionWithVariable` sets the variable at `path` (dots and `[0]` indexes, for
+  example `team.seats` or `tiers[1].price`) on a copy of `selection.variables`. A
+  path that would touch a prototype key is ignored and the selection comes back
+  unchanged in value.
+- `selectionWithAddOnQuantity` marks the add-on selected and clamps `quantity` with
+  `normalizeAddOnQuantity`.
+- `selectionInEffect` returns a copy of the selection that the renderer uses. With
+  `variablesEnabled: false` its `variables` are the pricing defaults. It does not
+  reconcile.
+
+```ts
+applySelectionInput(
+  pricing: NormalizedPricing,
+  current: PricingSelection,
+  input: Partial<PricingSelection>,
+): ApplySelectionInputResult
+
+interface ApplySelectionInputResult {
+  selection: PricingSelection;
+  removedAddOnIds: string[];
+  diagnostics: PricingDiagnostic[];
+}
+```
+
+`applySelectionInput` validates a partial selection the way the element's
+`applySelection` does, without applying it anywhere. An unknown plan or billing
+period keeps the one in `current` (`PR_SELECTION_UNKNOWN_PLAN`,
+`PR_SELECTION_UNKNOWN_BILLING_PERIOD`, both `warning`); an unknown add-on is ignored
+(`PR_SELECTION_UNKNOWN_ADDON`, `warning`); add-ons removed by reconciliation are
+reported as `PR_SELECTION_ADDON_REMOVED` (`info`). Selected quantities are
+normalized, the rest is merged with the schema defaults and reconciled, and the
+input is not mutated.
+
+```ts
+selectionToSearchParams(
+  selection: PricingSelection,
+  options?: { prefix?: string },
+): [string, string][]
+
+selectionFromSearchParams(
+  pricing: NormalizedPricing,
+  params: Iterable<[string, string]>,
+  options?: { prefix?: string; current?: PricingSelection },
+): ApplySelectionInputResult
+```
+
+The pair is a URL query string without the DOM: pass `URLSearchParams` entries in
+and out.
+
+```ts
+const pairs = selectionToSearchParams(selection, { prefix: 'pr.' });
+const query = new URLSearchParams(pairs).toString();
+
+const params = new URLSearchParams(query);
+const { selection: restored, diagnostics } = selectionFromSearchParams(pricing, params, {
+  prefix: 'pr.',
+});
+```
+
+- Keys are `plan`, `billing`, `addon` (repeated, `id` or `id:quantity`; the
+  quantity is read after the last colon) and `var.<path>` (the value is JSON, or
+  plain text when it is not JSON). Only selected add-ons are written. A quantity of
+  `1` is omitted unless the id contains a colon.
+- `prefix` is put before every key when writing; when reading, entries without it
+  are ignored.
+- Reading never throws. It runs through `applySelectionInput`, so unknown ids give
+  the diagnostics above, and `options.current` (default: the pricing defaults)
+  supplies the plan or billing period that an unknown value falls back to. Ids in
+  those diagnostics are cut at 64 characters.
+- Reading is bounded: at most 100 entries are taken, a `var.` value longer than 2048
+  characters or nested deeper than 8 levels is skipped, and a `var.` path with a
+  `__proto__`, `prototype` or `constructor` segment is skipped.
+
+```ts
+createPriceStabilizer(): PriceStabilizer
+
+interface PriceStabilizer {
+  stabilize(viewModel: PricingViewModel): PricingViewModel;
+  reset(): void;
+}
+```
+
+`stabilize` takes a view model and keeps the last valid price of a plan or add-on
+whose price now fails to evaluate (`kind: 'error'`), so a half-typed variable does
+not blank the page. It rewrites `resolved.planPrices`, `resolved.addOnPrices`, the
+affected breakdown lines and the subtotal in place, and returns the same view
+model. One stabilizer holds its own memory: create one per renderer. `reset()`
+forgets the remembered prices. `usePricingSelection` creates one per hook
+instance.
+
+Small helpers used by these functions are exported too:
+
+- `isRecord(value)`: true for a non-null, non-array object.
+- `asRecord(value)`: the value when `isRecord` holds, else `{}`.
+- `unwrapValue(value)`: `value.value` of an object that has a `value` key, else the
+  value itself.
+- `cloneValue(value)`: deep copy of arrays and plain objects; other values are
+  returned as they are.
+- `deepEqual(left, right)`: structural equality of arrays and plain objects; other
+  values compare with `Object.is`.
+- `getAtPath(source, path)`: reads an own value by a `a.b[0]` path; `undefined` when
+  the path is absent or unsafe.
+- `setAtPath(source, path, value)`: writes by path in place, creating objects and
+  arrays on the way; a path with a `__proto__` segment or an oversized array index
+  does nothing.
+- `humanizeIdentifier(identifier)`: splits camel case and `-`/`_` into spaced words
+  and capitalizes the first, for example `extra_storage` to `Extra storage`.
 
 ### Expression functions
 
@@ -424,6 +592,25 @@ loadPricingFromUrl(
 
 Only HTTP/HTTPS URLs are accepted by the built-in loader.
 
+```ts
+loadPricingSource(
+  input: { pricing?: IPricingLike; yaml?: string; src?: string },
+  options?: {
+    request?: PricingRequestOptions;
+    loadPricing?: PricingLoader;
+    normalizeOptions?: NormalizePricingOptions;
+    signal?: AbortSignal;
+  },
+): PricingResult<NormalizedPricing> | Promise<PricingResult<NormalizedPricing>>
+```
+
+`loadPricingSource` is the single entry the element and `usePricingSource` use.
+Exactly one of `pricing`, `yaml` and `src` is expected; none gives
+`PR_SOURCE_MISSING` and more than one `PR_SOURCE_CONFLICT`, both as a failed
+result. `pricing` and `yaml` return a result at once (`normalizePricing` and
+`parsePricingYaml`); `src` returns a promise from `loadPricingFromUrl`, with
+`request` spread into its options as given.
+
 ## `pricing-renderer/element`
 
 Exports `PricingRendererElement` without registering it globally.
@@ -459,6 +646,8 @@ Exports `PricingRendererElement` without registering it globally.
 | `onlyDifferences`      | `only-differences`        | `boolean`                        | automatic          |
 | `toolbarThreshold`     | `toolbar-threshold`       | `number`                         | `40`               |
 | `addOnFilterThreshold` | `add-on-filter-threshold` | `number`                         | `13`               |
+| `hideSections`         | `hide-sections`           | `readonly PricingSectionName[]`  | none hidden        |
+| `slots`                | —                         | `readonly PricingSlotName[]`     | none               |
 
 Exactly one of `pricing`, `yaml`, or `src` is required. Sensitive request
 configuration is property-only.
@@ -470,6 +659,25 @@ change rendering, links, events or navigation. The host router owns the route.
 
 `loadingLabel`, when set, is the text of the loading heading and status. Without
 it they use the `pricing.loading` message of the element's locale and `messages`.
+
+`hideSections` lists sections that are not rendered. `PricingSectionName` is
+`'hero'`, `'metadata'`, `'billing'`, `'variables'`, `'plans'`, `'comparison'`,
+`'addOns'` or `'summary'`. The attribute `hide-sections` takes the names separated
+by whitespace, for example `hide-sections="hero metadata"`; a token that is not a
+section name is dropped. A property value that is not an array, or an item that is
+not a section name, hides nothing. Hiding `plans` also makes `triggerPlanAction`
+return `false`. The property compares by content, so an array built in a render
+function does not cause an update on its own.
+
+`slots` lists the places where the host supplies its own content.
+`PricingSlotName` is `'plan-cta'`, `'summary-actions'`, `'loading'` or `'error'`.
+There is no attribute. For each requested slot the element renders an empty node
+marked `data-pr-slot="<name>"` instead of its built-in content (for `plan-cta`, one
+per plan card; `summary-actions` only while CTAs are enabled) and reports the nodes
+with the `pricing-slots-change` event. Fill each node from the host. A value that
+is not an array, or an item that is not a slot name, requests nothing, and the
+built-in markup stays. The React adapter does this for you with the render props
+below.
 
 ### When a property starts a new load
 
@@ -816,11 +1024,14 @@ All events bubble and are composed.
 | `pricing-selection-change` | `{ selection, resolved }`                                      | No         |
 | `pricing-action`           | `{ actionId, planId?, href?, selection, resolved, metadata? }` | Yes        |
 | `pricing-diagnostic`       | `{ diagnostics }`                                              | No         |
+| `pricing-slots-change`     | `{ nodes }`                                                    | No         |
+
+`pricing-slots-change` is described in [Events](./events.md#pricing-slots-change).
 
 Cancel `pricing-action` to keep navigation, checkout, or authentication under
 host control.
 
-The four events are declared in the global `HTMLElementEventMap` by
+The five events are declared in the global `HTMLElementEventMap` by
 `pricing-renderer/define`, `pricing-renderer/element` and
 `pricing-renderer/react`, so `addEventListener` on any element infers the event
 type from the name, with no cast:
@@ -832,9 +1043,10 @@ renderer.addEventListener('pricing-action', (event) => {
 });
 ```
 
-`pricing-ready`, `pricing-selection-change`, `pricing-action` and
-`pricing-diagnostic` map to `PricingReadyEvent`, `PricingSelectionChangeEvent`,
-`PricingActionEvent` and `PricingDiagnosticEvent`. Only the types change;
+`pricing-ready`, `pricing-selection-change`, `pricing-action`,
+`pricing-diagnostic` and `pricing-slots-change` map to `PricingReadyEvent`,
+`PricingSelectionChangeEvent`, `PricingActionEvent`, `PricingDiagnosticEvent` and
+`PricingSlotsChangeEvent`. Only the types change;
 `pricing-action` stays cancelable. Because the map is global, another library
 that declares an event of the same name in `HTMLElementEventMap` clashes with it.
 The review events `pricing-change-confirm` and `pricing-change-back` are not in
@@ -1116,6 +1328,290 @@ it renders, so React hosts need no extra import. Its props are `comparison`,
 `id`, `onConfirm` (`pricing-change-confirm`) and `onBack` (`pricing-change-back`).
 A ref to it is the element. `PricingChangeReviewElement` is re-exported from this
 entry.
+
+### `hideSections`, slots and render props
+
+`hideSections` (`readonly PricingSectionName[]`) is passed to the element
+property of the same name; see
+[Properties and attributes](#properties-and-attributes). A hidden section is not
+rendered.
+
+```tsx
+<PricingRenderer yaml={source} hideSections={['hero', 'comparison']} />
+```
+
+Four render props fill the element's slots. The wrapper requests the slots whose
+render prop is a function, so the element renders an empty node for each, and
+renders the return value of the prop into that node with a portal. They are called
+on the client only, after the element has rendered the node: the server render and
+the first client render call none of them and show the built-in content.
+
+```ts
+renderPlanCta?: (context: PricingPlanCtaContext) => ReactNode      // slot 'plan-cta'
+renderSummaryActions?: (context: PricingSummaryActionsContext) => ReactNode // 'summary-actions'
+renderLoading?: () => ReactNode                                    // slot 'loading'
+renderError?: (context: PricingErrorContext) => ReactNode          // slot 'error'
+```
+
+```ts
+interface PricingPlanCtaContext {
+  planId: string;
+  planName: string;
+  label: string; // the label of the built-in CTA
+  href?: string; // the safe link of the built-in CTA; absent for a button
+  relation?: SelectionRelation; // absent without a current plan
+  selected: boolean;
+  current: boolean;
+  pending: boolean; // this CTA's action is the pending one
+  anyPending: boolean; // any action is pending
+  trigger(): boolean; // dispatches the built-in `pricing-action`; false when ignored
+}
+
+interface PricingSummaryActionsContext {
+  selection: PricingSelection;
+  resolved: ResolvedPricing;
+  relation?: SelectionRelation; // absent without a current plan
+  pending: boolean; // any action is pending
+}
+
+interface PricingErrorContext {
+  diagnostics: readonly PricingDiagnostic[];
+  reload(): Promise<void>;
+}
+```
+
+`renderPlanCta` is called once for each plan card, `renderSummaryActions` once
+(only while CTAs are enabled). `planName`, `label` and the diagnostic messages
+can carry text from the pricing document: render them as text, never through an
+HTML sink such as `dangerouslySetInnerHTML`.
+
+```tsx
+function Page({ url }: { url: string }) {
+  return (
+    <PricingRenderer
+      src={url}
+      renderPlanCta={({ label, trigger }) => <button onClick={() => trigger()}>{label}</button>}
+      renderLoading={() => <Spinner />}
+      renderError={({ reload }) => <button onClick={() => void reload()}>Retry</button>}
+    />
+  );
+}
+```
+
+The wrapper keeps the element as the first child of a fragment and listens to
+`pricing-slots-change` itself, so the render props need no extra code. The context
+types, `PricingSlotName`, `PricingSectionName` and `PricingSlotsChangeEvent` are
+exported as types from this entry.
+
+### Provider and hooks
+
+`pricing-renderer/react/headless` is a second entry that imports only React: no
+Lit and no element definition. It exports
+`PricingRendererProvider`, `usePricingSource`, `usePricingSelection` and
+`usePricingRendererState`, with their types. `pricing-renderer/react` re-exports
+the same four values, so a page that already renders `PricingRenderer` can import
+them from either entry. Both modules contain `"use client"`.
+
+```tsx
+import {
+  PricingRendererProvider,
+  usePricingSelection,
+  usePricingSource,
+} from 'pricing-renderer/react/headless';
+```
+
+#### `PricingRendererProvider`
+
+```ts
+interface PricingRendererProviderProps {
+  config?: Partial<PricingRendererConfig>;
+  messages?: MessageCatalog;
+  presentation?: PricingPresentation;
+  request?: PricingRequestOptions;
+  requestOrigins?: readonly string[]; // origins besides the page origin
+  loadPricing?: PricingLoader;
+  children?: ReactNode;
+}
+```
+
+The provider publishes its props to its subtree and never writes the global
+configuration. The nearest provider applies: a nested provider replaces the outer
+one, it does not merge with it. `PricingRenderer`, `usePricingSource` and
+`usePricingSelection` read it. Precedence is the instance prop or option, then the
+provider, then the global configuration; see
+[Presentation precedence](./configuration.md#presentation-precedence).
+
+- `config`: `locale`, `variablesEnabled` and, for `PricingRenderer`, `pricingPath`,
+  `selectionEnabled` and `ctaEnabled`, used when the instance does not set them.
+  `config.presentation` is the lowest provider presentation layer.
+- `presentation`: merged over `config.presentation` and under the instance one.
+- `messages`: the instance `messages` win over these, key by key.
+- `loadPricing`: used when the instance has no `loadPricing`. Applies to `src` only.
+- `request`: used when the instance has no `request`. Applies to `src` only. Its
+  `headers` and `credentials` are sent only for a `src` that is an absolute URL whose
+  origin is the page origin or is listed in `requestOrigins`; a relative `src` such
+  as `/api/pricing` counts as a foreign origin, and for any foreign URL both are
+  removed and the other fields (`timeoutMs`, `maxBytes`, `fetch`) stay. The filter
+  reads the requested URL only: on a cross-origin redirect fetch drops
+  `Authorization` but keeps other custom headers, and cookies follow `credentials`,
+  so a listed origin or the page origin must not redirect to another origin while
+  the provider sends headers to it. See
+  [Configuration](./configuration.md#provider-request).
+
+#### `usePricingSource`
+
+```ts
+usePricingSource(props: UsePricingSourceProps): UsePricingSourceResult
+
+type UsePricingSourceProps = {
+  pricing?: IPricingLike;
+  yaml?: string;
+  src?: string;
+  request?: PricingRequestOptions;
+  loadPricing?: PricingLoader;
+  normalizeOptions?: NormalizePricingOptions;
+};
+
+type PricingSourceStatus = 'loading' | 'ready' | 'error';
+
+interface PricingSourceSnapshot {
+  status: PricingSourceStatus;
+  pricing: NormalizedPricing | undefined;
+  diagnostics: PricingDiagnostic[];
+}
+
+interface UsePricingSourceResult extends PricingSourceSnapshot {
+  reload: () => void;
+}
+```
+
+Loads and normalizes one source with `loadPricingSource`. `pricing` and `yaml`
+resolve during render, so the first render of a server pass is already `ready` or
+`error`. `src` starts as `loading` and loads in an effect: it never loads on the
+server. A new `src`, `yaml` or `pricing`, or a change of `request` or
+`normalizeOptions` by content, starts a new load and ignores the one in flight;
+`yaml`, `src`, `loadPricing` and functions inside `request` compare by identity, so
+memoize them. Unmounting aborts the load.
+
+- When a load fails after a pricing was loaded, `pricing` keeps the last value, the
+  status stays `ready` and `diagnostics` holds the new ones. Without a previous
+  pricing the status is `error`.
+- `reload()` loads `src` again (the status goes back to `loading`, `pricing` is
+  kept) and, for an inline source, normalizes it again.
+- The `request` of a `src` source is the prop, else the provider's after the origin
+  filter above. `timeoutMs` and `maxBytes` that are not a finite positive number
+  (and a `timeoutMs` above 2147483647) fall back to 15000 ms and 2097152 bytes, so
+  they cannot be switched off.
+
+#### `usePricingSelection`
+
+```ts
+usePricingSelection(
+  pricing: NormalizedPricing | undefined,
+  options?: UsePricingSelectionOptions,
+): UsePricingSelectionResult
+```
+
+Holds a selection for a pricing and derives the view model, with no element. The
+options are the instance layer:
+
+```ts
+interface UsePricingSelectionOptions {
+  selection?: PricingSelection; // controlled when set
+  onSelectionChange?: (change: UsePricingSelectionChange) => void;
+  defaultSelection?: Partial<PricingSelection>;
+  currentSelection?: Partial<PricingSelection>; // the customer's contract
+  locale?: string;
+  mode?: PricingMode;
+  visibility?: PricingVisibility;
+  messages?: MessageCatalog;
+  presentation?: PricingPresentation;
+  expressionOptions?: ExpressionOptions;
+  variablesEnabled?: boolean;
+}
+```
+
+`UsePricingSelectionChange` is
+`{ selection: PricingSelection; resolved: ResolvedPricing }`. `locale`,
+`variablesEnabled`, `messages` and `presentation` also resolve through
+the provider and the global configuration. The result is the snapshot plus stable
+actions:
+
+```ts
+// snapshot: every field is undefined while there is no pricing
+selection: PricingSelection | undefined; // reconciled, in effect
+viewModel: PricingViewModel | undefined; // prices stabilized by createPriceStabilizer
+resolved: ResolvedPricing | undefined; // viewModel.resolved
+pending: PendingAddOnChange | undefined; // a change that waits for confirm() or cancel()
+current: { planId: string; addOnIds: ReadonlySet<string> } | undefined;
+
+// actions: the identity does not change between renders
+selectPlan(planId: string): void
+toggleAddOn(addOnId: string, selected: boolean): void
+setVariable(path: string, value: unknown): void
+setAddOnQuantity(addOnId: string, quantity: number): void
+setBillingPeriod(billingPeriodId: string): void
+resetVariables(): void
+confirm(): void
+cancel(): void
+apply(input: Partial<PricingSelection>): ApplySelectionInputResult | undefined
+relationOf(planId: string): SelectionRelation | undefined
+compareWithCurrent(): SelectionComparison | undefined
+```
+
+- The hook is uncontrolled unless `options.selection` is set. A new `pricing`
+  resets the held selection to `defaultSelection` merged with the defaults and
+  reconciled, clears `pending` and the price memory.
+- `selectPlan` and `toggleAddOn` use `planSelectionChange`. A change that needs
+  confirmation sets `pending` and changes nothing else; `confirm()` applies it with
+  `applySelectionChange`, `cancel()` drops it. Other changes apply at once.
+- Every applied change calls `onSelectionChange` with the next selection and its
+  stabilized prices, also when uncontrolled and also when the result equals the
+  previous selection. In controlled mode the hook only reports: the host passes the
+  next `selection` back.
+- `apply` runs `applySelectionInput`, applies the result and returns it; the
+  `diagnostics` are the caller's to show. It returns `undefined` without a pricing.
+- `current` and `relationOf` are `undefined` without a known `currentSelection`
+  plan. `compareWithCurrent` returns `compareSelections` of the current selection
+  and the edit.
+- All actions do nothing before a pricing is set. The snapshot is cached, so the
+  hook is safe with `useSyncExternalStore` on the server.
+
+#### `usePricingRendererState`
+
+```ts
+usePricingRendererState(ref: { readonly current: EventTarget | null }): RendererState | undefined
+
+interface RendererState {
+  pricing: NormalizedPricing;
+  selection: PricingSelection;
+  resolved: ResolvedPricing;
+  applySelection: (input: Partial<PricingSelection>) => ApplySelectionResult | undefined;
+}
+```
+
+Reads the last state a `<pricing-renderer>` announced, so a component outside the
+renderer can show the selection or the total. Pass a ref to the element, for
+example the ref of `PricingRenderer`.
+
+- It is `undefined` on the server, on the first client render, before the first
+  `pricing-ready`, and after the ref changes to `null`.
+- It listens to `pricing-ready` and `pricing-selection-change` on the element in
+  a layout effect, so the first `pricing-ready` is not missed. The state follows
+  those events; an event from a nested renderer inside the element is ignored.
+- The listener moves when `ref.current` points to another element, and the state
+  resets until that element announces itself.
+- `applySelection` calls the element's `applySelection`. It returns `undefined`
+  when there is no element, and the state updates at once when the input was
+  applied.
+
+```tsx
+const ref = useRef<PricingRendererElement>(null);
+const state = usePricingRendererState(ref);
+
+<PricingRenderer ref={ref} yaml={source} />;
+<p>{state?.resolved.subtotal}</p>;
+```
 
 ## CSS entry points
 

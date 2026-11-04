@@ -39,10 +39,21 @@ declare global {
     __ctaCalls?: { planId: string; selected: boolean; slotConnected: boolean }[];
     // JSON of the selection and resolved state of each renderSummaryActions call.
     __summaryContexts?: string[];
+    // The hydrate-late mode: the host's light DOM just before hydrateRoot, whether hydrateRoot ran,
+    // the commits of the sibling probe and the host node itself, to see if hydration kept it.
+    __lateBefore?: { childCount: number; innerHTML: string };
+    __lateCommits?: number;
+    __lateHost?: Element | null;
+    __lateHydrateCalled?: boolean;
+    // Whether pricing-renderer was already defined when the server HTML was set.
+    __lateDefinedAtHtml?: boolean;
+    // Set by the inline script of react-slots.html; releases the held customElements.define calls.
+    __releaseDefinitions?: () => void;
   }
 }
 
-const mode = new URLSearchParams(location.search).get('mode') ?? 'all';
+const params = new URLSearchParams(location.search);
+const mode = params.get('mode') ?? 'all';
 const root = document.querySelector<HTMLElement>('#root')!;
 window.__actions = [];
 window.__errorContexts = [];
@@ -203,13 +214,16 @@ const slotNamesByMode: Record<string, readonly string[]> = {
   'error-yaml': everySlot,
   loading: everySlot,
   hydrate: everySlot,
+  'hydrate-late': everySlot,
   late: ['summary'],
   state: [],
   current: ['plan'],
 };
 // `mode` comes from the URL: only own keys count, never `__proto__` or `constructor`.
-const modeSlotNames = (): readonly string[] =>
-  Object.hasOwn(slotNamesByMode, mode) ? slotNamesByMode[mode]! : everySlot;
+const modeSlotNames = (): readonly string[] => {
+  if (mode === 'hydrate-late' && params.get('slots') === 'none') return [];
+  return Object.hasOwn(slotNamesByMode, mode) ? slotNamesByMode[mode]! : everySlot;
+};
 
 const useIsomorphicLayoutEffect = typeof document === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -257,6 +271,14 @@ function Probe(): ReactNode {
   return null;
 }
 
+// Counts its commits; it is a sibling of the renderer, so it says nothing about the host node.
+function LateProbe(): ReactNode {
+  useIsomorphicLayoutEffect(() => {
+    window.__lateCommits = (window.__lateCommits ?? 0) + 1;
+  }, []);
+  return null;
+}
+
 function StateHarness(): ReactNode {
   const ref = useRef<PricingRendererElement | null>(null);
   const setRef = useCallback((element: PricingRendererElement | null) => {
@@ -287,11 +309,60 @@ root.addEventListener(
 // The tree of the current props state; the hydrate mode adds the probe after the renderer.
 const buildTree = (): ReactNode => {
   const main = mode === 'state' ? h(StateHarness) : renderer();
-  return mode === 'hydrate' ? h(Fragment, null, main, h(Probe)) : main;
+  if (mode === 'hydrate') return h(Fragment, null, main, h(Probe));
+  return mode === 'hydrate-late' ? h(Fragment, null, main, h(LateProbe)) : main;
 };
 
 let reactRoot: { render(children: ReactNode): void };
-if (mode === 'hydrate') {
+
+// Hydrates after the element may have rendered its light DOM. `define=before|after` says whether
+// the element is defined when the server HTML is set; `hydrate=update|task|sync` says when
+// hydrateRoot runs: after the element's first update, in a later task, or inside flushSync.
+async function hydrateLate(): Promise<void> {
+  const defineAfter = params.get('define') === 'after';
+  const hydrate = params.get('hydrate') ?? 'update';
+  window.__recoverable = [];
+  window.__lateCommits = 0;
+  const host = (): PricingRendererElement | null =>
+    root.querySelector<PricingRendererElement>('pricing-renderer');
+  const start = (): void => {
+    const element = host();
+    window.__lateBefore = {
+      childCount: element?.childElementCount ?? 0,
+      innerHTML: element?.innerHTML ?? '',
+    };
+    window.__lateHost = element;
+    window.__lateHydrateCalled = true;
+    reactRoot = hydrateRoot(root, buildTree(), {
+      onRecoverableError: (error) => {
+        window.__recoverable!.push(error instanceof Error ? error.message : String(error));
+      },
+    });
+  };
+  root.innerHTML = renderToString(buildTree());
+  window.__lateDefinedAtHtml = customElements.get('pricing-renderer') !== undefined;
+  resetCounts();
+  if (hydrate === 'sync') {
+    flushSync(() => {
+      if (defineAfter) window.__releaseDefinitions?.();
+      start();
+    });
+    return;
+  }
+  if (defineAfter) window.__releaseDefinitions?.();
+  if (hydrate === 'task') {
+    await new Promise<void>((done) => {
+      setTimeout(done, 0);
+    });
+  } else {
+    await host()?.updateComplete;
+  }
+  start();
+}
+
+if (mode === 'hydrate-late') {
+  void hydrateLate();
+} else if (mode === 'hydrate') {
   root.innerHTML = renderToString(buildTree());
   resetCounts();
   window.__recoverable = [];

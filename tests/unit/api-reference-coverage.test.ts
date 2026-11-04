@@ -1,5 +1,6 @@
 // Guard for the "API reference coverage" signal of objective O3 (INTENT.md, "API reference coverage").
-// Proposal P-20261104-2. It covers value exports only; type exports, attributes, events and parts are
+// Proposal P-20261104-2. The guard is a mention check (each value export appears somewhere in the
+// code text of docs/api-reference.md), not proof that the export is fully documented. It covers value exports only; type exports, attributes, events and parts are
 // not part of this guard. Every value export of every JavaScript entry of the package must appear in the
 // code text (fenced blocks and inline spans) of docs/api-reference.md, or sit on the PENDING list below.
 import { existsSync, readFileSync } from 'node:fs';
@@ -60,42 +61,7 @@ function classifyExports(exportsField: Record<string, ExportTarget>) {
 }
 
 // Names exported but not yet documented. Sorted per entry. Remove a name when it is documented.
-const PENDING: Record<string, string[]> = {
-  '.': [
-    'applySelectionChange', // core, P3-15b
-    'applySelectionInput', // core, P3-15b
-    'asRecord', // core, later docs slice
-    'cloneValue', // core, later docs slice
-    'createPriceStabilizer', // core, later docs slice
-    'deepEqual', // core, later docs slice
-    'getAtPath', // core, later docs slice
-    'humanizeIdentifier', // core, later docs slice
-    'isRecord', // core, later docs slice
-    'planSelectionChange', // core, P3-15b
-    'selectionFromSearchParams', // core, P3-15b
-    'selectionInEffect', // core, P3-15b
-    'selectionToSearchParams', // core, P3-15b
-    'selectionWithAddOnQuantity', // core, P3-15b
-    'selectionWithVariable', // core, P3-15b
-    'setAtPath', // core, later docs slice
-    'unwrapValue', // core, later docs slice
-  ],
-  './yaml': [
-    'loadPricingSource', // yaml, B2b
-  ],
-  './react': [
-    'PricingRendererProvider', // react, P3-15b
-    'usePricingRendererState', // react, P3-15b
-    'usePricingSelection', // react, P3-15b
-    'usePricingSource', // react, P3-15b
-  ],
-  './react/headless': [
-    'PricingRendererProvider', // react/headless, P3-15b
-    'usePricingRendererState', // react/headless, P3-15b
-    'usePricingSelection', // react/headless, P3-15b
-    'usePricingSource', // react/headless, P3-15b
-  ],
-};
+const PENDING: Record<string, string[]> = {};
 
 /** Code text of a markdown document: fenced blocks first, then inline spans of the remaining text. */
 function codeText(markdown: string): string {

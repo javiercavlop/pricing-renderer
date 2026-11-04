@@ -60,6 +60,55 @@ need no cast. The types are needed only for a handler that you declare apart fro
 the call, such as a Vue method. The map has no entry for the two review events,
 so cast those (see [Review events](#review-events)).
 
+## `pricing-slots-change`
+
+Reports the nodes that a host can fill with its own content. It is not cancelable,
+bubbles and is composed like the other events, and its type is
+`PricingSlotsChangeEvent`.
+
+```ts
+interface PricingSlotsChangeDetail {
+  nodes: HTMLElement[];
+}
+```
+
+- **Only with `slots`.** The element renders slot nodes only for the names in its
+  `slots` property (`'plan-cta'`, `'summary-actions'`, `'loading'`, `'error'`; see
+  [the API reference](./api-reference.md#properties-and-attributes)). Without
+  slots, no node exists and the event never fires.
+- **Detail.** `detail.nodes` is a new array of the connected `[data-pr-slot]`
+  nodes, in document order. The value of `data-pr-slot` is the slot name. A node
+  of `plan-cta` exists for each plan card and carries `data-*` values for the
+  plan (such as its name and the label of the CTA); the `error` node carries the
+  diagnostics in `data-diagnostics`.
+- **Own nodes only.** A slot node that the host, or a nested `<pricing-renderer>`,
+  puts inside one of these nodes has another owner and is not listed.
+- **When it fires.** After an update of the element, if the list of nodes, any
+  `data-*` value on them or, while a `summary-actions` node exists, the selection or
+  the resolved prices differ from what the last event reported. An update that
+  changes none of them sends nothing. When the last slot node goes away (for
+  example the `slots` property is cleared), the event fires once more with an
+  empty `nodes` list.
+- **Not a selection event.** It does not replace `pricing-selection-change`; use it
+  to render into the nodes and to know when they were replaced or removed.
+- **Text from the pricing.** The `data-*` values may carry text from the pricing
+  document. Treat them as plain text and render them as text, never through an HTML
+  sink such as `innerHTML` or `dangerouslySetInnerHTML`.
+
+```ts
+const renderer = document.querySelector('pricing-renderer')!;
+renderer.slots = ['plan-cta'];
+renderer.addEventListener('pricing-slots-change', (event) => {
+  for (const node of event.detail.nodes) {
+    if (node.dataset.prSlot === 'plan-cta') node.textContent = node.dataset.planName ?? '';
+  }
+});
+```
+
+`PricingRenderer` for React listens to this event itself and renders its render
+props into the nodes; see
+[the React section](./api-reference.md#hidesections-slots-and-render-props).
+
 ## Review events
 
 `pricing-change-confirm` and `pricing-change-back` come from

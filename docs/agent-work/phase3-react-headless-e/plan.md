@@ -1,0 +1,1 @@
+Round 2: integrate 4ba0b251 (hydration harness plus temporary probe test). Push, read the CI probe output, replace the probe by assertions, rewrite the hydration paragraph in docs/react.md from the facts (or escalate if a src change is needed), then panel round 2.

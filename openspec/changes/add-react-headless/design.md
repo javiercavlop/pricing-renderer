@@ -442,7 +442,19 @@ component reads it in the same render through `useSyncExternalStore`.
 - `pricing` and `yaml` resolve during render; `src` loads only in an effect, abortable and
   idempotent for the StrictMode re-run.
 - The element is not server-rendered. Portals have no target until the element renders on the
-  client, so render props appear after hydration with no mismatch.
+  client, so render props appear after hydration with no portal mismatch.
+
+#### Known limitation: hydration of the element
+
+OPEN, not met by this change. The server HTML of the wrapper is an empty tag; the element renders
+its light DOM in a microtask once it is defined and connected. If React hydrates after that, React
+logs one recoverable hydration error and regenerates the host node (measured in Chromium, Firefox
+and WebKit, `tests/browser/react-hydration-order.spec.ts`). Hydration in the same task as the
+definition, before the microtask, gives no error. The final DOM is complete. A normal Next.js page
+hydrates in a later task, so it gets the error. Workaround: define the element after hydration
+(dynamic import after mount, or `next/dynamic` with `ssr: false` in a Client Component;
+`docs/react.md`, `docs/nextjs.md`). Follow-up: the change "wrapper SSR hydration fix" changes
+`src/react`.
 
 ### D10. No feature flag
 
