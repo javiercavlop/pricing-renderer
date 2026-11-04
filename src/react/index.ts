@@ -190,24 +190,26 @@ function applyProvider(
 
 const useClientLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
-// [impl->req~react-slot-portals~1]
-// The output of the render prop for one slot node, in a portal keyed as the entry says.
+// [impl->req~react-slot-portals~2]
+// The output of the render prop for one slot node, in a portal keyed as the entry says. A node that
+// is no longer connected gets none.
 function portalOf(props: PricingRendererProps, entry: SlotEntry): React.ReactPortal | null {
+  if (!entry.node.isConnected) return null;
   switch (entry.slot) {
     case 'plan-cta':
-      return props.renderPlanCta
+      return typeof props.renderPlanCta === 'function'
         ? createPortal(props.renderPlanCta(entry.context), entry.node, entry.key)
         : null;
     case 'summary-actions':
-      return props.renderSummaryActions
+      return typeof props.renderSummaryActions === 'function'
         ? createPortal(props.renderSummaryActions(entry.context), entry.node, entry.key)
         : null;
     case 'loading':
-      return props.renderLoading
+      return typeof props.renderLoading === 'function'
         ? createPortal(props.renderLoading(), entry.node, entry.key)
         : null;
     case 'error':
-      return props.renderError
+      return typeof props.renderError === 'function'
         ? createPortal(props.renderError(entry.context), entry.node, entry.key)
         : null;
   }
@@ -263,8 +265,9 @@ export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingR
       null,
       React.createElement(PricingRendererBase, {
         ...baseProps,
-        // Without render props the element renders no slot node and fires no slot event.
-        ...(slots !== undefined ? { onSlotsChange } : {}),
+        // Always attached: the element sends no event without slots, and the empty event that
+        // follows the last render prop clears the stale entries.
+        onSlotsChange,
         ref: setElement,
       }),
       entries.map((entry) => portalOf(props, entry)),

@@ -466,9 +466,9 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   `keyed(plan.id, ...)` is used only when `slots` requests `plan-cta`; it is the implementation of
   `req~slot-plan-cta-keyed~1`. Without `slots` no directive is added, so the existing test helpers
   that flatten directives stay unchanged. `repeat()` for the whole plan map is not used.
-- The wrapper renders each slot with `createPortal(node, container, planId)` from `react-dom`
-  (key = plan id for plan nodes, slot name for the others); it is the implementation of
-  `req~react-slot-portals~1`.
+- The wrapper renders each slot with `createPortal(node, container, key)` from `react-dom`
+  (key = `plan:<plan id>` for plan nodes, `slot:<slot name>` for the others); it is the
+  implementation of `req~react-slot-portals~2`.
 - The wrapper listens to `pricing-slots-change` through the `createComponent` events map, which
   `@lit/react` 1.0.8 sets, together with the element properties, in a `useLayoutEffect`
   (`node_modules/@lit/react/development/create-component.js:135`). Slot nodes that exist before

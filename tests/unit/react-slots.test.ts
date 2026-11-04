@@ -12,7 +12,8 @@ type Slots = Partial<
     | 'planCtaContextOf'
     | 'summaryActionsContextOf'
     | 'errorContextOf'
-    | 'errorDiagnosticsOf',
+    | 'errorDiagnosticsOf'
+    | 'slotEntriesOf',
     Fn
   >
 >;
@@ -181,6 +182,34 @@ describe('acceptedSlotNodes', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toBe(n);
     expect(selectors).toContain('pricing-renderer, [data-pr-slot]');
+  });
+});
+
+describe('acceptedSlotNodes with a malformed event', () => {
+  // [utest->req~react-slot-node-accept~2]
+  it('returns an empty list for a null detail and for nodes that are not an array', () => {
+    const acceptedSlotNodes = fn('acceptedSlotNodes');
+    const own: StandIn = {};
+    expect(acceptedSlotNodes(own, { target: own, detail: null })).toEqual([]);
+    expect(acceptedSlotNodes(own, { target: own, detail: { nodes: 'x' } })).toEqual([]);
+    expect(acceptedSlotNodes(own, { target: own, detail: {} })).toEqual([]);
+  });
+});
+
+describe('slotEntriesOf keys', () => {
+  // [utest->req~react-slot-portals~2]
+  it('keeps plan keys and slot keys apart even for a plan id that looks like a slot key', () => {
+    const slotEntriesOf = fn('slotEntriesOf');
+    const plan = planNode({ prSlot: 'plan-cta', planId: 'slot:summary-actions' });
+    const summary = planNode({ prSlot: 'summary-actions' });
+    const entries = slotEntriesOf({}, [plan, summary], { selection: {}, resolved: {} }) as {
+      key: string;
+    }[];
+    expect(entries.map((entry) => entry.key)).toEqual([
+      'plan:slot:summary-actions',
+      'slot:summary-actions',
+    ]);
+    expect(new Set(entries.map((entry) => entry.key)).size).toBe(2);
   });
 });
 

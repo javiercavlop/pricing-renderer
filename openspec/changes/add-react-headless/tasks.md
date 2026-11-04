@@ -333,7 +333,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     "Slot nodes read by the helper"; `req~react-slots-client-only~1`: "Server output"), and the
     React entry part of `req~composition-types-manifest~1`. The impl tags of the browser-only
     React requirements and scenarios (P3-12b) go in this slice; their tests come with P3-12b.
-  - Accepted trace gap: between the merges of P3-12 and P3-12b, `req~react-slot-portals~1`,
+  - Accepted trace gap: between the merges of P3-12 and P3-12b, `req~react-slot-portals~2`,
     `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1` and
     `req~react-error-diagnostics-source~1` have impl tags and no utest tag, and
     `req~react-slots-attach-read~1` ("Render prop given after the first event", "Summary state on
@@ -358,7 +358,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     the snapshot's `pricing.metadata.saasName`), `examples/vanilla/vite.config.ts` (build input),
     `examples/vanilla/package.json` and `pnpm-lock.yaml` (`react` and `react-dom` as dev
     dependencies, the root's ranges; no new package in the lockfile).
-  - Requirements: `req~react-slot-portals~1`, `req~react-plan-cta-context~2`,
+  - Requirements: `req~react-slot-portals~2`, `req~react-plan-cta-context~2`,
     `req~react-other-slot-contexts~1`, `req~react-error-diagnostics-source~1` (browser-only), the
     browser scenarios of `req~react-slots-attach-read~1` ("Render prop given after the first event",
     "Summary state on attach") and of `req~react-slots-client-only~1` ("During the first client
@@ -460,7 +460,7 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
     `req~slots-change-event~3`, `req~slots-change-event-own-nodes~1` (a nested element, a radio
     click and waiting for readiness), `req~slots-change-event-summary~1`,
     `req~trigger-plan-action~1`.
-  - `tests/browser/react-slots.spec.ts` (P3-12b): `req~react-slot-portals~1`,
+  - `tests/browser/react-slots.spec.ts` (P3-12b): `req~react-slot-portals~2`,
     `req~react-plan-cta-context~2`, `req~react-other-slot-contexts~1`,
     `req~react-error-diagnostics-source~1`. Their pure parts are unit requirements of P3-12.
   - `tests/browser/react-renderer-state.spec.ts` (P3-12b): the end-to-end race of
@@ -503,11 +503,11 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   `src/react/use-pricing-selection.ts`, `src/react/use-pricing-source.ts`; utest in
   `tests/unit/react-provider.test.ts` and the hook tests.
 - `hide-sections`: impl in `src/element/pricing-renderer-element.ts`, `src/element/index.ts`,
-  `src/react/index.ts`; utest in `tests/unit/hide-sections.test.ts` and
+  `src/react/index.ts`; utest in `tests/unit/hide-sections-element.test.ts` and
   `tests/browser/hide-sections.spec.ts`.
 - `composition`: impl in `src/element/renderers.ts`, `src/element/pricing-renderer-element.ts`,
   `src/element/events.ts`, `src/element/index.ts`, `src/react/slots.ts`, `src/react/index.ts`;
-  utest in `tests/unit/element-slots.test.ts`, `tests/unit/react-slots.test.ts`,
+  utest in `tests/unit/slots-element.test.ts`, `tests/unit/react-slots.test.ts`,
   `tests/unit/react-slots-mocked.test.ts`, `tests/browser/element-slots.spec.ts` and
   `tests/browser/react-slots.spec.ts`. The element side includes `req~slots-not-array~1` (unit
   file), `req~slots-change-event-own-nodes~1` (browser spec) and `req~slot-error-diagnostics~1`

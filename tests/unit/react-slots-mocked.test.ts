@@ -3,6 +3,28 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 const recorded = vi.hoisted(() => ({
   props: [] as Record<string, unknown>[],
   options: [] as Record<string, unknown>[],
+  entries: undefined as unknown[] | undefined,
+  portals: [] as { node: unknown; key: unknown }[],
+}));
+
+// The state of the wrapper only changes after an effect, which a server render never runs: the
+// test seeds the entries state directly.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useState: (init: unknown) =>
+      Array.isArray(init) && recorded.entries !== undefined
+        ? [recorded.entries, () => undefined]
+        : (actual.useState as (value: unknown) => unknown)(init),
+  };
+});
+
+vi.mock('react-dom', () => ({
+  createPortal: (_children: unknown, node: unknown, key: unknown) => {
+    recorded.portals.push({ node, key });
+    return null;
+  },
 }));
 
 vi.mock('@lit/react', () => ({
@@ -64,5 +86,42 @@ describe('PricingRenderer slot events', () => {
     await render({ yaml: 'name: x' });
     const events = recorded.options.map((o) => Object.values((o.events ?? {}) as object)).flat();
     expect(events).toContain('pricing-slots-change');
+  });
+
+  it('keeps onSlotsChange attached without render props', async () => {
+    const withFn = await render({ yaml: 'name: x', renderError: () => null });
+    expect(withFn.onSlotsChange).toBeTypeOf('function');
+    const without = await render({ yaml: 'name: x' });
+    expect(without.slots).toBeUndefined();
+    expect(without.onSlotsChange).toBeTypeOf('function');
+  });
+});
+
+// [utest->req~react-slot-portals~2]
+describe('PricingRenderer portals', () => {
+  it('renders into connected nodes only and only for render props that are functions', async () => {
+    const live = { isConnected: true };
+    const gone = { isConnected: false };
+    const loading = { isConnected: true };
+    recorded.entries = [
+      { slot: 'error', node: live, key: 'slot:error', context: {} },
+      { slot: 'error', node: gone, key: 'slot:error', context: {} },
+      { slot: 'loading', node: loading, key: 'slot:loading' },
+    ];
+    recorded.portals.length = 0;
+    try {
+      await render({ yaml: 'name: x', renderError: () => null, renderLoading: 'x' });
+      expect(recorded.portals).toEqual([{ node: live, key: 'slot:error' }]);
+      // Slots removed, the element re-renders and detaches the node, then the prop returns: the
+      // stale entry gets no portal.
+      recorded.portals.length = 0;
+      await render({ yaml: 'name: x' });
+      expect(recorded.portals).toEqual([]);
+      live.isConnected = false;
+      await render({ yaml: 'name: x', renderError: () => null });
+      expect(recorded.portals).toEqual([]);
+    } finally {
+      recorded.entries = undefined;
+    }
   });
 });

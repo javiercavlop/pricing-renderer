@@ -309,8 +309,8 @@ Needs: impl, utest
 
 ### Requirement: React portals into slot nodes
 
-`req~react-slot-portals~1`
-WHEN a `pricing-slots-change` event reports slot nodes, the `PricingRenderer` wrapper SHALL render into each reported node the output of its render prop, through a portal keyed by the plan id for plan nodes and by the slot name otherwise, and no portal into a node that is no longer reported.
+`req~react-slot-portals~2`
+WHEN a `pricing-slots-change` event reports slot nodes, the `PricingRenderer` wrapper SHALL render into each reported node the output of its render prop, through a portal keyed `plan:<plan id>` for plan nodes and `slot:<slot name>` otherwise, and no portal into a node that is no longer reported or no longer connected.
 
 Needs: impl, utest
 

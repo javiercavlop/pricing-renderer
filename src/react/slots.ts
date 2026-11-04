@@ -48,7 +48,9 @@ export function acceptedSlotNodes(
   event: { target: EventTarget | null; detail: PricingSlotsChangeDetail },
 ): HTMLElement[] | undefined {
   if (event.target !== element) return undefined;
-  return event.detail.nodes.filter(
+  const nodes: unknown = (event.detail as PricingSlotsChangeDetail | null | undefined)?.nodes;
+  if (!Array.isArray(nodes)) return [];
+  return (nodes as HTMLElement[]).filter(
     (node) =>
       node.isConnected &&
       isSlotName(node.dataset.prSlot) &&
@@ -147,7 +149,7 @@ export function errorDiagnosticsOf(node: HTMLElement): PricingDiagnostic[] {
 }
 
 // A slot node with the context its render prop receives, built when the event fired. `key` is the
-// portal key: the plan id for a plan node, `slot:<name>` for the others.
+// portal key: `plan:<plan id>` for a plan node, `slot:<name>` for the others.
 export type SlotEntry =
   | { slot: 'plan-cta'; node: HTMLElement; key: string; context: PricingPlanCtaContext }
   | {
@@ -174,7 +176,7 @@ export function slotEntriesOf(
           {
             slot: 'plan-cta',
             node,
-            key: node.dataset.planId ?? '',
+            key: `plan:${node.dataset.planId ?? ''}`,
             context: planCtaContextOf(element, node),
           },
         ];
