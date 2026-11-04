@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import {
@@ -233,10 +234,14 @@ if (mode === 'hydrate') {
   root.innerHTML = renderToString(buildTree());
   resetCounts();
   window.__recoverable = [];
-  reactRoot = hydrateRoot(root, buildTree(), {
-    onRecoverableError: (error) => {
-      window.__recoverable!.push(error instanceof Error ? error.message : String(error));
-    },
+  // Setting innerHTML upgrades <pricing-renderer>, and Lit renders its light DOM in a microtask.
+  // flushSync hydrates before that microtask, so React sees only the server HTML.
+  flushSync(() => {
+    reactRoot = hydrateRoot(root, buildTree(), {
+      onRecoverableError: (error) => {
+        window.__recoverable!.push(error instanceof Error ? error.message : String(error));
+      },
+    });
   });
 } else {
   reactRoot = createRoot(root);
