@@ -1,1 +1,1 @@
-Done: dependency state verified, audit report updated with owner proposal (release.yml split, verified to apply and parse). Remaining: push, PR, panel (reviewer + test-reviewer), ready.
+Done: dependency state verified, audit report updated with owner proposal (release.yml split, applies+parses). Round-1 review findings fixed (task ece5a10c). Remaining: push, CI, round-2 panel (reviewer + test-reviewer) on new head, ready.
