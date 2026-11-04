@@ -1,0 +1,1 @@
+Goal: architecture.md SSR passage describes fixed hydration (PR 95). State: wording fixes from round-1 review integrated (head after commit). Prettier not runnable locally; CI runs format check. Next: push, final reviewer on pushed head, set_review_package, lead_ready.
