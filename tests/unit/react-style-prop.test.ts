@@ -74,17 +74,10 @@ describe('React style prop', () => {
 
   it('passes style and className to the underlying component unchanged', async () => {
     const { PricingRenderer } = await import('../../src/react/index.js');
-    const renderFn = (
-      PricingRenderer as unknown as {
-        render: (props: Record<string, unknown>, ref: unknown) => unknown;
-      }
-    ).render;
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
     const style = { '--pr-color-accent': '#f00', '--pr-space-4': 12, color: 'red' };
-    const rendered = renderFn({ yaml: 'name: x', style, className: 'x' }, null) as {
-      type: (props: Record<string, unknown>) => unknown;
-      props: Record<string, unknown>;
-    };
-    rendered.type(rendered.props);
+    renderToString(createElement(PricingRenderer, { yaml: 'name: x', style, className: 'x' }));
     const last = recorded.props.at(-1);
     expect(last?.style).toEqual(style);
     expect(last?.className).toBe('x');

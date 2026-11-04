@@ -70,17 +70,17 @@ describe('React adapter props for the toolbar and add-on filter', () => {
   // The type test above is the real check; this only guards the spread of the props.
   it('guards the spread of the three props to the underlying component', async () => {
     const { PricingRenderer } = await import('../../src/react/index.js');
-    const render = (
-      PricingRenderer as unknown as {
-        render: (props: Record<string, unknown>, ref: unknown) => unknown;
-      }
-    ).render;
-    // forwardRef's render returns an element of the stub; the stub runs when it is invoked.
-    const element = render(
-      { yaml: 'name: x', onlyDifferences: false, toolbarThreshold: 10, addOnFilterThreshold: 3 },
-      null,
-    ) as { type: (props: Record<string, unknown>) => unknown; props: Record<string, unknown> };
-    element.type(element.props);
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    // The stub records the props it receives while renderToString renders the wrapper.
+    renderToString(
+      createElement(PricingRenderer, {
+        yaml: 'name: x',
+        onlyDifferences: false,
+        toolbarThreshold: 10,
+        addOnFilterThreshold: 3,
+      }),
+    );
     expect(recorded.props.at(-1)).toMatchObject({
       onlyDifferences: false,
       toolbarThreshold: 10,
