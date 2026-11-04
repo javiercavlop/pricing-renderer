@@ -1,1 +1,1 @@
-Items 1 (audit blocking), 2 (TS override 5.6.3), 3a (npm version gate) integrated at head d3c2c41. Remaining: 3b split of release.yml (needs test file scope decision), docs/audit-report.md update, push, PR, review panel (reviewer, test-reviewer, security-auditor, arch-reviewer), ready.
+Items 1, 2, 3a done and documented; 3b (split) deferred by owner/coordinator (option B), documented in release-split-deferred.md. Remaining: CI green on final head, review panel (high risk: reviewer, test-reviewer, security-auditor, arch-reviewer), set_review_package, lead_ready.
