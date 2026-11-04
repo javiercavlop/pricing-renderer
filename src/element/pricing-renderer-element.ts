@@ -10,7 +10,6 @@ import {
   getPricingRendererConfig,
   mergePresentationOptions,
   mergeSelection,
-  normalizePricing,
   planSelectionChange,
   reconcileSelection,
   selectionInEffect,
@@ -37,11 +36,11 @@ import { summaryActionState, type SummaryActionState } from './cta.js';
 import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
 import { inputChanged } from './same-input.js';
 import {
-  loadPricingFromUrl,
-  parsePricingYaml,
+  loadPricingSource,
   type PricingLoader,
   type PricingRequestOptions,
 } from '../yaml/index.js';
+import { pricingSourceError } from '../yaml/source.js';
 import type {
   ApplySelectionResult,
   PendingAddOnChange,
@@ -371,32 +370,20 @@ export class PricingRendererElement extends LitElement {
 
   public async reload(): Promise<void> {
     this._loadedOnce = true;
-    const sources = [
-      this.pricing !== undefined ? 'pricing' : undefined,
-      this.yaml !== undefined ? 'yaml' : undefined,
-      this.src ? 'src' : undefined,
-    ].filter(Boolean);
+    const input = {
+      ...(this.pricing !== undefined ? { pricing: this.pricing } : {}),
+      ...(this.yaml !== undefined ? { yaml: this.yaml } : {}),
+      ...(this.src !== undefined ? { src: this.src } : {}),
+    };
 
-    if (sources.length !== 1) {
+    const sourceError = pricingSourceError(input);
+    if (sourceError) {
       // [impl->req~reload-source-error-cancels-load~1] the load in flight must neither finish nor be
       // applied after this error
       this._abortController?.abort();
       this._abortController = undefined;
       this._loadSequence += 1;
-      this._applyLoadResult({
-        ok: false,
-        diagnostics: [
-          {
-            code: sources.length === 0 ? 'PR_SOURCE_MISSING' : 'PR_SOURCE_CONFLICT',
-            severity: 'error',
-            message:
-              sources.length === 0
-                ? 'Provide exactly one pricing source: pricing, yaml or src.'
-                : 'Only one pricing source can be provided at a time.',
-            path: '$',
-          },
-        ],
-      });
+      this._applyLoadResult(sourceError);
       return;
     }
 
@@ -407,20 +394,14 @@ export class PricingRendererElement extends LitElement {
     this._status = 'loading';
     this.requestUpdate();
 
-    let result: PricingResult<NormalizedPricing>;
-    if (this.pricing !== undefined) {
-      result = normalizePricing(this.pricing, this.normalizeOptions);
-    } else if (this.yaml !== undefined) {
-      result = parsePricingYaml(this.yaml, {
-        ...(this.normalizeOptions ? { normalize: this.normalizeOptions } : {}),
-      });
-    } else {
-      result = await loadPricingFromUrl(this.src!, {
-        ...(this.request ?? {}),
-        ...(this.loadPricing ? { loadPricing: this.loadPricing } : {}),
-        ...(this.normalizeOptions ? { normalize: this.normalizeOptions } : {}),
-        signal: controller.signal,
-      });
+    let result = loadPricingSource(input, {
+      ...(this.request ? { request: this.request } : {}),
+      ...(this.loadPricing ? { loadPricing: this.loadPricing } : {}),
+      ...(this.normalizeOptions ? { normalizeOptions: this.normalizeOptions } : {}),
+      signal: controller.signal,
+    });
+    if (result instanceof Promise) {
+      result = await result;
     }
     if (sequence !== this._loadSequence || controller.signal.aborted) {
       return;
