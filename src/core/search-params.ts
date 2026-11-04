@@ -62,7 +62,7 @@ function pathSegments(path: string): string[] {
     .filter(Boolean);
 }
 
-// [impl->req~search-params-var-path-safe~2] [impl->req~search-params-var-depth-limit~1]
+// [impl->req~search-params-var-path-safe~3] [impl->req~search-params-var-depth-limit~1]
 function isSafePath(variables: Record<string, unknown>, segments: string[]): boolean {
   if (segments.length === 0 || segments.length > MAX_DEPTH) return false;
   let parent: unknown = variables;

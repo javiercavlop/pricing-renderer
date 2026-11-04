@@ -256,7 +256,7 @@ describe('selectionFromSearchParams', () => {
 });
 
 describe('variable paths', () => {
-  // [utest->req~search-params-var-path-safe~2]
+  // [utest->req~search-params-var-path-safe~3]
   it('ignores prototype pollution attempts', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -275,7 +275,7 @@ describe('variable paths', () => {
     expect(Object.hasOwn(selection.variables, 'prototype')).toBe(false);
   });
 
-  // [utest->req~search-params-var-path-safe~2]
+  // [utest->req~search-params-var-path-safe~3]
   it('ignores a digit segment under a missing or scalar parent', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -290,7 +290,19 @@ describe('variable paths', () => {
     expect(result!.selection.variables.seats).toBe(5);
   });
 
-  // [utest->req~search-params-var-path-safe~2]
+  // [utest->req~search-params-var-path-safe~3]
+  it('ignores a non-digit segment under a scalar parent', () => {
+    const { selectionFromSearchParams } = api();
+    const before = structuredClone(acme.variables);
+    let result: ReadResult | undefined;
+    expect(() => {
+      result = selectionFromSearchParams(acme, [['var.seats.x', '1']]);
+    }).not.toThrow();
+    expect(result!.selection.variables.seats).toBe(5);
+    expect(acme.variables).toEqual(before);
+  });
+
+  // [utest->req~search-params-var-path-safe~3]
   it('ignores a digit segment under a record parent', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [['var.priceByRegion.0', '1']];
@@ -298,7 +310,7 @@ describe('variable paths', () => {
     expect(selection.variables.priceByRegion).toEqual({ 'eu-price': 8, 'us-price': 10 });
   });
 
-  // [utest->req~search-params-var-path-safe~2]
+  // [utest->req~search-params-var-path-safe~3]
   it('ignores array indexes that are not canonical or not below the length', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -319,7 +331,7 @@ describe('variable paths', () => {
     expect(Object.keys(variables)).toEqual(['tiers']);
   });
 
-  // [utest->req~search-params-var-path-safe~2]
+  // [utest->req~search-params-var-path-safe~3]
   it('writes an existing array element', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -565,6 +577,15 @@ describe('diagnostics of unknown ids', () => {
       expect(item.message).not.toContain('\uD83D');
       expect(item.path).not.toContain('\uD83D');
     }
+  });
+
+  // [utest->req~search-params-diagnostic-id-length~2]
+  it('keeps an id of exactly 64 code units that ends in a high surrogate', () => {
+    const { selectionFromSearchParams } = api();
+    const id = 'q'.repeat(63) + '\uD83D';
+    const { diagnostics } = selectionFromSearchParams(acme, [['addon', id]]);
+    expect(codesOf(diagnostics)).toEqual(['PR_SELECTION_UNKNOWN_ADDON']);
+    expect(diagnostics[0]!.path).toBe('selection.addOns.' + id);
   });
 
   // [utest->req~search-params-diagnostic-id-length~2]
