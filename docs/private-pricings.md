@@ -238,6 +238,36 @@ depends on the signed-in user: a shared cache would hand one user's pricing to a
 pricing that is sensitive per user, use `Cache-Control: no-store` instead; the browser then keeps
 no copy, at the cost of ETag revalidation.
 
+## Planned: a SPHERE public loader
+
+This section describes work that is not shipped. `createSpherePublicLoader` and the cache hook below
+do not exist yet, and nothing in this package exports them. Today, use the plain `fetch` recipes
+above. Do not import these names.
+
+Planned shape of `createSpherePublicLoader`, from `pricing-renderer/yaml`:
+
+- It returns `{ src, loadPricing, fetchYaml }`.
+- It accepts `https` URLs only.
+- A pinned `versionId` skips the manifest request.
+- It reads public (non-private) SPHERE versions only. It has no `headers` or `credentials` option.
+
+Planned for the built-in `src` loader: an ETag cache hook that is anonymous only. It is not used when
+`headers` is set, when `credentials` is not `'omit'`, or when `loadPricing` is used.
+
+The public SPHERE endpoints below were looked up at SPHERE v2.6.0, with medium confidence. Check them
+against your SPHERE before relying on them:
+
+- `GET {base}/api/v1/public/pricings/:pricingId` returns the manifest, including `latestVersionId`.
+- `GET {base}/api/v1/public/pricings/:pricingId/versions/:versionId/yaml` returns the raw YAML.
+- Ids are 24 hexadecimal characters.
+- The permanent link of a pricing is `{site}/p/{pricingId}`. The default public site is
+  `https://sphere.score.us.es`.
+
+A browser on another origin cannot read the ETag of a SPHERE response, because the API's CORS setup
+exposes no response headers. Manual ETag revalidation therefore belongs in server code or in a
+same-origin route, as in the recipes above. The browser HTTP cache revalidates by itself and needs no
+code. A service managed by SPACE is not read this way; see [Pricing versions](./pricing-versions.md).
+
 ## Checklist
 
 - No SPHERE or SPACE key in any browser file, `NEXT_PUBLIC_*` variable, `request.headers`, `src` or
@@ -257,3 +287,5 @@ no copy, at the cost of ETag revalidation.
 - [API reference](./api-reference.md) for `request`, `loadPricing` and the error state.
 - [Events and diagnostics](./events.md) for the `pricing-diagnostic` event.
 - [Project and instance configuration](./configuration.md).
+- [Next.js](./nextjs.md) for the full server and client flow.
+- [Which pricing version a page shows](./pricing-versions.md).

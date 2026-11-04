@@ -12,6 +12,7 @@ matter here are:
 
 ```ts
 interface SpaceContract {
+  contractedServices?: Record<string, string>; // service -> pricing version
   subscriptionPlans?: Record<string, string>; // service -> plan name
   subscriptionAddOns?: Record<string, Record<string, number>>; // service -> add-on -> quantity
 }
@@ -201,6 +202,13 @@ customer. If the page shows another version, `applySelection` can return
 `PR_SELECTION_UNKNOWN_PLAN`. [Which pricing version a page shows](./pricing-versions.md)
 gives the rule for signed-out and signed-in visitors, and why a SPACE-managed
 service is read through SPACE and not straight from SPHERE.
+
+`contractedServices` maps a service to the version the contract was signed on, for example
+`{ "acme": "2026_07" }`. `contractedVersion(contract, 'acme')` returns it as `2026.07`. If the loaded
+pricing is another version, a plan name or an add-on name from the contract may not exist in it.
+`applySelection` then returns `PR_SELECTION_UNKNOWN_PLAN` or `PR_SELECTION_UNKNOWN_ADDON` and keeps
+what is valid, so a version mismatch shows up as these diagnostics. The server-side flow that loads
+the contract's version is in [Next.js](./nextjs.md).
 
 ## Reload
 
