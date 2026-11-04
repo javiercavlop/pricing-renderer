@@ -95,7 +95,9 @@ can affect descendants. The supported styling contract is documented in
 ## SSR model
 
 All entry points are safe to import in an SSR build. The React adapter is marked
-`"use client"` and the full pricing UI is a client island. The library does not
+`"use client"` and the full pricing UI is a client island. The headless React
+entry (`pricing-renderer/react/headless`) has no Lit and no element; see the
+[React guide](./react.md). The library does not
 fetch remote sources on the server. Deep SSR/hydration of light DOM is not a v1
 contract; hosts should reserve space or provide a stable skeleton.
 

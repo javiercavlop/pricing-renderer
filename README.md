@@ -151,6 +151,7 @@ Trusted Publisher.
 | `pricing-renderer/define`               | Register `<pricing-renderer>`                                   |
 | `pricing-renderer/define-change-review` | Register `<pricing-change-review>`                              |
 | `pricing-renderer/react`                | Typed React 18/19 adapter                                       |
+| `pricing-renderer/react/headless`       | React provider and hooks, no Lit and no element                 |
 | `pricing-renderer/space`                | SPACE helpers: selection, novation body, version, usage         |
 | `pricing-renderer/base.css`             | Required structural and accessibility styles                    |
 | `pricing-renderer/theme.css`            | Default professional visual tokens                              |
@@ -260,6 +261,15 @@ class instances are compared by identity, and so are `loadPricing`, `yaml` and
 `useMemo`, or the element fetches again on every render. Call `reload()` on a ref
 to force a fetch, also after you changed an input object in place. The rules are
 in the [API reference](./docs/api-reference.md#when-a-property-starts-a-new-load).
+
+`pricing-renderer/react` needs both `react` and `react-dom` (the render props use
+`createPortal`). For your own pricing UI, `pricing-renderer/react/headless` has no Lit and no
+element: `PricingRendererProvider` shares settings without writing a global,
+`usePricingSource` loads a pricing, `usePricingSelection` holds the selection and view model, and
+`usePricingRendererState(ref)` reads the state of a rendered `PricingRenderer`.
+`PricingRenderer` also takes `renderPlanCta`, `renderSummaryActions`, `renderLoading` and
+`renderError` to draw your React output inside the renderer. See the
+[React guide](./docs/react.md) and the [Next.js guide](./docs/nextjs.md).
 
 ## Vue 3
 
@@ -476,6 +486,8 @@ allow-listed expression functions. See [Extending](./docs/extending.md).
 - [API reference](./docs/api-reference.md)
 - [Project and instance configuration](./docs/configuration.md)
 - [Events and diagnostics](./docs/events.md)
+- [React: provider, hooks and render props](./docs/react.md)
+- [Next.js (App Router)](./docs/nextjs.md)
 - [Vue 3 and Vite](./docs/vue.md)
 - [Private pricings](./docs/private-pricings.md)
 - [Preload the current subscription](./docs/preload-current-subscription.md)

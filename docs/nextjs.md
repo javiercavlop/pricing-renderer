@@ -211,7 +211,8 @@ configurePricingRenderer({
 ```
 
 For settings that vary by request, tenant or locale, pass props to the instance instead
-([configuration](./configuration.md)).
+([configuration](./configuration.md)), or wrap the island in `PricingRendererProvider`, which
+writes no global (see the [React guide](./react.md#pricingrendererprovider)).
 
 ## Keep `request` and `loadPricing` stable
 
@@ -292,6 +293,7 @@ Until then, use plain `fetch` as in this guide.
 
 ## Related
 
+- [React guide](./react.md) for the provider, the hooks and the render props.
 - [API reference](./api-reference.md) for the props, `request` and `loadPricing`.
 - [Private pricings](./private-pricings.md) for keys, routes and caching.
 - [Pricing versions](./pricing-versions.md) for which version to load.
