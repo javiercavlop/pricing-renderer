@@ -139,6 +139,13 @@
             },
             {
               "kind": "field",
+              "name": "hideSections",
+              "type": { "text": "readonly PricingSectionName[] | undefined" },
+              "attribute": "hide-sections",
+              "description": "Sections that are not rendered: hero, metadata, billing, variables, plans, comparison, addOns, summary. The attribute is a whitespace separated list; tokens that are not section names are ignored. Hiding the hero keeps a visually hidden title that labels the renderer. Hiding the add-ons keeps the summary."
+            },
+            {
+              "kind": "field",
               "name": "resolvedState",
               "type": { "text": "PricingSelectionChangeDetail | undefined" },
               "readonly": true,
@@ -206,6 +213,11 @@
               "name": "add-on-filter-threshold",
               "fieldName": "addOnFilterThreshold",
               "type": { "text": "number" }
+            },
+            {
+              "name": "hide-sections",
+              "fieldName": "hideSections",
+              "type": { "text": "readonly PricingSectionName[] | undefined" }
             },
             {
               "name": "pending-action-id",

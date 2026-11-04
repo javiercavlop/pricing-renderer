@@ -21,6 +21,8 @@ export type {
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
 } from './events.js';
+// [impl->req~hide-sections-react-manifest~1]
+export type { PricingSectionName } from './renderers.js';
 // [impl->req~cta-event-types~1]
 export type { SelectionRelation } from '../core/index.js';
 

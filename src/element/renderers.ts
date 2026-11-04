@@ -61,8 +61,23 @@ export interface RenderActions {
   revealAddOns?(byKeyboard?: boolean): void;
 }
 
+// [impl->req~hide-sections-property~1] the sections a host can hide
+export const PRICING_SECTION_NAMES = [
+  'hero',
+  'metadata',
+  'billing',
+  'variables',
+  'plans',
+  'comparison',
+  'addOns',
+  'summary',
+] as const;
+export type PricingSectionName = (typeof PRICING_SECTION_NAMES)[number];
+
 export interface RenderState {
   viewModel: PricingViewModel;
+  /** Sections the host hides; absent means none. */
+  hiddenSections?: ReadonlySet<PricingSectionName>;
   selection: PricingSelection;
   compact: boolean;
   search: string;
@@ -275,12 +290,18 @@ function renderRowMetadata(
     : nothing;
 }
 
-export function renderHeader(state: RenderState): TemplateResult {
-  const { viewModel } = state;
-  const title =
+// [impl->req~hide-sections-hero-name~1] also the text of the title that stays when the hero is hidden
+export function heroTitle(viewModel: PricingViewModel): string {
+  return (
     viewModel.presentation.title ??
     viewModel.pricing.metadata.saasName ??
-    t(viewModel, 'pricing.title');
+    t(viewModel, 'pricing.title')
+  );
+}
+
+export function renderHeader(state: RenderState): TemplateResult {
+  const { viewModel } = state;
+  const title = heroTitle(viewModel);
   const subtitle = viewModel.presentation.subtitle ?? t(viewModel, 'pricing.description');
   return html`
     <header class="pr-hero" data-pr-part="hero">
@@ -1341,7 +1362,8 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
 
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel } = state;
-  if (viewModel.addOns.length === 0) return nothing;
+  // [impl->req~hide-sections-render~1]
+  if (viewModel.addOns.length === 0 || state.hiddenSections?.has('addOns')) return nothing;
   // [impl->req~addon-grid-dense-details~1]
   const dense = viewModel.addOns.length > ADDON_DENSE_THRESHOLD;
   // [impl->req~addon-grid-filter~1] [impl->req~addon-grid-threshold-attribute~1]
@@ -1361,7 +1383,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
             ? renderFilteredAddOns(state, dense)
             : renderAddOnGrid(state, viewModel.addOns, dense)
         }
-        ${renderSummary(state)}
+        ${state.hiddenSections?.has('summary') ? nothing : renderSummary(state)}
       </div>
     </section>
   `;

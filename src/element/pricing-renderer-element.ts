@@ -67,7 +67,10 @@ import {
   toolbarThresholdOf,
   addOnFilterThresholdOf,
   instanceId,
+  heroTitle,
+  PRICING_SECTION_NAMES,
   type ActionOrigin,
+  type PricingSectionName,
   type RenderActions,
   type RenderState,
 } from './renderers.js';
@@ -82,10 +85,17 @@ import {
 // bottom bar is still the summary position (RenderState lives in renderers.ts and has no such field).
 export function renderAfterPlans(state: RenderState, wide = true): TemplateResult {
   const { viewModel, selection, compact } = state;
-  const withoutAddOns = viewModel.addOns.length === 0;
+  const hidden = state.hiddenSections;
+  // [impl->req~hide-sections-addons-summary~1] hidden add-ons count as no add-ons, so the summary
+  // keeps a place outside the add-on layout
+  const withoutAddOns = viewModel.addOns.length === 0 || Boolean(hidden?.has('addOns'));
   const docked = withoutAddOns && !compact && wide && selection.planId !== undefined;
-  const summary = withoutAddOns ? renderSummary(state) : nothing;
-  const parts = [docked ? summary : nothing, renderComparison(state), renderAddOns(state)];
+  const summary = withoutAddOns && !hidden?.has('summary') ? renderSummary(state) : nothing;
+  const parts = [
+    docked ? summary : nothing,
+    hidden?.has('comparison') ? nothing : renderComparison(state),
+    renderAddOns(state),
+  ];
   return html`<div class="pr-flow">${parts}</div>
     ${docked ? nothing : summary}`;
 }
@@ -117,6 +127,31 @@ export const onlyDifferencesConverter = {
     return value !== 'false';
   },
 };
+
+// [impl->req~hide-sections-attribute-converter~1] [impl->req~hide-sections-unknown~2]
+// Whitespace separated; only tokens that exactly match a section name are kept, in order.
+export const hideSectionsConverter = {
+  fromAttribute(value: string | null): PricingSectionName[] | undefined {
+    if (value === null) return undefined;
+    return value
+      .split(/[\t\n\f\r ]+/)
+      .filter((token): token is PricingSectionName =>
+        (PRICING_SECTION_NAMES as readonly string[]).includes(token),
+      );
+  },
+};
+
+// A value that is not an array hides nothing, and neither does an item that is not a section name.
+function hiddenSectionsOf(value: unknown): ReadonlySet<PricingSectionName> {
+  const names = new Set<PricingSectionName>();
+  if (!Array.isArray(value)) return names;
+  for (const item of value) {
+    if ((PRICING_SECTION_NAMES as readonly unknown[]).includes(item)) {
+      names.add(item as PricingSectionName);
+    }
+  }
+  return names;
+}
 
 export class PricingRendererElement extends LitElement {
   static properties = {
@@ -157,7 +192,19 @@ export class PricingRendererElement extends LitElement {
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
     addOnFilterThreshold: { type: Number, attribute: 'add-on-filter-threshold' },
+    // [impl->req~hide-sections-property~1] a host that builds the array in its render function does
+    // not re-render on every render
+    hideSections: {
+      attribute: 'hide-sections',
+      converter: hideSectionsConverter,
+      hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
+    },
   };
+
+  static {
+    // elementProperties is complete without defining the tag
+    this.finalize();
+  }
 
   declare pricing?: IPricingLike;
   declare yaml?: string;
@@ -186,6 +233,8 @@ export class PricingRendererElement extends LitElement {
   declare toolbarThreshold: number;
   // [impl->req~addon-grid-threshold-attribute~1]
   declare addOnFilterThreshold: number;
+  // [impl->req~hide-sections-property~1]
+  declare hideSections?: readonly PricingSectionName[];
 
   private _status: LoadStatus = 'idle';
   private readonly _projectPresentation: PricingPresentation;
@@ -979,8 +1028,10 @@ export class PricingRendererElement extends LitElement {
       resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold);
     // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
     const current = deriveCurrentContext(this._normalized, this._currentSelection);
+    const hidden = hiddenSectionsOf(this.hideSections);
     const state: RenderState = {
       viewModel,
+      ...(hidden.size > 0 ? { hiddenSections: hidden } : {}),
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: toolbarShown ? this._search : '',
@@ -1031,8 +1082,20 @@ export class PricingRendererElement extends LitElement {
                 </details>`
               : nothing
           }
-          ${renderHeader(state)} ${renderCatalogMetadata(state)} ${renderBilling(state)}
-          ${renderVariables(state)} ${renderPlans(state)} ${renderAfterPlans(state, this._wide)}
+          ${
+            // [impl->req~hide-sections-render~1] [impl->req~hide-sections-hero-name~1]
+            // the shell stays labelled by the title when the hero is hidden
+            hidden.has('hero')
+              ? html`<h2 class="pr-sr-only" id=${instanceId(state, 'title')}>
+                  ${heroTitle(viewModel)}
+                </h2>`
+              : renderHeader(state)
+          }
+          ${hidden.has('metadata') ? nothing : renderCatalogMetadata(state)}
+          ${hidden.has('billing') ? nothing : renderBilling(state)}
+          ${hidden.has('variables') ? nothing : renderVariables(state)}
+          ${hidden.has('plans') ? nothing : renderPlans(state)}
+          ${renderAfterPlans(state, this._wide)}
         </div>
         ${renderPendingDialog(state)}
         <p class="pr-sr-only" aria-live="polite">

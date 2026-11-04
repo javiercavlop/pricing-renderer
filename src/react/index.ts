@@ -29,6 +29,7 @@ import {
   type PricingChangeConfirmEvent,
   type PricingDiagnosticEvent,
   type PricingReadyEvent,
+  type PricingSectionName,
   type PricingSelectionChangeEvent,
 } from '../element/index.js';
 import '../element/define.js';
@@ -98,6 +99,8 @@ export interface PricingRendererSharedProps {
   toolbarThreshold?: number;
   // Number of add-ons above which the add-on search and "Show more" are shown.
   addOnFilterThreshold?: number;
+  // [impl->req~hide-sections-react-manifest~1] Sections that are not rendered.
+  hideSections?: readonly PricingSectionName[];
   // [impl->req~react-classname~1]
   className?: string;
   // [impl->req~react-style-prop~1] CSS properties plus custom properties such as `--pr-color-accent`
@@ -242,6 +245,7 @@ export type {
   PricingReadyEvent,
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
+  PricingSectionName,
 } from '../element/index.js';
 // [impl->req~cta-event-types~1]
 export type { SelectionRelation } from '../core/index.js';
