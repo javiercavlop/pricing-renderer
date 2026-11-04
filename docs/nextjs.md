@@ -43,46 +43,19 @@ export function PricingView({ yaml }: { yaml: string }) {
 
 ## Hydration of the element
 
-Known limitation of the current wrapper: the server HTML of `PricingRenderer` is an empty tag, and
-the element renders its light DOM on the client before a normal Next.js page hydrates (the page
-defines the element when its client bundle loads and hydrates in a later task). React then logs one
-recoverable hydration error and regenerates the host node. The final DOM is complete; the cost is a
-console error and a client re-render of the tree up to the root or the nearest `Suspense` boundary.
-The orders that were measured are in the
-[React guide](./react.md#known-limitation-hydration-of-the-element). A follow-up change, "wrapper
-SSR hydration fix", is planned.
+The server HTML of `PricingRenderer` is an empty `<pricing-renderer>` tag, and the element renders
+its light DOM on the client. The wrapper marks the host as opaque to React, so React neither
+hydrates nor deletes what the element renders. A normal App Router page, where the client bundle
+defines the element and hydration happens in a later task, hydrates without a hydration error. No
+workaround is needed: no `next/dynamic`, no `ssr: false` and no deferred import. How it works and
+what was measured are in the [React guide](./react.md#hydration-of-the-element).
 
-Workaround: define the element after hydration. A Client Component loads the wrapper with
-`next/dynamic` and `ssr: false` (the App Router allows `ssr: false` only in Client Components) and a
-sized placeholder as the loading fallback:
-
-```tsx
-// app/pricing/pricing-island.tsx
-'use client';
-
-import dynamic from 'next/dynamic';
-
-const PricingView = dynamic(() => import('./pricing-view').then((mod) => mod.PricingView), {
-  ssr: false,
-  loading: () => <div aria-busy="true" style={{ minHeight: 640 }} />,
-});
-
-export function PricingIsland({ yaml }: { yaml: string }) {
-  return <PricingView yaml={yaml} />;
-}
-```
-
-The Server Component page imports `PricingIsland`. The wrapper then does not render on the server
-(it never did: the tag was empty), so the placeholder reserves the space.
-
-`examples/next` applies this on `/pricing`: `app/pricing-island.tsx` loads `app/pricing-client.tsx`
-this way. `/change` needs no change: `ChangeFlow` renders `PricingChangeReview` only after the
-subscription has loaded in the browser, so the server HTML holds no element tag to hydrate.
+`examples/next` renders the wrapper directly on `/pricing`: `app/pricing-island.tsx` renders
+`app/pricing-client.tsx`, a Client Component that imports `PricingRenderer`. `/change` renders
+`PricingChangeReview` only after the subscription has loaded in the browser (`ChangeFlow`), so its
+server HTML holds no element tag to hydrate.
 
 ## Load the pricing on the server
-
-The later examples render `PricingView` directly for brevity. A real page should wrap it in the
-island above, the same way, to avoid the hydration error.
 
 A Server Component fetches the pricing with the key, which stays on the server, and passes the
 result to the client island as a `yaml` string or as a plain `pricing` object:

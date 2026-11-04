@@ -485,10 +485,14 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   accepts an absolute `https://` link to another host, so a host that needs same-site links checks
   `href` itself (`req~react-slot-href-safe~1`).
 
-- [ ] Wrapper SSR hydration fix (follow-up change). Open, not met here. The wrapper's server HTML
-      is an empty tag; hydrating after the element has rendered gives one recoverable hydration
-      error and a replaced host node (the final DOM is complete). Documented with a workaround in
-      `docs/react.md` and `docs/nextjs.md`; the fix changes `src/react`.
+- [x] Wrapper SSR hydration fix. Done. `PricingRenderer` and `PricingChangeReview` pass
+      `dangerouslySetInnerHTML: { __html: '' }` (one stable object per instance) and
+      `suppressHydrationWarning` to the host (`src/react/index.ts`), so React treats the host's
+      children as opaque. Evidence: `tests/browser/react-hydration-order.spec.ts`, every row
+      (define before or after the server HTML; hydrate after an update, in a later task, in
+      `flushSync`) gives 0 recoverable errors, the host node kept and the final DOM complete
+      (3 plans, 3 CTAs, 1 summary action), in Chromium and Firefox on React 19; WebKit runs in CI.
+      `docs/react.md` and `docs/nextjs.md` describe the behaviour and no longer carry a workaround.
 
 ## Traceability checklist
 

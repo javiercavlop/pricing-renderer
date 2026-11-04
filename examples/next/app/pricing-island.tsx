@@ -1,17 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import { PricingClient } from './pricing-client';
 
-// The wrapper is loaded after hydration (ssr: false), so React creates its host node on the client
-// instead of hydrating the empty server tag after the element has rendered. That avoids a
-// recoverable hydration error (docs/react.md, "Known limitation: hydration of the element").
-// ssr: false is only allowed in a Client Component. The server sends the placeholder, which keeps
-// the space of the renderer.
-const PricingClient = dynamic(() => import('./pricing-client').then((mod) => mod.PricingClient), {
-  ssr: false,
-  loading: () => <div aria-busy="true" style={{ minHeight: 640 }} />,
-});
-
+// The server HTML of the wrapper is an empty <pricing-renderer> tag and React treats the host as
+// opaque, so hydration is clean whether the element has rendered or not (docs/react.md,
+// "Hydration of the element"). No dynamic import or ssr: false is needed.
 export function PricingIsland({ yaml }: { yaml: string }) {
   return <PricingClient yaml={yaml} />;
 }
