@@ -2,6 +2,12 @@
 
 import { createComponent, type EventName } from '@lit/react';
 import * as React from 'react';
+import { mergePresentationOptions } from '../core/index.js';
+import {
+  PricingRendererContext,
+  filterProviderRequest,
+  type PricingRendererContextValue,
+} from './provider.js';
 import type {
   IPricingLike,
   ExpressionOptions,
@@ -110,10 +116,53 @@ export type PricingRendererStyle = React.CSSProperties & {
 
 export type PricingRendererProps = PricingInputProps & PricingRendererSharedProps;
 
+const providerConfigKeys = [
+  'locale',
+  'pricingPath',
+  'selectionEnabled',
+  'ctaEnabled',
+  'variablesEnabled',
+] as const;
+
+// [impl->req~provider-config-precedence~1] [impl->req~provider-presentation-precedence~1]
+// [impl->req~provider-messages-merge~1] [impl->req~provider-request-loader~1]
+// [impl->req~provider-request-origin~1] [impl->req~provider-nearest~1]
+// [impl->req~provider-absent-unchanged~2]
+// Instance props win over the nearest provider, which wins over the global configuration (the
+// element reads that one). Without a provider the props pass through unchanged.
+function applyProvider(
+  props: PricingRendererProps,
+  provider: PricingRendererContextValue | undefined,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...props };
+  if (provider === undefined) return merged;
+  for (const key of providerConfigKeys) {
+    const value = provider.config?.[key];
+    if (merged[key] === undefined && value !== undefined) merged[key] = value;
+  }
+  const layers = [provider.config?.presentation, provider.presentation, props.presentation];
+  if (layers.some((layer) => layer !== undefined)) {
+    merged.presentation = mergePresentationOptions(
+      mergePresentationOptions(layers[0], layers[1]),
+      layers[2],
+    );
+  }
+  if (provider.messages !== undefined) {
+    merged.messages = { ...provider.messages, ...props.messages };
+  }
+  if (props.src === undefined) return merged;
+  const loadPricing = props.loadPricing ?? provider.loadPricing;
+  if (loadPricing !== undefined) merged.loadPricing = loadPricing;
+  const request =
+    props.request ?? filterProviderRequest(provider.request, props.src, provider.requestOrigins);
+  if (request !== undefined) merged.request = request;
+  return merged;
+}
+
 export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingRendererProps>(
   (props, ref) =>
     React.createElement(PricingRendererBase, {
-      ...props,
+      ...applyProvider(props, React.useContext(PricingRendererContext)),
       ref,
     }),
 );
@@ -161,6 +210,8 @@ export const PricingChangeReview = React.forwardRef<
 PricingChangeReview.displayName = 'PricingChangeReview';
 
 export { PricingChangeReviewElement, PricingRendererElement };
+// [impl->req~react-entry-reexports-headless~1]
+export * from './headless.js';
 // [impl->req~react-reexports-result-type~1]
 export type {
   ApplySelectionResult,
