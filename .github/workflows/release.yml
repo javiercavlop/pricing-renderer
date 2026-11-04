@@ -30,6 +30,8 @@ jobs:
     # environment and the immutable release tag. Splitting it into an
     # unprivileged verify job and a minimal publish job would reduce the
     # exposure but changes the release flow and has not been approved.
+    # The npm CLI is the one bundled with the Node that setup-node installs,
+    # checked against a minimum version below; no npm is installed globally.
     permissions:
       contents: read
       id-token: write
@@ -83,16 +85,28 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      # Risk: the npm CLI is pinned to an exact version but downloaded without
-      # an integrity or signature check beyond what the registry and npm's own
-      # install provide, and it runs before dependencies are installed in the
-      # job that holds id-token: write. A compromised npm@11.18.0 tarball or
-      # registry response could act on the publish. Mitigations to consider
-      # separately: verify the tarball integrity hash or registry signatures
-      # (npm audit signatures), or use a runner image that already ships an
-      # OIDC-capable npm.
-      - name: Use an OIDC-compatible npm CLI
-        run: npm install --global npm@11.18.0
+      # npm trusted publishing (OIDC) needs npm >= 11.5.1. The npm CLI comes
+      # bundled with the Node distribution that setup-node installs; nothing
+      # else is downloaded here. Fail closed if the bundled npm is too old.
+      - name: Require an OIDC-capable npm CLI
+        env:
+          NPM_MIN_VERSION: 11.5.1
+        run: |
+          npm_version="$(npm --version)"
+          if ! NPM_VERSION="$npm_version" node -e '
+            const parse = (v) => v.split("-")[0].split(".").map(Number);
+            const have = parse(process.env.NPM_VERSION);
+            const need = parse(process.env.NPM_MIN_VERSION);
+            for (let i = 0; i < 3; i++) {
+              if ((have[i] || 0) !== (need[i] || 0)) {
+                process.exit((have[i] || 0) > (need[i] || 0) ? 0 : 1);
+              }
+            }
+          '; then
+            echo "::error::npm $npm_version is older than $NPM_MIN_VERSION, which npm trusted publishing requires."
+            exit 1
+          fi
+          echo "npm $npm_version satisfies >= $NPM_MIN_VERSION"
 
       - name: Install exact dependencies
         run: pnpm install --frozen-lockfile
