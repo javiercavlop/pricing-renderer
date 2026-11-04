@@ -14,19 +14,33 @@ const ORDERINGS = DEFINES.flatMap((define) => HYDRATES.map((hydrate) => ({ defin
 
 type LateStore = {
   __recoverable?: string[];
-  __lateBefore?: { childCount: number; innerHTML: string };
-  __lateCommits?: number;
   __lateHost?: Element | null;
+};
+
+// KNOWN LIMITATION (docs/react.md, 'Order: element upgrade, hydration...'). Lit renders the
+// element's light DOM before React hydrates, so React reports a recoverable mismatch and
+// regenerates the host node. Only hydration inside flushSync, before Lit's microtask, is clean.
+// The follow-up change 'wrapper SSR hydration fix' flips the 1 entries to 0, and the host
+// expectation to kept. Do not 'fix' this test, fix the wrapper.
+//
+// Measured by CI probes on PR 91 (same in chromium, firefox and webkit, default slots).
+// after/sync was not observed (the probe log was truncated): it is expected, to be confirmed by
+// CI, to behave like before/sync, because Lit renders in a microtask after the definition.
+const EXPECTED_RECOVERABLE: Record<`${Define}/${Hydrate}`, number> = {
+  'before/update': 1,
+  'before/task': 1,
+  'before/sync': 0,
+  'after/update': 1,
+  'after/task': 1,
+  'after/sync': 0,
 };
 
 const RADIOS = '#root input[type="radio"][name$="-plan"]';
 const CTAS = '#root [data-testid^="cta-"]';
 const SUMMARY = '#root [data-testid="summary"]';
 
-async function open(page: Page, define: Define, hydrate: Hydrate, slots?: 'none'): Promise<void> {
-  const extra = slots === undefined ? '' : `&slots=${slots}`;
-  const query = `mode=hydrate-late&define=${define}&hydrate=${hydrate}${extra}`;
-  await page.goto(`/react-slots.html?${query}`);
+async function open(page: Page, define: Define, hydrate: Hydrate): Promise<void> {
+  await page.goto(`/react-slots.html?mode=hydrate-late&define=${define}&hydrate=${hydrate}`);
 }
 
 test.describe('hydration order of the element and React', () => {
@@ -37,47 +51,28 @@ test.describe('hydration order of the element and React', () => {
       await expect(page.locator('#root pricing-renderer')).toHaveCount(1);
       await expect(page.locator(CTAS)).toHaveCount(3);
       await expect(page.locator(SUMMARY)).toHaveCount(1);
+
+      // hydrateRoot has run; a short settle lets React report its recoverable errors.
+      await page.waitForFunction(
+        () => (window as unknown as { __lateHydrateCalled?: boolean }).__lateHydrateCalled === true,
+      );
+      await page.waitForTimeout(300);
+
+      const seen = await page.evaluate(() => {
+        const store = window as unknown as LateStore;
+        return {
+          recoverable: store.__recoverable ?? [],
+          hostKept: document.querySelector('pricing-renderer') === store.__lateHost,
+        };
+      });
+
+      const expected = EXPECTED_RECOVERABLE[`${define}/${hydrate}`];
+      expect(seen.recoverable).toHaveLength(expected);
+      if (expected > 0) {
+        expect(seen.recoverable[0]).toContain('Hydration failed');
+      }
+      // The host node is regenerated exactly when React reported the mismatch.
+      expect(seen.hostKept).toBe(expected === 0);
     });
   }
-
-  // Temporary: it prints the facts of every ordering in the CI log by failing on purpose. The lead
-  // replaces it by assertions after reading the CI output.
-  test('probe: facts per ordering', async ({ page }) => {
-    test.setTimeout(180_000);
-    const facts: Record<string, unknown>[] = [];
-    for (const slots of ['default', 'none'] as const) {
-      for (const { define, hydrate } of ORDERINGS) {
-        await open(page, define, hydrate, slots === 'none' ? 'none' : undefined);
-        // Bounded, so an ordering that never renders is recorded with radios: 0.
-        await page.waitForSelector(RADIOS, { timeout: 8_000 }).catch(() => undefined);
-        await page.waitForTimeout(500);
-        const seen = await page.evaluate(() => {
-          const store = window as unknown as LateStore;
-          return {
-            recoverable: store.__recoverable ?? [],
-            childCountBefore: store.__lateBefore?.childCount,
-            commits: store.__lateCommits,
-            hostKept: document.querySelector('pricing-renderer') === store.__lateHost,
-          };
-        });
-        const { recoverable, ...rest } = seen;
-        const row = {
-          define,
-          hydrate,
-          slots,
-          ...rest,
-          radios: await page.locator(RADIOS).count(),
-          ctas: await page.locator(CTAS).count(),
-          actions: await page.locator(SUMMARY).count(),
-          recoverableCount: recoverable.length,
-          recoverableTail: recoverable.map((message) =>
-            message.slice(-260).replace(/\r?\n/g, ' | '),
-          ),
-        };
-        console.log('PROBE-ROW ' + JSON.stringify(row));
-        facts.push(row);
-      }
-    }
-    throw new Error('PROBE ' + JSON.stringify(facts));
-  });
 });
