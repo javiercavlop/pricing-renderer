@@ -273,17 +273,10 @@ describe('React density prop', () => {
 
   it('passes density to the underlying component unchanged', async () => {
     const { PricingRenderer } = await import('../../src/react/index.js');
-    const renderFn = (
-      PricingRenderer as unknown as {
-        render: (props: Record<string, unknown>, ref: unknown) => unknown;
-      }
-    ).render;
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
     for (const density of ['compact', 'comfortable']) {
-      const rendered = renderFn({ yaml: 'name: x', density }, null) as {
-        type: (props: Record<string, unknown>) => unknown;
-        props: Record<string, unknown>;
-      };
-      rendered.type(rendered.props);
+      renderToString(createElement(PricingRenderer, { yaml: 'name: x', density } as never));
       expect(recorded.props.at(-1)?.density).toBe(density);
     }
   });
