@@ -10,9 +10,9 @@ function renderPlanCta(plan: PricingPlanCtaContext) {
   if (plan.current) return <span data-plan-cta="current">Your current plan</span>;
   const label = plan.relation === 'upgrade' ? `Upgrade to ${plan.planName}` : plan.label;
   if (plan.href !== undefined) {
-    // `href` only passed the renderer's isSafeLink check: it can be a protocol-relative `//host`
-    // value or an absolute link to another host, so this is not a same-site link. next/link
-    // renders a plain anchor for such values. A host that needs same-site links checks it itself.
+    // `href` only passed the renderer's isSafeLink check: isSafeLink rejects `//host` but accepts
+    // an absolute https:// link to another host, so a host that needs same-site links checks href
+    // itself. next/link renders a plain anchor for an external value.
     return (
       <Link href={plan.href} data-plan-cta="link">
         {label}

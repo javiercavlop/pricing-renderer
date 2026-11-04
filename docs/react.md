@@ -299,7 +299,7 @@ component hierarchy (context, state and event handling work as usual), while the
 the element. Without render props the markup is unchanged. A renderer nested inside a slot node is
 not served by the outer wrapper.
 
-You can combine render props with [`hideSections`](./api-reference.md) (a list of section names
+You can combine render props with [`hideSections`](./api-reference.md#hidesections-slots-and-render-props) (a list of section names
 that the element does not render: `hero`, `metadata`, `billing`, `variables`, `plans`,
 `comparison`, `addOns`, `summary`) and with the raw `slots` property of the element
 (`PricingSlotName`: `plan-cta`, `summary-actions`, `loading`, `error`) in non-React hosts.
@@ -353,8 +353,13 @@ diagnostic `message` and `path` come from the pricing document or the host's dat
 
 ## Examples
 
-- [`examples/react`](../examples/react): a Vite app using the React entries.
-- [`examples/next`](../examples/next): the same in a Next.js App Router app.
+- [`examples/next`](../examples/next): a Next.js App Router app with the provider in
+  `app/providers.tsx`, a `next/link` plan CTA and the current plan in `app/pricing-client.tsx`
+  (route `/pricing`), and the review flow in `app/change` (route `/change`) against the route
+  handler `app/api/subscription`.
+- [`examples/react`](../examples/react): only the basic wrapper demo (a Vite app using the React
+  entry). It does not show the hooks, the provider or a router link. A React (Vite) example with a
+  router link and the review flow is planned as a follow-up.
 - [`examples/vanilla/src/react-slots.ts`](../examples/vanilla/src/react-slots.ts): mounts
   `PricingRenderer` with each render prop, the page used by the browser specs.
 

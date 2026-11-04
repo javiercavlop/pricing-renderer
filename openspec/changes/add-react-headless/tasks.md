@@ -381,10 +381,11 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
   - Content: the provider instead of the global config; a headless page with the hooks; a router
     `Link` CTA, `currentSelection` and the review flow (`compareWithCurrent`,
     `PricingChangeReview`) against an in-memory mock backend.
+  - Deferred out of the wave-4 PR (coordinator decision): react-router changes pnpm-lock.yaml, which the running change ci-health-audit-ts-release owns; P3-13 starts as its own change after that merge. Owner decision CRP-P3-D (a) stands: react-router at one exact version in examples/react, pnpm audit and licence report recorded.
   - Link note: the `href` of the plan context is checked by `isSafeLink`
-    only and may point to another host (a protocol-relative `//host` value is accepted today,
-    `docs/events.md:170`); the example does not present it as a same-site link. The `isSafeLink`
-    hardening stays a followup slice after an owner decision.
+    only. `isSafeLink` rejects `//host` and `/\host` (also with tab, CR or LF mixed in;
+    `src/core/view-model.ts:600-606`, `docs/events.md`) but accepts an absolute `https://` link to
+    another host, so it is not a same-site link; the example does not present it as one.
   - Supply chain (R1-SEC-009): `react-router` is pinned to one exact version (no range) in
     `examples/react/package.json`; before the lockfile is committed the implementer reads the
     output of `pnpm audit` and a licence report of the added packages and records both in the PR;
@@ -393,14 +394,14 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     no such entry; a package of the update that needs its script to work is reported, not allowed.
   - Checks: the lockfile update through a registered update check first, then `full`, `pkg`,
     `react-demo`.
-- [ ] P3-14 Next example (implementer, risk low; parallel with P3-13).
+- [x] P3-14 Next example (implementer, risk low; parallel with P3-13).
   - Files: `examples/next/app/**`.
   - Content: the provider in a client layout component; `next/link` in `renderPlanCta`; the current
     plan; the review flow with route handlers under `app/api/` holding in-memory state.
   - Link note: as in P3-13, the plan context `href` passes `isSafeLink` only and may point to
     another host; the example does not present it as a same-site link.
   - Checks: `full`, `pkg`, `next-demo`.
-- [ ] P3-15a React guide (doc-steward, risk low; after P3-13 and P3-14).
+- [x] P3-15a React guide (doc-steward, risk low; after P3-13 and P3-14).
   - Files: `docs/react.md` (new), the "React and Next" section of `README.md` (`:224-263`) and its
     docs list (`:472-492`).
   - Content: the provider, the hooks, SSR rules, and the two limits of `usePricingRendererState`
@@ -409,7 +410,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     another host; the guide does not present it as a same-site link and says that a host needing
     same-site links checks it itself.
   - Checks: `docs`.
-- [ ] P3-15b Reference (doc-steward, risk low; parallel with P3-15a).
+- [x] P3-15b Reference (doc-steward, risk low; parallel with P3-15a).
   - Files: `docs/api-reference.md` (core functions, `pricing-renderer/react`, the new subpath,
     `hideSections`, slots and the event), `docs/configuration.md` (the provider layer in
     "Presentation precedence", `:279-290`), `docs/events.md` (the full reference of the slot event;
@@ -479,13 +480,10 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
 
 ## Follow-ups outside the slices
 
-- `isSafeLink` (`src/core/view-model.ts:600-605`) accepts `//host` and `/\host`, which browsers
-  read as links to another host, and it does not drop tab, CR and LF before the check, which
-  browsers remove from URLs. The React plan context re-checks `data-href` with it
-  (`req~react-slot-href-safe~1`), so it inherits the gap. A fix (reject both prefixes after
-  removing tab, CR and LF, with a unit test) changes how existing CTA, metadata and doc links
-  render, which the additive-only rule does not allow inside this change; it needs an owner
-  decision and its own slice.
+- `isSafeLink` (`src/core/view-model.ts:600-606`): the hardening is already in the code. It
+  rejects `//host` and `/\host`, also with tab, CR or LF mixed in. The same-site caveat stays: it
+  accepts an absolute `https://` link to another host, so a host that needs same-site links checks
+  `href` itself (`req~react-slot-href-safe~1`).
 
 ## Traceability checklist
 
