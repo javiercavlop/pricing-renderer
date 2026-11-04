@@ -452,7 +452,7 @@ children did not match the server HTML, so React logged one recoverable error an
 host node. Decision: the wrapper makes the host opaque to React. `PricingRenderer` and
 `PricingChangeReview` pass `dangerouslySetInnerHTML: { __html: '' }` and `suppressHydrationWarning`
 to the host, so React neither hydrates nor deletes the element's light DOM. The `__html` object is
-stable per instance (kept in a ref): React 19 sets `innerHTML` again when the object identity
+stable per instance (kept in component state, not a module-level object): React 19 sets `innerHTML` again when the object identity
 changes, which would wipe the element's light DOM on a re-render. Measured in
 `tests/browser/react-hydration-order.spec.ts`: every order of definition and hydration gives 0
 recoverable errors, the host node kept and the final DOM complete (Chromium and Firefox on React
