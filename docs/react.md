@@ -315,10 +315,10 @@ that the element does not render: `hero`, `metadata`, `billing`, `variables`, `p
 ### Order: element upgrade, hydration and when render props apply
 
 - `pricing-renderer/react` imports the element definition, so importing the entry registers the
-  custom element. Import it at the top of your client module, so the element is defined before
-  React hydrates or commits the tree that contains it. The element never renders on the server;
-  the server HTML of the wrapper is an empty `<pricing-renderer>` tag. Read the next section: this
-  import order is not enough to avoid a hydration error.
+  custom element. The top-level import registers the element, so for client-only renders it is
+  defined before the tree commits. The element never renders on the server; the server HTML of the
+  wrapper is an empty `<pricing-renderer>` tag. Hydrating the wrapper after the element has
+  rendered logs a recoverable error: see the next section, its known limitation and its workaround.
 - Render props are client only. The server render and the first client render call no render
   prop and hold no portal. That holds for the portals only: the element's own light DOM is a
   separate matter (see [Known limitation](#known-limitation-hydration-of-the-element)).
@@ -336,11 +336,14 @@ that the element does not render: `hero`, `metadata`, `billing`, `variables`, `p
 
 The server HTML of the wrapper is an empty `<pricing-renderer>` tag. The element renders its light
 DOM on the client, in a microtask after it is defined and connected (before it has its props it
-shows an error shell, `section.pr-shell.pr-error`, with whitespace text). If React hydrates after
+renders its own initial light DOM; with a render prop for the error, that is the slot shell
+`section.pr-shell.pr-error`). If React hydrates after
 that render, the host node no longer matches the server HTML. React logs one recoverable error
 (`Hydration failed because the server rendered HTML didn't match the client`) and regenerates the
-host node. Measured in Chromium, Firefox and WebKit with the default slots
-(`examples/vanilla/react-slots.html?mode=hydrate-late`, `tests/browser/react-hydration-order.spec.ts`):
+host node. Measured in Chromium, Firefox and WebKit with all four render props
+(`examples/vanilla/react-slots.html?mode=hydrate-late`, `tests/browser/react-hydration-order.spec.ts`).
+The case without render props was not measured; the host mismatches either way because the server
+tag is empty:
 
 - Element defined before the server HTML is set, hydration after the element's first update: one
   recoverable error, host node replaced.

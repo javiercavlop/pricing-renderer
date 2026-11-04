@@ -81,6 +81,9 @@ subscription has loaded in the browser, so the server HTML holds no element tag 
 
 ## Load the pricing on the server
 
+The later examples render `PricingView` directly for brevity. A real page should wrap it in the
+island above, the same way, to avoid the hydration error.
+
 A Server Component fetches the pricing with the key, which stays on the server, and passes the
 result to the client island as a `yaml` string or as a plain `pricing` object:
 
