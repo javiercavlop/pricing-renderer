@@ -13,8 +13,9 @@ no `pnpm audit` or install result is claimed here.
 Workflow and configuration changes landed after the first version of this
 audit and are described in "CI and Dependabot configuration": the `audit` job
 in `ci.yml`, the grouped Dependabot configuration, SHA pinning of actions and
-the narrowed CI triggers. Release workflow findings 1 and 2 still hold
-against the current `release.yml`; findings 3 and 4 are resolved.
+the narrowed CI triggers. The `audit` job is now blocking. Against the
+current `release.yml`, release workflow findings 1, 3 and 4 are resolved and
+finding 2 is an accepted, documented risk.
 
 ## Dependencies
 
@@ -35,10 +36,17 @@ against the current `release.yml`; findings 3 and 4 are resolved.
 - **`playwright` and `@playwright/test` both declared.** Verified: both are
   `^1.55.0` in the root `package.json` and the lockfile resolves both to
   1.62.0. The duplicate declaration is redundant but harmless.
-- **`typescript` 5.6.1-rc, transitive.** Verified in `pnpm-lock.yaml`:
-  `@arethetypeswrong/core@0.18.5` depends on `typescript: 5.6.1-rc`. The
-  project's own `typescript` is 5.9.3. It is a pre-release compiler used only
-  by a dev tool.
+- **`typescript` 5.6.1-rc, transitive: resolved by an override.** The root
+  `package.json` `pnpm.overrides` has `@arethetypeswrong/core@0.18.5>typescript`:
+  `5.6.3` (scoped to the parent version, so an attw upgrade turns it off by
+  itself; remove it when attw ships a stable `typescript` pin), and the lockfile `overrides` section mirrors it. The lockfile
+  resolves `typescript@5.6.3` for `@arethetypeswrong/core@0.18.5`; the
+  project's own `typescript` stays 5.9.3. That attw version pins the exact
+  version `5.6.1-rc`, and still does in its latest release, according to
+  `docs/agent-work/ci-health/typescript-override.md`; this registry fact is
+  **not verified** from the repository files. The lockfile entry was edited by
+  hand; confirmation in CI under pnpm 10.19.0: see the pull request checks
+  (**not verified** here).
 - **Local pnpm differs from the declared one.** Verified: `packageManager` is
   `pnpm@10.19.0`, and `release.yml` and `ci.yml` use 10.19.0. An earlier
   local `pnpm install --frozen-lockfile` run reportedly showed pnpm v9.15.9;
@@ -62,8 +70,9 @@ The current state is:
   (`>=1.1.19 <2`, locked 1.1.21), `brace-expansion@5` (`>=5.0.10 <6`, locked
   5.0.12), `js-yaml@3` (`>=3.15.1 <4`, locked 3.15.2), `js-yaml@4`
   (`>=4.3.2 <5`, locked 4.3.2), `nanoid@3` (`>=3.3.18 <4`, locked 3.3.20) and
-  `source-map-js` (`>=1.2.2 <2`, locked 1.2.2). The lockfile `overrides`
-  section mirrors them.
+  `source-map-js` (`>=1.2.2 <2`, locked 1.2.2), and
+  `@arethetypeswrong/core@0.18.5>typescript` (`5.6.3`, locked 5.6.3). The lockfile
+  `overrides` section mirrors them.
 - Why each override was added (for example, which advisory) is **not
   verified** from the repository.
 
@@ -71,8 +80,14 @@ The current state is:
 
 - **`audit` job** (`.github/workflows/ci.yml`): installs with
   `pnpm install --frozen-lockfile` on Node 22 and runs
-  `pnpm audit --audit-level high`. It is advisory only
-  (`continue-on-error: true`), so a finding does not fail the workflow.
+  `pnpm audit --audit-level high`. It is blocking: the job has no
+  `continue-on-error`, and a comment in the job says a failure is fixed with a
+  dependency update or a documented override. Waiver path: when a high
+  advisory has no fixed release and neither can fix it, one GHSA may be waived
+  with `pnpm.auditConfig.ignoreGhsas` (pnpm 10 setting) in `package.json`, only
+  with the owner's approval, with a follow-up id and review date recorded here.
+  The `merge-report` job keeps
+  `continue-on-error: true` on purpose, because it only builds a report.
 - **Triggers and permissions:** `ci.yml` runs on `push` and `pull_request` for
   `main` and `develop`, with top-level `permissions: contents: read`. Actions
   in `ci.yml` and `release.yml` are pinned to commit SHAs.
@@ -82,16 +97,22 @@ The current state is:
   updates for `next`, `vite`, `vite-*`, `@vitejs/*`, `vitest`, `@vitest/*`) and
   `development` (version updates of development dependencies). The
   `github-actions` ecosystem has the groups `actions-security` and `actions`.
-- **Audit result:** a clean `pnpm audit` was reported, but it is **not
-  verified** for this document; no audit was run here.
+- **Audit result:** a lab run of `pnpm audit --audit-level high` exited 0 with
+  2 moderate advisories and no high or critical ones
+  (`docs/agent-work/ci-health/audit-job.md`). This is a point-in-time lab
+  result under pnpm 9.15.9, not a CI run, and it is **not verified** for this
+  document; no audit was run here.
 
 ## Release workflow (`.github/workflows/release.yml`)
 
-1. **Global npm without integrity verification.** `npm install --global
-npm@11.18.0` (line 95) installs a version-pinned CLI with no integrity or
-   signature check beyond what the registry and npm's own install provide, in a job that has `id-token: write`. A compromised package
-   would run in a job that can mint the OIDC token.
-2. **Whole pipeline in the publishing job.** Install, lint, tests, package
+1. **Global npm without integrity verification. Resolved.** The step
+   `npm install --global npm@11.18.0` is gone, so no registry code is
+   installed in the job that has `id-token: write`. The step "Require an
+   OIDC-capable npm CLI" fails the job when the npm bundled with setup-node's
+   Node 24 is older than 11.5.1 (`NPM_MIN_VERSION`). Residual risk: the bundled
+   npm comes from the Node distribution fetched by setup-node and is not
+   pinned (details: `docs/agent-work/ci-health/release-npm.md`).
+2. **Whole pipeline in the publishing job. Accepted risk.** Install, lint, tests, package
    checks, browser engine install and browser tests all run in the same job
    that holds `id-token: write` and the `npm` environment. Third-party code
    (dev dependencies, install scripts, browser tooling) runs next to the
@@ -125,13 +146,18 @@ commented-out `exit 1` does not count as a guard.
   explaining why (the React peers are optional), then validate with
   `pnpm install --frozen-lockfile`. The file is sensitive and was not edited
   here.
-- Release workflow item 1 (global `npm install --global npm@11.18.0` without
-  integrity verification, in the job holding `id-token: write`) is **open**.
-  Its integrity is **not verified**, and it is not accepted.
+- Release workflow item 1 (global npm install in the job holding
+  `id-token: write`) is **resolved**: the global install is removed and a step
+  fails the job when the bundled npm is older than 11.5.1. The bundled npm is
+  not pinned (it comes from the Node distribution fetched by setup-node), see
+  `docs/agent-work/ci-health/release-npm.md`. The workflow is not exercised
+  until the owner's next release.
 - Release workflow item 2 (whole pipeline in the publishing job) is the
   accepted risk: a comment in `release.yml` records that it is accepted
   deliberately, gated by the protected `npm` environment and the immutable
-  release tag, and that splitting the job has not been approved.
+  release tag, and that splitting the job has not been approved. The split is
+  deferred as a proposal to the owner; nothing of it is implemented, see
+  `docs/agent-work/ci-health/release-split-deferred.md`.
 - Release workflow items 3 (`prepublishOnly` ran the unit tests a second time)
   and 4 (`dist_tag` interpolated into `run`) are **resolved**:
   `prepublishOnly` is now `pnpm package:check`, and the dist-tag passes through
