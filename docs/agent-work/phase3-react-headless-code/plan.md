@@ -1,0 +1,1 @@
+Order (tasks.md): wave 1 remainder P3-2 and P3-3 (this PR A), then P3-4; wave 2 P3-5, P3-6, P3-7a/b, P3-8; wave 3 P3-10, P3-11, P3-12, P3-12b; wave 4 P3-13..15. Test tasks run as role implementer with gate G3; red checks use the bash install form. Parallel slices must exclude each other's red test files from suite checks.

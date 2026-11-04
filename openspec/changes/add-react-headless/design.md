@@ -147,7 +147,7 @@ moved inside:
   segments reach in the variables built so far, is an array and the segment is not a canonical
   index (`/^(0|[1-9]\d*)$/`) below its `length`; or when the parent is anything else (record,
   scalar or missing) and the segment is a digit run (`/^\d+$/`)
-  (`req~search-params-var-path-safe~2`). So no path segment creates or grows an array. A JSON value
+  (`req~search-params-var-path-safe~3`). So no path segment creates or grows an array. A JSON value
   loses every `__proto__` key at any depth (`req~search-params-var-proto-keys~1`). In the element,
   paths come only from the pricing author.
 - Limits on URL input, each checked before the work it bounds: a `var.<path>` value longer than

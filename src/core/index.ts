@@ -17,6 +17,12 @@ export {
   selectionWithVariable,
 } from './selection-change.js';
 export { createPriceStabilizer } from './price-stabilizer.js';
+// [impl->req~search-params-no-dom~1]
+export { selectionFromSearchParams, selectionToSearchParams } from './search-params.js';
+export type {
+  SelectionFromSearchParamsOptions,
+  SelectionToSearchParamsOptions,
+} from './search-params.js';
 export { collectExpressionDependencies, evaluatePriceExpression } from './expression.js';
 export {
   enUS,

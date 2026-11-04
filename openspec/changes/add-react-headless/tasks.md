@@ -131,7 +131,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `src/core/search-params.ts` (new), `src/core/index.ts`, `.changeset/selection-search-params.md`.
   - Requirements: every `req~search-params-*`, that is `req~search-params-write~1`,
     `-write-variables~1`, `-read~1`, `-read-addon-quantity-nan~1`, `-read-repeated-addon~1`,
-    `-var-text~1`, `-var-type-unchecked~1`, `-var-path-safe~2`, `-var-path-split~1`,
+    `-var-text~1`, `-var-type-unchecked~1`, `-var-path-safe~3`, `-var-path-split~1`,
     `-var-proto-keys~1`, `-read-no-throw~1`, `-var-length-limit~1`, `-var-depth-limit~1`,
     `-entry-limit~1`, `-diagnostic-id-length~2`, `-unknown-ids~1`, `-prefix~1`, `-round-trip~2`,
     `-round-trip-variables~1` and `-no-dom~1` (design.md D4).

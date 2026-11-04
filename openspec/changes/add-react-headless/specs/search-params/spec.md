@@ -113,9 +113,10 @@ Needs: impl, utest
 
 ### Requirement: Unsafe variable paths are ignored
 
-`req~search-params-var-path-safe~2`
-IF a segment of the `<path>` of a `var.<path>` entry is `__proto__`, `prototype` or `constructor`, or has an array parent and is not a match of `/^(0|[1-9]\d*)$/` below the parent's `length`, or has any other parent (record, scalar or none) and matches `/^\d+$/`, THEN `selectionFromSearchParams` SHALL ignore that entry.
+`req~search-params-var-path-safe~3`
+IF a segment of the `<path>` of a `var.<path>` entry is `__proto__`, `prototype` or `constructor`, or has an array parent and is not a match of `/^(0|[1-9]\d*)$/` below the parent's `length`, or has any other parent (record, scalar or none) and matches `/^\d+$/`, or has a scalar or null parent (any segment, digits or not), THEN `selectionFromSearchParams` SHALL ignore that entry, without throwing.
 The parent is the value that the earlier segments reach in the variables built so far.
+A segment under a missing parent is not ignored for that reason: the missing parent is created as a record.
 
 Needs: impl, utest
 
@@ -132,6 +133,13 @@ Needs: impl, utest
 - **WHEN** `selectionFromSearchParams(acme, entries)` is called
 - **THEN** it does not throw and `selection.variables` has no own key `x`
 - **AND** `selection.variables.seats` is 5
+
+#### Scenario: Non-digit segment under a scalar parent
+
+- **GIVEN** the acme fixture, where `seats` is 5, and the entries `[['var.seats.x', '1']]`
+- **WHEN** `selectionFromSearchParams(acme, entries)` is called
+- **THEN** it does not throw
+- **AND** `selection.variables.seats` is 5 and the pricing is not mutated
 
 #### Scenario: Array index that is not a canonical number
 
@@ -150,7 +158,7 @@ Needs: impl, utest
 ### Requirement: One path split for check and write
 
 `req~search-params-var-path-split~1`
-WHEN `selectionFromSearchParams` sets a `var.<path>` value, it SHALL write it at the segments of one split of `<path>` (`[<digits>]` read as `.<digits>`, empty segments dropped), the same segments that `req~search-params-var-path-safe~2` checks.
+WHEN `selectionFromSearchParams` sets a `var.<path>` value, it SHALL write it at the segments of one split of `<path>` (`[<digits>]` read as `.<digits>`, empty segments dropped), the same segments that `req~search-params-var-path-safe~3` checks.
 
 Needs: impl, utest
 

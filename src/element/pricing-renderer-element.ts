@@ -1,24 +1,27 @@
 import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import {
+  applySelectionChange,
   cloneValue,
   compareSelections,
+  createPriceStabilizer,
   createPricingViewModel,
   deepEqual,
   getMessages,
   getPricingRendererConfig,
   mergePresentationOptions,
   mergeSelection,
-  normalizeAddOnQuantity,
   normalizePricing,
+  planSelectionChange,
   reconcileSelection,
-  setAtPath,
+  selectionInEffect,
+  selectionWithAddOnQuantity,
+  selectionWithVariable,
   translate,
   type IPricingLike,
   type ExpressionOptions,
   type MessageCatalog,
   type NormalizedPricing,
   type NormalizePricingOptions,
-  type PriceBreakdownLine,
   type PricingDiagnostic,
   type PricingLayout,
   type PricingMode,
@@ -27,7 +30,6 @@ import {
   type PricingSelection,
   type PricingViewModel,
   type PricingVisibility,
-  type ResolvedPrice,
   type ViewModelOptions,
 } from '../core/index.js';
 import { applySelectionInput } from '../core/apply-selection.js';
@@ -206,8 +208,11 @@ export class PricingRendererElement extends LitElement {
   private _addOnSearch = '';
   private _addOnsRevealed = false;
   private _pendingAddOnChange?: PendingAddOnChange;
-  private _lastValidPlanPrices: Record<string, ResolvedPrice> = {};
-  private _lastValidAddOnPrices: Record<string, ResolvedPrice> = {};
+  // [impl->req~breakdown-element-stabilized~1] [impl->req~breakdown-in-element~1]
+  // [impl->req~element-subtotal-excludes-removed~1] every view model the element builds goes
+  // through the stabilizer, which keeps the last valid prices and folds the subtotal from the
+  // breakdown, so a removed add-on has no line and no share of the subtotal
+  private readonly _priceStabilizer = createPriceStabilizer();
   private _resizeObserver?: ResizeObserver;
   private _abortController?: AbortController;
   private _loadSequence = 0;
@@ -487,7 +492,7 @@ export class PricingRendererElement extends LitElement {
     if (!this._isReady()) return undefined;
     const selection = this._selectionInEffect();
     if (!selection) return undefined;
-    const { resolved } = this._stabilizeResolvedPrices(
+    const { resolved } = this._priceStabilizer.stabilize(
       createPricingViewModel(this._normalized!, selection, { ...this._viewModelOptions() }),
     );
     return cloneValue({ selection, resolved });
@@ -525,8 +530,7 @@ export class PricingRendererElement extends LitElement {
     this._diagnostics = result.diagnostics;
     if (result.value) {
       this._normalized = result.value;
-      this._lastValidPlanPrices = {};
-      this._lastValidAddOnPrices = {};
+      this._priceStabilizer.reset();
       // [impl->req~default-selection-reconciled~1] [impl->req~apply-selection-reload-restarts~1]
       this._internalSelection = reconcileSelection(
         result.value,
@@ -575,13 +579,14 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   }
 
+  // [impl->req~core-selection-in-effect~1] the core treats only `false` as off, the element any
+  // falsy value
   private _effectiveSelection(): PricingSelection | undefined {
     const selection = this.selection ?? this._internalSelection;
-    if (!selection || this.variablesEnabled || !this._normalized) return selection;
-    return {
-      ...selection,
-      variables: cloneValue(this._normalized.variables),
-    };
+    if (!selection || !this._normalized) return selection;
+    return selectionInEffect(this._normalized, selection, {
+      variablesEnabled: Boolean(this.variablesEnabled),
+    });
   }
 
   private _viewModelOptions(): ViewModelOptions {
@@ -595,62 +600,9 @@ export class PricingRendererElement extends LitElement {
     };
   }
 
-  // [impl->req~breakdown-element-stabilized~1] [impl->req~breakdown-in-element~1]
-  // A line whose price is replaced by the last valid price takes that price's own factors, and
-  // the subtotal is the line amount fold of the stabilized breakdown, so both stay in sync.
-  private _stabilizeResolvedPrices(viewModel: PricingViewModel): PricingViewModel {
-    const { resolved } = viewModel;
-    const keptLine = (line: PriceBreakdownLine, kept: ResolvedPrice): PriceBreakdownLine => {
-      if (kept.kind !== 'amount') return line;
-      // a line of a failed expression has no label, so none is carried over
-      return {
-        ...line,
-        quantity: kept.quantity,
-        unitAmount: kept.baseAmount,
-        billingMultiplier: kept.billingMultiplier,
-        amount: kept.amount,
-        requiresQuote: false,
-      };
-    };
-    const keptPlanIds = new Set<string>();
-    const keptAddOnIds = new Set<string>();
-    for (const [id, price] of Object.entries(resolved.planPrices)) {
-      if (price.kind === 'amount') {
-        this._lastValidPlanPrices[id] = price;
-      } else if (price.kind === 'error' && this._lastValidPlanPrices[id]) {
-        resolved.planPrices[id] = this._lastValidPlanPrices[id]!;
-        keptPlanIds.add(id);
-      }
-    }
-    for (const [id, price] of Object.entries(resolved.addOnPrices)) {
-      if (price.kind === 'amount') {
-        this._lastValidAddOnPrices[id] = price;
-      } else if (price.kind === 'error' && this._lastValidAddOnPrices[id]) {
-        resolved.addOnPrices[id] = this._lastValidAddOnPrices[id]!;
-        keptAddOnIds.add(id);
-      }
-    }
-
-    // [impl->req~element-subtotal-excludes-removed~1] the breakdown has no line of a removed add-on
-    const { breakdown } = resolved;
-    if (breakdown.plan && keptPlanIds.has(breakdown.plan.id)) {
-      breakdown.plan = keptLine(breakdown.plan, resolved.planPrices[breakdown.plan.id]!);
-    }
-    breakdown.addOns = breakdown.addOns.map((line) =>
-      keptAddOnIds.has(line.id) ? keptLine(line, resolved.addOnPrices[line.id]!) : line,
-    );
-    let subtotal = breakdown.plan?.amount ?? 0;
-    for (const line of breakdown.addOns) {
-      if (line.amount !== undefined) subtotal += line.amount;
-    }
-    breakdown.subtotal = subtotal;
-    resolved.subtotal = subtotal;
-    return viewModel;
-  }
-
   private _viewModel(): PricingViewModel | undefined {
     if (!this._normalized) return undefined;
-    return this._stabilizeResolvedPrices(
+    return this._priceStabilizer.stabilize(
       createPricingViewModel(this._normalized, this._effectiveSelection(), {
         ...this._viewModelOptions(),
       }),
@@ -688,7 +640,7 @@ export class PricingRendererElement extends LitElement {
       this._internalSelection = next;
     }
     const resolved = this._normalized
-      ? this._stabilizeResolvedPrices(
+      ? this._priceStabilizer.stabilize(
           createPricingViewModel(this._normalized, next, {
             ...this._viewModelOptions(),
           }),
@@ -706,27 +658,25 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   }
 
+  // [impl->req~core-plan-change-immediate~1] [impl->req~core-plan-change-pending~1]
   private _selectPlan = (planId: string): void => {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    const { selection: reconciled, removedAddOnIds } = reconcileSelection(this._normalized, {
-      ...selection,
-      planId,
-    });
-    if (removedAddOnIds.length === 0) {
+    const change = planSelectionChange(this._normalized, selection, { type: 'plan', planId });
+    if (change.kind === 'apply') {
       // [impl->req~plan-change-immediate~1]
-      this._setSelection(reconciled);
+      this._setSelection(change.selection);
       return;
     }
     // [impl->req~plan-change-confirmation~1] [impl->req~pending-plan-change-shape~1]
-    this._pendingAddOnChange = {
-      addOnId: '',
-      select: false,
-      addIds: [],
-      removeIds: removedAddOnIds,
-      planId,
-    };
+    this._openChangeDialog(change.pending);
+  };
+
+  // Keeps the focused element for the cancel and confirm paths, then focuses the dialog's default
+  // button once it is rendered.
+  private _openChangeDialog(pending: PendingAddOnChange): void {
+    this._pendingAddOnChange = pending;
     this._previousFocus =
       this.ownerDocument.activeElement instanceof HTMLElement
         ? this.ownerDocument.activeElement
@@ -735,7 +685,7 @@ export class PricingRendererElement extends LitElement {
     void this.updateComplete.then(() => {
       this.querySelector<HTMLElement>('.pr-dialog button[autofocus]')?.focus();
     });
-  };
+  }
 
   private _selectBilling = (billingPeriod: string): void => {
     const selection = this._effectiveSelection();
@@ -743,12 +693,11 @@ export class PricingRendererElement extends LitElement {
     this._setSelection({ ...selection, billingPeriod });
   };
 
+  // [impl->req~core-selection-with-variable~1]
   private _updateVariable = (path: string, value: unknown): void => {
     const selection = this._effectiveSelection();
     if (!selection) return;
-    const variables = cloneValue(selection.variables);
-    setAtPath(variables, path, value);
-    this._setSelection({ ...selection, variables });
+    this._setSelection(selectionWithVariable(selection, path, value));
   };
 
   private _resetVariables = (): void => {
@@ -757,121 +706,48 @@ export class PricingRendererElement extends LitElement {
     this._setSelection({ ...selection, variables: cloneValue(this._normalized.variables) });
   };
 
-  private _collectDependencies(addOnId: string, collected = new Set<string>()): Set<string> {
-    if (!this._normalized || collected.has(addOnId)) return collected;
-    const addOn = this._normalized.addOns.find((candidate) => candidate.id === addOnId);
-    for (const dependency of addOn?.dependsOn ?? []) {
-      if (!collected.has(dependency)) {
-        collected.add(dependency);
-        this._collectDependencies(dependency, collected);
-      }
-    }
-    return collected;
-  }
-
-  private _selectedDependents(addOnId: string): string[] {
-    if (!this._normalized) return [];
-    const selection = this._effectiveSelection();
-    const dependents = new Set<string>();
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const addOn of this._normalized.addOns) {
-        if (!selection?.addOns[addOn.id]?.selected || dependents.has(addOn.id)) continue;
-        if (addOn.dependsOn.some((id) => id === addOnId || dependents.has(id))) {
-          dependents.add(addOn.id);
-          changed = true;
-        }
-      }
-    }
-    return [...dependents];
-  }
-
+  // [impl->req~core-addon-select-change~1] [impl->req~core-addon-deselect-change~1]
+  // [impl->req~core-addon-change-direct~1] the dependencies to add are the transitive closure of
+  // dependsOn, so a two-level chain is added whole
   private _toggleAddOn = (addOnId: string, selected: boolean): void => {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    const addOn = this._normalized.addOns.find((candidate) => candidate.id === addOnId);
-    if (!addOn) return;
+    // an unknown add-on changes nothing and dispatches no event
+    if (!this._normalized.addOns.some((candidate) => candidate.id === addOnId)) return;
 
-    let addIds: string[] = [];
-    let removeIds: string[] = [];
-    if (selected) {
-      addIds = [...this._collectDependencies(addOnId)].filter(
-        (id) => !selection.addOns[id]?.selected,
-      );
-      const conflicts = new Set(addOn.excludes);
-      for (const candidate of this._normalized.addOns) {
-        if (candidate.excludes.includes(addOnId)) conflicts.add(candidate.id);
-      }
-      for (const dependency of addIds) {
-        const item = this._normalized.addOns.find((candidate) => candidate.id === dependency);
-        item?.excludes.forEach((id) => conflicts.add(id));
-      }
-      removeIds = [...conflicts].filter((id) => selection.addOns[id]?.selected);
-    } else {
-      removeIds = this._selectedDependents(addOnId);
+    const change = planSelectionChange(this._normalized, selection, {
+      type: 'addOn',
+      addOnId,
+      selected,
+    });
+    if (change.kind === 'confirm') {
+      this._openChangeDialog(change.pending);
+      return;
     }
-
-    const pending: PendingAddOnChange = { addOnId, select: selected, addIds, removeIds };
-    if (addIds.length || removeIds.length) {
-      this._pendingAddOnChange = pending;
-      this._previousFocus =
-        this.ownerDocument.activeElement instanceof HTMLElement
-          ? this.ownerDocument.activeElement
-          : undefined;
-      this.requestUpdate();
-      void this.updateComplete.then(() => {
-        this.querySelector<HTMLElement>('.pr-dialog button[autofocus]')?.focus();
-      });
-    } else {
-      this._applyAddOnChange(pending);
-    }
+    this._pendingAddOnChange = undefined;
+    this._setSelection(change.selection);
+    void this.updateComplete.then(() => this._restoreDialogFocus());
   };
 
+  // [impl->req~core-apply-selection-change~1]
   private _applyAddOnChange(change: PendingAddOnChange): void {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    const addOns = { ...selection.addOns };
-    const setState = (id: string, selected: boolean): void => {
-      const item = this._normalized!.addOns.find((candidate) => candidate.id === id);
-      const current = addOns[id];
-      addOns[id] = {
-        selected,
-        quantity: current?.quantity ?? item?.subscriptionConstraints?.minQuantity ?? 1,
-      };
-    };
     // [impl->req~plan-change-apply~1]
-    if (change.planId === undefined) setState(change.addOnId, change.select);
-    change.addIds.forEach((id) => setState(id, true));
-    change.removeIds.forEach((id) => setState(id, false));
+    const next = applySelectionChange(this._normalized, selection, change);
     this._pendingAddOnChange = undefined;
-    this._setSelection({
-      ...selection,
-      ...(change.planId !== undefined ? { planId: change.planId } : {}),
-      addOns,
-    });
+    this._setSelection(next);
     void this.updateComplete.then(() => this._restoreDialogFocus());
   }
 
+  // [impl->req~core-selection-with-addon-quantity~1]
   private _updateAddOnQuantity = (addOnId: string, quantity: number): void => {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    const current = selection.addOns[addOnId] ?? { selected: true, quantity };
-    const normalized = normalizeAddOnQuantity(this._normalized, addOnId, {
-      ...current,
-      selected: true,
-      quantity,
-    });
-    this._setSelection({
-      ...selection,
-      addOns: {
-        ...selection.addOns,
-        [addOnId]: { selected: true, quantity: normalized },
-      },
-    });
+    this._setSelection(selectionWithAddOnQuantity(this._normalized, selection, addOnId, quantity));
   };
 
   private _confirmAddOnChange = (): void => {
@@ -905,7 +781,7 @@ export class PricingRendererElement extends LitElement {
     if (!current || !this._normalized) return false;
     // [impl->req~events-reconciled-selection~1]
     const reconciled = reconcileSelection(this._normalized, current.resolved.selection).selection;
-    const viewModel = this._stabilizeResolvedPrices(
+    const viewModel = this._priceStabilizer.stabilize(
       createPricingViewModel(this._normalized, reconciled, { ...this._viewModelOptions() }),
     );
     const detail: PricingActionDetail = {
