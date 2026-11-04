@@ -7,18 +7,16 @@ The `release` step of `.github/workflows/release.yml` writes `dist_tag=next` onl
 ### State
 
 - PR 87 into develop, branch `fix/release-dist-tag-fail-closed`.
-- All slices and the round 1 fixes are integrated on `change/release-dist-tag-fail-closed`.
-- The OpenSpec change `release-dist-tag-fail-closed` adds `req~release-dist-tag-prerelease-map~1` and validates with `--strict`.
-- The test `tests/unit/release-workflow.test.ts` has 45 passing cases. The mapping case on the real workflow was red before the workflow change.
-- The I1 checks passed: the release test, the full unit run and `node scripts/check-release-ready.mjs v0.1.0`.
-- Round 1 panel: the security-auditor approved. The reviewer and the test-reviewer asked for changes. The fixes cover the `::error::` assertion, the read-time default (`//`, `||`, `:-`), `stripComments` and the exit detection, plus the docs wording.
-- CI was red at the first head only because Prettier rejected the earlier handoff file. This handoff is written to be Prettier-clean.
+- The round 2 fix F3 (task `2e6b0c65e0ad4cd5`) is integrated at head `997b5d5`. It is not pushed yet.
+- F3 adds killing fixtures for a missing `true` or `false` arm and for an arm that writes nothing. It requires the exact jq filter `.isPrerelease`, rejects a conditional or nested `exit 1`, and tightens `distTagGuard`. The release test has 68 cases and the real workflow is accepted.
+- `release.yml` is unchanged since the round 2 panel. The security-auditor approved it at `38989e2`.
+- CI at `38989e2`: quality, audit and changes passed. The browser jobs were still running without failure.
 
 ### Decisions
 
 - A new change, not an amendment of `harden-release-workflow` (coordinator answer Q1).
 - Static tests (coordinator answer Q2, design D7).
-- The raw value stays in the `::error::` echo: the field is a boolean from the Release API (security-auditor nit, not changed).
+- The raw value stays in the `::error::` echo: the field is a boolean from the Release API.
 
 ### Ruled out
 
@@ -29,10 +27,10 @@ The `release` step of `.github/workflows/release.yml` writes `dist_tag=next` onl
 ### Risks
 
 - The first real run of the changed step is the owner's next release. A mistake would stop it before publish, which is safe but a delay.
-- Static shell matching is brittle. The limits are listed in the test.
+- Static shell matching is brittle. The limits are listed in the test header.
 
 ### Next three steps
 
-1. Push this head and read the CI result.
-2. Run review round 2 on the new head: reviewer, test-reviewer and security-auditor.
-3. Mark the PR ready, store the review package and call ready.
+1. Push, read the CI result on the new head.
+2. Run review round 3: a test-reviewer and a reviewer on the new head.
+3. Store the review package and call ready.
