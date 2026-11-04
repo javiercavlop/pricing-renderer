@@ -60,15 +60,22 @@ test.describe('hydration order of the element and React', () => {
             hostKept: document.querySelector('pricing-renderer') === store.__lateHost,
           };
         });
-        facts.push({
+        const { recoverable, ...rest } = seen;
+        const row = {
           define,
           hydrate,
           slots,
-          ...seen,
+          ...rest,
           radios: await page.locator(RADIOS).count(),
           ctas: await page.locator(CTAS).count(),
           actions: await page.locator(SUMMARY).count(),
-        });
+          recoverableCount: recoverable.length,
+          recoverableTail: recoverable.map((message) =>
+            message.slice(-260).replace(/\r?\n/g, ' | '),
+          ),
+        };
+        console.log('PROBE-ROW ' + JSON.stringify(row));
+        facts.push(row);
       }
     }
     throw new Error('PROBE ' + JSON.stringify(facts));
