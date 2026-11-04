@@ -98,12 +98,13 @@ All entry points are safe to import in an SSR build. The React adapter is marked
 `"use client"` and the full pricing UI is a client island. The headless React
 entry (`pricing-renderer/react/headless`) has no Lit and no element; see the
 [React guide](./react.md). The library does not
-fetch remote sources on the server. Deep SSR/hydration of light DOM is not a v1
+fetch remote sources on the server. Server rendering of the element's light DOM is not a v1
 contract; hosts should reserve space or provide a stable skeleton. The element is not
 server-rendered: the server HTML of the React wrapper is an empty tag. The wrapper passes opaque
-host props (`dangerouslySetInnerHTML` with an empty stable `__html`, and `suppressHydrationWarning`),
-so React neither hydrates nor deletes what the element renders. Hydration is clean in any order and
-needs no workaround; see [Hydration of the element](./react.md#hydration-of-the-element).
+host props (`dangerouslySetInnerHTML` with a stable `{ __html: '' }` object per instance, and
+`suppressHydrationWarning`), so React neither hydrates nor deletes what the element renders.
+Hydration is clean in any order in the browsers measured on React 19 and needs no workaround; see
+[Hydration of the element](./react.md#hydration-of-the-element).
 
 ## Security boundaries
 
