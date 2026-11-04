@@ -13,12 +13,15 @@ import {
 import { flushSync } from 'react-dom';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
+import { compareSelections, type SelectionComparison } from 'pricing-renderer';
 import {
+  PricingChangeReview,
   PricingRenderer,
   usePricingRendererState,
   type PricingRendererElement,
   type PricingRendererProps,
 } from 'pricing-renderer/react';
+import { parsePricingYaml } from 'pricing-renderer/yaml';
 import 'pricing-renderer/styles.css';
 import pricingYaml from '../../../tests/fixtures/acme-pricing.yml?raw';
 
@@ -45,8 +48,12 @@ declare global {
     __lateCommits?: number;
     __lateHost?: Element | null;
     __lateHydrateCalled?: boolean;
-    // Whether pricing-renderer was already defined when the server HTML was set.
+    // Whether the host tag was already defined when the server HTML was set.
     __lateDefinedAtHtml?: boolean;
+    // The host's child nodes right after the server HTML was set, before any microtask could run.
+    __lateServerChildCount?: number;
+    // The host's confirm button (wrapper=review), to see if hydration and updates keep it.
+    __lateConfirm?: Element | null;
     // Set by the inline script of react-slots.html; releases the held customElements.define calls.
     __releaseDefinitions?: () => void;
   }
@@ -191,8 +198,10 @@ const propsState: {
   pendingActionId?: string;
   currentSelection?: PricingRendererProps['currentSelection'];
   slotNames?: readonly string[];
+  reviewPending: boolean;
 } = {
   errorVersion: 1,
+  reviewPending: true,
   renderError: makeRenderError(1),
   // The `current` mode starts with a current plan, to test it at mount.
   ...(mode === 'current' && { currentSelection: { planId: 'starter' } }),
@@ -306,11 +315,43 @@ root.addEventListener(
   true,
 );
 
+// hydrate-late hosts: `wrapper=review` mounts <PricingChangeReview> instead of the renderer, and
+// `wrapper=raw` a bare <pricing-renderer> element (a negative control, no wrapper).
+const wrapperParam = params.get('wrapper');
+const lateTag = wrapperParam === 'review' ? 'pricing-change-review' : 'pricing-renderer';
+
+// A small Growth to Enterprise comparison, computed in the page from the fixture.
+let reviewComparison: SelectionComparison | undefined;
+const comparisonOfReview = (): SelectionComparison => {
+  if (reviewComparison === undefined) {
+    const pricing = parsePricingYaml(pricingYaml).value!;
+    const contract = { planId: 'growth' } as const;
+    reviewComparison = compareSelections({
+      before: { pricing, selection: contract },
+      after: { pricing, selection: { planId: 'enterprise' } },
+    });
+  }
+  return reviewComparison;
+};
+
+const lateMain = (): ReactNode => {
+  if (wrapperParam === 'review') {
+    return h(PricingChangeReview, {
+      comparison: comparisonOfReview(),
+      pending: propsState.reviewPending,
+      locale: 'en-US',
+    });
+  }
+  // No source on the bare element: it still renders a light DOM (its error state), which is all
+  // the control needs.
+  return wrapperParam === 'raw' ? h('pricing-renderer') : renderer();
+};
+
 // The tree of the current props state; the hydrate mode adds the probe after the renderer.
 const buildTree = (): ReactNode => {
+  if (mode === 'hydrate-late') return h(Fragment, null, lateMain(), h(LateProbe));
   const main = mode === 'state' ? h(StateHarness) : renderer();
-  if (mode === 'hydrate') return h(Fragment, null, main, h(Probe));
-  return mode === 'hydrate-late' ? h(Fragment, null, main, h(LateProbe)) : main;
+  return mode === 'hydrate' ? h(Fragment, null, main, h(Probe)) : main;
 };
 
 let reactRoot: { render(children: ReactNode): void };
@@ -324,7 +365,7 @@ async function hydrateLate(): Promise<void> {
   window.__recoverable = [];
   window.__lateCommits = 0;
   const host = (): PricingRendererElement | null =>
-    root.querySelector<PricingRendererElement>('pricing-renderer');
+    root.querySelector<PricingRendererElement>(lateTag);
   const start = (): void => {
     const element = host();
     window.__lateBefore = {
@@ -332,6 +373,7 @@ async function hydrateLate(): Promise<void> {
       innerHTML: element?.innerHTML ?? '',
     };
     window.__lateHost = element;
+    window.__lateConfirm = element?.querySelector('[data-pr-part="review-confirm"]') ?? null;
     window.__lateHydrateCalled = true;
     reactRoot = hydrateRoot(root, buildTree(), {
       onRecoverableError: (error) => {
@@ -340,7 +382,17 @@ async function hydrateLate(): Promise<void> {
     });
   };
   root.innerHTML = renderToString(buildTree());
-  window.__lateDefinedAtHtml = customElements.get('pricing-renderer') !== undefined;
+  // Nothing has run since the assignment: the server tag is still empty.
+  window.__lateServerChildCount = host()?.childNodes.length ?? -1;
+  window.__lateDefinedAtHtml = customElements.get(lateTag) !== undefined;
+  if (wrapperParam === 'review') {
+    // The server HTML has no comparison, so the element would never render before hydration. Give
+    // it one, as a host that sets the property itself would, so its light DOM exists by then.
+    Object.assign(host()!, {
+      comparison: comparisonOfReview(),
+      pending: propsState.reviewPending,
+    });
+  }
   resetCounts();
   if (hydrate === 'sync') {
     flushSync(() => {
@@ -401,6 +453,7 @@ const toggleSlot = (name: string): void => {
 const toggles: [string, string][] = [
   ['toggle-plan-cta', 'Toggle plan CTA render prop'],
   ['toggle-summary', 'Toggle summary render prop'],
+  ['toggle-review-pending', 'Toggle the pending prop of the review (wrapper=review)'],
 ];
 for (const [id, label] of toggles) {
   const button = document.createElement('button');
@@ -411,6 +464,9 @@ for (const [id, label] of toggles) {
 }
 onClick('toggle-plan-cta', () => toggleSlot('plan'));
 onClick('toggle-summary', () => toggleSlot('summary'));
+onClick('toggle-review-pending', () => {
+  propsState.reviewPending = !propsState.reviewPending;
+});
 onClick('set-pending', () => {
   propsState.pendingActionId = 'start-growth';
 });
