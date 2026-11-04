@@ -1,4 +1,1 @@
-Goal: Phase 1b docs (own-0a8bc0e65ad74eec86dcfa5c8c0ebf1a).
-State: tasks aff66f638a124f80 (docs/nextjs.md) and 5cd70a61901a40d1 (extensions to private-pricings, pricing-versions, preload-current-subscription) integrated; head 2671b664. Checks passed in both tasks (install, test, format:check). Lead verified exports/anchors used by nextjs.md exist.
-Decisions: loader and ETag hook documented as planned (not in src). No changeset. README docs list and docs/configuration.md are outside scope: followup to link nextjs.md and pricing-versions.md from the README list.
-Next: push + PR, one reviewer on the head, lead_ready.
+Goal: Phase 1b docs (own-0a8bc0e65ad74eec86dcfa5c8c0ebf1a). PR #85. Round 1 review (e8849052e04c4490): 1 major + 3 minor + 2 nit, all fixed by task 9068216acfb24af5 (integrated, head 4d73ef5; install/test/format:check pass). CI was green on d0f7ab5. Followups: intake.md:44-51 outdated on identity reload; README docs list should link nextjs.md and pricing-versions.md (out of scope). Next: push, round 2 reviewer on 4d73ef5, pr_ready, set_review_package, lead_ready.
