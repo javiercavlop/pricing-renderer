@@ -82,6 +82,19 @@ const pricing: Record<string, unknown> = await res.json();
 return <PricingView pricing={pricing} />;
 ```
 
+The client component then takes a matching prop and passes it on:
+
+```tsx
+// app/pricing/pricing-view.tsx
+'use client';
+
+import { PricingRenderer } from 'pricing-renderer/react';
+
+export function PricingView({ pricing }: { pricing: Record<string, unknown> }) {
+  return <PricingRenderer pricing={pricing} locale="en-US" />;
+}
+```
+
 `export const dynamic = 'force-dynamic'` is a valid route segment option when Cache Components are
 not enabled. Use it for a page that depends on the signed-in user, so no full-route cache stores
 one user's page for another.
@@ -123,13 +136,17 @@ export default async function Page() {
 ```
 
 Pass `selectionFromContract(...)` and `contractedVersion(...)` only. Never pass the contract object
-itself: it carries `userInformation` and the subscription history, and everything you pass reaches
+itself: it can carry personal data such as `userInformation` and the subscription history, and everything you pass reaches
 the browser. In Next 15 and 16, `cookies()` from `next/headers` is async and must be awaited.
 
 The plan and add-on names in a contract belong to the contracted version. Load the pricing of that
 version for a signed-in customer; another version can make `applySelection` return
 `PR_SELECTION_UNKNOWN_PLAN`. [Pricing versions](./pricing-versions.md) says which version a page
 shows for signed-out and signed-in visitors.
+
+The sample loads YAML and passes `yaml`. For a SPACE-managed service the backend returns JSON, so
+the island takes `pricing` instead (see [Pricing versions](./pricing-versions.md)); a manual or
+public SPHERE source may be YAML. Use the prop that matches what your loader returns.
 
 Apply the selection in the client with the `ref` and `onReady` pattern from
 [Preload the current subscription](./preload-current-subscription.md), because `applySelection` is
@@ -174,8 +191,10 @@ preload guide shows how to keep the period in effect.
 
 `configurePricingRenderer` is module-global (`src/core/config.ts`) and the element reads it when it
 is constructed. A server process handles many requests, so a call made per request would leak one
-request's settings into the next. Call it only in client code, once, at the top of a `'use client'`
-module. `examples/next/app/pricing-client.tsx` does this:
+request's settings into the next. A `'use client'` module is also evaluated on the server during
+SSR, so call it once at module top level with constant values. Never call it inside a component or
+with request-dependent values such as a locale from a prop or user data.
+`examples/next/app/pricing-client.tsx` does this:
 
 ```tsx
 'use client';
@@ -196,11 +215,18 @@ For settings that vary by request, tenant or locale, pass props to the instance 
 
 ## Keep `request` and `loadPricing` stable
 
-The element reloads the pricing whenever `pricing`, `yaml`, `src`, `request`, `loadPricing` or
-`normalizeOptions` change identity. React passes props through to the element, so an object or
-function created in the render body is new on every render and reloads the pricing on every render.
+The element compares its loading inputs differently
+([when a property starts a new load](./api-reference.md#when-a-property-starts-a-new-load)):
 
-Before:
+- `pricing`, `request` and `normalizeOptions` are compared by content. Plain objects and arrays are
+  compared key by key, so an inline `request={{ credentials: 'same-origin', timeoutMs: 15_000 }}`
+  that React builds again on every render has the same content and does not reload. An inline
+  literal is fine.
+- `loadPricing`, `yaml` and `src` are compared by identity (strings by value, naturally). Functions,
+  `Headers` and `AbortSignal` are also compared by identity, also inside `request`. A new function
+  on every render counts as a change and reloads the pricing on every render.
+
+Reloads on every render:
 
 ```tsx
 'use client';
@@ -209,29 +235,33 @@ export function PricingView() {
   return (
     <PricingRenderer
       src="/api/pricing"
-      // New object on every render: the pricing reloads each time.
-      request={{ credentials: 'same-origin', timeoutMs: 15_000 }}
+      // New function on every render: the pricing reloads each time.
+      loadPricing={({ url, signal }) => fetch(url, { signal }).then((res) => res.text())}
     />
   );
 }
 ```
 
-After:
+Stable:
 
 ```tsx
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback } from 'react';
+import type { PricingLoader } from 'pricing-renderer/react';
 
 export function PricingView() {
-  const request = useMemo(() => ({ credentials: 'same-origin' as const, timeoutMs: 15_000 }), []);
-  return <PricingRenderer src="/api/pricing" request={request} />;
+  const loadPricing = useCallback<PricingLoader>(
+    ({ url, signal }) => fetch(url, { signal }).then((res) => res.text()),
+    [],
+  );
+  return <PricingRenderer src="/api/pricing" loadPricing={loadPricing} />;
 }
 ```
 
-A constant defined at module level works too. Do the same for `loadPricing` and `normalizeOptions`,
-with `useMemo` or `useCallback` and the values they depend on in the dependency list. `loadPricing`
-is only used together with `src`. Put no secret in a client `request`; see
+A function defined at module level works too. The same holds for a `headers` function inside
+`request`: define it once, or wrap it with `useCallback` and its dependencies. `loadPricing` is only
+used together with `src`. Put no secret in a client `request`; see
 [private pricings](./private-pricings.md).
 
 ## Planned
@@ -256,8 +286,9 @@ Until then, use plain `fetch` as in this guide.
 - Only `selectionFromContract(...)` and `contractedVersion(...)` cross to the client, never the
   contract.
 - The pricing loaded is the contracted version, and the selection is applied from `onReady`.
-- `configurePricingRenderer` is called only in client code.
-- `request`, `loadPricing` and `normalizeOptions` have a stable identity.
+- `configurePricingRenderer` is called once at module top level with constant values, never inside a
+  component or with request-dependent values.
+- `loadPricing` and function-valued `headers` have a stable identity.
 
 ## Related
 

@@ -18,7 +18,7 @@ The version that SPACE assigns to new contracts depends on how the service is re
 
 | Visitor and service                              | Version shown                              |
 | ------------------------------------------------ | ------------------------------------------ |
-| Signed out, any service                          | The version for new contracts (see below)  |
+| Signed out, any service                          | The version for new contracts (see above)  |
 | Signed in with a contract, SPHERE-linked service | The contract's version                     |
 | Signed in with a contract, manual service        | The contract's version                     |
 | Signed in with a contract, SPACE-managed service | The contract's version, read through SPACE |
