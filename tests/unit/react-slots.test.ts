@@ -181,7 +181,20 @@ describe('acceptedSlotNodes', () => {
     }) as unknown[];
     expect(result).toHaveLength(1);
     expect(result[0]).toBe(n);
-    expect(selectors).toContain('pricing-renderer, [data-pr-slot]');
+    expect(selectors).toContain('[data-pr-root], [data-pr-slot]');
+  });
+
+  // [utest->req~react-slot-node-accept~2]
+  it('skips items that are not elements without throwing', () => {
+    const acceptedSlotNodes = fn('acceptedSlotNodes');
+    const own: StandIn = {};
+    const textNode: StandIn = { nodeType: 3, isConnected: true };
+    expect(
+      acceptedSlotNodes(own, {
+        target: own,
+        detail: { nodes: [null, undefined, 'x', 1, textNode] },
+      }),
+    ).toEqual([]);
   });
 });
 

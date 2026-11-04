@@ -121,6 +121,7 @@ describe('hideSections: the property and the attribute', () => {
       }
     ).elementProperties.get('hideSections');
     expect(declared).toBeDefined();
+    expect(converter).toBeDefined();
     expect(declared?.attribute).toBe('hide-sections');
     expect(declared?.converter).toBe(converter);
   });

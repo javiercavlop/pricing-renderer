@@ -5,17 +5,28 @@ const recorded = vi.hoisted(() => ({
   options: [] as Record<string, unknown>[],
   entries: undefined as unknown[] | undefined,
   portals: [] as { node: unknown; key: unknown }[],
+  // Each value given to the entries state setter; an updater function is applied to the seeded
+  // entries first.
+  sets: [] as unknown[][],
+  refs: [] as unknown[],
 }));
 
 // The state of the wrapper only changes after an effect, which a server render never runs: the
-// test seeds the entries state directly.
+// test seeds the entries state directly and records what the setter receives.
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>();
+  const setEntries = (next: unknown): void => {
+    recorded.sets.push(
+      typeof next === 'function'
+        ? (next as (previous: unknown[]) => unknown[])(recorded.entries ?? [])
+        : (next as unknown[]),
+    );
+  };
   return {
     ...actual,
     useState: (init: unknown) =>
       Array.isArray(init) && recorded.entries !== undefined
-        ? [recorded.entries, () => undefined]
+        ? [recorded.entries, setEntries]
         : (actual.useState as (value: unknown) => unknown)(init),
   };
 });
@@ -27,15 +38,20 @@ vi.mock('react-dom', () => ({
   },
 }));
 
-vi.mock('@lit/react', () => ({
-  createComponent: (options: Record<string, unknown>) => {
-    recorded.options.push(options);
-    return (props: Record<string, unknown>) => {
-      recorded.props.push(props);
-      return null;
-    };
-  },
-}));
+// A forwardRef stand-in, so the test also sees the ref callback the wrapper passes to the element.
+vi.mock('@lit/react', async () => {
+  const { forwardRef } = await import('react');
+  return {
+    createComponent: (options: Record<string, unknown>) => {
+      recorded.options.push(options);
+      return forwardRef((props: Record<string, unknown>, ref) => {
+        recorded.props.push(props);
+        recorded.refs.push(ref);
+        return null;
+      });
+    },
+  };
+});
 
 type SlotNamesOf = (props: Record<string, unknown>) => unknown;
 let slotNamesOf: SlotNamesOf | undefined;
@@ -120,6 +136,47 @@ describe('PricingRenderer portals', () => {
       live.isConnected = false;
       await render({ yaml: 'name: x', renderError: () => null });
       expect(recorded.portals).toEqual([]);
+    } finally {
+      recorded.entries = undefined;
+    }
+  });
+
+  it('replaces the entries on an event, dropping a still-connected node the event omits', async () => {
+    const owner: Record<string, unknown> = {
+      triggerPlanAction: () => undefined,
+      reload: () => undefined,
+      resolvedState: undefined,
+    };
+    const slotNode = (slot: string) => ({
+      isConnected: true,
+      dataset: { prSlot: slot },
+      parentElement: { closest: () => owner },
+    });
+    const kept = slotNode('loading');
+    const omitted = slotNode('error');
+    recorded.entries = [
+      { slot: 'error', node: omitted, key: 'slot:error', context: {} },
+      { slot: 'loading', node: kept, key: 'slot:loading' },
+    ];
+    recorded.sets.length = 0;
+    try {
+      await render({ yaml: 'name: x', renderError: () => null, renderLoading: () => null });
+      const onSlotsChange = recorded.props.at(-1)?.onSlotsChange as (event: unknown) => void;
+      expect(onSlotsChange).toBeTypeOf('function');
+      const ref = recorded.refs.at(-1);
+      expect(ref).toBeTypeOf('function');
+      (ref as (node: unknown) => void)(owner);
+
+      onSlotsChange({ target: owner, detail: { nodes: [kept] } });
+      expect(recorded.sets).toHaveLength(1);
+      const [entries] = recorded.sets;
+      expect(entries).toHaveLength(1);
+      expect(entries![0]).toMatchObject({ slot: 'loading', node: kept, key: 'slot:loading' });
+      expect(entries!.some((entry) => (entry as { node: unknown }).node === omitted)).toBe(false);
+
+      onSlotsChange({ target: owner, detail: { nodes: [] } });
+      expect(recorded.sets).toHaveLength(2);
+      expect(recorded.sets[1]).toEqual([]);
     } finally {
       recorded.entries = undefined;
     }

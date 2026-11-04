@@ -125,7 +125,9 @@ export interface PricingRendererSharedProps {
   id?: string;
   'aria-label'?: string;
   // [impl->req~react-render-props-slots~1] Each one fills the element's slot of that name. They are
-  // called on the client only, after the element has rendered the slot node.
+  // called on the client only, after the element has rendered the slot node. Context strings
+  // (planName, label, diagnostic message) are plain text from the pricing document: render them as
+  // text, never through an HTML sink such as dangerouslySetInnerHTML.
   /** Replaces the built-in CTA of every plan card. */
   renderPlanCta?: (context: PricingPlanCtaContext) => React.ReactNode;
   /** Replaces the built-in action of the summary. */

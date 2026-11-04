@@ -35,7 +35,10 @@ Details that the table leaves out:
   element rendered itself, never a node that the host or a nested
   `<pricing-renderer>` put inside one of them. It fires after an update when the
   nodes, their `data-*` values or, with a `summary-actions` node, the selection
-  changed, and once with an empty list when the slots go away.
+  changed, and once with an empty list when the slots go away. The `data-*`
+  values of those nodes (plan name, label, diagnostic message) come from the
+  pricing document: they are plain text and must be rendered as text, never passed
+  to an HTML sink such as `dangerouslySetInnerHTML` or `innerHTML`.
 
 The event types are exported from `pricing-renderer/element`:
 

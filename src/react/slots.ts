@@ -50,13 +50,22 @@ export function acceptedSlotNodes(
   if (event.target !== element) return undefined;
   const nodes: unknown = (event.detail as PricingSlotsChangeDetail | null | undefined)?.nodes;
   if (!Array.isArray(nodes)) return [];
-  return (nodes as HTMLElement[]).filter(
-    (node) =>
+  return (nodes as unknown[]).filter(
+    (node): node is HTMLElement =>
+      isElementLike(node) &&
       node.isConnected &&
       isSlotName(node.dataset.prSlot) &&
       (node.dataset.prSlot !== 'plan-cta' || (node.dataset.planId ?? '') !== '') &&
-      node.parentElement?.closest('pricing-renderer, [data-pr-slot]') === element,
+      node.parentElement?.closest('[data-pr-root], [data-pr-slot]') === element,
   );
+}
+
+// An event detail is untrusted: an item that carries no dataset (null, a string, a text node) is
+// not a slot node.
+function isElementLike(node: unknown): node is HTMLElement {
+  if (typeof node !== 'object' || node === null) return false;
+  const dataset = (node as { dataset?: unknown }).dataset;
+  return typeof dataset === 'object' && dataset !== null;
 }
 
 // [impl->req~react-slots-attach-read~1]
