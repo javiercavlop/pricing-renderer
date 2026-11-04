@@ -37,8 +37,9 @@ finding 2 is an accepted, documented risk.
   `^1.55.0` in the root `package.json` and the lockfile resolves both to
   1.62.0. The duplicate declaration is redundant but harmless.
 - **`typescript` 5.6.1-rc, transitive: resolved by an override.** The root
-  `package.json` `pnpm.overrides` has `@arethetypeswrong/core>typescript`:
-  `5.6.3`, and the lockfile `overrides` section mirrors it. The lockfile
+  `package.json` `pnpm.overrides` has `@arethetypeswrong/core@0.18.5>typescript`:
+  `5.6.3` (scoped to the parent version, so an attw upgrade turns it off by
+  itself; remove it when attw ships a stable `typescript` pin), and the lockfile `overrides` section mirrors it. The lockfile
   resolves `typescript@5.6.3` for `@arethetypeswrong/core@0.18.5`; the
   project's own `typescript` stays 5.9.3. That attw version pins the exact
   version `5.6.1-rc`, and still does in its latest release, according to
@@ -70,7 +71,7 @@ The current state is:
   5.0.12), `js-yaml@3` (`>=3.15.1 <4`, locked 3.15.2), `js-yaml@4`
   (`>=4.3.2 <5`, locked 4.3.2), `nanoid@3` (`>=3.3.18 <4`, locked 3.3.20) and
   `source-map-js` (`>=1.2.2 <2`, locked 1.2.2), and
-  `@arethetypeswrong/core>typescript` (`5.6.3`, locked 5.6.3). The lockfile
+  `@arethetypeswrong/core@0.18.5>typescript` (`5.6.3`, locked 5.6.3). The lockfile
   `overrides` section mirrors them.
 - Why each override was added (for example, which advisory) is **not
   verified** from the repository.
@@ -81,7 +82,11 @@ The current state is:
   `pnpm install --frozen-lockfile` on Node 22 and runs
   `pnpm audit --audit-level high`. It is blocking: the job has no
   `continue-on-error`, and a comment in the job says a failure is fixed with a
-  dependency update or a documented override. The `merge-report` job keeps
+  dependency update or a documented override. Waiver path: when a high
+  advisory has no fixed release and neither can fix it, one GHSA may be waived
+  with `pnpm.auditConfig.ignoreGhsas` (pnpm 10 setting) in `package.json`, only
+  with the owner's approval, with a follow-up id and review date recorded here.
+  The `merge-report` job keeps
   `continue-on-error: true` on purpose, because it only builds a report.
 - **Triggers and permissions:** `ci.yml` runs on `push` and `pull_request` for
   `main` and `develop`, with top-level `permissions: contents: read`. Actions

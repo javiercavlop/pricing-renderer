@@ -55,6 +55,10 @@ jobs:
     # Blocking. The result depends on the live advisory database, so a new
     # advisory can fail unrelated pull requests. Fix it with a dependency
     # update or a documented pnpm override, not by re-adding continue-on-error.
+    # If a high advisory has no fixed release and neither can fix it, one GHSA
+    # may be waived with pnpm.auditConfig.ignoreGhsas (pnpm 10 setting) in
+    # package.json, only with the owner's approval, and with a follow-up id and
+    # review date recorded in docs/audit-report.md.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

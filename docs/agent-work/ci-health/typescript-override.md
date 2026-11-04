@@ -12,8 +12,24 @@
 `package.json` `pnpm.overrides` gets one scoped entry:
 
 ```json
-"@arethetypeswrong/core>typescript": "5.6.3"
+"@arethetypeswrong/core@0.18.5>typescript": "5.6.3"
 ```
+
+The key names the parent version (the locked `@arethetypeswrong/core`, 0.18.5), the `qar@1>zoo` selector form
+of pnpm overrides. Removal condition: remove the override when `@arethetypeswrong/core` ships a stable
+`typescript` pin. With the version selector an upgrade turns it off by itself, and the lockfile diff shows the
+new pin. An unscoped key would keep applying after an upgrade.
+
+Verification status (review finding R1-ARC-002): this task had no shell and no registered check, so
+`pnpm install --frozen-lockfile` was not run on the scoped key, and the pnpm version is unknown. The
+selector form is documented by pnpm (current docs; the 10.x page was not reachable) but this is **to be
+verified** by the frozen install in CI under pnpm 10.19.0. If CI reports `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`
+or an out-of-date lockfile, revert to the unscoped key `@arethetypeswrong/core>typescript` in `package.json`
+and in the `overrides:` block of `pnpm-lock.yaml`.
+
+Audit waiver path (comment in `ci.yml`): `pnpm.auditConfig.ignoreGhsas` (pnpm 10 setting) is **to be
+verified**: pnpm documents `auditConfig.ignoreGhsas`, but the docs do not confirm the `package.json` location
+for pnpm 10.19.
 
 5.6.3 is the highest stable release of the 5.6 minor that attw is built against, so it is the lowest-risk
 replacement. The lockfile changes are limited to: the new override line, `typescript@5.6.3` replacing
