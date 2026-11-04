@@ -137,7 +137,7 @@ describe('acceptedSlotNodes', () => {
     expect(result[0]).toBe(n);
   });
 
-  // [utest->req~react-slot-node-accept~2]
+  // [utest->req~react-slot-node-accept~3]
   it('leaves out foreign, detached and unknown nodes and keeps the order', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -158,7 +158,7 @@ describe('acceptedSlotNodes', () => {
     expect(result[1]).toBe(f);
   });
 
-  // [utest->req~react-slot-node-accept~2]
+  // [utest->req~react-slot-node-accept~3]
   it('leaves out an empty plan id', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -166,7 +166,7 @@ describe('acceptedSlotNodes', () => {
     expect(acceptedSlotNodes(own, { target: own, detail: { nodes: [empty] } })).toEqual([]);
   });
 
-  // [utest->req~react-slot-node-accept~2]
+  // [utest->req~react-slot-node-accept~3]
   it('leaves out the slot nodes of a nested renderer and nodes without a parent', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -184,7 +184,7 @@ describe('acceptedSlotNodes', () => {
     expect(selectors).toContain('[data-pr-root], [data-pr-slot]');
   });
 
-  // [utest->req~react-slot-node-accept~2]
+  // [utest->req~react-slot-node-accept~3]
   it('skips items that are not elements without throwing', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -195,11 +195,17 @@ describe('acceptedSlotNodes', () => {
         detail: { nodes: [null, undefined, 'x', 1, textNode] },
       }),
     ).toEqual([]);
+    const crafted: StandIn = {
+      dataset: { prSlot: 'loading' },
+      isConnected: true,
+      parentElement: {},
+    };
+    expect(acceptedSlotNodes(own, { target: own, detail: { nodes: [crafted] } })).toEqual([]);
   });
 });
 
 describe('acceptedSlotNodes with a malformed event', () => {
-  // [utest->req~react-slot-node-accept~2]
+  // [utest->req~react-slot-node-accept~3]
   it('returns an empty list for a null detail and for nodes that are not an array', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};

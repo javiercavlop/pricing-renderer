@@ -366,8 +366,8 @@ Needs: impl, utest
 
 ### Requirement: Slot node filter
 
-`req~react-slot-node-accept~2`
-IF a node of `detail.nodes` is not connected, has a `data-pr-slot` that is not a `PricingSlotName`, is a `plan-cta` node with an empty or missing `data-plan-id`, or has no `parentElement` or one whose `closest('pricing-renderer, [data-pr-slot]')` is not the wrapper's element, THEN the `PricingRenderer` wrapper SHALL render no portal into it; `acceptedSlotNodes(element, event)` leaves it out, the other nodes keeping their order.
+`req~react-slot-node-accept~3`
+IF a node of `detail.nodes` is not connected, has a `data-pr-slot` that is not a `PricingSlotName`, is a `plan-cta` node with an empty or missing `data-plan-id`, or has no `parentElement`, one without a `closest` function, or one whose `closest('[data-pr-root], [data-pr-slot]')` (the selector of the element's own slot ownership check) is not the wrapper's element, THEN the `PricingRenderer` wrapper SHALL render no portal into it; `acceptedSlotNodes(element, event)` leaves it out, the other nodes keeping their order.
 
 Needs: impl, utest
 
@@ -381,7 +381,7 @@ Needs: impl, utest
 
 - **GIVEN** the stand-ins `own` and `n` of "Event of a nested element", a stand-in element `nested` standing for a `<pricing-renderer>` inside `own`'s Growth slot node, a stand-in plan slot node `g` (`isConnected` `true`, `dataset` `{ prSlot: 'plan-cta', planId: 'growth' }`) with a `parentElement` whose `closest` records its selector and returns `nested`, and a stand-in plan slot node `h` with the dataset of `g`, `isConnected` `true` and `parentElement` `null`
 - **WHEN** a unit test calls `acceptedSlotNodes(own, { target: own, detail: { nodes: [g, h, n] } })`
-- **THEN** the result is `[n]` and the selector recorded by `g`'s `parentElement` is `'pricing-renderer, [data-pr-slot]'`
+- **THEN** the result is `[n]` and the selector recorded by `g`'s `parentElement` is `'[data-pr-root], [data-pr-slot]'`
 
 ### Requirement: Plan context read from the slot node
 

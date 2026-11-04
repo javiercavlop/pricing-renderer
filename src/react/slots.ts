@@ -39,7 +39,7 @@ function isSlotName(value: string | undefined): boolean {
   return value !== undefined && names.includes(value);
 }
 
-// [impl->req~react-slots-event-target~1] [impl->req~react-slot-node-accept~2]
+// [impl->req~react-slots-event-target~1] [impl->req~react-slot-node-accept~3]
 // The nodes of the event that this wrapper's element owns, in their order; undefined for the event
 // of another element. A node is left out when it is detached, is not a known slot, is a plan node
 // without a plan id, or sits in a nested renderer or inside another slot node.
@@ -54,6 +54,8 @@ export function acceptedSlotNodes(
     (node): node is HTMLElement =>
       isElementLike(node) &&
       node.isConnected &&
+      (node.parentElement === null ||
+        typeof (node.parentElement as { closest?: unknown } | undefined)?.closest === 'function') &&
       isSlotName(node.dataset.prSlot) &&
       (node.dataset.prSlot !== 'plan-cta' || (node.dataset.planId ?? '') !== '') &&
       node.parentElement?.closest('[data-pr-root], [data-pr-slot]') === element,

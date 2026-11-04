@@ -475,8 +475,8 @@ Specified by P3-S2 in `specs/composition` and `specs/hide-sections`:
   that listener is set are read once on attach with the helper `currentSlotNodes(element)`, that
   is `element.querySelectorAll('[data-pr-slot]')` filtered by `acceptedSlotNodes`.
 - `acceptedSlotNodes` keeps a node only if its nearest ancestor matching
-  `'pricing-renderer, [data-pr-slot]'` is the wrapper's own element
-  (`req~react-slot-node-accept~2`), so a node of a nested renderer, or one inside another slot
+  `'[data-pr-root], [data-pr-slot]'` (the same selector as the element's `slotOwnerSelector`) is
+  the wrapper's own element (`req~react-slot-node-accept~3`), so a node of a nested renderer, or one inside another slot
   node's portal content, gets no portal from this wrapper. The element, for its part, reports in
   `pricing-slots-change` only the slot nodes it rendered itself
   (`req~slots-change-event-own-nodes~1`).

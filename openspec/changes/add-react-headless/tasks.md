@@ -324,7 +324,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     node with stand-in nodes), `src/react/index.ts` (wrapper wiring and the context types),
     `.changeset/react-render-props.md`.
   - Requirements in the unit files: `req~react-render-props-slots~1`,
-    `req~react-slots-event-target~1`, `req~react-slot-node-accept~2`,
+    `req~react-slots-event-target~1`, `req~react-slot-node-accept~3`,
     `req~react-plan-context-reader~1`, `req~react-plan-context-any-pending~1`,
     `req~react-slot-href-safe~1`,
     `req~react-plan-context-trigger~1`, `req~react-summary-context-reader~1`,

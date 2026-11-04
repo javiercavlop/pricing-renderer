@@ -6,8 +6,12 @@ import type { PricingSelectionChangeDetail } from '../element/index.js';
 // [impl->req~react-plan-cta-context~2]
 export interface PricingPlanCtaContext {
   planId: string;
+  /** Plain text that may carry text from the pricing document: render it as text, never as HTML. */
   planName: string;
-  /** The label of the built-in CTA. */
+  /**
+   * The label of the built-in CTA. Plain text that may carry text from the pricing document:
+   * render it as text, never as HTML.
+   */
   label: string;
   /** The safe link of the built-in CTA; absent for a button. */
   href?: string;
@@ -35,6 +39,7 @@ export interface PricingSummaryActionsContext {
 
 // [impl->req~react-other-slot-contexts~1]
 export interface PricingErrorContext {
+  /** Messages are plain text that may carry text from the pricing document: render them as text. */
   diagnostics: readonly PricingDiagnostic[];
   reload(): Promise<void>;
 }

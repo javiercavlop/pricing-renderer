@@ -125,16 +125,25 @@ export interface PricingRendererSharedProps {
   id?: string;
   'aria-label'?: string;
   // [impl->req~react-render-props-slots~1] Each one fills the element's slot of that name. They are
-  // called on the client only, after the element has rendered the slot node. Context strings
-  // (planName, label, diagnostic message) are plain text from the pricing document: render them as
-  // text, never through an HTML sink such as dangerouslySetInnerHTML.
-  /** Replaces the built-in CTA of every plan card. */
+  // called on the client only, after the element has rendered the slot node.
+  /**
+   * Replaces the built-in CTA of every plan card. The context strings (planName, label) may carry
+   * text from the pricing document: render them as text, never through an HTML sink such as
+   * dangerouslySetInnerHTML.
+   */
   renderPlanCta?: (context: PricingPlanCtaContext) => React.ReactNode;
-  /** Replaces the built-in action of the summary. */
+  /**
+   * Replaces the built-in action of the summary. Any text taken from the context is plain text:
+   * render it as text, never through an HTML sink.
+   */
   renderSummaryActions?: (context: PricingSummaryActionsContext) => React.ReactNode;
   /** Replaces the content of the loading state. */
   renderLoading?: () => React.ReactNode;
-  /** Replaces the content of the error state. */
+  /**
+   * Replaces the content of the error state. The diagnostic messages may carry text from the
+   * pricing document: render them as text, never through an HTML sink such as
+   * dangerouslySetInnerHTML.
+   */
   renderError?: (context: PricingErrorContext) => React.ReactNode;
   onReady?: (event: PricingReadyEvent) => void;
   onSelectionChange?: (event: PricingSelectionChangeEvent) => void;
