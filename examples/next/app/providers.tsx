@@ -1,6 +1,6 @@
 'use client';
 
-import { PricingRendererProvider } from 'pricing-renderer/react';
+import { PricingRendererProvider } from 'pricing-renderer/react/headless';
 import type { ReactNode } from 'react';
 import { rendererConfig, rendererMessages, rendererPresentation } from './pricing-config';
 

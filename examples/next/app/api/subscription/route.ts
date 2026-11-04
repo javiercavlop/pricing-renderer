@@ -1,6 +1,7 @@
 // In-memory "subscription" of the demo. A module-level Map is enough for an example: it is shared
 // by the requests of one server process, starts from the same value on every start and is lost on
 // restart. A real app reads the signed-in customer's contract from its own backend.
+// The demo has no authentication or CSRF protection; a real app must add both.
 export const dynamic = 'force-dynamic';
 
 interface Subscription {
@@ -11,7 +12,11 @@ interface Subscription {
 
 const PLAN_IDS = new Set(['starter', 'growth']);
 const BILLING_PERIODS = new Set(['monthly', 'yearly']);
-const ADD_ON_IDS = new Set(['extraStorage']);
+// The add-ons of the demo YAML (pricing-yaml.ts): the plans each is available for and its
+// maxQuantity.
+const ADD_ONS = new Map<string, { availableFor: readonly string[]; maxQuantity: number }>([
+  ['extraStorage', { availableFor: ['growth'], maxQuantity: 10 }],
+]);
 
 const state = new Map<string, Subscription>([
   ['current', { planId: 'starter', billingPeriod: 'monthly', addOns: {} }],
@@ -35,13 +40,18 @@ function parseSubscription(body: unknown): Subscription | undefined {
   if (addOns === undefined) return parsed;
   if (!isRecord(addOns)) return undefined;
   for (const [id, entry] of Object.entries(addOns)) {
-    if (!ADD_ON_IDS.has(id) || !isRecord(entry)) return undefined;
+    const addOn = ADD_ONS.get(id);
+    if (addOn === undefined || !isRecord(entry)) return undefined;
     const { selected, quantity } = entry;
     if (typeof selected !== 'boolean') return undefined;
     if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1) {
       return undefined;
     }
-    if (selected) parsed.addOns[id] = { selected, quantity };
+    if (quantity > addOn.maxQuantity) return undefined;
+    if (selected) {
+      if (!addOn.availableFor.includes(planId)) return undefined;
+      parsed.addOns[id] = { selected, quantity };
+    }
   }
   return parsed;
 }
@@ -51,6 +61,9 @@ export function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+    return Response.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
   let body: unknown;
   try {
     body = await request.json();

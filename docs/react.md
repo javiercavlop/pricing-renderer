@@ -107,15 +107,19 @@ from the provider. An instance `request` replaces the provider `request` as a wh
 provider object yourself if you want both.
 
 Because a provider `request` applies to every `src` in its subtree, its `headers` and
-`credentials` are kept only when the `src` origin is the page origin or an origin listed in
-`requestOrigins`. On a server there is no page origin, so only listed origins get them. `maxBytes`
-and `timeoutMs` are kept for every origin. An instance `request` is used as given.
+`credentials` are kept only when `src` is an absolute URL whose origin is the page origin or an
+origin listed in `requestOrigins`. A relative `src` such as `/api/pricing` counts as a foreign
+origin and gets neither (the loader itself also needs an absolute URL for `src`), so resolve it
+first, for example with `new URL('/api/pricing', location.origin).href`. On a server there is no
+page origin, so only listed origins get them. `maxBytes` and `timeoutMs` are kept for every
+origin. An instance `request` is used as given.
 
 Two limits of that rule:
 
-- The check reads the requested URL only. A redirect from an allowed origin to another origin is
-  not seen, and other custom headers may follow it. A listed origin or the page origin must not
-  redirect elsewhere while the provider sends headers to it.
+- The check reads the requested URL only. On a cross-origin redirect, fetch drops the
+  `Authorization` header (WHATWG Fetch, HTTP-redirect fetch) but keeps other custom headers, and
+  cookies follow the `credentials` mode. A listed origin or the page origin must not redirect to
+  another origin while the provider sends headers to it.
 - A provider `loadPricing`, and a `fetch` inside a provider `request`, run for every `src`. A
   loader or `fetch` wrapper that adds its own credentials must check the URL it receives.
 
@@ -126,7 +130,9 @@ Resolves a pricing from `pricing`, `yaml` or `src` and returns it normalized.
 ```tsx
 import { usePricingSource } from 'pricing-renderer/react/headless';
 
-const { status, pricing, diagnostics, reload } = usePricingSource({ src: '/api/pricing' });
+const { status, pricing, diagnostics, reload } = usePricingSource({
+  src: 'https://api.example.com/pricing.yml',
+});
 ```
 
 Props: `pricing`, `yaml`, `src`, `request`, `loadPricing`, `normalizeOptions`. Result: `status`
@@ -167,8 +173,10 @@ The first argument is a `NormalizedPricing` or `undefined` (for example straight
 nothing and `apply` returns `undefined`.
 
 Options: `selection`, `onSelectionChange`, `defaultSelection`, `currentSelection`, `locale`,
-`mode`, `visibility`, `messages`, `presentation`, `expressionOptions`, `variablesEnabled`. Each
-falls back to the provider, then the global configuration, as above.
+`mode`, `visibility`, `messages`, `presentation`, `expressionOptions`, `variablesEnabled`. Only
+`locale`, `variablesEnabled`, `messages` and `presentation` fall back to the provider, then the
+global configuration, as above. `mode`, `visibility`, `expressionOptions`, `selection`,
+`defaultSelection` and `currentSelection` have no provider or global layer.
 
 - **Uncontrolled** (no `selection` option): the hook holds the selection. It starts from the
   defaults merged with `defaultSelection`, and it restarts when `pricing` is a different object.
@@ -246,10 +254,10 @@ ones you need.
 
 ```tsx
 <PricingRenderer
-  src="/api/pricing"
+  src="https://api.example.com/pricing.yml"
   renderPlanCta={({ planId, label, href, relation, anyPending, trigger }) => (
     <a
-      href={href ?? `/checkout/${planId}`}
+      href={href ?? `/checkout/${encodeURIComponent(planId)}`}
       aria-disabled={anyPending}
       data-relation={relation}
       onClick={(event) => {

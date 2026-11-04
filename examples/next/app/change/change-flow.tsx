@@ -58,7 +58,9 @@ export function ChangeFlow({ yaml }: { yaml: string }) {
             setSaveError(undefined);
             apply(current);
           }}
-          onConfirm={() => {
+          onConfirm={(event) => {
+            // The example manages `pending` itself, so the element must not set it too.
+            event.preventDefault();
             setSaving(true);
             setSaveError(undefined);
             const next = selection.selection;

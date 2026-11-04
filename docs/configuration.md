@@ -316,17 +316,21 @@ merges per locale and per unit, and the higher layer wins.
 </PricingRendererProvider>
 ```
 
-The provider sends its `headers` and `credentials` only to the page origin or to an
-origin in `requestOrigins` (compared as origins, `http:` and `https:` only). For any
-other `src`, both are removed from the request and the other fields (`timeoutMs`,
-`maxBytes`, `fetch`) are kept. This protects a token from a pricing URL that the
-host does not trust.
+The provider sends its `headers` and `credentials` only when `src` is an absolute
+URL whose origin is the page origin or an origin in `requestOrigins` (compared as
+origins, `http:` and `https:` only). A relative `src` such as `/api/pricing` counts
+as a foreign origin and gets neither; the loader itself also needs an absolute URL
+for `src`, so the host resolves it first, for example with
+`new URL('/api/pricing', location.origin).href`. For any other `src`, both are
+removed from the request and the other fields (`timeoutMs`, `maxBytes`, `fetch`)
+are kept. This protects a token from a pricing URL that the host does not trust.
 
-A listed origin or the page origin must not redirect to another origin while the
-provider sends its headers to it. The origin filter checks the requested URL
-only, not the URL a redirect leads to, so a redirect could carry the headers to
-the new origin. List only origins that you control and that do not redirect, or
-use a `loadPricing` loader that handles redirects itself.
+The origin filter reads the requested URL only. On a cross-origin redirect, fetch
+drops the `Authorization` header (WHATWG Fetch, HTTP-redirect fetch) but keeps
+other custom headers, and cookies follow the `credentials` mode. A listed origin
+or the page origin must therefore not redirect to another origin while the
+provider sends headers to it. List only origins that you control and that do not
+redirect, or use a `loadPricing` loader that handles redirects itself.
 
 ## Unit labels
 

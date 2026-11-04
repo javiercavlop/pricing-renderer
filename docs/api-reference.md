@@ -86,19 +86,19 @@ const { selection: next, removedAddOnIds } = reconcileSelection(pricing, {
 
 Supporting functions:
 
-| Function                   | Purpose                                                     |
-| -------------------------- | ----------------------------------------------------------- |
-| `createDefaultSelection`   | Build a complete selection from model defaults              |
-| `mergeSelection`           | Safely merge a partial selection                            |
-| `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                |
-| `reconcileSelection`       | Deselect add-ons unavailable for the plan and dependents    |
-| `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence |
-| `mergePresentationOptions` | Merge project and instance presentation maps                |
-| `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges  |
-| `getPlanCta`               | Resolve the CTA associated with a plan                      |
-| `getPricingRendererCustom` | Read the renderer-specific `custom` extension               |
-| `getCustomDetails`         | Return preserved custom details                             |
-| `isSafeLink`               | Validate a link: safe scheme or same-host path              |
+| Function                   | Purpose                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `createDefaultSelection`   | Build a complete selection from model defaults                                                                                      |
+| `mergeSelection`           | Safely merge a partial selection                                                                                                    |
+| `normalizeAddOnQuantity`   | Clamp a quantity to subscription constraints                                                                                        |
+| `reconcileSelection`       | Deselect add-ons unavailable for the plan and dependents                                                                            |
+| `mergePresentation`        | Apply props → `custom.pricingRenderer` → derived precedence                                                                         |
+| `mergePresentationOptions` | Merge project and instance presentation maps                                                                                        |
+| `getPlanHighlightSummary`  | Resolve typed highlights, verified inheritance, and badges                                                                          |
+| `getPlanCta`               | Resolve the CTA associated with a plan                                                                                              |
+| `getPricingRendererCustom` | Read the renderer-specific `custom` extension                                                                                       |
+| `getCustomDetails`         | Return preserved custom details                                                                                                     |
+| `isSafeLink`               | Validate a link: http(s), mailto, a path starting with a single /, a relative ./ or ../ path or a # fragment; not a same-site check |
 
 ### Selection functions
 
@@ -1448,11 +1448,14 @@ provider, then the global configuration; see
 - `messages`: the instance `messages` win over these, key by key.
 - `loadPricing`: used when the instance has no `loadPricing`. Applies to `src` only.
 - `request`: used when the instance has no `request`. Applies to `src` only. Its
-  `headers` and `credentials` are sent only to the page origin or to an origin
-  listed in `requestOrigins`; for any other URL, both are removed and the other
-  fields (`timeoutMs`, `maxBytes`, `fetch`) stay. A listed origin or the page
-  origin must not redirect to another origin while the provider sends its headers
-  to it: the filter checks the requested URL only, not the redirect target. See
+  `headers` and `credentials` are sent only for a `src` that is an absolute URL whose
+  origin is the page origin or is listed in `requestOrigins`; a relative `src` such
+  as `/api/pricing` counts as a foreign origin, and for any foreign URL both are
+  removed and the other fields (`timeoutMs`, `maxBytes`, `fetch`) stay. The filter
+  reads the requested URL only: on a cross-origin redirect fetch drops
+  `Authorization` but keeps other custom headers, and cookies follow `credentials`,
+  so a listed origin or the page origin must not redirect to another origin while
+  the provider sends headers to it. See
   [Configuration](./configuration.md#provider-request).
 
 #### `usePricingSource`
@@ -1497,7 +1500,8 @@ memoize them. Unmounting aborts the load.
   kept) and, for an inline source, normalizes it again.
 - The `request` of a `src` source is the prop, else the provider's after the origin
   filter above. `timeoutMs` and `maxBytes` that are not a finite positive number
-  fall back to 15000 ms and 2097152 bytes, so they cannot be switched off.
+  (and a `timeoutMs` above 2147483647) fall back to 15000 ms and 2097152 bytes, so
+  they cannot be switched off.
 
 #### `usePricingSelection`
 

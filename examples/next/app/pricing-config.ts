@@ -6,7 +6,6 @@ export const LOCALE = 'en-US';
 
 export const rendererConfig: Partial<PricingRendererConfig> = {
   locale: LOCALE,
-  pricingPath: '/pricing',
   selectionEnabled: true,
   ctaEnabled: true,
   variablesEnabled: true,

@@ -65,4 +65,5 @@ custom:
       - id: start-growth
         label: Start free trial
         planId: growth
+        href: /change?plan={planId}
 `;

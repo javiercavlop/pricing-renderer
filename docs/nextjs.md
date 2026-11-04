@@ -194,17 +194,15 @@ is constructed. A server process handles many requests, so a call made per reque
 request's settings into the next. A `'use client'` module is also evaluated on the server during
 SSR, so call it once at module top level with constant values. Never call it inside a component or
 with request-dependent values such as a locale from a prop or user data.
-`examples/next/app/pricing-client.tsx` does this:
+With constant values, this is safe:
 
 ```tsx
 'use client';
 
 import { configurePricingRenderer } from 'pricing-renderer';
-import { PricingRenderer } from 'pricing-renderer/react';
 
 configurePricingRenderer({
   locale: 'en-US',
-  pricingPath: '/pricing',
   selectionEnabled: true,
   ctaEnabled: true,
 });
@@ -213,6 +211,9 @@ configurePricingRenderer({
 For settings that vary by request, tenant or locale, pass props to the instance instead
 ([configuration](./configuration.md)), or wrap the island in `PricingRendererProvider`, which
 writes no global (see the [React guide](./react.md#pricingrendererprovider)).
+`examples/next/app/providers.tsx` does the latter: its `Providers` client component wraps the
+layout in `PricingRendererProvider` with module-level constants and calls no
+`configurePricingRenderer`.
 
 ## Keep `request` and `loadPricing` stable
 
@@ -235,7 +236,7 @@ Reloads on every render:
 export function PricingView() {
   return (
     <PricingRenderer
-      src="/api/pricing"
+      src="https://app.example.com/api/pricing"
       // New function on every render: the pricing reloads each time.
       loadPricing={({ url, signal }) => fetch(url, { signal }).then((res) => res.text())}
     />
@@ -256,7 +257,7 @@ export function PricingView() {
     ({ url, signal }) => fetch(url, { signal }).then((res) => res.text()),
     [],
   );
-  return <PricingRenderer src="/api/pricing" loadPricing={loadPricing} />;
+  return <PricingRenderer src="https://app.example.com/api/pricing" loadPricing={loadPricing} />;
 }
 ```
 
