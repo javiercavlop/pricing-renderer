@@ -278,16 +278,55 @@ expanded value. An expanded link that is not safe renders the CTA as a button.
 
 ## Presentation precedence
 
-Presentation can be owned by three layers:
+Presentation can be owned by these layers, from the highest to the lowest:
 
-1. Per-instance `presentation` on the Web Component or React adapter.
-2. Project defaults passed to `configurePricingRenderer`.
-3. Portable YAML metadata under `custom.pricingRenderer`.
+1. Per-instance `presentation` on the Web Component, the React adapter or the
+   options of `usePricingSelection`.
+2. The `presentation` prop of the nearest `PricingRendererProvider`.
+3. The `config.presentation` prop of the same provider.
+4. Project defaults passed to `configurePricingRenderer`.
+5. Portable YAML metadata under `custom.pricingRenderer`.
+
+Layers 2 and 3 exist only under a provider (see
+[React](./api-reference.md#provider-and-hooks)); without one, layers 1, 4 and 5
+apply as before. The provider never writes the global configuration of layer 4.
+The same order applies to the other settings: `locale`, `pricingPath`,
+`selectionEnabled`, `ctaEnabled` and `variablesEnabled` come from the instance,
+then `config` of the nearest provider, then the global configuration, and
+`messages` of the provider are merged under the instance `messages`.
 
 Plan-keyed `planHighlights` and `planBadges` maps merge by plan, while an entry
 from a higher layer replaces the same plan's entry. This makes shared defaults
 easy to extend for one pricing page without mutating the iPricing. `unitLabels`
 merges per locale and per unit, and the higher layer wins.
+
+### Provider request
+
+`PricingRendererProvider` can carry the request settings of a remote pricing
+(`request`) and a custom loader (`loadPricing`) for every `PricingRenderer` and
+`usePricingSource` below it that loads a `src`. An instance `request` or
+`loadPricing` replaces the provider one; the two are not merged.
+
+```tsx
+<PricingRendererProvider
+  request={{ headers: getHeaders, credentials: 'include', timeoutMs: 8000 }}
+  requestOrigins={['https://api.example.com']}
+>
+  <PricingRenderer src="https://api.example.com/pricing.yml" />
+</PricingRendererProvider>
+```
+
+The provider sends its `headers` and `credentials` only to the page origin or to an
+origin in `requestOrigins` (compared as origins, `http:` and `https:` only). For any
+other `src`, both are removed from the request and the other fields (`timeoutMs`,
+`maxBytes`, `fetch`) are kept. This protects a token from a pricing URL that the
+host does not trust.
+
+A listed origin or the page origin must not redirect to another origin while the
+provider sends its headers to it. The origin filter checks the requested URL
+only, not the URL a redirect leads to, so a redirect could carry the headers to
+the new origin. List only origins that you control and that do not redirect, or
+use a `loadPricing` loader that handles redirects itself.
 
 ## Unit labels
 

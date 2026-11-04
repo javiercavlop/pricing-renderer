@@ -60,42 +60,7 @@ function classifyExports(exportsField: Record<string, ExportTarget>) {
 }
 
 // Names exported but not yet documented. Sorted per entry. Remove a name when it is documented.
-const PENDING: Record<string, string[]> = {
-  '.': [
-    'applySelectionChange', // core, P3-15b
-    'applySelectionInput', // core, P3-15b
-    'asRecord', // core, later docs slice
-    'cloneValue', // core, later docs slice
-    'createPriceStabilizer', // core, later docs slice
-    'deepEqual', // core, later docs slice
-    'getAtPath', // core, later docs slice
-    'humanizeIdentifier', // core, later docs slice
-    'isRecord', // core, later docs slice
-    'planSelectionChange', // core, P3-15b
-    'selectionFromSearchParams', // core, P3-15b
-    'selectionInEffect', // core, P3-15b
-    'selectionToSearchParams', // core, P3-15b
-    'selectionWithAddOnQuantity', // core, P3-15b
-    'selectionWithVariable', // core, P3-15b
-    'setAtPath', // core, later docs slice
-    'unwrapValue', // core, later docs slice
-  ],
-  './yaml': [
-    'loadPricingSource', // yaml, B2b
-  ],
-  './react': [
-    'PricingRendererProvider', // react, P3-15b
-    'usePricingRendererState', // react, P3-15b
-    'usePricingSelection', // react, P3-15b
-    'usePricingSource', // react, P3-15b
-  ],
-  './react/headless': [
-    'PricingRendererProvider', // react/headless, P3-15b
-    'usePricingRendererState', // react/headless, P3-15b
-    'usePricingSelection', // react/headless, P3-15b
-    'usePricingSource', // react/headless, P3-15b
-  ],
-};
+const PENDING: Record<string, string[]> = {};
 
 /** Code text of a markdown document: fenced blocks first, then inline spans of the remaining text. */
 function codeText(markdown: string): string {
