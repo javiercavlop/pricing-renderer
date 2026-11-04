@@ -355,7 +355,7 @@ Checks (names used per slice; `docs/agent-work/phase3-react-headless/plan.md at 
     `pricing-renderer/react` with `createRoot` and `createElement`, no JSX, render props chosen by
     the query string; one query mode instead renders a component that calls
     `usePricingRendererState(ref)` with `ref` on the `PricingRenderer` of the same render and prints
-    the snapshot's `pricing.saasName`), `examples/vanilla/vite.config.ts` (build input),
+    the snapshot's `pricing.metadata.saasName`), `examples/vanilla/vite.config.ts` (build input),
     `examples/vanilla/package.json` and `pnpm-lock.yaml` (`react` and `react-dom` as dev
     dependencies, the root's ranges; no new package in the lockfile).
   - Requirements: `req~react-slot-portals~1`, `req~react-plan-cta-context~2`,

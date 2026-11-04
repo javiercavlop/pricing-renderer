@@ -506,7 +506,15 @@ describe('headless entry loads no element code', () => {
 describe('react entry re-exports the headless entry', () => {
   it('exports every runtime export of the headless entry with the same identity', async () => {
     const keys = Object.keys(headlessMod);
-    expect(keys).toContain('PricingRendererProvider');
+    expect(keys.sort()).toEqual([
+      'PricingRendererProvider',
+      'usePricingRendererState',
+      'usePricingSelection',
+      'usePricingSource',
+    ]);
+    for (const hook of ['usePricingRendererState', 'usePricingSelection', 'usePricingSource']) {
+      expect(headlessMod[hook], hook).toBeTypeOf('function');
+    }
     const entry = (await import('../../src/react/index.js')) as Loose;
     for (const key of keys) {
       expect(Object.is(entry[key], headlessMod[key]), key).toBe(true);
