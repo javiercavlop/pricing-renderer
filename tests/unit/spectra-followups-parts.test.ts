@@ -38,4 +38,14 @@ describe('docs/theming.md stable part hooks', () => {
     const stale = (await documentedParts()).filter((part) => !rendered.has(part));
     expect(stale).toEqual([]);
   });
+
+  // [utest->req~slot-plan-cta~1] [utest->req~slot-summary-actions~1] [utest->req~slot-loading~1]
+  // [utest->req~slot-error~1] the loading and error shells are drawn by the element itself
+  it('renders and documents the four slot parts', async () => {
+    const slotParts = ['plan-cta-slot', 'summary-actions-slot', 'loading-slot', 'error-slot'];
+    const rendered = new Set(await renderedParts());
+    const documented = new Set(await documentedParts());
+    expect(slotParts.filter((part) => !rendered.has(part))).toEqual([]);
+    expect(slotParts.filter((part) => !documented.has(part))).toEqual([]);
+  });
 });

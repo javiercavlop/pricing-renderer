@@ -79,7 +79,13 @@ const docText = (rel: string): string => (existsSync(docPath(rel)) ? read(rel) :
 describe('documentation stays in sync with the code', () => {
   it('derives the real events and diagnostic codes from the source', () => {
     expect([...rendererEventNames].sort()).toEqual(
-      ['pricing-action', 'pricing-diagnostic', 'pricing-ready', 'pricing-selection-change'].sort(),
+      [
+        'pricing-action',
+        'pricing-diagnostic',
+        'pricing-ready',
+        'pricing-selection-change',
+        'pricing-slots-change',
+      ].sort(),
     );
     expect([...eventNames].sort()).toEqual(
       [
@@ -89,6 +95,7 @@ describe('documentation stays in sync with the code', () => {
         'pricing-diagnostic',
         'pricing-ready',
         'pricing-selection-change',
+        'pricing-slots-change',
       ].sort(),
     );
     expect(diagnosticCodes.size).toBeGreaterThanOrEqual(30);
