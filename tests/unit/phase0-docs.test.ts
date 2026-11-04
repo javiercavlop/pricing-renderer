@@ -115,8 +115,8 @@ describe('the API reference states the kept-price breakdown line of the element'
   });
 
   it('matches what the element does with a kept price', () => {
-    const element = read('src/element/pricing-renderer-element.ts');
-    const keptLine = element.slice(element.indexOf('const keptLine'));
+    const stabilizer = read('src/core/price-stabilizer.ts');
+    const keptLine = stabilizer.slice(stabilizer.indexOf('const keptLine'));
     expect(keptLine).toMatch(/quantity: kept\.quantity,/);
     expect(keptLine).toMatch(/unitAmount: kept\.baseAmount,/);
     expect(keptLine).toMatch(/billingMultiplier: kept\.billingMultiplier,/);
