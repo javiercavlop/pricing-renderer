@@ -1,0 +1,1 @@
+Done: S0 spec (1e002b0a65754851), T1 tests (4c92b0f6ffd547da, red first), I1 workflow + audit report (93bb49c8330743b9). Remaining: push, PR, medium panel with security-auditor, review package, ready. No release, no changeset, no publish.
