@@ -35,8 +35,10 @@ declare global {
     __unmounts?: Record<string, number>;
     // The return value of each ctx.trigger() call.
     __triggerResults?: boolean[];
-    // One entry per call of renderPlanCta: what it saw and whether its slot node was in the page.
+    // One entry per commit of a plan CTA output: what it saw, and whether its slot node was in the page.
     __ctaCalls?: { planId: string; selected: boolean; slotConnected: boolean }[];
+    // JSON of the selection and resolved state of each renderSummaryActions call.
+    __summaryContexts?: string[];
   }
 }
 
@@ -48,6 +50,7 @@ window.__mounts = {};
 window.__unmounts = {};
 window.__triggerResults = [];
 window.__ctaCalls = [];
+window.__summaryContexts = [];
 
 // Wraps the output of a render prop, so that an unmounted portal is visible to a page script even
 // when its slot node is detached and no locator can reach it.
@@ -78,17 +81,21 @@ const str = (value: unknown): string => (value === undefined ? '' : String(value
 
 const renderPlanCta: PricingRendererProps['renderPlanCta'] = (ctx) => {
   counted('plan');
-  window.__ctaCalls!.push({
-    planId: ctx.planId,
-    selected: ctx.selected,
-    slotConnected:
-      root.querySelector(`[data-pr-slot="plan-cta"][data-plan-id="${ctx.planId}"]`) !== null,
-  });
+  // Recorded at commit, from the node the output is portalled into: a detached node is visible here.
+  const record = (node: HTMLElement | null): void => {
+    if (node === null) return;
+    window.__ctaCalls!.push({
+      planId: ctx.planId,
+      selected: ctx.selected,
+      slotConnected: node.closest('[data-pr-slot]')?.isConnected ?? false,
+    });
+  };
   return tracked(
     'plan',
     h(
       'button',
       {
+        ref: record,
         type: 'button',
         'data-rp': '1',
         'data-testid': `cta-${ctx.planId}`,
@@ -111,6 +118,9 @@ const renderPlanCta: PricingRendererProps['renderPlanCta'] = (ctx) => {
 
 const renderSummaryActions: PricingRendererProps['renderSummaryActions'] = (ctx) => {
   counted('summary');
+  window.__summaryContexts!.push(
+    JSON.stringify({ selection: ctx.selection, resolved: ctx.resolved }),
+  );
   return tracked(
     'summary',
     h(

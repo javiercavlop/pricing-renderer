@@ -178,10 +178,35 @@ test.describe('React portals fill the slot nodes', () => {
     await expect(ctaOf(page, 'growth')).toBeVisible();
     await expect(page.getByTestId('loading')).toHaveCount(0);
     await expect(page.locator('#root [data-pr-slot="loading"]')).toHaveCount(0);
-    // The portal into the loading node is unmounted exactly once: no output is left in a node that
-    // is no longer reported.
+    // The loading node is both disconnected and no longer reported, so this does not tell the two
+    // causes apart; the test below pins the unreported case on its own. The portal is unmounted
+    // exactly once.
     await expect.poll(() => unmounted(page, 'loading')).toBe(1);
     expect(await mounted(page, 'loading')).toBe(1);
+  });
+
+  test('No portal into a connected node the element no longer reports', async ({ page }) => {
+    await open(page, 'plan');
+    for (const planId of PLAN_IDS) await expect(ctaOf(page, planId)).toBeVisible();
+    expect(await unmounted(page, 'plan')).toBe(0);
+    // Reports only the growth plan node, from the live DOM; the other nodes stay connected.
+    const report = (kept: string[]): Promise<void> =>
+      page.evaluate((ids) => {
+        const element = document.querySelector('#root pricing-renderer')!;
+        const nodes = [...document.querySelectorAll('#root [data-pr-slot]')].filter((node) =>
+          ids.includes(node.getAttribute('data-plan-id') ?? ''),
+        );
+        element.dispatchEvent(new CustomEvent('pricing-slots-change', { detail: { nodes } }));
+      }, kept);
+    await report(['growth']);
+    await expect.poll(() => unmounted(page, 'plan')).toBe(2);
+    await expect(page.locator('#root [data-pr-slot="plan-cta"]')).toHaveCount(3);
+    await expect(ctaOf(page, 'growth')).toBeVisible();
+    await expect(ctaOf(page, 'starter')).toHaveCount(0);
+    await expect(ctaOf(page, 'enterprise')).toHaveCount(0);
+    // Reports every node again: the outputs come back, so the test ends clean.
+    await report(PLAN_IDS);
+    for (const planId of PLAN_IDS) await expect(ctaOf(page, planId)).toBeVisible();
   });
 
   test('Error content is inside the error slot node', async ({ page }) => {
@@ -252,6 +277,8 @@ test.describe('React portals fill the slot nodes', () => {
 test.describe('plan CTA render context', () => {
   test('Label, link and state of each plan', async ({ page }) => {
     await open(page, 'plan');
+    // The harness renders a button for every plan, not a link; what is asserted is that each plan's
+    // own slot holds its own label and href.
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Start free trial');
     await expect(ctaOf(page, 'growth')).toHaveAttribute(
       'data-href',
@@ -390,6 +417,7 @@ test.describe('summary, loading and error render contexts', () => {
     await page.getByTestId('error-reload').click();
     await expect.poll(() => requests).toBe(2);
     await expect(page.getByTestId('error')).toBeVisible();
+    await expect(page.getByTestId('error')).toHaveAttribute('data-codes', /.+/);
   });
 
   test('Loading shows while the source is pending', async ({ page }) => {
@@ -470,6 +498,16 @@ test.describe('slot nodes and state read on attach', () => {
     await expect(summary).toHaveAttribute('data-plan', 'starter');
     const state = await elementState(page);
     await expect(summary).toHaveAttribute('data-subtotal', state.subtotal);
+    // The whole context the render prop got equals the state the element reports.
+    const reported = await page.evaluate(() => {
+      const element = document.querySelector('#root pricing-renderer') as ResolvedElement;
+      const { selection, resolved } = element.resolvedState!;
+      return JSON.stringify({ selection, resolved });
+    });
+    const contexts = await page.evaluate(
+      () => (window as unknown as { __summaryContexts?: string[] }).__summaryContexts ?? [],
+    );
+    expect(contexts.at(-1)).toBe(reported);
   });
 
   test('Summary context after a pick when given after ready', async ({ page }) => {
