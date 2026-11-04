@@ -1,2 +1,1 @@
-Change phase3-react-headless-d, one PR into develop (feat/react-headless-d). Scope delivered: review follow-ups (F), P3-10 hideSections, P3-11 element slots, P3-12 React render props via portals, P3-12b harness page and browser specs. Wave 4 (P3-13..15b: React example, Next example, docs) is deferred to a later change (tasks.md puts it after P3-12b merges; diff already past 800 lines).
-Next: push, open PR, CI (browser shards decide the browser specs), review panel (medium: reviewer + test-reviewer + security-auditor), lead_ready.
+Change phase3-react-headless-d, one PR (#88). Delivered: F, P3-10, P3-11, P3-12, P3-12b. Wave 4 deferred. Now: panel round 1 fixes (cf028141, 332ebfa3), integrate, push, CI, panel round 2, ready.
