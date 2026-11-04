@@ -35,3 +35,25 @@ descriptions of 100 to 250 characters).
   - `planGrid.layoutBreakdown`: the offsets and heights of the blocks above the plan grid and of the
     first card's children.
   - `planGrid.loneLastCard`: the result of `loneLastCard` for the measured grid.
+  - `layoutVariant`: `auto` for the default layout. At 375 light/en a second line follows with
+    `layoutVariant: "table"` (the `layout="table"` attribute set on the element, then set back to `auto`), so the
+    scrolling table can be compared with the cards.
+  - `text`: `awkwardBreaks` and `truncatedTexts` from `measureText`.
+  - `expanded`: `rendererHeightInViewports` after `revealAllRows`, and `finished` (false when 100
+    rounds were not enough). It runs last in a pass because it changes the page; every pass opens a
+    fresh page, because the renderer keeps revealed groups across a reload.
+  - `addOns`: null without add-ons; else `cardsRendered`, `cardsDisabled` (`data-available="false"`),
+    `rowSpreads` (cards and height spread per grid row) and `summaryInViewport` (does
+    `[data-pr-part="summary"]` intersect the viewport with the first, middle and last add-on card
+    scrolled to the centre; null when there is no summary).
+  - `visiblePlanColumns`: plan header cells fully inside `.pr-table-scroll` at `scrollLeft` 0; null
+    when the layout is cards or none.
+  - `contrast`: the axe `color-contrast` violation count and the first three node targets. It never
+    fails the test.
+  - A `SPECTRA_UX_TOTAL` line per fixture with the total time in ms.
+- Variants: 1440x900 and 375x812, each in light/en and dark/es, plus 1024x768 light/en (five passes
+  and the table pass per fixture).
+- Fixtures: the default run uses okta, clickup and webflow. `UX_STRESS_ALL=1` runs all six shapes
+  (okta, clickup, webflow, zoom, salesforce, github). It is local only: the
+  `on-demand-specs` job sets just `PW_UX_STRESS=1`. Worst case without retries: 6 tests of 180 s, 18 min. The pure helpers `countCellsFullyInside`,
+  `addOnRowSpreads` and `intersectsViewport` in `metrics.ts` are covered by the unit test.

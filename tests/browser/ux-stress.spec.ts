@@ -1,11 +1,19 @@
+import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { buildStressYaml, findStressFixture } from '../fixtures/stress/build.js';
-import { loneLastCard } from '../fixtures/stress/metrics.js';
+import {
+  addOnRowSpreads,
+  countCellsFullyInside,
+  intersectsViewport,
+  loneLastCard,
+} from '../fixtures/stress/metrics.js';
 import {
   applyPricing,
   measureOverflow,
   measurePlanGrid,
+  measureText,
   openRenderer,
+  revealAllRows,
   type Viewport,
 } from './helpers/spectra.js';
 
@@ -23,14 +31,28 @@ const subset = ['okta-usd-monthly', 'clickup-usd-monthly', 'webflow-eur-monthly'
 
 type Variant = { viewport: Viewport; theme: 'light' | 'dark'; locale: 'en' | 'es' };
 
+// 1440 and 375 cross light/en with dark/es; 1024 adds the tablet width in light/en.
 const variants: Variant[] = [
   { viewport: { width: 1440, height: 900 }, theme: 'light', locale: 'en' },
+  { viewport: { width: 1440, height: 900 }, theme: 'dark', locale: 'es' },
+  { viewport: { width: 375, height: 812 }, theme: 'light', locale: 'en' },
   { viewport: { width: 375, height: 812 }, theme: 'dark', locale: 'es' },
+  { viewport: { width: 1024, height: 768 }, theme: 'light', locale: 'en' },
 ];
 
+// UX_STRESS_ALL=1 runs all six shapes (USD, monthly) instead of the three fixtures above.
+const allShapes = [
+  'okta-usd-monthly',
+  'clickup-usd-monthly',
+  'webflow-eur-monthly',
+  'zoom-usd-monthly',
+  'salesforce-usd-monthly',
+  'github-usd-monthly',
+];
+
+const axeMs = 20_000;
 const openMs = 15_000;
 const applyPricingMs = 25_000;
-const resizeMs = 8_000;
 const measureMs = 8_000;
 const pageTimeoutMs = 8_000;
 const navigationTimeoutMs = 15_000;
@@ -180,28 +202,150 @@ async function measureUx(page: Page) {
   });
 }
 
+// Plan header cells (not the feature column) of the comparison table against the scroll box, at
+// scrollLeft 0. The pure counting lives in metrics.ts.
+async function measureVisiblePlanColumns(page: Page): Promise<number | null> {
+  const boxes = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+    const table = renderer.querySelector('.pr-comparison-table');
+    const scroller = table?.closest('.pr-table-scroll') ?? null;
+    if (!table || !scroller) return null;
+    scroller.scrollLeft = 0;
+    const box = scroller.getBoundingClientRect();
+    const cells = [...table.querySelectorAll('thead th')].slice(1).map((cell) => {
+      const rect = cell.getBoundingClientRect();
+      return { left: rect.left, right: rect.right };
+    });
+    return { scroller: { left: box.left, right: box.right }, cells };
+  });
+  return boxes ? countCellsFullyInside(boxes.cells, boxes.scroller) : null;
+}
+
+// Add-on grid: height spread per grid row, cards rendered and disabled, and whether the summary
+// shares the viewport with the first, middle and last card scrolled to the centre. Null without
+// add-on cards.
+async function measureAddOns(page: Page) {
+  const raw = await page.evaluate(async () => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+    const cards = [...renderer.querySelectorAll<HTMLElement>('.pr-addon-card')];
+    if (cards.length === 0) return null;
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    await nextFrame();
+    const rects = cards.map((card) => {
+      const rect = card.getBoundingClientRect();
+      return { top: rect.top + window.scrollY, height: rect.height };
+    });
+    const disabled = cards.filter((card) => card.getAttribute('data-available') === 'false').length;
+    const summary = renderer.querySelector('[data-pr-part="summary"]');
+    const picks = [0, Math.floor((cards.length - 1) / 2), cards.length - 1];
+    const summaryRects: ({ top: number; bottom: number } | null)[] = [];
+    for (const index of picks) {
+      cards[index]!.scrollIntoView({ block: 'center', behavior: 'instant' });
+      await nextFrame();
+      const rect = summary?.getBoundingClientRect();
+      summaryRects.push(rect ? { top: rect.top, bottom: rect.bottom } : null);
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    await nextFrame();
+    return {
+      rects,
+      disabled,
+      summaryRects,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  if (!raw) return null;
+  const visible = raw.summaryRects.map((rect) =>
+    rect ? intersectsViewport(rect, raw.viewportHeight) : null,
+  );
+  return {
+    cardsRendered: raw.rects.length,
+    cardsDisabled: raw.disabled,
+    rowSpreads: addOnRowSpreads(raw.rects),
+    summaryInViewport: { first: visible[0], middle: visible[1], last: visible[2] },
+  };
+}
+
+async function measureContrast(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .include('pricing-renderer')
+    .withRules(['color-contrast'])
+    .analyze();
+  const nodes = results.violations.flatMap((violation) => violation.nodes);
+  return {
+    violations: nodes.length,
+    targets: nodes.slice(0, 3).map((node) => node.target.join(' ')),
+  };
+}
+
+// Sets the layout attribute and waits for the re-render.
+async function setLayout(page: Page, layout: string): Promise<void> {
+  await page.evaluate(async (value) => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
+      updateComplete: Promise<unknown>;
+    };
+    renderer.setAttribute('layout', value);
+    await renderer.updateComplete;
+    for (let frame = 0; frame < 3; frame += 1) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  }, layout);
+}
+
+// Height of the renderer in viewports after every group and "show more" is open. It mutates the
+// page, so it runs last in a pass; the next pass opens a fresh page.
+async function measureExpanded(page: Page) {
+  const finished = await revealAllRows(page);
+  const height = await page.evaluate(() => {
+    const renderer = document.querySelector('pricing-renderer') as HTMLElement;
+    return Math.round((renderer.getBoundingClientRect().height / window.innerHeight) * 100) / 100;
+  });
+  return { rendererHeightInViewports: height, finished };
+}
+
+const fixtureIds = process.env.UX_STRESS_ALL === '1' ? allShapes : subset;
+
+// A normal pass has 11 bounded steps (open, apply, six measures, axe, expand, visible check) whose
+// limits sum to 124 s; the table pass has 13 steps (set and restore the layout) and 140 s. Those
+// are limits for a stuck step, not the expected time. The test timeout is a cumulative cap sized on the typical
+// time of a pass (open, apply and the measures take well under 20 s), with room: 30 s per pass.
+// Six passes give 180 s. CI budget: 3 fixtures, and with retries 2 a test that times out runs 3
+// times, so the worst case is 3 x 3 x 180 s = 27 min, below the 40 min --global-timeout
+// (2400000 ms) and the 50 min job timeout of .github/workflows/ci.yml.
+const passBudgetMs = 30_000;
+const testTimeoutMs = (variants.length + 1) * passBudgetMs;
+
 test.describe('ux stress summary', () => {
-  for (const id of subset) {
+  for (const id of fixtureIds) {
     test(`${id} renders and reports its layout`, async ({ page }) => {
-      test.setTimeout(60_000);
+      test.setTimeout(testTimeoutMs);
       page.setDefaultTimeout(pageTimeoutMs);
       page.setDefaultNavigationTimeout(navigationTimeoutMs);
       const fixture = findStressFixture(id);
       const yaml = buildStressYaml(fixture);
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await bounded('open the renderer', openMs, openRenderer(page, variants[0]!.viewport));
+      const startedTotal = Date.now();
 
-      for (const variant of variants) {
-        const name = `${id} ${variant.viewport.width} ${variant.theme} ${variant.locale}`;
+      // One pass: apply the pricing, measure everything, print one line. layoutVariant is "auto"
+      // for the default layout and "table" for the forced scrolling table.
+      const runPass = async (variant: Variant, layoutVariant: 'auto' | 'table') => {
+        const name = `${id} ${variant.viewport.width} ${variant.theme} ${variant.locale} ${layoutVariant}`;
         const startedAt = Date.now();
-        await bounded(`${name}: resize`, resizeMs, page.setViewportSize(variant.viewport));
+        // A fresh page state per pass: the renderer keeps revealed groups across a reload, so a pass
+        // that follows revealAllRows would otherwise measure expanded rows. openRenderer also sets
+        // the viewport.
+        await bounded(`${name}: open the renderer`, openMs, openRenderer(page, variant.viewport));
         const state = await bounded(
           `${name}: apply the pricing`,
           applyPricingMs,
           applyPricing(page, yaml, variant.locale, variant.theme),
         );
         expect(state, `${name}: the pricing should reach the ready state`).toBe('ready');
+        if (layoutVariant === 'table') {
+          await bounded(`${name}: set the layout`, measureMs, setLayout(page, 'table'));
+        }
 
         const ux = await bounded(`${name}: measure the layout`, measureMs, measureUx(page));
         const grid = await bounded(
@@ -214,6 +358,23 @@ test.describe('ux stress summary', () => {
           measureMs,
           measureOverflow(page),
         );
+        const text = await bounded(`${name}: measure the text`, measureMs, measureText(page));
+        const visiblePlanColumns = await bounded(
+          `${name}: measure the plan columns`,
+          measureMs,
+          measureVisiblePlanColumns(page),
+        );
+        const addOns = await bounded(
+          `${name}: measure the add-ons`,
+          measureMs,
+          measureAddOns(page),
+        );
+        const contrast = await bounded(`${name}: axe color-contrast`, axeMs, measureContrast(page));
+        // Last: it opens every group, so nothing after it sees the collapsed page.
+        const expanded = await bounded(`${name}: expand`, measureMs, measureExpanded(page));
+        if (layoutVariant === 'table') {
+          await bounded(`${name}: restore the layout`, measureMs, setLayout(page, 'auto'));
+        }
 
         const rows = grid.cardsPerRow;
         const summary = {
@@ -222,9 +383,11 @@ test.describe('ux stress summary', () => {
           viewport: `${variant.viewport.width}x${variant.viewport.height}`,
           theme: variant.theme,
           locale: variant.locale,
+          layoutVariant,
           elapsedMs: Date.now() - startedAt,
           documentHeightInViewports: ux.documentHeightInViewports,
           rendererHeightInViewports: ux.rendererHeightInViewports,
+          expanded,
           firstViewport: { pageTop: ux.pageTop, rendererTop: ux.rendererTop },
           horizontalScroll: {
             pagePx: ux.pageScrollOverflowPx,
@@ -233,6 +396,7 @@ test.describe('ux stress summary', () => {
           },
           sticky: ux.sticky,
           comparisonLayout: ux.comparisonLayout,
+          visiblePlanColumns,
           sectionHeightsInViewports: ux.sectionHeightsInViewports,
           planGrid: {
             cards: grid.planCardCount,
@@ -243,6 +407,12 @@ test.describe('ux stress summary', () => {
             layoutBreakdown: grid.layoutBreakdown,
             loneLastCard: loneLastCard(grid.gridColumns, rows),
           },
+          text: {
+            awkwardBreaks: text.awkwardBreaks,
+            truncatedTexts: text.truncatedTexts,
+          },
+          addOns,
+          contrast,
         };
         console.info(`SPECTRA_UX_SUMMARY ${JSON.stringify(summary)}`);
 
@@ -260,8 +430,18 @@ test.describe('ux stress summary', () => {
         } else {
           expect(grid.planCardCount, `${name}: plan cards are rendered`).toBeGreaterThan(0);
         }
+      };
+
+      const tableVariant = variants.find(
+        (variant) => variant.viewport.width === 375 && variant.theme === 'light',
+      );
+      for (const variant of variants) {
+        await runPass(variant, 'auto');
+        if (variant === tableVariant) await runPass(variant, 'table');
       }
 
+      const totalMs = Date.now() - startedTotal;
+      console.info(`SPECTRA_UX_TOTAL ${JSON.stringify({ fixture: id, totalMs })}`);
       expect(errors, 'the page should not throw').toEqual([]);
     });
   }
