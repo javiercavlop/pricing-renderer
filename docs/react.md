@@ -353,6 +353,8 @@ hydration errors, the host node is kept and the final DOM is complete (3 plans, 
 and 1 summary action in the fixture). WebKit runs in CI. Render props still appear after hydration
 and the element's first render, as described above.
 
+The browser tests run on React 19. React 18 is supported by the same mechanism, but this repository has no browser measurement for it.
+
 ### Render the context as text
 
 The context strings are not under your control. `planName`, `label`, `href`, `relation` and the
