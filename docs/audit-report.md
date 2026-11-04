@@ -88,7 +88,7 @@ The current state is:
 ## Release workflow (`.github/workflows/release.yml`)
 
 1. **Global npm without integrity verification.** `npm install --global
-npm@11.18.0` (line 89) installs a version-pinned CLI with no integrity or
+npm@11.18.0` (line 95) installs a version-pinned CLI with no integrity or
    signature check beyond what the registry and npm's own install provide, in a job that has `id-token: write`. A compromised package
    would run in a job that can mint the OIDC token.
 2. **Whole pipeline in the publishing job.** Install, lint, tests, package
@@ -112,6 +112,9 @@ npm@11.18.0` (line 89) installs a version-pinned CLI with no integrity or
 The changed workflow is not exercised until the owner's next release. The
 static test `tests/unit/release-workflow.test.ts` checks both fixes (items 3
 and 4); it checks that the guard text is present and anchored on `DIST_TAG`.
+The static test also checks that the dist-tag mapping writes `next` only for
+`true` and `latest` only for `false` and fails on any other value, and that a
+commented-out `exit 1` does not count as a guard.
 
 ## Open items
 
@@ -136,10 +139,12 @@ and 4); it checks that the guard text is present and anchored on `DIST_TAG`.
   owner's next release; `tests/unit/release-workflow.test.ts` checks that the
   guard text is present and anchored on `DIST_TAG`, and that the unit tests run
   once.
-- The step that picks the dist-tag (`release.yml`, step "Verify the published
-  GitHub Release") selects `latest` for any `isPrerelease` value other than
-  `true`, including a failed `jq` read. The new guard cannot catch this because
-  `latest` is allowed. Noted, not changed here; a possible follow-up.
+- Resolved: the dist-tag mapping. The step "Verify the published GitHub
+  Release" (`release.yml`) now maps `isPrerelease` exactly (`true` to `next`,
+  `false` to `latest`) and fails with an error before `npm publish` for any
+  other value, including an empty value after a failed `jq` read and `null`.
+  The workflow is still not exercised until the owner's next release;
+  `tests/unit/release-workflow.test.ts` checks the mapping statically.
 - Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
   copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
   (checked against both upstream `LICENSE` files).
