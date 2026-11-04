@@ -1,33 +1,16 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { configurePricingRenderer } from 'pricing-renderer';
-import { PricingRenderer } from 'pricing-renderer/react';
+import { BrowserRouter } from 'react-router';
 import 'pricing-renderer/styles.css';
-import pricingYaml from '../../../tests/fixtures/acme-pricing.yml?raw';
+import './styles.css';
+import './pricing-config';
+import { App } from './app';
 
-configurePricingRenderer({
-  locale: 'en-US',
-  pricingPath: '/pricing',
-  selectionEnabled: true,
-  ctaEnabled: true,
-  variablesEnabled: true,
-});
-
-function Demo() {
-  return (
-    <PricingRenderer
-      yaml={pricingYaml}
-      theme="light"
-      onAction={(event) => {
-        event.preventDefault();
-        console.info('Pricing action', event.detail);
-      }}
-    />
-  );
-}
-
+// Client-side only: no server render and no hydration, so the router can read the URL directly.
 createRoot(document.querySelector('#root')!).render(
   <React.StrictMode>
-    <Demo />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 );
