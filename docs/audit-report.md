@@ -33,8 +33,9 @@ finding 2 is an accepted, documented risk.
 - **`yaml` 2.9.0 vs 2.9.1.** 2.9.0 is verified (lockfile). The existence of 2.9.1 was confirmed only by an external
   query and is **not verified** from the repository.
 - **React versions differ.** Verified: `examples/next/package.json` pins
-  `react` and `react-dom` to exactly 19.2.0. The lockfile resolves 19.2.8,
-  and `examples/react` declares `^19.1.1`.
+  `react` and `react-dom` to exactly 19.2.0, and the lockfile resolves 19.2.0
+  for it. The other ranges (`^19.1.1` in the root, `examples/react` and
+  `examples/vanilla`) resolve to 19.2.8 in the lockfile.
 - **`playwright` and `@playwright/test` both declared.** Verified: both are
   `^1.55.0` in the root `package.json` and the lockfile resolves both to
   1.62.0. The duplicate declaration is redundant but harmless.
@@ -64,8 +65,8 @@ The current state is:
 
 - `next` is pinned to `16.4.3` in `examples/next/package.json` (lockfile:
   `next@16.4.3`).
-- `vite` is `^7.3.7` in the root `package.json`, `examples/react` and
-  `examples/vanilla` (lockfile: `vite@7.3.7`); `vitest` is `^5.0.5` (lockfile:
+- `vite` is `^7.3.7` in the root `package.json`, `examples/react`,
+  `examples/vanilla` and `examples/vue` (lockfile: `vite@7.3.7`); `vitest` is `^5.0.5` (lockfile:
   `vitest@5.0.5`).
 - `@vitejs/plugin-react` is `^5.2.0` in `examples/react/package.json`
   (lockfile: `5.2.0`).
@@ -92,7 +93,7 @@ The current state is:
   The `merge-report` job keeps
   `continue-on-error: true` on purpose, because it only builds a report.
 - **Triggers and permissions:** `ci.yml` runs on `push` and `pull_request` for
-  `main` and `develop`, with top-level `permissions: contents: read`. Actions
+  `main` and `develop`, and on `workflow_dispatch`, with top-level `permissions: contents: read`. Actions
   in `ci.yml` and `release.yml` are pinned to commit SHAs.
 - **Dependabot** (`.github/dependabot.yml`): weekly updates, limit 5, for npm
   (`/` and `/examples/*`) and for `github-actions` (`/`). npm groups:
@@ -201,11 +202,10 @@ This splits the `publish` job into an unprivileged `verify` job and a minimal
 `publish` job. It is a proposal only: `.github/workflows/release.yml` is
 unchanged. Applying it needs the owner's approval and a token with
 Workflows: write. The diff is against the current `release.yml` (164 lines).
-`actions/download-artifact` is pinned to the SHA of its `v6` tag
-(`018cc2cf5baa6db3ef3c5f8a56943fffe632ef53`, v6.0.0). The SHA was confirmed
-through the GitHub API tags by an external lookup, not from the repository.
-No documented incompatibility between `upload-artifact` v6 and
-`download-artifact` v6 was found (no compatibility matrix exists).
+`actions/download-artifact` reuses the pin already in `ci.yml` (`merge-report`
+job): `9000827ccba6bdab643e8b6fd33ac0654aef8333` (v8), next to
+`upload-artifact` v6. It is the same pair as `ci.yml` `merge-report`, so no new
+pin is introduced.
 
 <!-- prettier-ignore-start -->
 ```diff
@@ -242,6 +242,7 @@ No documented incompatibility between `upload-artifact` v6 and
 +      dist_tag: ${{ steps.release.outputs.dist_tag }}
 +      tarball: ${{ steps.pack.outputs.tarball }}
 +      sha256: ${{ steps.pack.outputs.sha256 }}
++      artifact: ${{ steps.pack.outputs.artifact }}
      env:
        RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
      steps:
@@ -311,14 +312,16 @@ No documented incompatibility between `upload-artifact` v6 and
 +          {
 +            echo "tarball=$(basename "$1")"
 +            echo "sha256=$(sha256sum "$1" | cut -d' ' -f1)"
++            echo "artifact=release-tarball-$GITHUB_RUN_ID"
 +          } >>"$GITHUB_OUTPUT"
 +
 +      - name: Upload the release tarball
 +        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
 +        with:
-+          name: release-tarball-${{ github.run_id }}-${{ github.run_attempt }}
++          name: ${{ steps.pack.outputs.artifact }}
 +          path: ${{ runner.temp }}/release-pack/${{ steps.pack.outputs.tarball }}
 +          retention-days: 7
++          overwrite: true
 +          if-no-files-found: error
 +
 +  publish:
@@ -336,12 +339,13 @@ No documented incompatibility between `upload-artifact` v6 and
 +      id-token: write
 +    steps:
 +      - name: Download the release tarball
-+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
++        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
 +        with:
-+          name: release-tarball-${{ github.run_id }}-${{ github.run_attempt }}
++          name: ${{ needs.verify.outputs.artifact }}
 +          path: ${{ runner.temp }}/release-tarball
 +
 +      - name: Verify the tarball checksum
++        shell: bash
 +        env:
 +          TARBALL: ${{ needs.verify.outputs.tarball }}
 +          EXPECTED_SHA256: ${{ needs.verify.outputs.sha256 }}
@@ -352,6 +356,10 @@ No documented incompatibility between `upload-artifact` v6 and
 +              exit 1
 +              ;;
 +          esac
++          if [[ ! "$EXPECTED_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
++            echo "::error::The sha256 reported by the verify job is not 64 lowercase hex characters."
++            exit 1
++          fi
 +          actual="$(sha256sum "$RUNNER_TEMP/release-tarball/$TARBALL" | cut -d' ' -f1)"
 +          if [ "$actual" != "$EXPECTED_SHA256" ]; then
 +            echo "::error::The downloaded tarball does not match the sha256 reported by the verify job."
@@ -413,6 +421,30 @@ no environment, `publish` has `id-token: write` and no checkout or install
 step. The behaviour of the workflow was **not exercised** (no run of the
 release workflow).
 
+To rerun the check, save the following snippet to a file such as
+`/tmp/check-diff.js` and run, from the repository root,
+`node --input-type=module -e "$(cat /tmp/check-diff.js)"`. It takes the first
+diff fence of this file, applies it to a temporary copy of `release.yml` and
+parses the result. Observed result at this revision: `git apply` applied the
+patch, the job list printed `verify,publish` and the script ended with `ok`
+(see the check results of this revision).
+
+<!-- prettier-ignore-start -->
+```js
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import {execFileSync} from 'node:child_process'; import YAML from 'yaml';
+const md=fs.readFileSync('docs/audit-report.md','utf8');
+const m=md.match(/```diff\n([\s\S]*?)\n```/); if(!m) throw new Error('no diff fence');
+const d=fs.mkdtempSync(path.join(os.tmpdir(),'rel-')); fs.mkdirSync(path.join(d,'.github/workflows'),{recursive:true});
+fs.copyFileSync('.github/workflows/release.yml',path.join(d,'.github/workflows/release.yml')); fs.writeFileSync(path.join(d,'p.diff'),m[1]+'\n');
+execFileSync('git',['apply','--recount','--verbose','p.diff'],{cwd:d,stdio:'inherit'});
+const doc=YAML.parse(fs.readFileSync(path.join(d,'.github/workflows/release.yml'),'utf8')); const names=Object.keys(doc.jobs); console.log(names.join(','));
+if(names.join(',')!=='verify,publish') throw new Error('jobs'); if(doc.jobs.publish.needs!=='verify') throw new Error('needs');
+if(doc.jobs.verify.permissions['id-token']) throw new Error('verify id-token'); if(doc.jobs.verify.environment) throw new Error('verify env');
+if(doc.jobs.publish.permissions['id-token']!=='write') throw new Error('publish perms');
+if(doc.jobs.publish.steps.some(s=>/pnpm install|actions\/checkout/.test((s.run||'')+(s.uses||'')))) throw new Error('publish has checkout/install'); console.log('ok');
+```
+<!-- prettier-ignore-end -->
+
 Deviation from the brief: the tarball is passed after the flags
 (`npm publish --access public --provenance --tag "$DIST_TAG" <path>`), not as
 `npm publish ./<tarball> ...`, so that the required substring
@@ -428,14 +460,26 @@ the package spec at any position; this is not verified by a run.
   as a job output only protects the artifact in transit and at rest between
   the two jobs, not against a malicious `verify` job. This reduces what runs
   next to the OIDC token but does not remove trust in the build.
-- `prepublishOnly` (`pnpm package:check`) does not run when a tarball is
-  published, so `package:check` must keep running in `verify`; the proposed
-  file keeps it. `npm pack` runs `prepack` (the build) in `verify`.
+- `prepublishOnly` (`pnpm package:check`) is expected not to run when a
+  tarball is published (per the `npm publish` code); this is **not verified**
+  (a dry-run test is pending). `package:check` must keep running in `verify`;
+  the proposed file keeps it. `npm pack` runs `prepack` (the build) in
+  `verify`.
+- Where the proposed diff differs from
+  `docs/agent-work/ci-health/release-split-deferred.md` (the release lookup
+  and `dist_tag` stay in `verify`), this diff supersedes that file.
+- Re-runs: the artifact name is `release-tarball-${{ github.run_id }}` (no
+  `run_attempt`), computed once in `verify` and passed to `publish` as the
+  job output `artifact`. "Re-run failed jobs" of only `publish` reuses
+  `verify`'s tarball and outputs from the earlier attempt (documented GitHub
+  behaviour, not exercised). "Re-run all jobs" keeps the same `run_id`, so
+  the name repeats; `upload-artifact` v6 fails on a duplicate name unless
+  `overwrite: true`, so the upload sets `overwrite: true` and the new
+  attempt replaces the artifact. That overwrite across attempts is not
+  exercised.
 - Provenance is attached when publishing the tarball from a job that has no
   checkout; whether `--provenance` accepts this without repository metadata
   beyond `package.json` is **not verified** until a real release.
-- `actions/download-artifact` at the `v6` SHA is a new pin, and its
-  compatibility with `upload-artifact` v6 is inferred, not documented.
 - `tests/unit/release-workflow.test.ts` asserts on `release.yml` and must be
   updated in the same change:
   - the read of `jobs.publish.steps` (line 269) must read `verify` steps for
@@ -455,6 +499,16 @@ the package spec at any position; this is not verified by a run.
     `id-token: write`, the `gh release view` call and
     `npm publish --access public --provenance` are all present, and none of
     the forbidden patterns appears.
+- The OpenSpec requirement text would need a new revision, and the tests'
+  `[utest->req~...~1]` tags would be retagged to it. In
+  `openspec/changes/harden-release-workflow/specs/release-workflow/spec.md`,
+  `req~release-dist-tag-env~1` (mapped from `steps.release.outputs.dist_tag`,
+  read from `jobs.publish.steps`), `req~release-single-unit-test-run~1` (reads
+  `jobs.publish.steps`) and the prerelease-map scenarios (`jobs.publish.steps`,
+  `steps.release.outputs.dist_tag`) name the single job. ADR
+  `docs/adr/0002-release-trust-model-and-supply-chain-gates.md` already says
+  the split "would need changes to `tests/unit/release-workflow.test.ts` and
+  to the openspec release-workflow requirements".
 - New assertions worth adding to that test: `verify` has no `id-token` and no
   `environment`; `publish` has no checkout or `pnpm install` step.
 - This changes the release flow, so it needs the owner's approval, and the
