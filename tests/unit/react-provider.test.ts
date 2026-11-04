@@ -63,19 +63,20 @@ beforeEach(() => {
 const acmeYaml = 'name: Acme\n';
 
 function providerComponent(): Parameters<typeof createElement>[0] {
-  expect(providerMod.PricingRendererProvider, `${providerPath} PricingRendererProvider`).toBeTypeOf(
-    'function',
-  );
-  return providerMod.PricingRendererProvider as Parameters<typeof createElement>[0];
+  const provider = providerMod.PricingRendererProvider;
+  expect(provider, `${providerPath} PricingRendererProvider`).toBeTypeOf('function');
+  return provider as Parameters<typeof createElement>[0];
 }
 
-function filterRequest(): (
+type FilterRequest = (
   request: Loose | undefined,
   src: string | undefined,
   origins?: readonly string[],
-) => Loose | undefined {
+) => Loose | undefined;
+
+function filterRequest(): FilterRequest {
   expect(providerMod.filterProviderRequest, 'filterProviderRequest').toBeTypeOf('function');
-  return providerMod.filterProviderRequest as ReturnType<typeof filterRequest>;
+  return providerMod.filterProviderRequest as FilterRequest;
 }
 
 // Renders `PricingRenderer` with the props inside the providers, outermost first, with
@@ -139,7 +140,9 @@ describe('provider presentation precedence', () => {
   const badge = (label: string) => [{ id: label, label, tone: 'accent' as const }];
 
   it('passes the merge of the provider config, the provider and the instance presentation', async () => {
-    const configPresentation = { planBadges: { starter: badge('Config'), growth: badge('Config') } };
+    const configPresentation = {
+      planBadges: { starter: badge('Config'), growth: badge('Config') },
+    };
     const pp = { planBadges: { growth: badge('Provider') } };
     const ip = { planBadges: { starter: badge('Instance') } };
     const props = await renderWrapper({ yaml: acmeYaml, presentation: ip }, [
@@ -148,8 +151,8 @@ describe('provider presentation precedence', () => {
     expect(props.presentation).toEqual(
       mergePresentationOptions(mergePresentationOptions(configPresentation, pp), ip),
     );
-    const planBadges = (props.presentation as { planBadges: Record<string, { label: string }[]> })
-      .planBadges;
+    type Merged = { planBadges: Record<string, { label: string }[]> };
+    const planBadges = (props.presentation as Merged).planBadges;
     expect(planBadges.growth?.[0]?.label).toBe('Provider');
     expect(planBadges.starter?.[0]?.label).toBe('Instance');
   });
@@ -255,7 +258,11 @@ describe('provider request headers stay on allowed origins', () => {
 
     it('strips headers and credentials from a foreign origin, keeps the rest', () => {
       vi.stubGlobal('location', { origin: 'https://app.example.com' });
-      const result = filterRequest()({ ...request, maxBytes: 10 }, 'https://cdn.example.net/a.yml', []);
+      const result = filterRequest()(
+        { ...request, maxBytes: 10 },
+        'https://cdn.example.net/a.yml',
+        [],
+      );
       expect(result).toEqual({ timeoutMs: 5000, maxBytes: 10 });
     });
 
@@ -267,29 +274,35 @@ describe('provider request headers stay on allowed origins', () => {
     it('has no page origin on a server, so only listed origins keep headers', () => {
       expect(globalThis.location).toBeUndefined();
       const filter = filterRequest();
-      expect(filter(request, 'https://cdn.example.net/a.yml', ['https://cdn.example.net'])).toEqual(
-        request,
-      );
-      expect(filter(request, 'https://app.example.com/a.yml', ['https://cdn.example.net'])).toEqual({
-        timeoutMs: 5000,
-      });
-      expect(filter(request, 'https://cdn.example.net/a.yml')).toEqual({ timeoutMs: 5000 });
+      const cdn = ['https://cdn.example.net'];
+      const stripped = { timeoutMs: 5000 };
+      expect(filter(request, 'https://cdn.example.net/a.yml', cdn)).toEqual(request);
+      expect(filter(request, 'https://app.example.com/a.yml', cdn)).toEqual(stripped);
+      expect(filter(request, 'https://cdn.example.net/a.yml')).toEqual(stripped);
+    });
+
+    it('compares origins, not string prefixes', () => {
+      vi.stubGlobal('location', { origin: 'https://app.example.com' });
+      const filter = filterRequest();
+      const stripped = { timeoutMs: 5000 };
+      expect(filter(request, 'https://app.example.com.evil.net/a.yml', [])).toEqual(stripped);
+      expect(filter(request, 'https://app.example.com@evil.net/a.yml', [])).toEqual(stripped);
+      expect(filter(request, 'https://app.example.com:8443/a.yml', [])).toEqual(stripped);
     });
 
     it('reads each listed entry as an origin and ignores one that does not parse', () => {
       const filter = filterRequest();
-      expect(
-        filter(request, 'https://cdn.example.net/a.yml', ['not a url', 'https://cdn.example.net/path']),
-      ).toEqual(request);
-      expect(filter(request, 'https://cdn.example.net/a.yml', ['not a url'])).toEqual({
-        timeoutMs: 5000,
-      });
+      const src = 'https://cdn.example.net/a.yml';
+      const listed = ['not a url', 'https://cdn.example.net/path'];
+      expect(filter(request, src, listed)).toEqual(request);
+      expect(filter(request, src, ['not a url'])).toEqual({ timeoutMs: 5000 });
     });
 
     it('strips headers and credentials when src is not an absolute URL', () => {
       vi.stubGlobal('location', { origin: 'https://app.example.com' });
       const filter = filterRequest();
-      expect(filter(request, '/acme.yml', ['https://cdn.example.net'])).toEqual({ timeoutMs: 5000 });
+      const cdn = ['https://cdn.example.net'];
+      expect(filter(request, '/acme.yml', cdn)).toEqual({ timeoutMs: 5000 });
       expect(filter(request, undefined, [])).toEqual({ timeoutMs: 5000 });
     });
   });
@@ -319,7 +332,11 @@ describe('nearest provider wins', () => {
 describe('provider keeps the global configuration', () => {
   it('renders its children and leaves the global locale alone', () => {
     const html = renderToString(
-      createElement(providerComponent(), { config: { locale: 'es-ES' } }, createElement('b', null, 'x')),
+      createElement(
+        providerComponent(),
+        { config: { locale: 'es-ES' } },
+        createElement('b', null, 'x'),
+      ),
     );
     expect(html).toBe('<b>x</b>');
     expect(getPricingRendererConfig().locale).toBe('en-US');
@@ -356,7 +373,12 @@ describe('no provider, no added settings', () => {
 // `import type` and `export type`; a declaration whose specifiers are all inline `type` specifiers
 // still counts (verbatimModuleSyntax keeps it as a side-effect import).
 function runtimeSpecifiers(file: string): string[] {
-  const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(file, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
   const found: string[] = [];
   const visit = (node: ts.Node): void => {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
@@ -389,7 +411,8 @@ function resolveRelative(from: string, specifier: string): string {
     base,
     join(base, 'index.ts'),
   ];
-  const found = candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
+  const isFile = (path: string): boolean => existsSync(path) && statSync(path).isFile();
+  const found = candidates.find(isFile);
   if (found === undefined) throw new Error(`Cannot resolve ${specifier} from ${from}`);
   return found;
 }
@@ -420,9 +443,8 @@ describe('headless entry loads no element code', () => {
   });
 
   it('exports the provider', () => {
-    expect(headlessMod.PricingRendererProvider, `${headlessPath} PricingRendererProvider`).toBeTypeOf(
-      'function',
-    );
+    const provider = headlessMod.PricingRendererProvider;
+    expect(provider, `${headlessPath} PricingRendererProvider`).toBeTypeOf('function');
   });
 });
 
@@ -467,11 +489,17 @@ const allowedReactDom = new Set(['createPortal']);
 // property accesses of namespace or default imports. Type-only imports and qualified names in type
 // positions (`React.CSSProperties`) are not value uses.
 function reactUses(file: string): { module: string; name: string }[] {
-  const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(file, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  );
   const uses: { module: string; name: string }[] = [];
   const namespaces = new Map<string, string>();
   for (const statement of source.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    if (!ts.isImportDeclaration(statement)) continue;
+    if (!ts.isStringLiteral(statement.moduleSpecifier)) continue;
     const module = statement.moduleSpecifier.text;
     if (module !== 'react' && !module.startsWith('react-dom')) continue;
     const clause = statement.importClause;
@@ -517,9 +545,11 @@ describe('React API common to 18.2 and 19', () => {
 // [utest->req~react-headless-no-new-peer~1]
 describe('no new peer dependency', () => {
   it('lists exactly react and react-dom, optional, at the same range', () => {
-    const manifest = JSON.parse(
-      readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'),
-    ) as { peerDependencies: Loose; peerDependenciesMeta: Loose };
+    const manifestPath = fileURLToPath(new URL('../../package.json', import.meta.url));
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      peerDependencies: Loose;
+      peerDependenciesMeta: Loose;
+    };
     const range = '^18.2.0 || ^19.0.0';
     expect(manifest.peerDependencies).toEqual({ react: range, 'react-dom': range });
     expect(manifest.peerDependenciesMeta).toEqual({

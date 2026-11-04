@@ -18,6 +18,7 @@ describe('SSR-safe entrypoints', () => {
 
   // [utest->req~react-headless-entry~1]
   it('imports the headless React entry without defining an element', async () => {
+    vi.resetModules();
     const define = vi.fn();
     vi.stubGlobal('customElements', { define, get: vi.fn() });
     const headless = (await import('../../src/react/headless.js').catch(() => ({}))) as Record<
@@ -30,6 +31,8 @@ describe('SSR-safe entrypoints', () => {
 
   // [utest->req~react-headless-entry~1]
   it('imports the headless React entry without a customElements registry', async () => {
+    vi.resetModules();
+    vi.stubGlobal('customElements', undefined);
     expect(globalThis.customElements).toBeUndefined();
     const headless = (await import('../../src/react/headless.js').catch(() => ({}))) as Record<
       string,
