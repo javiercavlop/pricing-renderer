@@ -4,14 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 4174",
-    "build": "vite build"
+    "build": "tsc --noEmit && vite build"
   },
   "dependencies": {
     "pricing-renderer": "workspace:*",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-router": "7.18.5"
   },
   "devDependencies": {
+    "@types/node": "^24.1.0",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.2.0",
