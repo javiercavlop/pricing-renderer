@@ -210,7 +210,23 @@ PricingChangeReview.displayName = 'PricingChangeReview';
 
 export { PricingChangeReviewElement, PricingRendererElement };
 // [impl->req~react-entry-reexports-headless~1]
-export * from './headless.js';
+export {
+  PricingRendererProvider,
+  usePricingRendererState,
+  usePricingSelection,
+  usePricingSource,
+} from './headless.js';
+export type {
+  PricingRendererProviderProps,
+  PricingSourceSnapshot,
+  PricingSourceStatus,
+  RendererState,
+  UsePricingSelectionChange,
+  UsePricingSelectionOptions,
+  UsePricingSelectionResult,
+  UsePricingSourceProps,
+  UsePricingSourceResult,
+} from './headless.js';
 // [impl->req~react-reexports-result-type~1]
 export type {
   ApplySelectionResult,

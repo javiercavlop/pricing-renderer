@@ -193,6 +193,7 @@ export function createSelectionStore(): SelectionStore {
   // Holds the next selection when uncontrolled, then reports it, also when it equals the previous.
   const commit = (next: PricingSelection): void => {
     if (!pricing) return;
+    pending = undefined;
     const { onSelectionChange } = options;
     const selection = reconcileSelection(pricing, next).selection;
     if (options.selection === undefined) internal = selection;

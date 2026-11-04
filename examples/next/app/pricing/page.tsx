@@ -1,4 +1,5 @@
 import { PricingClient } from '../pricing-client';
+import { SourceStatus } from './source-status';
 
 const pricingYaml = String.raw`
 syntaxVersion: '3.1'
@@ -79,6 +80,7 @@ export default function PricingPage() {
           boundary.
         </span>
       </header>
+      <SourceStatus />
       <PricingClient yaml={pricingYaml} />
     </main>
   );
