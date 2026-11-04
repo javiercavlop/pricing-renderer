@@ -24,9 +24,10 @@ interface Step {
 }
 
 // Removes shell comments so that a commented-out command is never counted as a command. Full-line
-// comments go away, and so does a trailing `#` that follows whitespace outside quotes. Quote state
-// is carried across lines, `\#` is an escape and `$#` or `${#x}` are not comments. Limit: heredocs
-// and `$(...)` nesting are not modelled; a `#` after whitespace inside a heredoc body is removed.
+// comments go away, and so does a trailing `#` that follows whitespace or one of `;&|()` outside
+// quotes. Quote state is carried across lines, `\#` is an escape and `$#` or `${#x}` are not
+// comments. Limit: heredocs and `$(...)` nesting are not modelled; a `#` after whitespace inside a
+// heredoc body is removed.
 function stripComments(script: string): string {
   let quote: '"' | "'" | null = null;
   return script
@@ -46,7 +47,7 @@ function stripComments(script: string): string {
           if (char === '"') quote = null;
         } else if (char === '"' || char === "'") {
           quote = char;
-        } else if (char === '#' && (index === 0 || /\s/u.test(line.charAt(index - 1)))) {
+        } else if (char === '#' && (index === 0 || /[\s;&|()]/u.test(line.charAt(index - 1)))) {
           break;
         }
         kept += char;
@@ -71,6 +72,7 @@ interface Arm {
 }
 
 interface Mapping {
+  variable: string;
   arms: Arm[];
   start: number;
   end: number;
@@ -85,7 +87,12 @@ function findCaseMapping(code: string, variables: Set<string>): Mapping | undefi
       const selector = (arm[1] ?? '').replace(/^["']|["']$/gu, '');
       return [{ selector: selector === '*' ? null : selector, body: arm[2] ?? '' }];
     });
-    return { arms, start: match.index, end: match.index + match[0].length };
+    return {
+      variable: match[1] ?? '',
+      arms,
+      start: match.index,
+      end: match.index + match[0].length,
+    };
   }
   return undefined;
 }
@@ -108,7 +115,12 @@ function findIfMapping(code: string, variables: Set<string>): Mapping | undefine
     arms.push({ selector, body: code.slice(bodyStart, marker.index) });
     bodyStart = marker.index + marker[0].length;
     if (marker[0] === 'fi') {
-      return { arms, start: markers[first]?.index ?? 0, end: bodyStart };
+      return {
+        variable: markers[first]?.[1] ?? '',
+        arms,
+        start: markers[first]?.index ?? 0,
+        end: bodyStart,
+      };
     }
     selector = marker[0] === 'else' ? null : (marker[2] ?? '');
   }
@@ -122,26 +134,60 @@ interface DistTagWrite {
 
 function distTagWrites(text: string): DistTagWrite[] {
   return text.split('\n').flatMap((line) =>
-    [...line.matchAll(/\bdist_tag=["']?(\$?\{?\w+\}?)/gu)].map((match) => ({
+    [...line.matchAll(/\bdist_tag=["']?([^\s"';&|]*)/gu)].map((match) => ({
       value: match[1] ?? '',
       toOutput: line.includes('GITHUB_OUTPUT'),
     })),
   );
 }
 
+// Text without its quoted strings, so that words inside a message are never read as commands.
+function blankQuoted(text: string): string {
+  return text.replace(/"(?:\\[\s\S]|[^"\\])*"|'[^']*'/gu, '""');
+}
+
 // Analyses the script of the step that reads isPrerelease. Returns the problems found; an empty
-// list means: next is written only for the literal true, latest only for the literal false, the
-// default branch has a real `exit 1` command and writes no dist_tag, and an assignment inside a
-// branch reaches $GITHUB_OUTPUT only after the case or if, which the default branch never reaches.
+// list means: the read has no default and the variable is not reassigned before the mapping, next
+// is written only for the literal true, latest only for the literal false, the default branch
+// echoes an ::error:: annotation, has an unconditional real `exit 1` command and writes no
+// dist_tag, and an assignment inside a branch reaches $GITHUB_OUTPUT only after the case or if,
+// which the default branch never reaches.
+// Limit: text matching, not a shell parser. Not recognised, so a script using them fails with
+// "no case or if/elif/else mapping" or a branch problem: the words else/fi inside messages in the
+// if form, `[[ ]]`, `then` on its own line, `!=` conditions, an arm that sets another variable
+// before the output, `printf` writes and `|| exit 1`.
 function distTagMappingProblems(script: string): string[] {
   const code = stripComments(script);
-  const readPattern = /\b(\w+)=(?:"\$\(|\$\()[^)]*\.isPrerelease/gu;
-  const variables = new Set([...code.matchAll(readPattern)].map((match) => match[1] ?? ''));
+  const readPattern = /\b(\w+)=(?:"\$\(|\$\()(?:\\\n|[^\n])*?\.isPrerelease(?:\\\n|[^\n])*/gu;
+  const reads = [...code.matchAll(readPattern)];
+  const variables = new Set(reads.map((match) => match[1] ?? ''));
   const mapping = findCaseMapping(code, variables) ?? findIfMapping(code, variables);
   if (!mapping) {
-    return ['no case or if/elif/else mapping on a variable assigned from the .isPrerelease read'];
+    return [
+      'no case or if/elif/else mapping on a variable assigned from the .isPrerelease read ' +
+        '(extend distTagMappingProblems or switch to a behavioural test, design D3/R2)',
+    ];
   }
   const problems: string[] = [];
+  if (reads.some((read) => /\/\/|\|\|/u.test(read[0]))) {
+    problems.push('the .isPrerelease read supplies a fallback value (// or ||)');
+  }
+  let lastRead: (typeof reads)[number] | undefined;
+  for (const read of reads) {
+    if (read[1] === mapping.variable && read.index + read[0].length <= mapping.start) {
+      lastRead = read;
+    }
+  }
+  if (lastRead) {
+    const between = code.slice(lastRead.index + lastRead[0].length, mapping.start);
+    const reassigned = new RegExp(
+      `(?:^|[\\s;&|(])${mapping.variable}=|\\$\\{${mapping.variable}:?[-=]`,
+      'mu',
+    );
+    if (reassigned.test(between)) {
+      problems.push('the variable is reassigned or defaulted between the read and the mapping');
+    }
+  }
   const expected: Record<string, string> = { true: 'next', false: 'latest' };
   for (const selector of ['true', 'false']) {
     if (!mapping.arms.some((arm) => arm.selector === selector)) {
@@ -153,7 +199,10 @@ function distTagMappingProblems(script: string): string[] {
     const writes = distTagWrites(arm.body);
     if (arm.selector === null) {
       if (writes.length > 0) problems.push('the default branch writes dist_tag');
-      if (!/(?:^\s*|[;&]\s*)exit\s+1\b/mu.test(arm.body)) {
+      if (!/\becho\s+["']?::error::/u.test(arm.body)) {
+        problems.push('the default branch has no ::error:: annotation');
+      }
+      if (!/(?:^|;)\s*exit\s+1\b/mu.test(blankQuoted(arm.body))) {
         problems.push('the default branch has no exit 1 command');
       }
       continue;
@@ -250,6 +299,33 @@ describe('release workflow', () => {
     );
   });
 
+  // [utest->req~release-dist-tag-env~1]
+  it('does not accept a guard whose exit 1 is a comment right after a semicolon', () => {
+    const publish = [
+      'case "$DIST_TAG" in',
+      '  latest|next) ;;',
+      '  *)',
+      '    echo "::error::bad";# exit 1',
+      '    ;;',
+      'esac',
+      'npm publish --access public --provenance --tag "$DIST_TAG"',
+    ].join('\n');
+    expect(distTagGuard('DIST_TAG').test(publish)).toBe(true);
+    expect(distTagGuard('DIST_TAG').test(stripComments(publish))).toBe(false);
+  });
+
+  // [utest->req~release-dist-tag-env~1]
+  it.each([
+    ['a # inside double quotes', 'echo "a # b"; exit 1', 'echo "a # b"; exit 1'],
+    ['$# and ${#x} and an escaped #', 'echo $# ${#x} a\\#b', 'echo $# ${#x} a\\#b'],
+    ['a comment after whitespace', 'x # exit 1', 'x'],
+    ['a quote closed on a later line', 'echo "a\nb # c" # d', 'echo "a\nb # c"'],
+    ['a comment right after a semicolon', 'foo;# exit 1', 'foo;'],
+    ['a comment right after a pipe and an ampersand', 'a|# b\nc&&# d', 'a|\nc&&'],
+  ])('stripComments keeps %s as expected', (_name, input, expected) => {
+    expect(stripComments(input)).toBe(expected);
+  });
+
   // [utest->req~release-dist-tag-prerelease-map~1]
   it('maps isPrerelease true to next and false to latest and fails on anything else', () => {
     expect(releaseSteps).toHaveLength(1);
@@ -262,17 +338,25 @@ describe('release workflow', () => {
       'release_json="$(gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,tagName)"',
       'is_prerelease="$(jq -r \'.isPrerelease\' <<<"$release_json")"',
     ];
-    const failBranch = [
-      '    echo "::error::Unexpected isPrerelease value: $is_prerelease"',
-      '    exit 1',
-    ];
+    const errorLine = '    echo "::error::Unexpected isPrerelease value: $is_prerelease"';
+    const exitLine = '    exit 1';
+    const failBranch = [errorLine, exitLine];
+    const withRead = (script: string, read: string): string =>
+      script.replace(readLines[1] ?? '', () => read);
     const output = ['echo "dist_tag=$dist_tag" >>"$GITHUB_OUTPUT"'];
     const next = 'dist_tag=next';
     const latest = 'dist_tag=latest';
     const direct = (tag: string): string => `echo "dist_tag=${tag}" >>"$GITHUB_OUTPUT"`;
-    const caseScript = (trueArm: string, falseArm: string, other: string[], after: string[]) =>
+    const caseScript = (
+      trueArm: string,
+      falseArm: string,
+      other: string[],
+      after: string[],
+      between: string[] = [],
+    ) =>
       [
         ...readLines,
+        ...between,
         'case "$is_prerelease" in',
         `  true) ${trueArm} ;;`,
         `  false) ${falseArm} ;;`,
@@ -294,8 +378,8 @@ describe('release workflow', () => {
         'fi',
         ...after,
       ].join('\n');
-    const mapped = (other: string[], after: string[]): string =>
-      caseScript(next, latest, other, after);
+    const mapped = (other: string[], after: string[], between: string[] = []): string =>
+      caseScript(next, latest, other, after, between);
 
     // [utest->req~release-dist-tag-prerelease-map~1]
     it.each([
@@ -357,13 +441,69 @@ describe('release workflow', () => {
       ],
       [
         'a case whose default arm only has exit 1 in a comment',
-        mapped([failBranch[0] ?? '', '    # exit 1'], output),
+        mapped([errorLine, '    # exit 1'], output),
         /no exit 1 command/u,
       ],
       [
         'an if whose else only has exit 1 in a comment',
-        ifScript(next, latest, [failBranch[0] ?? '', '  # exit 1'], output),
+        ifScript(next, latest, [errorLine, '  # exit 1'], output),
         /no exit 1 command/u,
+      ],
+      [
+        'a default arm whose exit 1 is only inside a quoted message',
+        mapped([errorLine, '    echo "failed; exit 1"'], output),
+        /no exit 1 command/u,
+      ],
+      [
+        'a default arm whose exit 1 is conditional',
+        mapped([errorLine, '    [ -n "$is_prerelease" ] && exit 1'], output),
+        /no exit 1 command/u,
+      ],
+      [
+        'a default arm without an ::error:: annotation',
+        mapped([exitLine], output),
+        /no ::error:: annotation/u,
+      ],
+      [
+        'a default arm that writes an empty dist_tag to the output',
+        mapped([errorLine, '    echo "dist_tag=" >>"$GITHUB_OUTPUT"', exitLine], output),
+        /default branch writes dist_tag/u,
+      ],
+      [
+        'a default arm that writes dist_tag through a command substitution',
+        mapped([errorLine, '    echo "dist_tag=$(printf latest)"', exitLine], output),
+        /default branch writes dist_tag/u,
+      ],
+      [
+        'a read with a jq alternative operator',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r \'.isPrerelease // false\' <<<"$release_json")"',
+        ),
+        /fallback value/u,
+      ],
+      [
+        'a read with an || fallback',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r \'.isPrerelease\' <<<"$release_json" || echo false)"',
+        ),
+        /fallback value/u,
+      ],
+      [
+        'a ${var:-} default between the read and the mapping',
+        mapped(failBranch, output, ['is_prerelease="${is_prerelease:-false}"']),
+        /reassigned or defaulted/u,
+      ],
+      [
+        'a := default between the read and the mapping',
+        mapped(failBranch, output, [': "${is_prerelease:=false}"']),
+        /reassigned or defaulted/u,
+      ],
+      [
+        'a reassignment between the read and the mapping',
+        mapped(failBranch, output, ['is_prerelease=false']),
+        /reassigned or defaulted/u,
       ],
       [
         'a default arm whose exit 1 is only text in an echo',
