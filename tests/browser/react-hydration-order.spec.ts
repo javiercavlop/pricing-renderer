@@ -15,11 +15,16 @@ const ORDERINGS = DEFINES.flatMap((define) => HYDRATES.map((hydrate) => ({ defin
 type LateStore = {
   __recoverable?: string[];
   __lateHost?: Element | null;
+  __lateBefore?: { childCount: number; innerHTML: string };
+  __lateCommits?: number;
+  __lateHydrateCalled?: boolean;
+  __lateDefinedAtHtml?: boolean;
 };
 
-// KNOWN LIMITATION (docs/react.md, 'Order: element upgrade, hydration...'). Lit renders the
+// KNOWN LIMITATION (docs/react.md, 'Known limitation: hydration of the element'). Lit renders the
 // element's light DOM before React hydrates, so React reports a recoverable mismatch and
 // regenerates the host node. Only hydration inside flushSync, before Lit's microtask, is clean.
+// The measured harness uses all four render props (default slots).
 // The follow-up change 'wrapper SSR hydration fix' flips the 1 entries to 0, and the host
 // expectation to kept. Do not 'fix' this test, fix the wrapper.
 //
@@ -52,21 +57,44 @@ test.describe('hydration order of the element and React', () => {
       await expect(page.locator(CTAS)).toHaveCount(3);
       await expect(page.locator(SUMMARY)).toHaveCount(1);
 
-      // hydrateRoot has run; a short settle lets React report its recoverable errors.
-      await page.waitForFunction(
-        () => (window as unknown as { __lateHydrateCalled?: boolean }).__lateHydrateCalled === true,
-      );
-      await page.waitForTimeout(300);
+      const expected = EXPECTED_RECOVERABLE[`${define}/${hydrate}`];
+
+      // hydrateRoot has run and the sibling probe has committed.
+      await page.waitForFunction(() => {
+        const store = window as unknown as LateStore;
+        return store.__lateHydrateCalled === true && (store.__lateCommits ?? 0) >= 1;
+      });
+      // React reports a recoverable error during that commit: wait for it, bounded.
+      if (expected > 0) {
+        await page.waitForFunction(
+          () => ((window as unknown as LateStore).__recoverable ?? []).length > 0,
+          undefined,
+          { timeout: 5000 },
+        );
+      }
+      // With 0 expected errors there is no signal to wait for; a short settle after the commit
+      // lets a late error show up, so a regression is still caught.
+      await page.waitForTimeout(100);
 
       const seen = await page.evaluate(() => {
         const store = window as unknown as LateStore;
         return {
           recoverable: store.__recoverable ?? [],
           hostKept: document.querySelector('pricing-renderer') === store.__lateHost,
+          beforeChildCount: store.__lateBefore?.childCount,
+          definedAtHtml: store.__lateDefinedAtHtml,
         };
       });
 
-      const expected = EXPECTED_RECOVERABLE[`${define}/${hydrate}`];
+      // Preconditions of the hazard; they hold before and after the wrapper fix, so a green row
+      // means 'fixed', not 'the harness stopped reproducing the order'.
+      expect(seen.definedAtHtml).toBe(define === 'before');
+      if (hydrate === 'sync') {
+        expect(seen.beforeChildCount).toBe(0);
+      } else {
+        expect(seen.beforeChildCount).toBeGreaterThan(0);
+      }
+
       expect(seen.recoverable).toHaveLength(expected);
       if (expected > 0) {
         expect(seen.recoverable[0]).toContain('Hydration failed');

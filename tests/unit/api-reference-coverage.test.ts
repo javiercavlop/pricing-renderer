@@ -1,5 +1,6 @@
 // Guard for the "API reference coverage" signal of objective O3 (INTENT.md, "API reference coverage").
-// Proposal P-20261104-2. It covers value exports only; type exports, attributes, events and parts are
+// Proposal P-20261104-2. The guard is a mention check (each value export appears somewhere in the
+// code text of docs/api-reference.md), not proof that the export is fully documented. It covers value exports only; type exports, attributes, events and parts are
 // not part of this guard. Every value export of every JavaScript entry of the package must appear in the
 // code text (fenced blocks and inline spans) of docs/api-reference.md, or sit on the PENDING list below.
 import { existsSync, readFileSync } from 'node:fs';

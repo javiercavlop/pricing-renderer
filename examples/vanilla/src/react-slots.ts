@@ -45,6 +45,8 @@ declare global {
     __lateCommits?: number;
     __lateHost?: Element | null;
     __lateHydrateCalled?: boolean;
+    // Whether pricing-renderer was already defined when the server HTML was set.
+    __lateDefinedAtHtml?: boolean;
     // Set by the inline script of react-slots.html; releases the held customElements.define calls.
     __releaseDefinitions?: () => void;
   }
@@ -338,6 +340,7 @@ async function hydrateLate(): Promise<void> {
     });
   };
   root.innerHTML = renderToString(buildTree());
+  window.__lateDefinedAtHtml = customElements.get('pricing-renderer') !== undefined;
   resetCounts();
   if (hydrate === 'sync') {
     flushSync(() => {
