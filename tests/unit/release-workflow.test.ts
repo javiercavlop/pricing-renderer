@@ -57,12 +57,29 @@ function stripComments(script: string): string {
     .join('\n');
 }
 
-// The guard that rejects every dist tag other than latest and next, as text in a publish script.
-function distTagGuard(name: string): RegExp {
-  const notArmEnd = '(?:(?!;;|esac)[\\s\\S])*?';
-  return new RegExp(
-    `case\\s+"\\$\\{?${name}\\}?"\\s+in\\s+latest\\|next\\)\\s*;;\\s*\\*\\)${notArmEnd}\\bexit 1\\s*;;\\s*esac`,
-  );
+// Text without its quoted strings, so that words inside a message are never read as commands.
+function blankQuoted(text: string): string {
+  return text.replace(/"(?:\\[\s\S]|[^"\\])*"|'[^']*'/gu, '""');
+}
+
+// An `exit 1` that starts a command (line start or after `;`), in text without quoted strings.
+const exitCommand = /(?:^|;)\s*exit\s+1\b/mu;
+// Syntax that makes a command conditional or nested: a compound-command keyword or `{` at the
+// start of a command, or a line that ends in `&&` or `|` (the next line then depends on it).
+const conditionalSyntax =
+  /(?:^|[;&|(])\s*(?:\{|(?:if|then|elif|else|fi|case|esac|while|until|for|do|done)\b)|(?:&&|\|)[ \t]*$/mu;
+
+// The guard that rejects every dist tag other than latest and next, in a publish script whose
+// comments are already removed. Returns the match, or null when the script has no such case or the
+// `*)` arm lacks an unconditional `exit 1` command (a word in a message or a conditional exit does
+// not count).
+function distTagGuard(name: string, code: string): RegExpExecArray | null {
+  const notArmEnd = '(?:(?!;;|esac)[\\s\\S])*';
+  const match = new RegExp(
+    `case\\s+"\\$\\{?${name}\\}?"\\s+in\\s+latest\\|next\\)\\s*;;\\s*\\*\\)(${notArmEnd});;\\s*esac`,
+  ).exec(code);
+  const arm = blankQuoted(match?.[1] ?? '');
+  return match && exitCommand.test(arm) && !conditionalSyntax.test(arm) ? match : null;
 }
 
 // One branch of a case or an if/elif/else; `selector` is null for the default branch.
@@ -141,21 +158,27 @@ function distTagWrites(text: string): DistTagWrite[] {
   );
 }
 
-// Text without its quoted strings, so that words inside a message are never read as commands.
-function blankQuoted(text: string): string {
-  return text.replace(/"(?:\\[\s\S]|[^"\\])*"|'[^']*'/gu, '""');
+// The filter argument of an .isPrerelease read: the quoted string that holds `.isPrerelease`, or
+// the bare word.
+function isPrereleaseFilter(read: string): string {
+  const quoted =
+    /'([^']*\.isPrerelease[^']*)'/u.exec(read) ?? /"([^"]*\.isPrerelease[^"]*)"/u.exec(read);
+  return (quoted?.[1] ?? /[^\s)"'<]*\.isPrerelease[^\s)"'<]*/u.exec(read)?.[0] ?? '').trim();
 }
 
 // Analyses the script of the step that reads isPrerelease. Returns the problems found; an empty
-// list means: the read has no default and the variable is not reassigned before the mapping, next
-// is written only for the literal true, latest only for the literal false, the default branch
-// echoes an ::error:: annotation, has an unconditional real `exit 1` command and writes no
-// dist_tag, and an assignment inside a branch reaches $GITHUB_OUTPUT only after the case or if,
-// which the default branch never reaches.
+// list means: the read filter is exactly `.isPrerelease` with no default and the variable is not
+// reassigned before the mapping, next is written only for the literal true, latest only for the
+// literal false, the default branch echoes an ::error:: annotation, has an unconditional real
+// `exit 1` command (not after `if`, `then`, `&&`, `||`, and not inside a nested if or case) and
+// writes no dist_tag, and an assignment inside a branch reaches $GITHUB_OUTPUT only after the case
+// or if, which the default branch never reaches.
 // Limit: text matching, not a shell parser. Not recognised, so a script using them fails with
 // "no case or if/elif/else mapping" or a branch problem: the words else/fi inside messages in the
 // if form, `[[ ]]`, `then` on its own line, `!=` conditions, an arm that sets another variable
-// before the output, `printf` writes and `|| exit 1`.
+// before the output, `printf` writes and `|| exit 1`. The conditional exit check looks for
+// keywords and a trailing `&&` or `|` after quoted strings are blanked; a jq filter that holds a
+// quote, or an exit hidden behind a function or an eval, is not modelled.
 function distTagMappingProblems(script: string): string[] {
   const code = stripComments(script);
   const readPattern = /\b(\w+)=(?:"\$\(|\$\()(?:\\\n|[^\n])*?\.isPrerelease(?:\\\n|[^\n])*/gu;
@@ -171,6 +194,9 @@ function distTagMappingProblems(script: string): string[] {
   const problems: string[] = [];
   if (reads.some((read) => /\/\/|\|\|/u.test(read[0]))) {
     problems.push('the .isPrerelease read supplies a fallback value (// or ||)');
+  }
+  if (reads.some((read) => isPrereleaseFilter(read[0]) !== '.isPrerelease')) {
+    problems.push('the jq filter of the .isPrerelease read is not exactly .isPrerelease');
   }
   let lastRead: (typeof reads)[number] | undefined;
   for (const read of reads) {
@@ -202,8 +228,11 @@ function distTagMappingProblems(script: string): string[] {
       if (!/\becho\s+["']?::error::/u.test(arm.body)) {
         problems.push('the default branch has no ::error:: annotation');
       }
-      if (!/(?:^|;)\s*exit\s+1\b/mu.test(blankQuoted(arm.body))) {
+      const armCommands = blankQuoted(arm.body);
+      if (!exitCommand.test(armCommands)) {
         problems.push('the default branch has no exit 1 command');
+      } else if (conditionalSyntax.test(armCommands)) {
+        problems.push('the default branch has a conditional or nested exit 1');
       }
       continue;
     }
@@ -274,7 +303,7 @@ describe('release workflow', () => {
   it('rejects any dist tag other than latest and next before publishing', () => {
     expect(distTagName).toBeDefined();
     const code = stripComments(publishRun);
-    const match = distTagGuard(distTagName ?? '').exec(code);
+    const match = distTagGuard(distTagName ?? '', code);
     const publishAt = code.indexOf('npm publish');
     expect(match).not.toBeNull();
     expect((match?.index ?? Infinity) + (match?.[0].length ?? 0)).toBeLessThanOrEqual(publishAt);
@@ -292,11 +321,9 @@ describe('release workflow', () => {
       'esac',
       'npm publish --access public --provenance --tag "$DIST_TAG"',
     ].join('\n');
-    expect(distTagGuard('DIST_TAG').test(publish)).toBe(true);
-    expect(distTagGuard('DIST_TAG').test(stripComments(publish))).toBe(false);
-    expect(distTagGuard('DIST_TAG').test(stripComments(publish.replace('# exit', 'exit')))).toBe(
-      true,
-    );
+    expect(distTagGuard('DIST_TAG', stripComments(publish))).toBeNull();
+    const uncommented = stripComments(publish.replace('# exit', 'exit'));
+    expect(distTagGuard('DIST_TAG', uncommented)).not.toBeNull();
   });
 
   // [utest->req~release-dist-tag-env~1]
@@ -310,8 +337,52 @@ describe('release workflow', () => {
       'esac',
       'npm publish --access public --provenance --tag "$DIST_TAG"',
     ].join('\n');
-    expect(distTagGuard('DIST_TAG').test(publish)).toBe(true);
-    expect(distTagGuard('DIST_TAG').test(stripComments(publish))).toBe(false);
+    expect(distTagGuard('DIST_TAG', stripComments(publish))).toBeNull();
+  });
+
+  // [utest->req~release-dist-tag-env~1]
+  it('does not accept a guard whose exit 1 follows a semicolon inside a trailing comment', () => {
+    const publish = [
+      'case "$DIST_TAG" in',
+      '  latest|next) ;;',
+      '  *)',
+      '    echo "::error::bad" # note; exit 1',
+      '    ;;',
+      'esac',
+      'npm publish --access public --provenance --tag "$DIST_TAG"',
+    ].join('\n');
+    expect(distTagGuard('DIST_TAG', publish)).not.toBeNull();
+    expect(distTagGuard('DIST_TAG', stripComments(publish))).toBeNull();
+  });
+
+  // [utest->req~release-dist-tag-env~1]
+  it.each([
+    ['an exit command after a semicolon', '*) echo bad; exit 1 ;;', true],
+    ['an exit command on its own line', '*)\n    echo bad\n    exit 1\n    ;;', true],
+    ['exit 1 only as words of a command', '*) echo bad exit 1 ;;', false],
+    ['exit 1 only inside a quoted message', '*) echo "bad; exit 1" ;;', false],
+    ['an exit 1 behind &&', '*) [ -n "$DIST_TAG" ] && exit 1 ;;', false],
+    ['an exit 1 behind ||', '*) [ -z "$DIST_TAG" ] || exit 1 ;;', false],
+    [
+      'an exit 1 after && at the end of a line',
+      '*)\n    [ -n "$DIST_TAG" ] &&\n    exit 1\n    ;;',
+      false,
+    ],
+    ['an exit 1 inside an if', '*)\n    if [ -n "$DIST_TAG" ]; then exit 1; fi\n    ;;', false],
+    [
+      'an exit 1 inside a multi-line if',
+      '*)\n    if [ -n "$DIST_TAG" ]\n    then\n      exit 1\n    fi\n    ;;',
+      false,
+    ],
+  ])('distTagGuard on a guard with %s', (_name, arm, accepted) => {
+    const publish = [
+      'case "$DIST_TAG" in',
+      '  latest|next) ;;',
+      `  ${arm}`,
+      'esac',
+      'npm publish --access public --provenance --tag "$DIST_TAG"',
+    ].join('\n');
+    expect(distTagGuard('DIST_TAG', stripComments(publish)) !== null).toBe(accepted);
   });
 
   // [utest->req~release-dist-tag-env~1]
@@ -380,6 +451,17 @@ describe('release workflow', () => {
       ].join('\n');
     const mapped = (other: string[], after: string[], between: string[] = []): string =>
       caseScript(next, latest, other, after, between);
+    const caseArms = (arms: string[]): string =>
+      [
+        ...readLines,
+        'case "$is_prerelease" in',
+        ...arms,
+        '  *)',
+        ...failBranch,
+        '    ;;',
+        'esac',
+        ...output,
+      ].join('\n');
 
     // [utest->req~release-dist-tag-prerelease-map~1]
     it.each([
@@ -562,6 +644,86 @@ describe('release workflow', () => {
         'a latest write after the mapping',
         mapped(failBranch, [direct('latest')]),
         /dist_tag=latest is written after the mapping/u,
+      ],
+      [
+        'a case with only a true arm',
+        caseArms([`  true) ${next} ;;`]),
+        /no branch selected by the literal false/u,
+      ],
+      [
+        'a case with only a false arm',
+        caseArms([`  false) ${latest} ;;`]),
+        /no branch selected by the literal true/u,
+      ],
+      [
+        'a true arm that writes nothing',
+        caseArms(['  true) : ;;', `  false) ${latest} ;;`]),
+        /does not write dist_tag=next/u,
+      ],
+      [
+        'a false arm that writes nothing',
+        caseArms([`  true) ${next} ;;`, '  false) : ;;']),
+        /does not write dist_tag=latest/u,
+      ],
+      [
+        'one arm for true|false that writes next',
+        caseArms([`  true|false) ${next} ;;`]),
+        /no branch selected/u,
+      ],
+      [
+        'a read filter that compares with true',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r \'.isPrerelease == true\' <<<"$release_json")"',
+        ),
+        /not exactly \.isPrerelease/u,
+      ],
+      [
+        'a read filter with if ... then',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r \'if .isPrerelease then "true" else "false" end\' <<<"$release_json")"',
+        ),
+        /not exactly \.isPrerelease/u,
+      ],
+      [
+        'a read filter with and true',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r \'.isPrerelease and true\' <<<"$release_json")"',
+        ),
+        /not exactly \.isPrerelease/u,
+      ],
+      [
+        'a read filter in double quotes that is not exact',
+        withRead(
+          mapped(failBranch, output),
+          'is_prerelease="$(jq -r ".isPrerelease == true" <<<"$release_json")"',
+        ),
+        /not exactly \.isPrerelease/u,
+      ],
+      [
+        'a default arm whose exit 1 is after then on the same line',
+        mapped([errorLine, '    if [ -n "$is_prerelease" ]; then exit 1; fi'], output),
+        /no exit 1 command/u,
+      ],
+      [
+        'a default arm whose exit 1 is inside a multi-line if',
+        mapped(
+          [errorLine, '    if [ -n "$is_prerelease" ]', '    then', '      exit 1', '    fi'],
+          output,
+        ),
+        /conditional or nested/u,
+      ],
+      [
+        'a default arm whose exit 1 is after && at the end of a line',
+        mapped([errorLine, '    [ -n "$is_prerelease" ] &&', '      exit 1'], output),
+        /conditional or nested/u,
+      ],
+      [
+        'a default arm whose exit 1 is after || at the end of a line',
+        mapped([errorLine, '    [ -z "$is_prerelease" ] ||', '      exit 1'], output),
+        /conditional or nested/u,
       ],
       [
         'a mapping on a variable that does not hold the isPrerelease read',

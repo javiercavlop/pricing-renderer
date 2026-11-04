@@ -1,5 +1,7 @@
 # Tasks: release-dist-tag-fail-closed
 
+Line numbers are at base `c0c926d`.
+
 Rules for every slice:
 
 - One capability (`release-workflow`), at most 300 diff lines per slice without tests. Order: S0,
