@@ -1,1 +1,1 @@
-T1 done and integrated. Push, open PR, panel (reviewer + test-reviewer), ready.
+Round 2 panel on pushed head, then set_review_package and lead_ready.
