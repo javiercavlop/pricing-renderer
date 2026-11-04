@@ -73,12 +73,12 @@ describe('renderer state store: element events', () => {
 
     target.dispatchEvent(readyEvent('starter'));
     const afterReady = store.getSnapshot();
-    expect(afterReady?.pricing.saasName).toBe('Acme Cloud');
+    expect(afterReady?.pricing.metadata.saasName).toBe('Acme Cloud');
     expect(afterReady?.selection.planId).toBe('starter');
 
     target.dispatchEvent(changeEvent('growth'));
     const afterChange = store.getSnapshot();
-    expect(afterChange?.pricing.saasName).toBe('Acme Cloud');
+    expect(afterChange?.pricing.metadata.saasName).toBe('Acme Cloud');
     expect(afterChange?.pricing).toBe(afterReady?.pricing);
     expect(afterChange?.selection.planId).toBe('growth');
     expect(afterChange?.resolved).toEqual(resolvePricing(acme, selectionOf('growth')));
@@ -257,7 +257,7 @@ describe('renderer state store: early listening', () => {
     store.attach(target);
     expect(store.getSnapshot()).toBeUndefined();
     await Promise.resolve();
-    expect(store.getSnapshot()?.pricing.saasName).toBe('Acme Cloud');
+    expect(store.getSnapshot()?.pricing.metadata.saasName).toBe('Acme Cloud');
   });
 });
 
@@ -307,7 +307,7 @@ describe('renderer state store: applySelection', () => {
     expect(target.applySelection).toHaveBeenCalledWith({ planId: 'enterprise' });
     expect((result as ApplyResult).applied).toBe(true);
     expect(store.getSnapshot()?.selection.planId).toBe('enterprise');
-    expect(store.getSnapshot()?.pricing.saasName).toBe('Acme Cloud');
+    expect(store.getSnapshot()?.pricing.metadata.saasName).toBe('Acme Cloud');
     expect(store.getSnapshot()).not.toBe(snapshot);
     expect(listener).toHaveBeenCalledTimes(1);
   });

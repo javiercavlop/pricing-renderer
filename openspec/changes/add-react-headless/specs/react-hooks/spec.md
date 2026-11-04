@@ -505,7 +505,7 @@ Needs: impl, utest
 
 - **GIVEN** `store = createRendererStateStore()` after `store.attach(target)`, `target` a Node `EventTarget`
 - **WHEN** `pricing-ready` with the acme pricing and then `pricing-selection-change` with plan `growth` are dispatched on `target`
-- **THEN** `getSnapshot().pricing.saasName` is `Acme Cloud` and `getSnapshot().selection.planId` is `growth`
+- **THEN** `getSnapshot().pricing.metadata.saasName` is `Acme Cloud` and `getSnapshot().selection.planId` is `growth`
 - **AND** on a new store attached to a new target, a `pricing-selection-change` before any `pricing-ready` leaves `getSnapshot()` `undefined`
 
 ### Requirement: Renderer state snapshot is cached
@@ -559,7 +559,7 @@ Needs: impl, utest
 
 - **GIVEN** `store = createRendererStateStore()` and a Node `EventTarget` that queues a `pricing-ready` with the acme pricing as a microtask
 - **WHEN** `store.attach(target)` is called in the same synchronous call and the microtask runs
-- **THEN** `getSnapshot().pricing.saasName` is `Acme Cloud`
+- **THEN** `getSnapshot().pricing.metadata.saasName` is `Acme Cloud`
 
 #### Scenario: Attach from the layout effect
 
