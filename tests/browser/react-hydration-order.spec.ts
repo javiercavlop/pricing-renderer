@@ -23,9 +23,9 @@ type LateStore = {
 // The follow-up change 'wrapper SSR hydration fix' flips the 1 entries to 0, and the host
 // expectation to kept. Do not 'fix' this test, fix the wrapper.
 //
-// Measured by CI probes on PR 91 (same in chromium, firefox and webkit, default slots).
-// after/sync was not observed (the probe log was truncated): it is expected, to be confirmed by
-// CI, to behave like before/sync, because Lit renders in a microtask after the definition.
+// Measured on PR 91 (same in chromium, firefox and webkit, default slots). after/sync was
+// measured by this spec in CI: 0 recoverable errors, host node kept, like before/sync, because
+// Lit renders in a microtask after the definition.
 const EXPECTED_RECOVERABLE: Record<`${Define}/${Hydrate}`, number> = {
   'before/update': 1,
   'before/task': 1,

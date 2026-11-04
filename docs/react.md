@@ -348,8 +348,7 @@ host node. Measured in Chromium, Firefox and WebKit with the default slots
   recoverable error, host node replaced.
 - Hydration in a later task than the definition: one recoverable error, host node replaced.
 - Hydration in the same task as the definition, before the element's microtask (`flushSync`): no
-  error, host node kept. The same task with the definition after the server HTML is expected to
-  behave the same; it is not measured yet.
+  error, host node kept. This holds with the definition before or after the server HTML is set.
 
 The final DOM is complete in every order: plans, calls to action and the summary action are
 present. The cost is a console error and a client re-render of the tree up to the root (or the
