@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PricingClient } from '../pricing-client';
+import { PricingIsland } from '../pricing-island';
 import { pricingYaml } from '../pricing-yaml';
 import { SourceStatus } from './source-status';
 
@@ -18,7 +18,7 @@ export default function PricingPage() {
       <nav>
         <Link href="/change">Review a plan change</Link>
       </nav>
-      <PricingClient yaml={pricingYaml} />
+      <PricingIsland yaml={pricingYaml} />
     </main>
   );
 }

@@ -485,6 +485,11 @@ uses `setAttribute`, user input, or events dispatched from `updated()`.
   accepts an absolute `https://` link to another host, so a host that needs same-site links checks
   `href` itself (`req~react-slot-href-safe~1`).
 
+- [ ] Wrapper SSR hydration fix (follow-up change). Open, not met here. The wrapper's server HTML
+      is an empty tag; hydrating after the element has rendered gives one recoverable hydration
+      error and a replaced host node (the final DOM is complete). Documented with a workaround in
+      `docs/react.md` and `docs/nextjs.md`; the fix changes `src/react`.
+
 ## Traceability checklist
 
 - `selection-logic`: impl in `src/core/selection-change.ts`, `src/core/price-stabilizer.ts`,

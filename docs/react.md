@@ -317,9 +317,11 @@ that the element does not render: `hero`, `metadata`, `billing`, `variables`, `p
 - `pricing-renderer/react` imports the element definition, so importing the entry registers the
   custom element. Import it at the top of your client module, so the element is defined before
   React hydrates or commits the tree that contains it. The element never renders on the server;
-  until it is defined and has rendered, the tag is empty.
+  the server HTML of the wrapper is an empty `<pricing-renderer>` tag. Read the next section: this
+  import order is not enough to avoid a hydration error.
 - Render props are client only. The server render and the first client render call no render
-  prop and hold no portal, so hydration sees the same markup as the server and cannot mismatch.
+  prop and hold no portal. That holds for the portals only: the element's own light DOM is a
+  separate matter (see [Known limitation](#known-limitation-hydration-of-the-element)).
 - After the first client commit, the wrapper reads the slot nodes that already exist. It also
   listens to `pricing-slots-change`, whose listener is set by the same commit, before the wrapper's
   own effect. The slot nodes exist only once the element has rendered, and the wrapper reads
@@ -329,6 +331,62 @@ that the element does not render: `hero`, `metadata`, `billing`, `variables`, `p
   prop removed later clears its portals. A node the element no longer reports gets no portal.
 - The summary context needs the element's state. A summary node gets no output until the element
   has a ready state to read.
+
+### Known limitation: hydration of the element
+
+The server HTML of the wrapper is an empty `<pricing-renderer>` tag. The element renders its light
+DOM on the client, in a microtask after it is defined and connected (before it has its props it
+shows an error shell, `section.pr-shell.pr-error`, with whitespace text). If React hydrates after
+that render, the host node no longer matches the server HTML. React logs one recoverable error
+(`Hydration failed because the server rendered HTML didn't match the client`) and regenerates the
+host node. Measured in Chromium, Firefox and WebKit with the default slots
+(`examples/vanilla/react-slots.html?mode=hydrate-late`, `tests/browser/react-hydration-order.spec.ts`):
+
+- Element defined before the server HTML is set, hydration after the element's first update: one
+  recoverable error, host node replaced.
+- Element defined after the server HTML is set, hydration after the element's first update: one
+  recoverable error, host node replaced.
+- Hydration in a later task than the definition: one recoverable error, host node replaced.
+- Hydration in the same task as the definition, before the element's microtask (`flushSync`): no
+  error, host node kept. The same task with the definition after the server HTML is expected to
+  behave the same; it is not measured yet.
+
+The final DOM is complete in every order: plans, calls to action and the summary action are
+present. The cost is a console error and a client re-render of the tree up to the root (or the
+nearest `Suspense` boundary). The UI is not broken.
+
+A normal Next.js App Router page defines the element when its client bundle loads and hydrates in a
+later task. That is the common order, so it gets the error.
+
+This is a known limitation of the current wrapper. A follow-up change, "wrapper SSR hydration fix",
+is planned to fix it in `src/react`.
+
+Workaround: define the element after hydration, so React creates the host node on the client
+instead of hydrating it. Do not import `pricing-renderer/react` at the top of the module that
+hydrates. Load it with a dynamic import after mount: a client component imports it in an effect
+and renders the wrapper once it is loaded.
+
+```tsx
+'use client';
+
+import { useEffect, useState, type ComponentType } from 'react';
+import type { PricingRendererProps } from 'pricing-renderer/react';
+
+export function LatePricing(props: PricingRendererProps) {
+  const [Renderer, setRenderer] = useState<ComponentType<PricingRendererProps> | undefined>();
+  useEffect(() => {
+    void import('pricing-renderer/react').then((mod) => setRenderer(() => mod.PricingRenderer));
+  }, []);
+  if (Renderer === undefined) return <div style={{ minHeight: 480 }} aria-busy="true" />;
+  return <Renderer {...props} />;
+}
+```
+
+In Next.js, use `next/dynamic` with `ssr: false` inside a Client Component (the App Router allows
+`ssr: false` only in Client Components); see the [Next.js guide](./nextjs.md#hydration-of-the-element).
+
+With the workaround the wrapper does not render on the server. It never did: the server HTML was
+the empty tag. Reserve space with a placeholder to avoid layout shift.
 
 ### Render the context as text
 
@@ -351,7 +409,9 @@ diagnostic `message` and `path` come from the pricing document or the host's dat
   the wrapper and the hooks in a client component ([Next.js guide](./nextjs.md)).
 - Importing either entry on the server is safe: nothing touches the DOM at import time.
 - The element is not server-rendered. The wrapper's full content appears after hydration; render
-  props appear after that, as described above.
+  props appear after that, as described above. Hydrating the wrapper can log a recoverable
+  hydration error; see the [known limitation](#known-limitation-hydration-of-the-element) and its
+  workaround.
 - Hooks are server-safe. `usePricingSource` resolves `pricing` and `yaml` during render and never
   loads `src` on the server. `usePricingSelection` is pure and renders the same on the server and
   the client. `usePricingRendererState` returns `undefined` on the server.
