@@ -9,13 +9,17 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // render prop output carries a data-testid. This spec has not been run in the authoring
 // environment (no browser there).
 
-type Mode = 'all' | 'plan' | 'summary' | 'none' | 'error' | 'loading' | 'late' | 'hydrate';
+type Mode = 'all' | 'plan' | 'summary' | 'error' | 'error-yaml' | 'loading' | 'late' | 'hydrate';
+
+type Diagnostic = { code: string };
+type ErrorContext = { version: number; diagnostics: Diagnostic[] };
 
 type Store = {
+  __probe?: Record<string, number>;
+  __ref?: HTMLElement;
+  __errorContexts?: ErrorContext[];
   __actions?: { actionId: string; planId: string }[];
   __recoverable?: string[];
-  __renderCalls?: number;
-  __renderHistory?: { value: number; slotNodes: number }[];
   __marks?: HTMLElement[];
 };
 
@@ -55,15 +59,19 @@ async function gated(page: Page): Promise<() => void> {
   return release;
 }
 
-// Sets properties on the element after ready, as a host would; the wrapper does not render again.
-const setOnElement = (page: Page, props: Record<string, unknown>): Promise<void> =>
-  page.evaluate(async (props) => {
-    const element = document.querySelector('#root pricing-renderer') as HTMLElement & {
-      updateComplete: Promise<unknown>;
-    };
-    Object.assign(element, props);
-    await element.updateComplete;
-  }, props);
+const errorContexts = (page: Page): Promise<ErrorContext[]> =>
+  page.evaluate(() => (window as unknown as Store).__errorContexts ?? []);
+
+async function lastErrorVersion(page: Page): Promise<number | undefined> {
+  return (await errorContexts(page)).at(-1)?.version;
+}
+
+const refApplySelection = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const element = (window as unknown as Store).__ref as ResolvedElement;
+    const result = element.applySelection({ planId: 'growth' }) as { applied: boolean };
+    return result.applied;
+  });
 
 const actions = (page: Page): Promise<{ actionId: string; planId: string }[]> =>
   page.evaluate(() => (window as unknown as Store).__actions ?? []);
@@ -172,9 +180,9 @@ test.describe('plan CTA render context', () => {
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-selected', 'false');
     for (const planId of PLAN_IDS) {
       const cta = ctaOf(page, planId);
-      await expect(cta).toHaveAttribute('data-current', '');
-      await expect(cta).toHaveAttribute('data-pending', '');
-      await expect(cta).toHaveAttribute('data-any-pending', '');
+      await expect(cta).toHaveAttribute('data-current', 'false');
+      await expect(cta).toHaveAttribute('data-pending', 'false');
+      await expect(cta).toHaveAttribute('data-any-pending', 'false');
       await expect(cta).toHaveAttribute('data-relation', '');
     }
   });
@@ -205,7 +213,7 @@ test.describe('plan CTA render context', () => {
   test('Current plan set after ready', async ({ page }) => {
     await open(page, 'plan');
     await expect(ctaOf(page, 'growth')).toBeVisible();
-    await setOnElement(page, { currentSelection: { planId: 'starter' } });
+    await page.locator('#set-current').click();
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-current', 'true');
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-relation', 'current');
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-label', 'Current plan');
@@ -216,16 +224,25 @@ test.describe('plan CTA render context', () => {
   test('Pending action: pending, any-pending and a refused trigger', async ({ page }) => {
     await open(page, 'plan');
     await expect(ctaOf(page, 'growth')).toBeVisible();
-    await setOnElement(page, { pendingActionId: 'start-growth' });
+    await page.locator(radio('enterprise')).check({ force: true });
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-selected', 'true');
+    await page.locator('#set-pending').click();
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-pending', 'true');
-    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-pending', '');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Start free trial');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute(
+      'data-href',
+      'https://example.com/signup?plan=growth',
+    );
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-selected', 'true');
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-current', 'false');
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-relation', '');
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-pending', 'false');
     for (const planId of PLAN_IDS) {
       await expect(ctaOf(page, planId)).toHaveAttribute('data-any-pending', 'true');
     }
     await ctaOf(page, 'enterprise').click();
     // trigger() is refused while an action is pending: no pricing-action is dispatched.
-    await setOnElement(page, { pendingActionId: undefined });
-    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-any-pending', '');
+    await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-any-pending', 'true');
     expect(await actions(page)).toEqual([]);
   });
 
@@ -261,7 +278,7 @@ test.describe('summary, loading and error render contexts', () => {
     const next = await elementState(page);
     expect(next.plan).toBe('enterprise');
     await expect(summary).toHaveAttribute('data-subtotal', next.subtotal);
-    await expect(summary).toHaveAttribute('data-pending', '');
+    await expect(summary).toHaveAttribute('data-pending', 'false');
     await expect(summary).toHaveAttribute('data-relation', '');
   });
 
@@ -313,23 +330,19 @@ test.describe('error diagnostics come from the slot node', () => {
     await expect(error).toHaveAttribute('data-codes', codes);
   });
 
-  // The harness has no control to render the wrapper again, so this checks the slot-node source
-  // through the element's own update only.
-  test('A refused applySelection adds no code', async ({ page }) => {
-    await missing(page);
-    await open(page, 'error');
-    const error = page.getByTestId('error');
-    await expect(error).toBeVisible();
-    const before = await codesOfNode(page);
-    const applied = await page.evaluate(async () => {
-      const element = document.querySelector('#root pricing-renderer') as ResolvedElement;
-      const result = element.applySelection({ planId: 'growth' }) as { applied: boolean };
-      await (element as unknown as { updateComplete: Promise<unknown> }).updateComplete;
-      return result.applied;
-    });
-    expect(applied).toBe(false);
-    await expect(error).toHaveAttribute('data-codes', before);
-    expect(await error.getAttribute('data-codes')).not.toContain('PR_SELECTION_NOT_READY');
+  test('Refused applySelection in the error state', async ({ page }) => {
+    await open(page, 'error-yaml');
+    await expect(page.locator('#root [data-pr-slot="error"]')).toHaveCount(1);
+    await expect.poll(() => errorContexts(page)).not.toEqual([]);
+    const first = (await errorContexts(page))[0]?.diagnostics ?? [];
+    expect(first[0]?.code).toBe('PR_YAML_PARSE_ERROR');
+    expect(await refApplySelection(page)).toBe(false);
+    await page.locator('#rerender-error').click();
+    await expect.poll(() => lastErrorVersion(page)).toBe(2);
+    const recorded = await errorContexts(page);
+    expect(recorded.at(-1)?.diagnostics).toEqual(first);
+    const codes = recorded.flatMap((context) => context.diagnostics.map((entry) => entry.code));
+    expect(codes).not.toContain('PR_SELECTION_NOT_READY');
   });
 });
 
@@ -338,21 +351,22 @@ test.describe('slot nodes and state read on attach', () => {
   test('Render prop given after the first event', async ({ page }) => {
     await open(page, 'late');
     await expect(page.locator('#root .pr-plan-card')).toHaveCount(3);
-    await expect(page.locator('#root [data-testid]')).toHaveCount(0);
+    const summarySlot = page.locator('#root [data-pr-slot="summary-actions"]');
+    await expect(summarySlot.getByTestId('summary')).toBeVisible();
+    // No plan slot node is rendered without a plan CTA render prop, and no CTA output exists.
+    await expect(page.locator('#root [data-testid^="cta-"]')).toHaveCount(0);
     await page.locator('#add-render-prop').click();
     for (const planId of PLAN_IDS) {
       await expect(ctaOf(page, planId)).toHaveText(/^Pick /);
       await expect(slotOf(page, planId).locator('[data-testid^="cta-"]')).toHaveCount(1);
     }
-    await expect(
-      page.locator('#root [data-pr-slot="summary-actions"]').getByTestId('summary'),
-    ).toBeVisible();
+    await expect(summarySlot.getByTestId('summary')).toBeVisible();
+    await expect(page.getByTestId('summary')).toHaveCount(1);
   });
 
   test('Summary state on attach', async ({ page }) => {
     await open(page, 'late');
     await expect(page.locator('#root .pr-plan-card')).toHaveCount(3);
-    await page.locator('#add-render-prop').click();
     const summary = page.getByTestId('summary');
     await expect(summary).toHaveAttribute('data-plan', 'starter');
     const state = await elementState(page);
@@ -373,46 +387,19 @@ test.describe('slot nodes and state read on attach', () => {
 // [utest->req~react-slots-client-only~1]
 test.describe('render props wait for the client', () => {
   test('No render prop in the first client render, no hydration error', async ({ page }) => {
-    // Records every value the page assigns to __renderCalls and how many slot nodes existed then.
-    await page.addInitScript(() => {
-      const store = window as unknown as Store;
-      const history: { value: number; slotNodes: number }[] = [];
-      let current = 0;
-      store.__renderHistory = history;
-      Object.defineProperty(window, '__renderCalls', {
-        configurable: true,
-        get: () => current,
-        set: (value: number) => {
-          current = value;
-          history.push({
-            value,
-            slotNodes: document.querySelectorAll('#root [data-pr-slot]').length,
-          });
-        },
-      });
-    });
     await open(page, 'hydrate');
     // The portals fill after hydration.
     for (const planId of PLAN_IDS) {
       await expect(ctaOf(page, planId)).toBeVisible();
     }
     await expect(page.getByTestId('summary')).toBeVisible();
+    // The sibling after the wrapper copied the counts in its first layout effect.
     const result = await page.evaluate(() => {
       const store = window as unknown as Store;
-      return {
-        recoverable: store.__recoverable ?? [],
-        calls: store.__renderCalls ?? -1,
-        history: store.__renderHistory ?? [],
-      };
+      return { probe: store.__probe, recoverable: store.__recoverable };
     });
+    expect(result.probe).toEqual({ plan: 0, summary: 0, loading: 0, error: 0, rp: 0 });
     expect(result.recoverable).toEqual([]);
-    expect(result.calls).toBeGreaterThan(0);
-    // Every render prop call happened with the slot nodes already in the document, none during the
-    // server render or before the element rendered them.
-    for (const entry of result.history) {
-      if (entry.value > 0) expect(entry.slotNodes).toBeGreaterThan(0);
-    }
-    if (result.history.length > 0) expect(result.history[0]?.value).toBe(0);
   });
 
   test('One CTA per plan after hydration', async ({ page }) => {
