@@ -444,17 +444,20 @@ component reads it in the same render through `useSyncExternalStore`.
 - The element is not server-rendered. Portals have no target until the element renders on the
   client, so render props appear after hydration with no portal mismatch.
 
-#### Known limitation: hydration of the element
+#### Resolved: hydration of the element
 
-OPEN, not met by this change. The server HTML of the wrapper is an empty tag; the element renders
-its light DOM in a microtask once it is defined and connected. If React hydrates after that, React
-logs one recoverable hydration error and regenerates the host node (measured in Chromium, Firefox
-and WebKit, `tests/browser/react-hydration-order.spec.ts`). Hydration in the same task as the
-definition, before the microtask, gives no error. The final DOM is complete. A normal Next.js page
-hydrates in a later task, so it gets the error. Workaround: define the element after hydration
-(dynamic import after mount, or `next/dynamic` with `ssr: false` in a Client Component;
-`docs/react.md`, `docs/nextjs.md`). Follow-up: the change "wrapper SSR hydration fix" changes
-`src/react`.
+The server HTML of the wrapper is an empty tag; the element renders its light DOM in a microtask
+once it is defined and connected. Without a fix, hydrating after that render found a host whose
+children did not match the server HTML, so React logged one recoverable error and regenerated the
+host node. Decision: the wrapper makes the host opaque to React. `PricingRenderer` and
+`PricingChangeReview` pass `dangerouslySetInnerHTML: { __html: '' }` and `suppressHydrationWarning`
+to the host, so React neither hydrates nor deletes the element's light DOM. The `__html` object is
+stable per instance (kept in component state, not a module-level object): React 19 sets `innerHTML` again when the object identity
+changes, which would wipe the element's light DOM on a re-render. Measured in
+`tests/browser/react-hydration-order.spec.ts`: every order of definition and hydration gives 0
+recoverable errors, the host node kept and the final DOM complete (Chromium and Firefox on React
+19; WebKit in CI). The server HTML is unchanged and the element still does not render on the
+server; render props still appear after hydration and the element's first render.
 
 ### D10. No feature flag
 

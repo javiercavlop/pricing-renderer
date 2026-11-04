@@ -50,6 +50,19 @@ import {
 import '../element/define.js';
 import type { PricingLoader, PricingRequestOptions } from '../yaml/index.js';
 
+// The server HTML of the host is an empty tag, while the element renders its light DOM on the
+// client in a microtask. An empty innerHTML makes React treat the children as text content: it
+// neither hydrates nor deletes them, so hydrating after the element rendered is no mismatch. React
+// compares the dangerouslySetInnerHTML object by identity, so each component keeps one object for
+// its life (a new one per render would clear the element on every update). Not a public prop. A
+// function, not a module-level object: this module holds no shared state.
+function opaqueHostProps() {
+  return {
+    dangerouslySetInnerHTML: { __html: '' },
+    suppressHydrationWarning: true,
+  } as const;
+}
+
 const PricingRendererBase = createComponent({
   tagName: 'pricing-renderer',
   elementClass: PricingRendererElement,
@@ -244,6 +257,7 @@ export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingR
     // [impl->req~react-slots-client-only~1]
     // Entries exist only after the first effect, so the server render and the first client render
     // call no render prop and hold no portal.
+    const [hostProps] = React.useState(opaqueHostProps);
     const elementRef = React.useRef<PricingRendererElement | null>(null);
     const [entries, setEntries] = React.useState<readonly SlotEntry[]>([]);
     const setElement = React.useCallback(
@@ -276,6 +290,7 @@ export const PricingRenderer = React.forwardRef<PricingRendererElement, PricingR
       null,
       React.createElement(PricingRendererBase, {
         ...baseProps,
+        ...hostProps,
         // Always attached: the element sends no event without slots, and the empty event that
         // follows the last render prop clears the stale entries.
         onSlotsChange,
@@ -320,8 +335,10 @@ export const PricingChangeReview = React.forwardRef<
   PricingChangeReviewProps
 >((props, ref) => {
   definePricingChangeReview();
+  const [hostProps] = React.useState(opaqueHostProps);
   return React.createElement(PricingChangeReviewBase, {
     ...props,
+    ...hostProps,
     ref,
   });
 });
