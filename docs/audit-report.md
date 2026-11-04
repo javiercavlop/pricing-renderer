@@ -141,9 +141,10 @@ commented-out `exit 1` does not count as a guard.
   once.
 - Resolved: the dist-tag mapping. The step "Verify the published GitHub
   Release" (`release.yml`) now maps `isPrerelease` exactly (`true` to `next`,
-  `false` to `latest`) and fails with an error before `npm publish` for any
-  other value, including an empty value after a failed `jq` read and `null`.
-  The workflow is still not exercised until the owner's next release;
+  `false` to `latest`). A failed `jq` read stops the step (the plain
+  assignment fails under `bash -e`), and any value other than `true` or `false`
+  (empty, `null`, other text) fails with an error before `npm publish`. The
+  workflow is still not exercised until the owner's next release;
   `tests/unit/release-workflow.test.ts` checks the mapping statically.
 - Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
   copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`

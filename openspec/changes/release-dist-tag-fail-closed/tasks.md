@@ -38,7 +38,7 @@ Checks (the coordinator registers them; names are the commands):
 Requirement: `req~release-dist-tag-prerelease-map~1`; hardening of the test of
 `req~release-dist-tag-env~1` (unchanged, design.md D4). Risk medium (intake, I1: score 4).
 
-- [ ] T1 Tests (test-designer).
+- [x] T1 Tests (test-designer).
   - Files: `tests/unit/release-workflow.test.ts`.
   - Read only: `specs/release-workflow/spec.md`, `.github/workflows/release.yml`,
     `openspec/changes/harden-release-workflow/specs/release-workflow/spec.md`.
@@ -55,7 +55,7 @@ Requirement: `req~release-dist-tag-prerelease-map~1`; hardening of the test of
     `harden-release-workflow`) consistent.
   - Tags: `// [utest->req~release-dist-tag-prerelease-map~1]`, `// [utest->req~release-dist-tag-env~1]`.
   - Checks: `red_before` (case 1), `release-test` (after I1), `lint`, `format`.
-- [ ] I1 Implementation (implementer, after T1 is frozen).
+- [x] I1 Implementation (implementer, after T1 is frozen).
   - Files: `.github/workflows/release.yml` (only the `release` step, `:39-62`),
     `docs/audit-report.md` (`:139-142` resolved; one line in the "Release workflow" section,
     `:112-114`, saying the static test also checks the mapping; keep "not exercised until the

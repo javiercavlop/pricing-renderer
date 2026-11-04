@@ -63,6 +63,6 @@ Needs: impl, utest
 
 #### Scenario: Base text is rejected
 
-- **GIVEN** the base text of the `release` step (`release.yml:58-62`), where `if [ "$(jq -r '.isPrerelease' <<<"$release_json")" = "true" ]` writes `dist_tag=next` and the `else` branch writes `dist_tag=latest`
+- **GIVEN** the base text of the `release` step (`release.yml:58-62` at base `c0c926d`), where `if [ "$(jq -r '.isPrerelease' <<<"$release_json")" = "true" ]` writes `dist_tag=next` and the `else` branch writes `dist_tag=latest`
 - **WHEN** the requirement is checked
 - **THEN** the check fails, because a branch not selected by the literal `false` writes `latest`
