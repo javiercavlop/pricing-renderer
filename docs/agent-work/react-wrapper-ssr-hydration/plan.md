@@ -1,1 +1,1 @@
-Push, open PR, CI (webkit rows), panel (reviewer, test-reviewer, security-auditor), ready.
+Round 2: tasks 3de27cf3adfe4017 (tests) and 24316056c83e44af (docs). Then integrate, sync/push, CI (webkit), new panel (reviewer light, test-reviewer, security already approved on code unchanged), ready.
