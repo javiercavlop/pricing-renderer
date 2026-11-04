@@ -159,14 +159,20 @@ describe('usePricingSelection holds the selection between renders', () => {
     expect(Object.is(entry.getServerSnapshot!(), entry.getSnapshot())).toBe(true);
   });
 
-  it('sets up no effect that changes the state', () => {
+  it('registers no effect and re-rendering notifies no subscriber', () => {
     const acme = load();
     const first = render(acme);
-    for (const run of [...harness.layout, ...harness.passive]) {
-      const cleanup = run();
-      if (typeof cleanup === 'function') cleanup();
-    }
-    expect(Object.is(render(acme).selection, first.selection)).toBe(true);
+    const listener = vi.fn();
+    const unsubscribe = harness.sync[0]!.subscribe(listener);
+    const snapshot = harness.sync[0]!.getSnapshot();
+    const second = render(acme);
+    // The hook state lives in the store: no layout or passive effect is registered.
+    expect(harness.layout).toHaveLength(0);
+    expect(harness.passive).toHaveLength(0);
+    expect(listener).not.toHaveBeenCalled();
+    expect(Object.is(harness.sync[1]!.getSnapshot(), snapshot)).toBe(true);
+    expect(Object.is(second.selection, first.selection)).toBe(true);
+    unsubscribe();
   });
 });
 
