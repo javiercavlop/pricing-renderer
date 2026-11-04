@@ -3,16 +3,34 @@ import { Link } from 'react-router';
 import { YAML } from './pricing-config';
 import { useSubscription } from './subscription';
 
+const REVIEW_LABEL = 'Review change';
+const NO_CHANGE_LABEL = 'No changes';
+
 export function PricingPage() {
-  const { current, notice } = useSubscription();
+  const { current } = useSubscription();
 
   return (
     <>
-      {/* Always rendered, so a screen reader announces the text when it appears. */}
-      <p role="status">{notice}</p>
       <PricingRenderer
         yaml={YAML}
         currentSelection={current}
+        // The built-in summary button does nothing without a handler, so replace it with a link to
+        // the review. Only the chosen plan is carried over, not the period or the variables.
+        renderSummaryActions={({ selection, relation, pending }) =>
+          selection.planId === undefined || relation === 'current' ? (
+            <span aria-disabled="true">{NO_CHANGE_LABEL}</span>
+          ) : (
+            <Link
+              to={`/change?plan=${encodeURIComponent(selection.planId)}`}
+              aria-disabled={pending}
+              onClick={(event) => {
+                if (pending) event.preventDefault();
+              }}
+            >
+              {REVIEW_LABEL}
+            </Link>
+          )
+        }
         renderPlanCta={({ planId, label, relation, current: isCurrent, anyPending, trigger }) =>
           // The plan the customer already has is not a link: there is nothing to change to.
           isCurrent ? (
@@ -27,6 +45,7 @@ export function PricingPage() {
               data-relation={relation}
               aria-disabled={anyPending}
               onClick={(event) => {
+                // Guard for hosts that set `pendingActionId`; this demo never does.
                 if (anyPending) {
                   event.preventDefault();
                   return;

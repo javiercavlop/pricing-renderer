@@ -6,7 +6,9 @@ Date: 2026-11-04.
 
 - Package: `react-router`, pinned to the exact version `7.18.5` in `examples/react/package.json`
   (no range), by owner decision CRP-P3-D a.
-- Why this line: the 7.x line is above the July 2026 advisory fixes. Only the declarative (library)
+- Why this line: 7.18.5 is at or above the patched versions 7.18.0 (GHSA-chx6-hx7r-mcp5,
+  GHSA-337j-9hxr-rhxg, GHSA-wrjc-x8rr-h8h6) and 7.18.2 (GHSA-qwww-vcr4-c8h2) of the July 2026
+  advisories. Only the declarative (library)
   mode is used: `BrowserRouter`, `Routes`, `Route`, `Link`, `useSearchParams`, `useNavigate`. No
   data router, no framework or server-rendering mode.
 - Licence: MIT (`pnpm --filter pricing-renderer-react-demo licenses list --prod`).

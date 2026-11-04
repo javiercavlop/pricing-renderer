@@ -29,6 +29,8 @@ export function ChangePage() {
     if (pricing === undefined) return;
     apply(current);
     if (planParam !== null && pricing.plans.some((plan) => plan.id === planParam)) {
+      // selectPlan can return a pending change (a dependency or exclusion that needs confirmation).
+      // The demo pricing has none; a real page would render `pending` with confirm and cancel.
       selectPlan(planParam);
     }
   }, [pricing, current, planParam, apply, selectPlan]);
@@ -86,6 +88,8 @@ export function ChangePage() {
             );
           }}
         />
+      ) : planParam !== null && !pricing.plans.some((plan) => plan.id === planParam) ? (
+        <p>Unknown plan. Choose one of the plans above.</p>
       ) : (
         <p>Your selection equals the current subscription. Choose another plan to review it.</p>
       )}
