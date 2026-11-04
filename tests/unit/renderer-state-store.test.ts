@@ -160,6 +160,85 @@ describe('renderer state store: element events', () => {
   });
 });
 
+function detailOf(event: Event): unknown {
+  return (event as unknown as { detail: unknown }).detail;
+}
+
+// A target that records its handlers, to call them with events that bubbled from elsewhere.
+function recordingTarget() {
+  const handlers = new Map<string, (event: Event) => void>();
+  const target = {
+    addEventListener: (type: string, handler: (event: Event) => void) => {
+      handlers.set(type, handler);
+    },
+    removeEventListener: (type: string) => {
+      handlers.delete(type);
+    },
+  } as unknown as EventTarget;
+  const fire = (type: string, event: unknown) => handlers.get(type)?.(event as Event);
+  return { target, fire };
+}
+
+// [utest->req~renderer-state-events~1]
+describe('renderer state store: event origin and detail shape', () => {
+  it('ignores events that bubbled from another target', () => {
+    const store = createStore();
+    const { target, fire } = recordingTarget();
+    const nested = new EventTarget();
+    store.attach(target);
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const ready = detailOf(readyEvent('starter'));
+    const change = detailOf(changeEvent('growth'));
+    fire('pricing-ready', { target: nested, detail: ready });
+    expect(store.getSnapshot()).toBeUndefined();
+    expect(listener).not.toHaveBeenCalled();
+
+    fire('pricing-ready', { target, detail: ready });
+    const own = store.getSnapshot();
+    expect(own?.selection.planId).toBe('starter');
+    listener.mockClear();
+
+    fire('pricing-selection-change', { target: nested, detail: change });
+    fire('pricing-ready', { target: nested, detail: ready });
+    expect(store.getSnapshot()).toBe(own);
+    expect(listener).not.toHaveBeenCalled();
+
+    fire('pricing-selection-change', { target, detail: change });
+    expect(store.getSnapshot()?.selection.planId).toBe('growth');
+  });
+
+  it('ignores a missing or malformed detail without throwing', () => {
+    const store = createStore();
+    const target = new EventTarget();
+    store.attach(target);
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    expect(() => {
+      target.dispatchEvent(new CustomEvent('pricing-ready'));
+      target.dispatchEvent(new Event('pricing-ready'));
+      target.dispatchEvent(new CustomEvent('pricing-ready', { detail: 'text' }));
+      target.dispatchEvent(new CustomEvent('pricing-ready', { detail: {} }));
+    }).not.toThrow();
+    expect(store.getSnapshot()).toBeUndefined();
+
+    target.dispatchEvent(readyEvent('starter'));
+    const before = store.getSnapshot();
+    listener.mockClear();
+
+    expect(() => {
+      target.dispatchEvent(new CustomEvent('pricing-selection-change'));
+      target.dispatchEvent(new Event('pricing-selection-change'));
+      target.dispatchEvent(new CustomEvent('pricing-selection-change', { detail: null }));
+      target.dispatchEvent(new CustomEvent('pricing-selection-change', { detail: {} }));
+    }).not.toThrow();
+    expect(store.getSnapshot()).toBe(before);
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
+
 // [utest->req~renderer-state-cached-snapshot~1]
 describe('renderer state store: cached snapshot', () => {
   it('returns the identical snapshot from repeated reads', () => {

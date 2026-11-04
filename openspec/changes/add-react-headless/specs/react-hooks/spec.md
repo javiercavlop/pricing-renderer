@@ -79,8 +79,8 @@ Needs: impl, utest
 
 - **GIVEN** the acme YAML text and a `loadPricing` that resolves it
 - **WHEN** `loadPricingSource({ yaml })` and `loadPricingSource({ src: 'https://example.com/acme.yml' }, { loadPricing, signal })` are called
-- **THEN** the first result is not a promise and its `value.saasName` is `Acme Cloud`
-- **AND** the second is a promise whose value has the same `saasName`, and `loadPricing` got the `signal`
+- **THEN** the first result is not a promise and its `value.metadata.saasName` is `Acme Cloud`
+- **AND** the second is a promise whose value has the same `metadata.saasName`, and `loadPricing` got the `signal`
 
 #### Scenario: Request passed as given
 
@@ -102,7 +102,7 @@ Needs: impl, utest
 - **GIVEN** a `loadPricing` spy that resolves the acme YAML and `store = createSourceStore()` given `setInput({ src: 'https://example.com/acme.yml' }, { loadPricing, request: { maxBytes: -1, timeoutMs: Number.NaN } })`
 - **WHEN** `store.start()` is called and the load settles
 - **THEN** the spy's `request.maxBytes` is 2097152 and its `request.timeoutMs` is 15000
-- **AND** `getSnapshot().pricing.saasName` is `Acme Cloud`
+- **AND** `getSnapshot().pricing.metadata.saasName` is `Acme Cloud`
 
 #### Scenario: Timeout above the timer limit
 
@@ -126,7 +126,7 @@ Needs: impl, utest
 
 #### Scenario: Server render of the acme YAML
 
-- **GIVEN** a component that renders `status` and `pricing.saasName` of `usePricingSource({ yaml: acmeYaml })`
+- **GIVEN** a component that renders `status` and `pricing.metadata.saasName` of `usePricingSource({ yaml: acmeYaml })`
 - **WHEN** it is rendered with `react-dom/server` `renderToString`
 - **THEN** the output contains `ready` and `Acme Cloud`
 - **AND** with `usePricingSource({})` it contains `error` and the diagnostics hold `PR_SOURCE_MISSING`
@@ -183,7 +183,7 @@ Needs: impl, utest
 
 - **GIVEN** `store = createSourceStore()` given `setInput({ src: 'https://example.com/acme.yml' }, { loadPricing })` and `start()`, where the first `loadPricing` call resolves the acme YAML with `saasName` `First` after the second call resolves it with `saasName` `Second`
 - **WHEN** `store.reload()` is called while the first load is pending and both loads settle
-- **THEN** `getSnapshot().pricing.saasName` is `Second`
+- **THEN** `getSnapshot().pricing.metadata.saasName` is `Second`
 
 ### Requirement: A changed source makes the load in flight stale
 
@@ -196,7 +196,7 @@ Needs: impl, utest
 
 - **GIVEN** `store = createSourceStore()` given `setInput({ src: 'https://example.com/acme.yml' }, { loadPricing })` and `start()`, with a `loadPricing` whose promise the test resolves by hand with YAML whose `saasName` is `Remote`
 - **WHEN** `store.setInput({ yaml: acmeYaml }, {})` is called and the `loadPricing` promise resolves before `store.stop()` is called
-- **THEN** `getSnapshot().pricing.saasName` is `Acme Cloud` and `status` is `ready`
+- **THEN** `getSnapshot().pricing.metadata.saasName` is `Acme Cloud` and `status` is `ready`
 
 ### Requirement: A successful load
 
@@ -209,7 +209,7 @@ Needs: impl, utest
 
 - **GIVEN** `store = createSourceStore()` given `setInput({ src: 'https://example.com/acme.yml' }, { loadPricing })` with a `loadPricing` that resolves the acme YAML
 - **WHEN** `store.start()` is called and the load settles
-- **THEN** `getSnapshot().status` is `ready` and `getSnapshot().pricing.saasName` is `Acme Cloud`
+- **THEN** `getSnapshot().status` is `ready` and `getSnapshot().pricing.metadata.saasName` is `Acme Cloud`
 
 ### Requirement: A failed load keeps the last pricing
 
@@ -222,13 +222,13 @@ Needs: impl, utest
 
 - **GIVEN** a `createSourceStore()` that loaded the acme pricing from `src` after `start()`, and a `loadPricing` that now rejects
 - **WHEN** `reload()` settles
-- **THEN** `getSnapshot().status` is `ready`, `pricing.saasName` is `Acme Cloud`, and `diagnostics` holds `PR_SOURCE_LOAD_FAILED`
+- **THEN** `getSnapshot().status` is `ready`, `pricing.metadata.saasName` is `Acme Cloud`, and `diagnostics` holds `PR_SOURCE_LOAD_FAILED`
 
 #### Scenario: Invalid YAML after a valid one
 
 - **GIVEN** `store = createSourceStore()` given `setInput({ yaml: acmeYaml }, {})` and then `setInput({ yaml: 'plans: [' }, {})`
 - **WHEN** `getSnapshot()` is read after the second `setInput`
-- **THEN** `status` is `ready` and `pricing.saasName` is `Acme Cloud`
+- **THEN** `status` is `ready` and `pricing.metadata.saasName` is `Acme Cloud`
 - **AND** a new `createSourceStore()` given only `setInput({ yaml: 'plans: [' }, {})` has `status` `error` and `pricing` undefined
 
 ### Requirement: Selection state of the hook

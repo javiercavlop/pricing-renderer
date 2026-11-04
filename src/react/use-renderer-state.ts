@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react';
 import type { NormalizedPricing, PricingSelection, ResolvedPricing } from '../core/index.js';
 import type {
@@ -27,6 +29,12 @@ type SelectionTarget = EventTarget & {
   applySelection?: (input: Partial<PricingSelection>) => ApplySelectionResult;
 };
 
+// The detail of an event, or undefined when it is missing or not an object.
+function detailOf<T>(event: Event): T | undefined {
+  const detail: unknown = (event as CustomEvent<unknown>).detail;
+  return typeof detail === 'object' && detail !== null ? (detail as T) : undefined;
+}
+
 // [impl->req~react-no-module-state~1] every piece of state below belongs to one store instance
 // [impl->req~renderer-state-events~1] [impl->req~renderer-state-cached-snapshot~1]
 // [impl->req~renderer-state-server-snapshot~1] [impl->req~renderer-state-ref-change~1]
@@ -55,8 +63,12 @@ export function createRendererStateStore(): RendererStateStore {
     return result;
   };
 
+  // The element's events bubble and are composed: one from a nested renderer reaches the listener
+  // too, and only the event dispatched on the attached target counts.
   const onReady = (event: Event): void => {
-    const detail = (event as CustomEvent<PricingReadyDetail>).detail;
+    if (event.target !== target) return;
+    const detail = detailOf<PricingReadyDetail>(event);
+    if (!detail || !detail.pricing) return;
     snapshot = {
       pricing: detail.pricing,
       selection: detail.selection,
@@ -68,8 +80,9 @@ export function createRendererStateStore(): RendererStateStore {
 
   const onChange = (event: Event): void => {
     // A change before any pricing-ready since the last attach has no pricing to go with it.
-    if (!snapshot) return;
-    const detail = (event as CustomEvent<PricingSelectionChangeDetail>).detail;
+    if (!snapshot || event.target !== target) return;
+    const detail = detailOf<PricingSelectionChangeDetail>(event);
+    if (!detail || !detail.selection) return;
     snapshot = {
       pricing: snapshot.pricing,
       selection: detail.selection,

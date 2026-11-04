@@ -374,12 +374,74 @@ describe('usePricingSource: reload loads the current source again', () => {
     expect(loadPricing).toHaveBeenCalledTimes(2);
   });
 
-  it('applies an inline source again', () => {
+  it('applies an inline source again and notifies the listener', () => {
     const store = createStore();
     store.setInput({ yaml: acmeYaml }, {});
+    const before = store.getSnapshot();
+    const listener = vi.fn();
+    store.subscribe(listener);
     store.reload();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot()).not.toBe(before);
     expect(store.getSnapshot().status).toBe('ready');
     expect(nameOf(store)).toBe('Acme Cloud');
+  });
+
+  it('goes back to loading with the old pricing before the second load settles', async () => {
+    const gate = deferred<string>();
+    let calls = 0;
+    const loadPricing = vi.fn<Loader>(() => {
+      calls += 1;
+      return calls === 1 ? Promise.resolve(acmeYaml) : gate.promise;
+    });
+    const store = createStore();
+    store.setInput({ src: ACME_URL }, { loadPricing });
+    store.start();
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    const statuses: string[] = [];
+    store.subscribe(() => statuses.push(store.getSnapshot().status));
+
+    store.reload();
+
+    expect(statuses).toEqual(['loading']);
+    expect(store.getSnapshot().status).toBe('loading');
+    expect(nameOf(store)).toBe('Acme Cloud');
+    expect(loadPricing).toHaveBeenCalledTimes(2);
+    gate.resolve(yamlNamed('Second'));
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    expect(nameOf(store)).toBe('Second');
+    expect(statuses).toEqual(['loading', 'ready']);
+  });
+
+  it('starts no load after stop() and loads at the next start()', async () => {
+    const signals: AbortSignal[] = [];
+    const loadPricing = vi.fn<Loader>(async ({ signal }) => {
+      signals.push(signal);
+      return acmeYaml;
+    });
+    const store = createStore();
+    store.setInput({ src: ACME_URL }, { loadPricing });
+    store.start();
+    await vi.waitFor(() => expect(store.getSnapshot().status).toBe('ready'));
+    store.stop();
+    store.reload();
+    await settle();
+    expect(loadPricing).toHaveBeenCalledTimes(1);
+
+    store.start();
+    await vi.waitFor(() => expect(loadPricing).toHaveBeenCalledTimes(2));
+    expect(signals[1]?.aborted).toBe(false);
+  });
+
+  it('starts no load for reload() after stop() of a load still in flight', async () => {
+    const loadPricing = vi.fn<Loader>(() => new Promise<string>(() => {}));
+    const store = createStore();
+    store.setInput({ src: ACME_URL }, { loadPricing });
+    store.start();
+    store.stop();
+    store.reload();
+    await settle();
+    expect(loadPricing).toHaveBeenCalledTimes(1);
   });
 });
 

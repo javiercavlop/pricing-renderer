@@ -103,6 +103,8 @@ export function createSourceStore(): SourceStore {
   let sequence = 0;
   let loadState: 'idle' | 'inflight' | 'settled' = 'idle';
   let controller: AbortController | undefined;
+  // True between start() and stop(): only then does a load have a cleanup that aborts it.
+  let active = false;
 
   function notify(): void {
     for (const listener of [...listeners]) listener();
@@ -192,11 +194,13 @@ export function createSourceStore(): SourceStore {
     },
     // [impl->req~use-pricing-source-src-effect~1]
     start() {
+      active = true;
       if (held === undefined || !isRemote(held) || loadState !== 'idle') return;
       load(held);
     },
     // [impl->req~use-pricing-source-abort~1]
     stop() {
+      active = false;
       if (loadState === 'inflight') {
         sequence += 1;
         loadState = 'idle';
@@ -207,6 +211,12 @@ export function createSourceStore(): SourceStore {
     reload() {
       if (held === undefined) return;
       if (isRemote(held)) {
+        if (!active) {
+          // After stop() nothing aborts a new load: the next start() loads instead.
+          sequence += 1;
+          loadState = 'idle';
+          return;
+        }
         if (snapshot.status !== 'loading' || snapshot.diagnostics.length > 0) {
           snapshot = loadingSnapshot();
           notify();
