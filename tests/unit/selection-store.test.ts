@@ -586,6 +586,31 @@ describe('review from the hooks', () => {
     );
   });
 
+  it('compares with the expression options of the input', () => {
+    const expressionOptions = { functions: { rate: () => 30 } };
+    const base = {
+      currentSelection: { planId: 'growth' },
+      defaultSelection: { planId: 'starter' },
+    };
+    const store = newStore(rated1, { ...base, expressionOptions });
+    const review = store.compareWithCurrent();
+    expect(review).toEqual(
+      compareSelections({
+        before: { pricing: rated1, selection: { planId: 'growth' } },
+        after: { pricing: rated1, selection: selectionOf(store) },
+        expression: expressionOptions,
+      }),
+    );
+    const without = newStore(rated1, base).compareWithCurrent();
+    expect(without).toEqual(
+      compareSelections({
+        before: { pricing: rated1, selection: { planId: 'growth' } },
+        after: { pricing: rated1, selection: selectionOf(store) },
+      }),
+    );
+    expect(review).not.toEqual(without);
+  });
+
   it('gives undefined without a current context', () => {
     const store = newStore(acme, {});
     expect(store.compareWithCurrent()).toBeUndefined();
