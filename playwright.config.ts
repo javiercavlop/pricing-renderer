@@ -6,15 +6,17 @@ const visualSnapshotSuffix = process.platform === 'linux' ? '-linux' : '';
 const isBlobRun = Boolean(process.env.CI) && process.env.PW_BLOB === '1';
 // Shard jobs have a 25 minute job timeout, so the run must end before it.
 const globalTimeoutMs = process.env.CI ? (isBlobRun ? 15 : 30) * 60_000 : 0;
+// TEMP (UX-3 measurement): reverted before the change is ready.
 const ciReporter: ReporterDescription[] = isBlobRun
-  ? [['blob'], ['github']]
-  : [['html', { open: 'never' }], ['github']];
+  ? [['blob'], ['github'], ['list']]
+  : [['html', { open: 'never' }], ['github'], ['list']];
 const reporter = process.env.CI ? ciReporter : 'list';
 // The two heavy specs (ux-stress and the SPECTRA review) are on demand on CI: one flag,
 // PW_UX_STRESS=1, set only by the manual on-demand-specs job of ci.yml, runs both.
+// TEMP (UX-3 measurement): reverted before the change is ready.
 const testIgnore =
   process.env.CI && process.env.PW_UX_STRESS !== '1'
-    ? ['**/ux-stress.spec.ts', '**/spectra-review.spec.ts']
+    ? ['**/spectra-review.spec.ts']
     : undefined;
 
 export default defineConfig({
