@@ -146,6 +146,12 @@
             },
             {
               "kind": "field",
+              "name": "slots",
+              "type": { "text": "readonly PricingSlotName[] | undefined" },
+              "description": "Slots the host fills: plan-cta, summary-actions, loading, error. For each requested slot the element renders an empty div with data-pr-slot and the state as data-* attributes, in place of the built-in control, and reports the nodes with pricing-slots-change. A value that is not an array, and names that are not slot names, are ignored. No attribute."
+            },
+            {
+              "kind": "field",
               "name": "resolvedState",
               "type": { "text": "PricingSelectionChangeDetail | undefined" },
               "readonly": true,
@@ -167,6 +173,13 @@
               ],
               "return": { "type": { "text": "ApplySelectionResult" } },
               "description": "Validates the selection against the loaded pricing and replaces the internal selection. Omitted fields take the schema defaults. Emits no pricing-selection-change. Refused by result (applied: false) while the element is not ready or when the selection property is set."
+            },
+            {
+              "kind": "method",
+              "name": "triggerPlanAction",
+              "parameters": [{ "name": "planId", "type": { "text": "string" } }],
+              "return": { "type": { "text": "boolean" } },
+              "description": "Fires the pricing-action that activating the built-in CTA of this plan fires, and returns the result of dispatchEvent. Returns false, without an event, while pendingActionId is set, ctaEnabled is false, the element is not ready, the plans are hidden, the plan is not rendered or its CTA is disabled (the current plan)."
             }
           ],
           "attributes": [
@@ -244,6 +257,11 @@
               "name": "pricing-diagnostic",
               "type": { "text": "CustomEvent<PricingDiagnosticDetail>" },
               "description": "Fired with the diagnostics of a load, after an applySelection call that returns diagnostics, including its PR_SELECTION_NOT_READY and PR_SELECTION_CONTROLLED refusals, and when currentSelection or the pricing changes and currentSelection has a plan or add-on id the pricing does not define (PR_CURRENT_SELECTION_UNKNOWN_PLAN, PR_CURRENT_SELECTION_UNKNOWN_ADDON). Check the diagnostic code before treating an error as a load failure."
+            },
+            {
+              "name": "pricing-slots-change",
+              "type": { "text": "CustomEvent<PricingSlotsChangeDetail>" },
+              "description": "Fired after an update when the slot nodes the element rendered (detail.nodes, in document order) or their data-* values changed, or, with a summary-actions node, when the selection or its resolved prices changed. Fired with an empty list when the slots go away. Bubbles, composed, not cancelable. Nodes of a nested renderer or added by the host are not listed."
             }
           ]
         }

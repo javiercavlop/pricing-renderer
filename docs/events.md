@@ -1,7 +1,7 @@
 # Events
 
-`<pricing-renderer>` reports what happens through four DOM events, and
-`<pricing-change-review>` adds two (see [Review events](#review-events)). All six
+`<pricing-renderer>` reports what happens through five DOM events, and
+`<pricing-change-review>` adds two (see [Review events](#review-events)). All seven
 are `CustomEvent`s that bubble and are composed, so a listener on an ancestor, on
 `document` or outside a shadow root receives them. `pricing-action`,
 `pricing-change-confirm` and `pricing-change-back` are `cancelable`; the others are
@@ -13,6 +13,7 @@ not. The payload is always in `event.detail`.
 | `pricing-selection-change` | The user changed plan, billing, variables or add-ons    | No         | `{ selection, resolved }`                                      |
 | `pricing-action`           | The user clicked a plan CTA or the summary action       | Yes        | `{ actionId, planId?, href?, selection, resolved, metadata? }` |
 | `pricing-diagnostic`       | A load or applySelection returned diagnostics           | No         | `{ diagnostics }`                                              |
+| `pricing-slots-change`     | The slot nodes of the `slots` property changed          | No         | `{ nodes }`                                                    |
 | `pricing-change-confirm`   | The user activates Confirm in `<pricing-change-review>` | Yes        | `{ comparison: SelectionComparison }`                          |
 | `pricing-change-back`      | The user activates Back in `<pricing-change-review>`    | Yes        | `{ comparison: SelectionComparison }`                          |
 
@@ -29,6 +30,12 @@ Details that the table leaves out:
 - While `currentSelection` names a plan of the pricing, the `pricing-action` detail
   also has `relation` and `source` (see below). The table shows the detail without
   them, as it is when no current plan is known.
+- `pricing-slots-change` is emitted only while the `slots` property asks for
+  slots. `detail.nodes` lists, in document order, the `[data-pr-slot]` nodes the
+  element rendered itself, never a node that the host or a nested
+  `<pricing-renderer>` put inside one of them. It fires after an update when the
+  nodes, their `data-*` values or, with a `summary-actions` node, the selection
+  changed, and once with an empty list when the slots go away.
 
 The event types are exported from `pricing-renderer/element`:
 
@@ -38,10 +45,11 @@ import type {
   PricingDiagnosticEvent,
   PricingReadyEvent,
   PricingSelectionChangeEvent,
+  PricingSlotsChangeEvent,
 } from 'pricing-renderer/element';
 ```
 
-The four `<pricing-renderer>` events are also declared in the global
+The five `<pricing-renderer>` events are also declared in the global
 `HTMLElementEventMap`, by `pricing-renderer/define`, `pricing-renderer/element` and
 `pricing-renderer/react`. `addEventListener` called with one of these names
 therefore types `event` as the matching event type above, and the examples below

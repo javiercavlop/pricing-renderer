@@ -379,8 +379,9 @@ Public events:
 - `pricing-selection-change`
 - `pricing-action`
 - `pricing-diagnostic`
+- `pricing-slots-change`
 
-`addEventListener` is typed for these four names through the global
+`addEventListener` is typed for these five names through the global
 `HTMLElementEventMap`, so a listener needs no cast. See the
 [events reference](./docs/events.md) for each payload and the diagnostic codes.
 

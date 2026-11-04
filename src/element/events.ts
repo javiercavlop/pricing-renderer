@@ -54,12 +54,22 @@ export type ApplySelectionResult =
       diagnostics: PricingDiagnostic[];
     };
 
+// [impl->req~slots-property~1] the slots a host can ask the element to render
+export type PricingSlotName = 'plan-cta' | 'summary-actions' | 'loading' | 'error';
+
+// [impl->req~slots-change-event~3]
+export interface PricingSlotsChangeDetail {
+  nodes: HTMLElement[];
+}
+
 export type PricingReadyEvent = CustomEvent<PricingReadyDetail>;
 export type PricingSelectionChangeEvent = CustomEvent<PricingSelectionChangeDetail>;
 export type PricingActionEvent = CustomEvent<PricingActionDetail>;
 export type PricingDiagnosticEvent = CustomEvent<PricingDiagnosticDetail>;
+export type PricingSlotsChangeEvent = CustomEvent<PricingSlotsChangeDetail>;
 
-// [impl->req~typed-event-map~1] Typed addEventListener for the four events of <pricing-renderer>.
+// [impl->req~typed-event-map~1] [impl->req~composition-types-manifest~1]
+// Typed addEventListener for the five events of <pricing-renderer>.
 // Every entry (/define, /element, /react) reaches this module, so the augmentation travels with them.
 declare global {
   interface HTMLElementEventMap {
@@ -67,6 +77,7 @@ declare global {
     'pricing-selection-change': PricingSelectionChangeEvent;
     'pricing-action': PricingActionEvent;
     'pricing-diagnostic': PricingDiagnosticEvent;
+    'pricing-slots-change': PricingSlotsChangeEvent;
   }
 }
 

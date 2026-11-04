@@ -20,6 +20,9 @@ export type {
   PricingReadyEvent,
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
+  PricingSlotName,
+  PricingSlotsChangeDetail,
+  PricingSlotsChangeEvent,
 } from './events.js';
 // [impl->req~hide-sections-react-manifest~1]
 export type { PricingSectionName } from './renderers.js';

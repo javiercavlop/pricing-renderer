@@ -246,7 +246,16 @@ export type {
   PricingSelectionChangeDetail,
   PricingSelectionChangeEvent,
   PricingSectionName,
+  PricingSlotName,
+  PricingSlotsChangeDetail,
+  PricingSlotsChangeEvent,
 } from '../element/index.js';
+// [impl->req~composition-types-manifest~1]
+export type {
+  PricingErrorContext,
+  PricingPlanCtaContext,
+  PricingSummaryActionsContext,
+} from './slots-types.js';
 // [impl->req~cta-event-types~1]
 export type { SelectionRelation } from '../core/index.js';
 export type { PricingLoader, PricingRequestOptions } from '../yaml/index.js';

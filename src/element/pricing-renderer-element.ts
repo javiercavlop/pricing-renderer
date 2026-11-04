@@ -32,7 +32,7 @@ import {
   type ViewModelOptions,
 } from '../core/index.js';
 import { applySelectionInput } from '../core/apply-selection.js';
-import { summaryActionState, type SummaryActionState } from './cta.js';
+import { planCtaView, summaryActionState, type SummaryActionState } from './cta.js';
 import { currentSelectionDiagnostics, deriveCurrentContext } from './current-selection.js';
 import { inputChanged } from './same-input.js';
 import {
@@ -49,6 +49,8 @@ import type {
   PricingDiagnosticDetail,
   PricingReadyDetail,
   PricingSelectionChangeDetail,
+  PricingSlotName,
+  PricingSlotsChangeDetail,
 } from './events.js';
 import {
   comparisonRowTotal,
@@ -58,7 +60,9 @@ import {
   renderBilling,
   renderCatalogMetadata,
   renderComparison,
+  renderErrorSlotShell,
   renderHeader,
+  renderLoadingSlotShell,
   renderPendingDialog,
   renderPlans,
   renderSummary,
@@ -69,6 +73,7 @@ import {
   instanceId,
   heroTitle,
   PRICING_SECTION_NAMES,
+  PRICING_SLOT_NAMES,
   type ActionOrigin,
   type PricingSectionName,
   type RenderActions,
@@ -153,6 +158,29 @@ function hiddenSectionsOf(value: unknown): ReadonlySet<PricingSectionName> {
   return names;
 }
 
+// [impl->req~slots-not-array~1] [impl->req~slots-default-markup~1]
+// A value that is not an array requests nothing, and neither does an item that is not a slot name.
+function requestedSlotsOf(value: unknown): ReadonlySet<PricingSlotName> {
+  const names = new Set<PricingSlotName>();
+  if (!Array.isArray(value)) return names;
+  for (const item of value) {
+    if ((PRICING_SLOT_NAMES as readonly unknown[]).includes(item)) {
+      names.add(item as PricingSlotName);
+    }
+  }
+  return names;
+}
+
+// What the last pricing-slots-change event reported, to tell a change from an update without one.
+interface SlotsDispatch {
+  nodes: HTMLElement[];
+  data: string[];
+  summary?: PricingSelectionChangeDetail;
+}
+
+const slotNodeSelector = '[data-pr-slot]';
+const slotOwnerSelector = '[data-pr-root], [data-pr-slot]';
+
 export class PricingRendererElement extends LitElement {
   static properties = {
     // [impl->req~element-input-structural-compare~1] a host that builds these objects in its render
@@ -199,6 +227,8 @@ export class PricingRendererElement extends LitElement {
       converter: hideSectionsConverter,
       hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
     },
+    // [impl->req~slots-property~1] the slot names the host fills; no attribute
+    slots: { attribute: false },
   };
 
   static {
@@ -235,7 +265,10 @@ export class PricingRendererElement extends LitElement {
   declare addOnFilterThreshold: number;
   // [impl->req~hide-sections-property~1]
   declare hideSections?: readonly PricingSectionName[];
+  // [impl->req~slots-property~1]
+  declare slots?: readonly PricingSlotName[];
 
+  private _lastSlotsDispatch: SlotsDispatch = { nodes: [], data: [] };
   private _status: LoadStatus = 'idle';
   private readonly _projectPresentation: PricingPresentation;
   private _normalized?: NormalizedPricing;
@@ -398,6 +431,60 @@ export class PricingRendererElement extends LitElement {
       this._updateCompactLayout(this.getBoundingClientRect().width);
     }
     this._reportCurrentSelection();
+    this._reportSlots();
+  }
+
+  // [impl->req~slots-change-event~3] [impl->req~slots-change-event-own-nodes~1]
+  // [impl->req~slots-change-event-summary~1]
+  // Once per change of the slot nodes this element rendered, of their data-* values or, while a
+  // summary slot node exists, of the selection and the resolved prices. A node that the host or a
+  // nested renderer put inside a slot node has another owner and is not listed.
+  private _reportSlots(): void {
+    const nodes = [...this.querySelectorAll<HTMLElement>(slotNodeSelector)].filter(
+      (node) => node.isConnected && node.parentElement?.closest(slotOwnerSelector) === this,
+    );
+    const data = nodes.map((node) => JSON.stringify(Object.entries(node.dataset)));
+    const summary = nodes.some((node) => node.dataset.prSlot === 'summary-actions')
+      ? this._snapshot()
+      : undefined;
+    const last = this._lastSlotsDispatch;
+    if (
+      nodes.length === last.nodes.length &&
+      nodes.every(
+        (node, index) => node === last.nodes[index] && data[index] === last.data[index],
+      ) &&
+      deepEqual(summary, last.summary)
+    ) {
+      return;
+    }
+    this._lastSlotsDispatch = { nodes, data, ...(summary ? { summary } : {}) };
+    this.dispatchEvent(
+      new CustomEvent<PricingSlotsChangeDetail>('pricing-slots-change', {
+        detail: { nodes: [...nodes] },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  // [impl->req~trigger-plan-action~1] [impl->req~trigger-plan-action-guard~1]
+  // The same pricing-action as a click on the plan's built-in CTA, for a host that draws its own.
+  public triggerPlanAction(planId: string): boolean {
+    if (!this.ctaEnabled || this.pendingActionId || !this._isReady()) return false;
+    if (hiddenSectionsOf(this.hideSections).has('plans')) return false;
+    const viewModel = this._viewModel();
+    const plan = viewModel?.plans.find((candidate) => candidate.id === planId);
+    if (!viewModel || !plan) return false;
+    const current = deriveCurrentContext(this._normalized!, this._currentSelection);
+    const cta = planCtaView(viewModel, plan, {
+      currentPlanId: current?.planId,
+      pendingActionId: this.pendingActionId,
+    });
+    if (cta.disabled) return false;
+    const origin: ActionOrigin | undefined = cta.relation
+      ? { relation: cta.relation, source: 'plan' }
+      : undefined;
+    return this._triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   }
 
   // [impl->req~current-selection-diagnostics~1]
@@ -965,11 +1052,13 @@ export class PricingRendererElement extends LitElement {
   };
 
   protected render(): TemplateResult {
+    const slots = requestedSlotsOf(this.slots);
     if (this._status === 'loading' || this._status === 'idle') {
       const loadingTitleId = `${this._idPrefix}-loading-title`;
       // [impl->req~loading-label-localized~1]
       const loadingLabel =
         this.loadingLabel ?? translate(getMessages(this.locale, this.messages), 'pricing.loading');
+      if (slots.has('loading')) return renderLoadingSlotShell(loadingTitleId, loadingLabel);
       return html`
         <section class="pr-shell pr-shell--loading" aria-labelledby=${loadingTitleId}>
           <h2 id=${loadingTitleId} class="pr-sr-only">${loadingLabel}</h2>
@@ -983,6 +1072,7 @@ export class PricingRendererElement extends LitElement {
       `;
     }
     if (!this._normalized || this._status === 'error') {
+      if (slots.has('error')) return renderErrorSlotShell(this._diagnostics);
       const messages = getMessages(this.locale, this.messages);
       // [impl->req~error-state-human-message~1] the codes and messages stay inside a closed details
       return html`
@@ -1032,6 +1122,7 @@ export class PricingRendererElement extends LitElement {
     const state: RenderState = {
       viewModel,
       ...(hidden.size > 0 ? { hiddenSections: hidden } : {}),
+      ...(slots.size > 0 ? { slots } : {}),
       selection: viewModel.resolved.selection,
       compact: this._compact,
       search: toolbarShown ? this._search : '',

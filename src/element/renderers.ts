@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { keyed as keyedBy } from 'lit/directives/keyed.js';
 import { live } from 'lit/directives/live.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -17,6 +18,7 @@ import {
   type PriceBreakdownLine,
   type PricingComparisonGroup,
   type PricingComparisonRow,
+  type PricingDiagnostic,
   type PricingSelection,
   type PricingViewModel,
   type ResolvedPrice,
@@ -27,7 +29,7 @@ import { maxQuantityOnGrid } from '../core/resolve.js';
 import { addOnProvidesForPlan, isAddOnOnlyRow } from '../core/view-model.js';
 import { formatUnit } from '../core/units.js';
 import { isPendingActionId, planCtaView, type SummaryActionState } from './cta.js';
-import type { PendingAddOnChange } from './events.js';
+import type { PendingAddOnChange, PricingSlotName } from './events.js';
 
 /** Set on a `pricing-action` detail only while the current plan is known. */
 export interface ActionOrigin {
@@ -74,10 +76,15 @@ export const PRICING_SECTION_NAMES = [
 ] as const;
 export type PricingSectionName = (typeof PRICING_SECTION_NAMES)[number];
 
+// [impl->req~slots-property~1] the slots a host can request
+export const PRICING_SLOT_NAMES = ['plan-cta', 'summary-actions', 'loading', 'error'] as const;
+
 export interface RenderState {
   viewModel: PricingViewModel;
   /** Sections the host hides; absent means none. */
   hiddenSections?: ReadonlySet<PricingSectionName>;
+  /** Slots the host requests; absent means none. */
+  slots?: ReadonlySet<PricingSlotName>;
   selection: PricingSelection;
   compact: boolean;
   search: string;
@@ -414,6 +421,38 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
       </button>`;
 }
 
+// [impl->req~slot-plan-cta~1] [impl->req~slot-plan-cta-keyed~1] [impl->req~slot-plan-cta-context~1]
+// [impl->req~slot-plan-cta-any-pending~1]
+// An empty node the host fills; it carries the state of the built-in CTA and card as data-*. The
+// keyed directive gives each plan its own node, so a node never moves to another plan.
+function renderPlanCtaSlot(
+  state: RenderState,
+  plan: NormalizedPlan,
+  selected: boolean,
+  current: boolean,
+): ReturnType<typeof keyedBy> {
+  const cta = planCtaView(state.viewModel, plan, {
+    currentPlanId: state.currentPlanId,
+    pendingActionId: state.pendingActionId,
+  });
+  return keyedBy(
+    plan.id,
+    html`<div
+      data-pr-slot="plan-cta"
+      data-pr-part="plan-cta-slot"
+      data-plan-id=${plan.id}
+      data-plan-name=${plan.name}
+      data-label=${cta.label}
+      data-href=${cta.href ?? nothing}
+      data-relation=${cta.relation ?? nothing}
+      data-selected=${String(selected)}
+      data-current=${current ? 'true' : nothing}
+      data-pending=${cta.pending ? 'true' : nothing}
+      data-any-pending=${cta.ariaDisabled ? 'true' : nothing}
+    ></div>`,
+  );
+}
+
 export function renderPlans(state: RenderState): TemplateResult {
   const { viewModel, selection, selectionEnabled, ctaEnabled, actions } = state;
   const titleId = instanceId(state, 'plans-title');
@@ -550,7 +589,13 @@ export function renderPlans(state: RenderState): TemplateResult {
                           </ul>`
                         : nothing
                     }
-                    ${ctaEnabled ? renderPlanCta(state, plan) : nothing}
+                    ${
+                      !ctaEnabled
+                        ? nothing
+                        : state.slots?.has('plan-cta')
+                          ? renderPlanCtaSlot(state, plan, selected, current)
+                          : renderPlanCta(state, plan)
+                    }
                   </article>
                 `;
               })}
@@ -1483,6 +1528,17 @@ function renderBreakdownPanel(state: RenderState): TemplateResult {
 // Rendered outside the live region, so a change of label is not announced by the summary.
 function renderSummaryAction(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel, summaryAction, pendingActionId, selection, actions } = state;
+  // [impl->req~slot-summary-actions~1] [impl->req~slot-summary-actions-context~1]
+  // The slot node stands in for the summary action with or without a current plan; data-pending
+  // follows aria-disabled of the built-in action (any pending action), not its own-id state.
+  if (state.ctaEnabled && state.slots?.has('summary-actions')) {
+    return html`<div
+      data-pr-slot="summary-actions"
+      data-pr-part="summary-actions-slot"
+      data-relation=${summaryAction?.relation ?? nothing}
+      data-pending=${pendingActionId !== undefined ? 'true' : nothing}
+    ></div>`;
+  }
   if (!state.ctaEnabled || !summaryAction) return nothing;
   const pending = isPendingActionId(pendingActionId, summaryAction.actionId);
   const origin: ActionOrigin = { relation: summaryAction.relation, source: 'summary' };
@@ -1581,6 +1637,34 @@ export function renderCatalogMetadata(state: RenderState): TemplateResult | type
       </dl>
     </section>
   `;
+}
+
+// [impl->req~slot-loading~1] the shell keeps its labelled heading; the slot node replaces the skeleton
+export function renderLoadingSlotShell(titleId: string, label: string): TemplateResult {
+  return html`
+    <section class="pr-shell pr-shell--loading" aria-labelledby=${titleId}>
+      <h2 id=${titleId} class="pr-sr-only">${label}</h2>
+      <div data-pr-slot="loading" data-pr-part="loading-slot"></div>
+    </section>
+  `;
+}
+
+// [impl->req~slot-error~1] [impl->req~slot-error-diagnostics~1]
+// The slot node is the only child; the diagnostics travel as JSON in data-diagnostics.
+export function renderErrorSlotShell(diagnostics: readonly PricingDiagnostic[]): TemplateResult {
+  const entries = diagnostics.map((item) => ({
+    code: item.code,
+    severity: item.severity,
+    message: item.message,
+    ...(item.path !== undefined ? { path: item.path } : {}),
+  }));
+  return html`<section class="pr-shell pr-error" role="alert">
+    <div
+      data-pr-slot="error"
+      data-pr-part="error-slot"
+      data-diagnostics=${JSON.stringify(entries)}
+    ></div>
+  </section>`;
 }
 
 export function renderPendingDialog(state: RenderState): TemplateResult | typeof nothing {
