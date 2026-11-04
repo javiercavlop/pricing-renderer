@@ -1,0 +1,1 @@
+Items 1 (audit blocking), 2 (TS override 5.6.3), 3a (npm version gate) integrated at head d3c2c41. Remaining: 3b split of release.yml (needs test file scope decision), docs/audit-report.md update, push, PR, review panel (reviewer, test-reviewer, security-auditor, arch-reviewer), ready.

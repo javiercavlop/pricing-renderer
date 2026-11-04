@@ -1,0 +1,4 @@
+State: head d3c2c41 holds items 1, 2, 3a (tasks 30aea1da, f0eece06, be73e826 integrated; blocked first attempts replaced). Audit run in lab: exit 0, 2 moderate, no high. TS lockfile hand-edited, needs CI confirmation under pnpm 10.19.0. Gate script tested against fake npm versions.
+Open: 3b split (verify job unprivileged + publish job publishing packed tarball via npm publish --access public --provenance --tag "$DIST_TAG" ./tarball, which skips prepack/prepublishOnly); requires editing tests/unit/release-workflow.test.ts (`runs the unit tests once` test reads jobs.publish.steps only) -> escalating for scope. Then audit-report.md doc task.
+Risks: workflow push token (Workflows: write); blocking audit may fail on future advisories.
+Next: push to test token, escalate split, audit-report task, PR + panel.
