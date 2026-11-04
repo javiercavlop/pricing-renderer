@@ -7,8 +7,10 @@ that could not be checked from the repository is marked **not verified**.
 
 The dependency and release-workflow findings below were checked against the
 repository files (`package.json` files, `pnpm-lock.yaml`,
-`.github/workflows/release.yml`). No command was run for this document, so
-no `pnpm audit` or install result is claimed here.
+`.github/workflows/release.yml`). The commands run for this revision, and
+their results, are listed under "Commands run for this revision". Anything
+not listed there, in particular `pnpm audit`, was not run and is
+**not verified**.
 
 Workflow and configuration changes landed after the first version of this
 audit and are described in "CI and Dependabot configuration": the `audit` job
@@ -45,13 +47,14 @@ finding 2 is an accepted, documented risk.
   version `5.6.1-rc`, and still does in its latest release, according to
   `docs/agent-work/ci-health/typescript-override.md`; this registry fact is
   **not verified** from the repository files. The lockfile entry was edited by
-  hand; confirmation in CI under pnpm 10.19.0: see the pull request checks
-  (**not verified** here).
+  hand. `pnpm install --frozen-lockfile` accepts it locally (see "Commands
+  run for this revision"); confirmation under pnpm 10.19.0 is the pull
+  request's CI (**not verified** here).
 - **Local pnpm differs from the declared one.** Verified: `packageManager` is
   `pnpm@10.19.0`, and `release.yml` and `ci.yml` use 10.19.0. An earlier
   local `pnpm install --frozen-lockfile` run reportedly showed pnpm v9.15.9;
-  that observation is **not verified** for this document, since no command was
-  run here. If accurate, local results may differ from CI.
+  the lab run of this revision also reported v9.15.9 (see "Commands run for
+  this revision"), so local results may differ from CI, which pins 10.19.0.
 
 ### What the dependency update changed
 
@@ -139,41 +142,318 @@ commented-out `exit 1` does not count as a guard.
 
 ## Open items
 
-- **Harden `.npmrc`: pending, to be applied by hand.** Current content:
+- **Harden `.npmrc`: pending, not applied.** The edit was refused in this
+  revision because `.npmrc` is a protected sensitive file, so
+  `engine-strict=true` was neither applied nor validated. Current content:
   `engine-strict=false`, `prefer-frozen-lockfile=true`,
-  `strict-peer-dependencies=false`, `cache=.npm-cache`. Proposed: set
-  `engine-strict=true`, keep `strict-peer-dependencies=false` with a comment
-  explaining why (the React peers are optional), then validate with
-  `pnpm install --frozen-lockfile`. The file is sensitive and was not edited
-  here.
-- Release workflow item 1 (global npm install in the job holding
-  `id-token: write`) is **resolved**: the global install is removed and a step
-  fails the job when the bundled npm is older than 11.5.1. The bundled npm is
-  not pinned (it comes from the Node distribution fetched by setup-node), see
-  `docs/agent-work/ci-health/release-npm.md`. The workflow is not exercised
-  until the owner's next release.
-- Release workflow item 2 (whole pipeline in the publishing job) is the
-  accepted risk: a comment in `release.yml` records that it is accepted
-  deliberately, gated by the protected `npm` environment and the immutable
-  release tag, and that splitting the job has not been approved. The split is
-  deferred as a proposal to the owner; nothing of it is implemented, see
-  `docs/agent-work/ci-health/release-split-deferred.md`.
-- Release workflow items 3 (`prepublishOnly` ran the unit tests a second time)
-  and 4 (`dist_tag` interpolated into `run`) are **resolved**:
-  `prepublishOnly` is now `pnpm package:check`, and the dist-tag passes through
-  `env` with a guard before publish. The workflow is not exercised until the
-  owner's next release; `tests/unit/release-workflow.test.ts` checks that the
-  guard text is present and anchored on `DIST_TAG`, and that the unit tests run
-  once.
-- Resolved: the dist-tag mapping. The step "Verify the published GitHub
-  Release" (`release.yml`) now maps `isPrerelease` exactly (`true` to `next`,
-  `false` to `latest`). A failed `jq` read stops the step (the plain
-  assignment fails under `bash -e`), and any value other than `true` or `false`
-  (empty, `null`, other text) fails with an error before `npm publish`. The
-  workflow is still not exercised until the owner's next release;
-  `tests/unit/release-workflow.test.ts` checks the mapping statically.
-- Resolved: the `next`/`vite`/`vitest`/`@vitejs/plugin-react` update, and the
-  copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
-  (checked against both upstream `LICENSE` files).
+  `strict-peer-dependencies=false`, `cache=.npm-cache`. To apply by hand:
+  set `engine-strict=true`, and put a `#` comment saying that the React peer
+  dependencies are optional above `strict-peer-dependencies=false`, then run
+  `pnpm install --frozen-lockfile`. Compatibility check done: the root
+  `package.json` `engines` is `"node": ">=22"` and no other `package.json`
+  in the repository declares `engines` (searched the root and
+  `examples/*/package.json`), so the setting has nothing stricter to trip on.
+  CI uses Node 22 (`ci.yml`) and Node 24 (`release.yml`), both within
+  `>=22`; that the install passes with the setting on is **not verified**.
+- **Release workflow finding 2 (whole pipeline in the publishing job): accepted
+  risk, split not approved.** A comment in `release.yml` records that it is
+  accepted deliberately, gated by the protected `npm` environment and the
+  immutable release tag. The proposed split is under "For the owner: proposed
+  release.yml change (not applied)"; background in
+  `docs/agent-work/ci-health/release-split-deferred.md`. The release workflow
+  is not exercised until the owner's next release.
+- **Audit not run.** `pnpm audit --audit-level high` could not be run in this
+  revision (no command-line access, only the registered checks), so no audit
+  result is claimed. The blocking `audit` job in CI is the check.
 - Not verified: latest upstream versions of `next`, `vite`, `vitest` and
   `yaml`.
+
+Resolved (details in the sections above): the `next`, `vite`, `vitest` and
+`@vitejs/plugin-react` update, the `typescript` 5.6.1-rc override, the blocking
+`audit` job, release workflow findings 1, 3 and 4 and the dist-tag mapping, and
+the copyright lines for Sphere and Pricing4TS in `THIRD_PARTY_NOTICES.md`
+(checked against both upstream `LICENSE` files).
+
+## Commands run for this revision
+
+All run through the registered checks, in the lab with pnpm v9.15.9 (not the
+declared 10.19.0):
+
+- `pnpm install --frozen-lockfile`: exit 0 ("Lockfile is up to date"; 382
+  packages added; root `typescript` 5.9.3).
+- Search for `5.6.1-rc` in `pnpm-lock.yaml`: no match.
+- `pnpm typecheck`: exit 0.
+- `pnpm lint`: exit 0 (one warning, `no-console` in
+  `docs/agent-work/prop-20261028-3/review/demo.mjs`, not part of this change).
+- `pnpm test`: exit 0 (94 files, 2011 tests passed).
+- `pnpm package:check`: exit 0 (build, publint and attw passed).
+- `pnpm build`: exit 0.
+- `pnpm format:check`: exit 0, with the diff fence in the owner section
+  wrapped in prettier-ignore comments (it failed without them).
+
+Not run, **not verified**: `pnpm audit --audit-level high`, the release
+workflow, the `.npmrc` change (needs the owner, see "Open items"), and CI under
+pnpm 10.19.0.
+
+## For the owner: proposed release.yml change (not applied)
+
+This splits the `publish` job into an unprivileged `verify` job and a minimal
+`publish` job. It is a proposal only: `.github/workflows/release.yml` is
+unchanged. Applying it needs the owner's approval and a token with
+Workflows: write. The diff is against the current `release.yml` (164 lines).
+`actions/download-artifact` is pinned to the SHA of its `v6` tag
+(`018cc2cf5baa6db3ef3c5f8a56943fffe632ef53`, v6.0.0). The SHA was confirmed
+through the GitHub API tags by an external lookup, not from the repository.
+No documented incompatibility between `upload-artifact` v6 and
+`download-artifact` v6 was found (no compatibility matrix exists).
+
+<!-- prettier-ignore-start -->
+```diff
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -18,23 +18,19 @@
+   cancel-in-progress: false
+ 
+ jobs:
+-  publish:
++  verify:
+     runs-on: ubuntu-latest
+-    environment: npm
+-    # NOTE: this single job holds id-token: write (needed for npm provenance
+-    # and OIDC publishing) and also installs dependencies and runs the full
+-    # test suite from the release tag. Third-party install scripts and test
+-    # code therefore execute in a job that can mint an OIDC token. This is
+-    # accepted deliberately so that the exact commit that is tested is the
+-    # one that is published, and the job is gated by the protected "npm"
+-    # environment and the immutable release tag. Splitting it into an
+-    # unprivileged verify job and a minimal publish job would reduce the
+-    # exposure but changes the release flow and has not been approved.
+-    # The npm CLI is the one bundled with the Node that setup-node installs,
+-    # checked against a minimum version below; no npm is installed globally.
++    # NOTE: this job runs everything that executes third-party code (install
++    # scripts, lint, tests, browser tooling) with read-only permissions: no
++    # id-token and no "npm" environment. Only the packed tarball, its sha256
++    # and the dist-tag leave it; the publish job does not check out or install
++    # anything from the repository.
+     permissions:
+       contents: read
+-      id-token: write
++    outputs:
++      dist_tag: ${{ steps.release.outputs.dist_tag }}
++      tarball: ${{ steps.pack.outputs.tarball }}
++      sha256: ${{ steps.pack.outputs.sha256 }}
+     env:
+       RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
+     steps:
+@@ -82,32 +78,8 @@
+       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+         with:
+           node-version: 24
+-          registry-url: https://registry.npmjs.org
+           package-manager-cache: false
+ 
+-      # npm trusted publishing (OIDC) needs npm >= 11.5.1. The npm CLI comes
+-      # bundled with the Node distribution that setup-node installs; nothing
+-      # else is downloaded here. Fail closed if the bundled npm is too old.
+-      - name: Require an OIDC-capable npm CLI
+-        env:
+-          NPM_MIN_VERSION: 11.5.1
+-        run: |
+-          npm_version="$(npm --version)"
+-          if ! NPM_VERSION="$npm_version" node -e '
+-            const parse = (v) => v.split("-")[0].split(".").map(Number);
+-            const have = parse(process.env.NPM_VERSION);
+-            const need = parse(process.env.NPM_MIN_VERSION);
+-            for (let i = 0; i < 3; i++) {
+-              if ((have[i] || 0) !== (need[i] || 0)) {
+-                process.exit((have[i] || 0) > (need[i] || 0) ? 0 : 1);
+-              }
+-            }
+-          '; then
+-            echo "::error::npm $npm_version is older than $NPM_MIN_VERSION, which npm trusted publishing requires."
+-            exit 1
+-          fi
+-          echo "npm $npm_version satisfies >= $NPM_MIN_VERSION"
+-
+       - name: Install exact dependencies
+         run: pnpm install --frozen-lockfile
+ 
+@@ -148,17 +120,109 @@
+           retention-days: 14
+           if-no-files-found: ignore
+ 
+-      # [impl->req~release-dist-tag-env~1]
+-      # [impl->req~release-check-substrings-kept~1]
+-      - name: Publish stable releases to latest and prereleases to next
+-        env:
+-          DIST_TAG: ${{ steps.release.outputs.dist_tag }}
+-        run: |
+-          case "$DIST_TAG" in
+-            latest|next) ;;
+-            *)
+-              echo "::error::Unexpected npm dist-tag: $DIST_TAG"
+-              exit 1
+-              ;;
+-          esac
+-          npm publish --access public --provenance --tag "$DIST_TAG"
++      - name: Pack the release tarball
++        id: pack
++        env:
++          PACK_DIR: ${{ runner.temp }}/release-pack
++        run: |
++          mkdir -p "$PACK_DIR"
++          npm pack --pack-destination "$PACK_DIR"
++          set -- "$PACK_DIR"/*.tgz
++          if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
++            echo "::error::Expected exactly one packed tarball in $PACK_DIR."
++            exit 1
++          fi
++          {
++            echo "tarball=$(basename "$1")"
++            echo "sha256=$(sha256sum "$1" | cut -d' ' -f1)"
++          } >>"$GITHUB_OUTPUT"
++
++      - name: Upload the release tarball
++        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
++        with:
++          name: release-tarball-${{ github.run_id }}-${{ github.run_attempt }}
++          path: ${{ runner.temp }}/release-pack/${{ steps.pack.outputs.tarball }}
++          retention-days: 7
++          if-no-files-found: error
++
++  publish:
++    needs: verify
++    runs-on: ubuntu-latest
++    environment: npm
++    # NOTE: this job holds id-token: write and runs no repository code. It
++    # does not check out the repository and does not install dependencies; it
++    # publishes the tarball that the verify job packed, after checking its
++    # sha256 against the value that job reported. The npm CLI is the one
++    # bundled with the Node that setup-node installs, checked against a
++    # minimum version below; no npm is installed globally.
++    permissions:
++      contents: read
++      id-token: write
++    steps:
++      - name: Download the release tarball
++        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
++        with:
++          name: release-tarball-${{ github.run_id }}-${{ github.run_attempt }}
++          path: ${{ runner.temp }}/release-tarball
++
++      - name: Verify the tarball checksum
++        env:
++          TARBALL: ${{ needs.verify.outputs.tarball }}
++          EXPECTED_SHA256: ${{ needs.verify.outputs.sha256 }}
++        run: |
++          case "$TARBALL" in
++            ""|*/*)
++              echo "::error::Unexpected tarball name: $TARBALL"
++              exit 1
++              ;;
++          esac
++          actual="$(sha256sum "$RUNNER_TEMP/release-tarball/$TARBALL" | cut -d' ' -f1)"
++          if [ "$actual" != "$EXPECTED_SHA256" ]; then
++            echo "::error::The downloaded tarball does not match the sha256 reported by the verify job."
++            exit 1
++          fi
++
++      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
++        with:
++          node-version: 24
++          registry-url: https://registry.npmjs.org
++          package-manager-cache: false
++
++      # npm trusted publishing (OIDC) needs npm >= 11.5.1. The npm CLI comes
++      # bundled with the Node distribution that setup-node installs; nothing
++      # else is downloaded here. Fail closed if the bundled npm is too old.
++      - name: Require an OIDC-capable npm CLI
++        env:
++          NPM_MIN_VERSION: 11.5.1
++        run: |
++          npm_version="$(npm --version)"
++          if ! NPM_VERSION="$npm_version" node -e '
++            const parse = (v) => v.split("-")[0].split(".").map(Number);
++            const have = parse(process.env.NPM_VERSION);
++            const need = parse(process.env.NPM_MIN_VERSION);
++            for (let i = 0; i < 3; i++) {
++              if ((have[i] || 0) !== (need[i] || 0)) {
++                process.exit((have[i] || 0) > (need[i] || 0) ? 0 : 1);
++              }
++            }
++          '; then
++            echo "::error::npm $npm_version is older than $NPM_MIN_VERSION, which npm trusted publishing requires."
++            exit 1
++          fi
++          echo "npm $npm_version satisfies >= $NPM_MIN_VERSION"
++
++      # [impl->req~release-dist-tag-env~1]
++      # [impl->req~release-check-substrings-kept~1]
++      - name: Publish stable releases to latest and prereleases to next
++        env:
++          DIST_TAG: ${{ needs.verify.outputs.dist_tag }}
++          TARBALL: ${{ needs.verify.outputs.tarball }}
++        run: |
++          case "$DIST_TAG" in
++            latest|next) ;;
++            *)
++              echo "::error::Unexpected npm dist-tag: $DIST_TAG"
++              exit 1
++              ;;
++          esac
++          npm publish --access public --provenance --tag "$DIST_TAG" "$RUNNER_TEMP/release-tarball/$TARBALL"
+```
+<!-- prettier-ignore-end -->
+
+The diff was written by hand and checked by reading against the current file;
+it was not applied to a copy and parsed, because no shell was available in
+this revision (**not verified** as valid YAML). Parse the result with the
+`yaml` package before applying.
+
+Deviation from the brief: the tarball is passed after the flags
+(`npm publish --access public --provenance --tag "$DIST_TAG" <path>`), not as
+`npm publish ./<tarball> ...`, so that the required substring
+`npm publish --access public --provenance` stays in the file
+(`requiredWorkflowContent` in `scripts/check-release-ready.mjs`). npm accepts
+the package spec at any position; this is not verified by a run.
+
+### Trade-offs
+
+- The tarball is built in the unprivileged job and trusted by the publish job.
+  Anything that can alter the tarball inside `verify` (a compromised
+  dependency or test code) now decides what is published. The sha256 passed
+  as a job output only protects the artifact in transit and at rest between
+  the two jobs, not against a malicious `verify` job. This reduces what runs
+  next to the OIDC token but does not remove trust in the build.
+- `prepublishOnly` (`pnpm package:check`) does not run when a tarball is
+  published, so `package:check` must keep running in `verify`; the proposed
+  file keeps it. `npm pack` runs `prepack` (the build) in `verify`.
+- Provenance is attached when publishing the tarball from a job that has no
+  checkout; whether `--provenance` accepts this without repository metadata
+  beyond `package.json` is **not verified** until a real release.
+- `actions/download-artifact` at the `v6` SHA is a new pin, and its
+  compatibility with `upload-artifact` v6 is inferred, not documented.
+- `tests/unit/release-workflow.test.ts` asserts on `release.yml` and must be
+  updated in the same change:
+  - the read of `jobs.publish.steps` (line 269) must read `verify` steps for
+    the release lookup and unit-test assertions and `publish` steps for the
+    publish assertions;
+  - `distTagValue` (line 278) must become
+    the expression on `needs.verify.outputs.dist_tag`; the publish step keeps
+    `DIST_TAG` in its own `env`, so the `distTagName` lookup still works;
+  - "has no expression interpolated into a run script" (line 285) must cover
+    the steps of both jobs;
+  - "runs the unit tests once" (line 739) must count `pnpm test` over both
+    jobs (still once, in `verify`) and `pnpm test:browser`;
+  - the "maps isPrerelease" test (line 401) uses `releaseSteps`, which now come
+    from `verify`;
+  - the test that keeps what `scripts/check-release-ready.mjs` requires and
+    forbids (line 749) still holds with the file as proposed: `release:`, `workflow_call:`,
+    `id-token: write`, the `gh release view` call and
+    `npm publish --access public --provenance` are all present, and none of
+    the forbidden patterns appears.
+- New assertions worth adding to that test: `verify` has no `id-token` and no
+  `environment`; `publish` has no checkout or `pnpm install` step.
+- This changes the release flow, so it needs the owner's approval, and the
+  edit needs a token with Workflows: write. It is not exercised until a real
+  release.
