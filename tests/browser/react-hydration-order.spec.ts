@@ -21,22 +21,15 @@ type LateStore = {
   __lateDefinedAtHtml?: boolean;
 };
 
-// KNOWN LIMITATION (docs/react.md, 'Known limitation: hydration of the element'). Lit renders the
-// element's light DOM before React hydrates, so React reports a recoverable mismatch and
-// regenerates the host node. Only hydration inside flushSync, before Lit's microtask, is clean.
-// The measured harness uses all four render props (default slots).
-// The follow-up change 'wrapper SSR hydration fix' flips the 1 entries to 0, and the host
-// expectation to kept. Do not 'fix' this test, fix the wrapper.
-//
-// Measured on PR 91 (same in chromium, firefox and webkit, default slots). after/sync was
-// measured by this spec in CI: 0 recoverable errors, host node kept, like before/sync, because
-// Lit renders in a microtask after the definition.
+// The wrapper makes the host opaque to React's hydration, so every order is clean: no recoverable
+// error and the host node is kept, whether the element rendered its light DOM before React
+// hydrated or not. The harness uses all four render props (default slots).
 const EXPECTED_RECOVERABLE: Record<`${Define}/${Hydrate}`, number> = {
-  'before/update': 1,
-  'before/task': 1,
+  'before/update': 0,
+  'before/task': 0,
   'before/sync': 0,
-  'after/update': 1,
-  'after/task': 1,
+  'after/update': 0,
+  'after/task': 0,
   'after/sync': 0,
 };
 
@@ -103,4 +96,32 @@ test.describe('hydration order of the element and React', () => {
       expect(seen.hostKept).toBe(expected === 0);
     });
   }
+
+  test('define before, hydrate task, no render props: clean hydration, host kept', async ({
+    page,
+  }) => {
+    await page.goto('/react-slots.html?mode=hydrate-late&define=before&hydrate=task&slots=none');
+    await expect(page.locator(RADIOS)).toHaveCount(3);
+    await expect(page.locator('#root pricing-renderer')).toHaveCount(1);
+    await page.waitForFunction(() => {
+      const store = window as unknown as LateStore;
+      return store.__lateHydrateCalled === true && (store.__lateCommits ?? 0) >= 1;
+    });
+    await page.waitForTimeout(100);
+
+    const seen = await page.evaluate(() => {
+      const store = window as unknown as LateStore;
+      return {
+        recoverable: store.__recoverable ?? [],
+        hostKept: document.querySelector('pricing-renderer') === store.__lateHost,
+        beforeChildCount: store.__lateBefore?.childCount,
+        definedAtHtml: store.__lateDefinedAtHtml,
+      };
+    });
+    // The element rendered before React hydrated, as in the rows above.
+    expect(seen.definedAtHtml).toBe(true);
+    expect(seen.beforeChildCount).toBeGreaterThan(0);
+    expect(seen.recoverable).toHaveLength(0);
+    expect(seen.hostKept).toBe(true);
+  });
 });
