@@ -1,0 +1,5 @@
+State: wave 2 code complete on change/phase3-react-headless-c. Full suite green in the wiring task (88 files, 1807 tests), typecheck, lint, package:check green. New: src/react/{use-pricing-source,selection-store,use-pricing-selection,use-renderer-state}.ts, headless.ts exports, changesets use-pricing-source, use-pricing-selection, use-renderer-state (selection-store has none by design), 4+ new unit test pairs. Spec wording fixed: pricing.metadata.saasName in react-hooks spec and tasks.md.
+Decisions: test tasks used role implementer with red_before bash install form; blocked impl tasks cannot be integrated, so they were redone with replaces and a narrow test-edit permission.
+Followup noted by worker: add assertions in tests/unit/react-provider.test.ts that headless exports the two new hooks and no createXStore (left to panel).
+Next: push, open PR into develop, CI, panel (reviewer, test-reviewer, security-auditor since URL input/headers), set_review_package, lead_ready.
+Deferred to P3-15b docs: redirects, shared loaders checking context.url, SSRF.
