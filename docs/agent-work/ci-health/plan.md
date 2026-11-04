@@ -7,7 +7,10 @@
 - Item 3a, `release.yml`: drop the global `npm install --global npm@11.18.0` from
   the job that holds `id-token: write`. Replace it with a fail-closed version
   gate: npm >= 11.5.1. Node 24.0.0 bundles npm 11.3.0, the latest 24.x bundles
-  11.19.1, and trusted publishing needs >= 11.5.1.
+  11.19.1, and trusted publishing needs >= 11.5.1. `node-version: 24` is not
+  pinned: setup-node checks the runner tool cache first, so the build is
+  whichever 24.x the runner image has cached, or the latest download if none
+  matches.
 - Item 3b, split `release.yml` into an unprivileged verify job and a minimal
   publish job that publishes a packed tarball. This needs
   `tests/unit/release-workflow.test.ts` changed: it reads `jobs.publish.steps`

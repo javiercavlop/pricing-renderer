@@ -29,8 +29,10 @@ required `release_tag` input. It:
    an existing, non-draft GitHub Release. The Release itself determines whether
    the npm dist-tag is `latest` or `next`.
 2. Checks out the exact immutable release tag without persisting Git credentials.
-3. Uses a GitHub-hosted runner, Node 24, npm 11.18.0, and pnpm 10.19.0 without a
-   release dependency cache.
+3. Uses a GitHub-hosted runner, Node 24 with its bundled npm CLI (at least
+   11.5.1, checked by a gate in the workflow), and pnpm 10.19.0 without a
+   release dependency cache. See
+   [ADR 0002](adr/0002-release-trust-model-and-supply-chain-gates.md).
 4. Verifies that the tag is exactly `v<package version>`, release documentation
    is final, and that the version is not already present on npm.
 5. Runs formatting, lint, typechecking, unit tests, packed-artifact validation,

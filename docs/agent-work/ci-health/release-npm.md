@@ -21,15 +21,18 @@ finding 1).
 
 Pinning another global npm would keep downloading and running registry code in
 the OIDC job. Node 24.0.0 bundled npm 11.3.0, but the latest Node 24.x bundles
-11.19.1, and `node-version: 24` resolves to the latest 24.x. A gate adds no
-download and fails closed if that ever stops being true.
+11.19.1. `node-version: 24` is not pinned: setup-node checks the runner tool
+cache first, so the Node 24 build (and its bundled npm) is whichever 24.x the
+runner image has cached, or the latest download if none matches. A gate adds no
+download and fails closed if the bundled npm is ever older than the minimum.
 
 ## Residual risk
 
 The bundled npm comes from the Node distribution fetched by setup-node, which
-is still trusted without a separate check. `node-version: 24` resolves to the
-latest 24.x, so the npm version is not pinned and can change between releases;
-the gate only guarantees the minimum.
+is still trusted without a separate check. The Node 24 build is whichever 24.x
+the runner tool cache holds (or the latest download if none matches), so the npm
+version is not pinned and can change between releases; the gate only guarantees
+the minimum.
 
 ## Check result
 

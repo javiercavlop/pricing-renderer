@@ -1,7 +1,8 @@
 # Release workflow: job split deferred
 
 This is a proposal for the owner. Nothing of it is implemented; `release.yml`
-is unchanged by it (audit finding 2, accepted risk).
+is unchanged by it (audit finding 2, accepted risk). The decision record is
+[ADR 0002](../../adr/0002-release-trust-model-and-supply-chain-gates.md).
 
 ## What the split would be
 
@@ -13,6 +14,8 @@ is unchanged by it (audit finding 2, accepted risk).
   the step "Verify the published GitHub Release" and the dist-tag guard,
   downloads the tarball and runs
   `npm publish --access public --provenance --tag "$DIST_TAG" ./<tarball>`.
+  It also keeps `actions/setup-node` with `registry-url` and the npm
+  minimum-version gate, because the npm that publishes runs there.
 
 Publishing a tarball skips the `prepack` and `prepublishOnly` lifecycle
 scripts (per npm's publish code; not verified here), so no build code runs
@@ -44,3 +47,14 @@ published.
    sha256 before and after.
 3. That the provenance subject digest equals the tarball digest.
 4. That the dist-tag guard still runs before the publish step.
+5. Run `npm publish ./x.tgz --dry-run` on a throwaway package whose `prepack`
+   and `prepublishOnly` scripts write a marker file, and check the marker is
+   absent (the safety argument depends on a tarball publish skipping them).
+6. That the `setup-node` `registry-url` and the npm gate run in the `publish`
+   job.
+
+## Residual risk
+
+A compromised install or test in `verify` can still alter the tarball, and
+`publish` then publishes and attests it. The split protects the OIDC token, not
+the integrity of the artifact.
