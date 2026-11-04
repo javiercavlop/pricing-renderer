@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as yamlEntry from '../../src/yaml/index.js';
 
 type SourceResult = {
   ok: boolean;
-  value?: { saasName: string };
+  value?: { metadata: { saasName: string } };
   diagnostics: { code: string; severity: string; path?: string }[];
 };
 type Loader = (call: {
@@ -34,10 +34,6 @@ function isPromise(value: unknown): boolean {
     typeof (value as { then?: unknown }).then === 'function'
   );
 }
-
-beforeAll(() => {
-  expect(ns.loadPricingSource).toBeTypeOf('function');
-});
 
 // [utest->req~load-source-one-source~1]
 describe('loadPricingSource: exactly one source', () => {
@@ -97,9 +93,7 @@ describe('loadPricingSource: exactly one source', () => {
   it('counts an empty yaml string as a defined source', () => {
     const result = loadPricingSource({ yaml: '', src: ACME_URL }, {});
     expect(isPromise(result)).toBe(false);
-    expect((result as SourceResult).diagnostics.map((d) => d.code)).toEqual([
-      'PR_SOURCE_CONFLICT',
-    ]);
+    expect((result as SourceResult).diagnostics.map((d) => d.code)).toEqual(['PR_SOURCE_CONFLICT']);
   });
 });
 
@@ -112,12 +106,12 @@ describe('loadPricingSource: the one source', () => {
     const inline = loadPricingSource({ yaml: acmeYaml });
     expect(isPromise(inline)).toBe(false);
     expect((inline as SourceResult).ok).toBe(true);
-    expect((inline as SourceResult).value?.saasName).toBe('Acme Cloud');
+    expect((inline as SourceResult).value?.metadata.saasName).toBe('Acme Cloud');
 
     const remote = loadPricingSource({ src: ACME_URL }, { loadPricing, signal: controller.signal });
     expect(isPromise(remote)).toBe(true);
     const settled = await remote;
-    expect(settled.value?.saasName).toBe('Acme Cloud');
+    expect(settled.value?.metadata.saasName).toBe('Acme Cloud');
     expect(loadPricing).toHaveBeenCalledTimes(1);
     const call = loadPricing.mock.calls[0]?.[0];
     expect(call?.url).toBe(ACME_URL);
@@ -126,24 +120,24 @@ describe('loadPricingSource: the one source', () => {
 
   it('gives the loader a signal that follows the signal of the options', async () => {
     let received: AbortSignal | undefined;
+    const controller = new AbortController();
     const loadPricing = vi.fn<Loader>(async ({ signal }) => {
       received = signal;
+      controller.abort();
       return acmeYaml;
     });
-    const controller = new AbortController();
-    const pending = loadPricingSource({ src: ACME_URL }, { loadPricing, signal: controller.signal });
-    controller.abort();
-    await pending;
+    await loadPricingSource({ src: ACME_URL }, { loadPricing, signal: controller.signal });
+    expect(loadPricing).toHaveBeenCalledTimes(1);
     expect(received?.aborted).toBe(true);
   });
 
   it('returns a synchronous result for pricing', () => {
     const result = loadPricingSource({
-      pricing: { saasName: 'Inline', plans: { free: { price: 0 } } },
+      pricing: { syntaxVersion: '3.1', saasName: 'Inline', plans: { free: { price: 0 } } },
     });
     expect(isPromise(result)).toBe(false);
     expect((result as SourceResult).ok).toBe(true);
-    expect((result as SourceResult).value?.saasName).toBe('Inline');
+    expect((result as SourceResult).value?.metadata.saasName).toBe('Inline');
   });
 
   it('returns a synchronous failed result for invalid yaml', () => {
