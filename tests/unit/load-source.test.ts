@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import type { NormalizePricingOptions } from '../../src/core/index.js';
 import * as yamlEntry from '../../src/yaml/index.js';
 
 type SourceResult = {
@@ -14,7 +15,12 @@ type Loader = (call: {
 }) => Promise<string>;
 type LoadPricingSource = (
   input: { pricing?: unknown; yaml?: string; src?: string },
-  options?: { request?: { maxBytes?: number }; loadPricing?: Loader; signal?: AbortSignal },
+  options?: {
+    request?: { maxBytes?: number };
+    loadPricing?: Loader;
+    normalizeOptions?: NormalizePricingOptions;
+    signal?: AbortSignal;
+  },
 ) => SourceResult | Promise<SourceResult>;
 
 const ns = yamlEntry as unknown as { loadPricingSource?: LoadPricingSource };
@@ -90,6 +96,21 @@ describe('loadPricingSource: exactly one source', () => {
     expect(loadPricing).not.toHaveBeenCalled();
   });
 
+  it('returns PR_SOURCE_CONFLICT for pricing and src, without loading', () => {
+    const loadPricing = vi.fn<Loader>(async () => acmeYaml);
+    const result = loadPricingSource(
+      {
+        pricing: { syntaxVersion: '3.1', saasName: 'Inline', plans: { free: { price: 0 } } },
+        src: ACME_URL,
+      },
+      { loadPricing },
+    );
+    expect(isPromise(result)).toBe(false);
+    expect((result as SourceResult).ok).toBe(false);
+    expect((result as SourceResult).diagnostics.map((d) => d.code)).toEqual(['PR_SOURCE_CONFLICT']);
+    expect(loadPricing).not.toHaveBeenCalled();
+  });
+
   it('counts an empty yaml string as a defined source', () => {
     const result = loadPricingSource({ yaml: '', src: ACME_URL }, {});
     expect(isPromise(result)).toBe(false);
@@ -145,6 +166,47 @@ describe('loadPricingSource: the one source', () => {
     expect(isPromise(result)).toBe(false);
     expect((result as SourceResult).ok).toBe(false);
     expect((result as SourceResult).diagnostics.length).toBeGreaterThan(0);
+  });
+
+  describe('normalizeOptions', () => {
+    const normalizeOptions: NormalizePricingOptions = {
+      syntaxAdapters: [
+        {
+          id: 'test-adapter',
+          supports: (version) => version === '3.1',
+          adapt: (pricing) => ({ ...(pricing as Record<string, unknown>), saasName: 'Adapted' }),
+        },
+      ],
+    };
+    const inlinePricing = {
+      syntaxVersion: '3.1',
+      saasName: 'Inline',
+      plans: { free: { price: 0 } },
+    };
+
+    function expectAdapted(result: SourceResult) {
+      expect(result.value?.metadata.saasName).toBe('Adapted');
+      expect(result.diagnostics.map((d) => d.code)).toContain('PR_VERSION_ADAPTED');
+    }
+
+    it('reaches the normalization of pricing', () => {
+      const result = loadPricingSource({ pricing: inlinePricing }, { normalizeOptions });
+      expect(isPromise(result)).toBe(false);
+      expectAdapted(result as SourceResult);
+    });
+
+    it('reaches the normalization of yaml', () => {
+      const result = loadPricingSource({ yaml: acmeYaml }, { normalizeOptions });
+      expect(isPromise(result)).toBe(false);
+      expectAdapted(result as SourceResult);
+    });
+
+    it('reaches the normalization of the text loaded for src', async () => {
+      const loadPricing = vi.fn<Loader>(async () => acmeYaml);
+      const result = await loadPricingSource({ src: ACME_URL }, { loadPricing, normalizeOptions });
+      expect(loadPricing).toHaveBeenCalledTimes(1);
+      expectAdapted(result);
+    });
   });
 
   it('passes request as given: maxBytes -1 reaches the loader and refuses the body', async () => {
