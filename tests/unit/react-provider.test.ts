@@ -46,8 +46,8 @@ let providerMod: Loose = {};
 let headlessMod: Loose = {};
 
 beforeAll(async () => {
-  providerMod = (await import('../../src/react/provider.js').catch(() => ({}))) as Loose;
-  headlessMod = (await import('../../src/react/headless.js').catch(() => ({}))) as Loose;
+  providerMod = (await import('../../src/react/provider.js')) as Loose;
+  headlessMod = (await import('../../src/react/headless.js')) as Loose;
 });
 
 afterEach(() => {
@@ -162,6 +162,26 @@ describe('provider presentation precedence', () => {
     const ip = { planBadges: { starter: badge('Instance') } };
     const props = await renderWrapper({ yaml: acmeYaml, presentation: ip }, [{ presentation: pp }]);
     expect(props.presentation).toEqual(mergePresentationOptions(pp, ip));
+  });
+
+  it('lets the instance win and the provider beat the config on the same key', async () => {
+    type Merged = { planBadges: Record<string, { label: string }[]> };
+    const both = await renderWrapper(
+      { yaml: acmeYaml, presentation: { planBadges: { growth: badge('Instance') } } },
+      [{ presentation: { planBadges: { growth: badge('Provider') } } }],
+    );
+    expect((both.presentation as Merged).planBadges.growth).toEqual([
+      { id: 'Instance', label: 'Instance', tone: 'accent' },
+    ]);
+    const overConfig = await renderWrapper({ yaml: acmeYaml }, [
+      {
+        config: { presentation: { planBadges: { growth: badge('Config') } } },
+        presentation: { planBadges: { growth: badge('Provider') } },
+      },
+    ]);
+    expect((overConfig.presentation as Merged).planBadges.growth).toEqual([
+      { id: 'Provider', label: 'Provider', tone: 'accent' },
+    ]);
   });
 
   it('passes the provider presentation when the instance sets none', async () => {
@@ -298,6 +318,26 @@ describe('provider request headers stay on allowed origins', () => {
       expect(filter(request, src, ['not a url'])).toEqual({ timeoutMs: 5000 });
     });
 
+    it('compares origins case-insensitively and ignores a default port', () => {
+      vi.stubGlobal('location', { origin: 'https://app.example.com' });
+      expect(filterRequest()(request, 'HTTPS://APP.example.com:443/a.yml', [])).toEqual(request);
+    });
+
+    it('never matches a protocol-relative URL', () => {
+      vi.stubGlobal('location', { origin: 'https://app.example.com' });
+      const listed = ['https://cdn.example.net'];
+      const result = filterRequest()(request, '//cdn.example.net/a.yml', listed);
+      expect(result).toEqual({ timeoutMs: 5000 });
+    });
+
+    it('strips headers and credentials for a blob URL of the page origin', () => {
+      vi.stubGlobal('location', { origin: 'https://app.example.com' });
+      const result = filterRequest()(request, 'blob:https://app.example.com/1', []);
+      expect(result).toEqual({ timeoutMs: 5000 });
+      expect(result).not.toHaveProperty('headers');
+      expect(result).not.toHaveProperty('credentials');
+    });
+
     it('strips headers and credentials when src is not an absolute URL', () => {
       vi.stubGlobal('location', { origin: 'https://app.example.com' });
       const filter = filterRequest();
@@ -340,6 +380,20 @@ describe('provider keeps the global configuration', () => {
     );
     expect(html).toBe('<b>x</b>');
     expect(getPricingRendererConfig().locale).toBe('en-US');
+  });
+
+  it('leaves the global configuration unchanged for messages and presentation', async () => {
+    const before = structuredClone(getPricingRendererConfig());
+    renderToString(
+      createElement(providerComponent(), {
+        messages: { 'cta.select': 'Pick' },
+        presentation: { planBadges: { growth: [{ id: 'a', label: 'A', tone: 'accent' }] } },
+      }),
+    );
+    expect(getPricingRendererConfig()).toEqual(before);
+    const props = await renderWrapper({ yaml: acmeYaml });
+    expect(Object.keys(props)).not.toContain('messages');
+    expect(Object.keys(props)).not.toContain('presentation');
   });
 
   it('gives a tree without a provider none of the provider settings', async () => {

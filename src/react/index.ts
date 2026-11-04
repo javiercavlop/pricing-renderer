@@ -116,14 +116,6 @@ export type PricingRendererStyle = React.CSSProperties & {
 
 export type PricingRendererProps = PricingInputProps & PricingRendererSharedProps;
 
-const providerConfigKeys = [
-  'locale',
-  'pricingPath',
-  'selectionEnabled',
-  'ctaEnabled',
-  'variablesEnabled',
-] as const;
-
 // [impl->req~provider-config-precedence~1] [impl->req~provider-presentation-precedence~1]
 // [impl->req~provider-messages-merge~1] [impl->req~provider-request-loader~1]
 // [impl->req~provider-request-origin~1] [impl->req~provider-nearest~1]
@@ -136,6 +128,13 @@ function applyProvider(
 ): Record<string, unknown> {
   const merged: Record<string, unknown> = { ...props };
   if (provider === undefined) return merged;
+  const providerConfigKeys = [
+    'locale',
+    'pricingPath',
+    'selectionEnabled',
+    'ctaEnabled',
+    'variablesEnabled',
+  ] as const;
   for (const key of providerConfigKeys) {
     const value = provider.config?.[key];
     if (merged[key] === undefined && value !== undefined) merged[key] = value;

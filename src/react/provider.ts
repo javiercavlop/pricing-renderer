@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, createElement, useMemo, type ReactNode } from 'react';
+import { createContext, createElement, useMemo, type ReactElement, type ReactNode } from 'react';
 import type { MessageCatalog, PricingPresentation, PricingRendererConfig } from '../core/index.js';
 import type { PricingLoader, PricingRequestOptions } from '../yaml/index.js';
 
@@ -23,7 +23,8 @@ export const PricingRendererContext = createContext<PricingRendererContextValue 
 
 function originOf(url: string): string | undefined {
   try {
-    return new URL(url).origin;
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.origin : undefined;
   } catch {
     return undefined;
   }
@@ -53,7 +54,7 @@ export function filterProviderRequest(
 
 // [impl->req~provider-no-global-write~1]
 // The provider only publishes its props to its tree; it never writes the global configuration.
-export function PricingRendererProvider(props: PricingRendererProviderProps): ReactNode {
+export function PricingRendererProvider(props: PricingRendererProviderProps): ReactElement {
   const { children, config, messages, presentation, request, requestOrigins, loadPricing } = props;
   const value = useMemo(
     () => ({ config, messages, presentation, request, requestOrigins, loadPricing }),
