@@ -6,15 +6,20 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // openspec/changes/add-react-headless/specs/composition/spec.md that need a browser (listed in
 // tasks.md, "Browser-only requirements"). The page is examples/vanilla/react-slots.html, which
 // mounts PricingRenderer with the Acme pricing and the render props the `mode` query selects; every
-// render prop output carries a data-testid. This spec has not been run in the authoring
-// environment (no browser there).
+// render prop output carries a data-testid.
 
 type Mode = 'all' | 'plan' | 'summary' | 'error' | 'error-yaml' | 'loading' | 'late' | 'hydrate';
+type MountMode = Mode | 'current';
 
 type Diagnostic = { code: string };
 type ErrorContext = { version: number; diagnostics: Diagnostic[] };
 
 type Store = {
+  __mounts?: Record<string, number>;
+  __unmounts?: Record<string, number>;
+  __triggerResults?: boolean[];
+  __ctaCalls?: { planId: string; selected: boolean; slotConnected: boolean }[];
+  __diagnosticCodes?: string[];
   __probe?: Record<string, number>;
   __ref?: HTMLElement;
   __errorContexts?: ErrorContext[];
@@ -38,7 +43,7 @@ const ctaOf = (page: Page, planId: string): Locator =>
 const radio = (planId: string): string =>
   `#root input[type="radio"][name$="-plan"][value="${planId}"]`;
 
-async function open(page: Page, mode: Mode): Promise<void> {
+async function open(page: Page, mode: MountMode): Promise<void> {
   await page.goto(`/react-slots.html?mode=${mode}`);
 }
 
@@ -73,6 +78,27 @@ const refApplySelection = (page: Page): Promise<boolean> =>
     return result.applied;
   });
 
+// Records the codes of the pricing-diagnostic events of the rendered element from now on.
+const recordDiagnostics = (page: Page): Promise<void> =>
+  page.evaluate(() => {
+    const store = window as unknown as Store;
+    const codes: string[] = [];
+    store.__diagnosticCodes = codes;
+    store.__ref?.addEventListener('pricing-diagnostic', (event) => {
+      const { diagnostics } = (event as CustomEvent<{ diagnostics: Diagnostic[] }>).detail;
+      for (const entry of diagnostics) codes.push(entry.code);
+    });
+  });
+
+const notReadyCount = async (page: Page): Promise<number> => {
+  const codes = await page.evaluate(() => (window as unknown as Store).__diagnosticCodes ?? []);
+  return codes.filter((code) => code === 'PR_SELECTION_NOT_READY').length;
+};
+
+// The return value of each ctx.trigger() call of the harness.
+const triggerResults = (page: Page): Promise<boolean[]> =>
+  page.evaluate(() => (window as unknown as Store).__triggerResults ?? []);
+
 const actions = (page: Page): Promise<{ actionId: string; planId: string }[]> =>
   page.evaluate(() => (window as unknown as Store).__actions ?? []);
 
@@ -104,7 +130,22 @@ const marksIntact = (page: Page): Promise<boolean> =>
     return marks.length > 0 && marks.every((node) => node.isConnected);
   });
 
-// [utest->req~react-slot-portals~1]
+// Mounts and effect cleanups of the render prop outputs, by kind; the harness counts them because
+// a portal into a detached node cannot be seen by a locator.
+type Which = 'mounts' | 'unmounts';
+const lifecycle = (page: Page, which: Which): Promise<Record<string, number>> =>
+  page.evaluate((key) => {
+    const store = window as unknown as Store;
+    return { ...(key === 'mounts' ? store.__mounts : store.__unmounts) };
+  }, which);
+
+const unmounted = async (page: Page, kind: string): Promise<number> =>
+  (await lifecycle(page, 'unmounts'))[kind] ?? 0;
+
+const mounted = async (page: Page, kind: string): Promise<number> =>
+  (await lifecycle(page, 'mounts'))[kind] ?? 0;
+
+// [utest->req~react-slot-portals~2]
 test.describe('React portals fill the slot nodes', () => {
   test('One plan CTA per plan slot node', async ({ page }) => {
     await open(page, 'all');
@@ -137,6 +178,10 @@ test.describe('React portals fill the slot nodes', () => {
     await expect(ctaOf(page, 'growth')).toBeVisible();
     await expect(page.getByTestId('loading')).toHaveCount(0);
     await expect(page.locator('#root [data-pr-slot="loading"]')).toHaveCount(0);
+    // The portal into the loading node is unmounted exactly once: no output is left in a node that
+    // is no longer reported.
+    await expect.poll(() => unmounted(page, 'loading')).toBe(1);
+    expect(await mounted(page, 'loading')).toBe(1);
   });
 
   test('Error content is inside the error slot node', async ({ page }) => {
@@ -159,6 +204,47 @@ test.describe('React portals fill the slot nodes', () => {
     for (const planId of PLAN_IDS) {
       await expect(slotOf(page, planId).locator('[data-testid^="cta-"]')).toHaveCount(1);
     }
+  });
+
+  test('A removed render prop is unmounted, the plan nodes keep one CTA each', async ({ page }) => {
+    await open(page, 'all');
+    await expect(page.getByTestId('summary')).toBeVisible();
+    for (const planId of PLAN_IDS) await expect(ctaOf(page, planId)).toBeVisible();
+    expect(await unmounted(page, 'summary')).toBe(0);
+    await page.locator('#toggle-summary').click();
+    await expect.poll(() => unmounted(page, 'summary')).toBe(1);
+    await expect(page.getByTestId('summary')).toHaveCount(0);
+    expect(await unmounted(page, 'plan')).toBe(0);
+    await expect(page.locator('#root [data-pr-slot="plan-cta"]')).toHaveCount(3);
+    for (const planId of PLAN_IDS) {
+      const buttons = slotOf(page, planId).locator('[data-testid^="cta-"]');
+      await expect(buttons).toHaveCount(1);
+      await expect(buttons).toHaveAttribute('data-plan-id', planId);
+    }
+    await expect(page.locator('#root [data-testid^="cta-"]')).toHaveCount(3);
+  });
+
+  test('Render prop off, plan picked, on again: no stale or detached call', async ({ page }) => {
+    await open(page, 'plan');
+    for (const planId of PLAN_IDS) await expect(ctaOf(page, planId)).toBeVisible();
+    await page.locator('#toggle-plan-cta').click();
+    await expect(page.locator('#root [data-pr-slot="plan-cta"]')).toHaveCount(0);
+    await expect.poll(() => unmounted(page, 'plan')).toBe(3);
+    await page.locator(radio('growth')).check({ force: true });
+    await expect.poll(async () => (await elementState(page)).plan).toBe('growth');
+    await page.evaluate(() => {
+      (window as unknown as Store).__ctaCalls = [];
+    });
+    await page.locator('#toggle-plan-cta').click();
+    for (const planId of PLAN_IDS) {
+      const selected = String(planId === 'growth');
+      await expect(ctaOf(page, planId)).toHaveAttribute('data-selected', selected);
+      await expect(slotOf(page, planId).locator('[data-testid^="cta-"]')).toHaveCount(1);
+    }
+    const calls = await page.evaluate(() => (window as unknown as Store).__ctaCalls ?? []);
+    expect(calls.length).toBeGreaterThanOrEqual(3);
+    expect(calls.filter((call) => !call.slotConnected)).toEqual([]);
+    expect(calls.filter((call) => call.selected !== (call.planId === 'growth'))).toEqual([]);
   });
 });
 
@@ -221,6 +307,15 @@ test.describe('plan CTA render context', () => {
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade to Growth');
   });
 
+  test('Current plan set at mount', async ({ page }) => {
+    await open(page, 'current');
+    await expect(ctaOf(page, 'starter')).toHaveAttribute('data-current', 'true');
+    await expect(ctaOf(page, 'starter')).toHaveAttribute('data-relation', 'current');
+    await expect(ctaOf(page, 'starter')).toHaveAttribute('data-label', 'Current plan');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-relation', 'upgrade');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade to Growth');
+  });
+
   test('Pending action: pending, any-pending and a refused trigger', async ({ page }) => {
     await open(page, 'plan');
     await expect(ctaOf(page, 'growth')).toBeVisible();
@@ -244,6 +339,7 @@ test.describe('plan CTA render context', () => {
     // trigger() is refused while an action is pending: no pricing-action is dispatched.
     await expect(ctaOf(page, 'enterprise')).toHaveAttribute('data-any-pending', 'true');
     expect(await actions(page)).toEqual([]);
+    await expect.poll(() => triggerResults(page)).toEqual([false]);
   });
 
   test('After a selection change each portal stays on its plan', async ({ page }) => {
@@ -336,9 +432,12 @@ test.describe('error diagnostics come from the slot node', () => {
     await expect.poll(() => errorContexts(page)).not.toEqual([]);
     const first = (await errorContexts(page))[0]?.diagnostics ?? [];
     expect(first[0]?.code).toBe('PR_YAML_PARSE_ERROR');
+    await recordDiagnostics(page);
     expect(await refApplySelection(page)).toBe(false);
+    await expect.poll(() => notReadyCount(page)).toBe(1);
     await page.locator('#rerender-error').click();
     await expect.poll(() => lastErrorVersion(page)).toBe(2);
+    expect(await notReadyCount(page)).toBe(1);
     const recorded = await errorContexts(page);
     expect(recorded.at(-1)?.diagnostics).toEqual(first);
     const codes = recorded.flatMap((context) => context.diagnostics.map((entry) => entry.code));

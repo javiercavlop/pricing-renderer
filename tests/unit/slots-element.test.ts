@@ -298,6 +298,7 @@ describe('plan CTA slot nodes', () => {
 
 // [utest->req~slot-plan-cta-keyed~1]
 describe('plan slot nodes belong to one plan', () => {
+  // Template-shape check only; the behavioural proof is tests/browser/element-slots.spec.ts.
   it('wraps each plan slot node in a keyed directive with the plan id', async () => {
     const template = (await ready({ slots: ['plan-cta'] })).element.render();
     const keys: unknown[] = [];

@@ -3,7 +3,7 @@ import { openDemo, planCta, PQ, setProps } from './helpers/change-flow.js';
 
 // Element slots (add-react-headless, P3-11). The scenarios are those of
 // openspec/changes/add-react-headless/specs/composition/spec.md that need a browser (listed in
-// tasks.md, "Browser-only requirements"); the others are in tests/unit/element-slots.test.ts. A new
+// tasks.md, "Browser-only requirements"); the others are in tests/unit/slots-element.test.ts. A new
 // element is a <pricing-renderer id="extra"> with the pricing of the demo page (Acme, en-US) and
 // the given properties, appended to document.body.
 
@@ -244,6 +244,20 @@ test.describe('slots change event', () => {
       await element.updateComplete;
     });
     expect(await eventCount(page)).toBe(0);
+  });
+
+  test('Values that are not a list of slot names, no event', async ({ page }) => {
+    await mount(page, {});
+    const values: unknown[] = [null, 'plan-cta', 3, { length: 1, 0: 'plan-cta' }];
+    for (const value of values) {
+      await page.evaluate(async (slots) => {
+        const element = document.querySelector('#extra') as SlotElement & { slots?: unknown };
+        element.slots = slots;
+        await element.updateComplete;
+      }, value);
+      expect(await eventCount(page)).toBe(0);
+      await expect(page.locator('#extra [data-pr-slot]')).toHaveCount(0);
+    }
   });
 });
 

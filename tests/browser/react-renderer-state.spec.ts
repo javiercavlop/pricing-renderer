@@ -3,8 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 // usePricingRendererState (add-react-headless, P3-12b): the end-to-end race of
 // req~renderer-state-early-listen~1 with a real element and a real commit. The page is
 // examples/vanilla/react-slots.html?mode=state, where a component calls the hook with a ref to the
-// PricingRenderer rendered in the same render. This spec has not been run in the authoring
-// environment (no browser there).
+// PricingRenderer rendered in the same render.
 
 const radio = (planId: string): string =>
   `#root input[type="radio"][name$="-plan"][value="${planId}"]`;

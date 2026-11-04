@@ -30,6 +30,13 @@ declare global {
     __probe?: { plan: number; summary: number; loading: number; error: number; rp: number };
     __ref?: PricingRendererElement | null;
     __errorContexts?: { version: number; diagnostics: unknown }[];
+    // Mounts and effect cleanups of the render prop outputs, by kind (plan, summary, ...).
+    __mounts?: Record<string, number>;
+    __unmounts?: Record<string, number>;
+    // The return value of each ctx.trigger() call.
+    __triggerResults?: boolean[];
+    // One entry per call of renderPlanCta: what it saw and whether its slot node was in the page.
+    __ctaCalls?: { planId: string; selected: boolean; slotConnected: boolean }[];
   }
 }
 
@@ -37,6 +44,25 @@ const mode = new URLSearchParams(location.search).get('mode') ?? 'all';
 const root = document.querySelector<HTMLElement>('#root')!;
 window.__actions = [];
 window.__errorContexts = [];
+window.__mounts = {};
+window.__unmounts = {};
+window.__triggerResults = [];
+window.__ctaCalls = [];
+
+// Wraps the output of a render prop, so that an unmounted portal is visible to a page script even
+// when its slot node is detached and no locator can reach it.
+function Tracked(props: { kind: string; children: ReactNode }): ReactNode {
+  const { kind } = props;
+  useEffect(() => {
+    const bump = (counts: Record<string, number>): void => {
+      counts[kind] = (counts[kind] ?? 0) + 1;
+    };
+    bump(window.__mounts!);
+    return () => bump(window.__unmounts!);
+  }, [kind]);
+  return props.children;
+}
+const tracked = (kind: string, child: ReactNode): ReactNode => h(Tracked, { kind }, child);
 
 // Calls per render prop; the total also goes to `window.__renderCalls`.
 const callCounts = { plan: 0, summary: 0, loading: 0, error: 0 };
@@ -52,46 +78,59 @@ const str = (value: unknown): string => (value === undefined ? '' : String(value
 
 const renderPlanCta: PricingRendererProps['renderPlanCta'] = (ctx) => {
   counted('plan');
-  return h(
-    'button',
-    {
-      type: 'button',
-      'data-rp': '1',
-      'data-testid': `cta-${ctx.planId}`,
-      'data-label': ctx.label,
-      'data-href': ctx.href ?? '',
-      'data-selected': String(ctx.selected),
-      'data-current': String(ctx.current),
-      'data-pending': String(ctx.pending),
-      'data-any-pending': String(ctx.anyPending),
-      'data-relation': str(ctx.relation),
-      onClick: () => {
-        ctx.trigger();
+  window.__ctaCalls!.push({
+    planId: ctx.planId,
+    selected: ctx.selected,
+    slotConnected:
+      root.querySelector(`[data-pr-slot="plan-cta"][data-plan-id="${ctx.planId}"]`) !== null,
+  });
+  return tracked(
+    'plan',
+    h(
+      'button',
+      {
+        type: 'button',
+        'data-rp': '1',
+        'data-testid': `cta-${ctx.planId}`,
+        'data-plan-id': ctx.planId,
+        'data-label': ctx.label,
+        'data-href': ctx.href ?? '',
+        'data-selected': String(ctx.selected),
+        'data-current': String(ctx.current),
+        'data-pending': String(ctx.pending),
+        'data-any-pending': String(ctx.anyPending),
+        'data-relation': str(ctx.relation),
+        onClick: () => {
+          window.__triggerResults!.push(ctx.trigger());
+        },
       },
-    },
-    `Pick ${ctx.planName}`,
+      `Pick ${ctx.planName}`,
+    ),
   );
 };
 
 const renderSummaryActions: PricingRendererProps['renderSummaryActions'] = (ctx) => {
   counted('summary');
-  return h(
-    'div',
-    {
-      'data-rp': '1',
-      'data-testid': 'summary',
-      'data-plan': ctx.selection.planId ?? '',
-      'data-subtotal': String(ctx.resolved.subtotal),
-      'data-pending': String(ctx.pending),
-      'data-relation': str(ctx.relation),
-    },
+  return tracked(
     'summary',
+    h(
+      'div',
+      {
+        'data-rp': '1',
+        'data-testid': 'summary',
+        'data-plan': ctx.selection.planId ?? '',
+        'data-subtotal': String(ctx.resolved.subtotal),
+        'data-pending': String(ctx.pending),
+        'data-relation': str(ctx.relation),
+      },
+      'summary',
+    ),
   );
 };
 
 const renderLoading: PricingRendererProps['renderLoading'] = () => {
   counted('loading');
-  return h('p', { 'data-rp': '1', 'data-testid': 'loading' }, 'Loading prices');
+  return tracked('loading', h('p', { 'data-rp': '1', 'data-testid': 'loading' }, 'Loading prices'));
 };
 
 // Each call to this factory gives a new function, so a re-render can change the identity.
@@ -100,23 +139,26 @@ const makeRenderError =
   (ctx) => {
     counted('error');
     window.__errorContexts!.push({ version, diagnostics: ctx.diagnostics });
-    return h(
-      'div',
-      {
-        'data-rp': '1',
-        'data-testid': 'error',
-        'data-codes': ctx.diagnostics.map((item) => item.code).join(','),
-      },
+    return tracked(
+      'error',
       h(
-        'button',
+        'div',
         {
-          type: 'button',
-          'data-testid': 'error-reload',
-          onClick: () => {
-            void ctx.reload();
-          },
+          'data-rp': '1',
+          'data-testid': 'error',
+          'data-codes': ctx.diagnostics.map((item) => item.code).join(','),
         },
-        'Retry',
+        h(
+          'button',
+          {
+            type: 'button',
+            'data-testid': 'error-reload',
+            onClick: () => {
+              void ctx.reload();
+            },
+          },
+          'Retry',
+        ),
       ),
     );
   };
@@ -128,7 +170,12 @@ const propsState: {
   pendingActionId?: string;
   currentSelection?: PricingRendererProps['currentSelection'];
   slotNames?: readonly string[];
-} = { errorVersion: 1, renderError: makeRenderError(1) };
+} = {
+  errorVersion: 1,
+  renderError: makeRenderError(1),
+  // The `current` mode starts with a current plan, to test it at mount.
+  ...(mode === 'current' && { currentSelection: { planId: 'starter' } }),
+};
 
 const slots = (names: readonly string[]): Partial<PricingRendererProps> => ({
   ...(names.includes('plan') && { renderPlanCta }),
@@ -148,7 +195,11 @@ const slotNamesByMode: Record<string, readonly string[]> = {
   hydrate: everySlot,
   late: ['summary'],
   state: [],
+  current: ['plan'],
 };
+// `mode` comes from the URL: only own keys count, never `__proto__` or `constructor`.
+const modeSlotNames = (): readonly string[] =>
+  Object.hasOwn(slotNamesByMode, mode) ? slotNamesByMode[mode]! : everySlot;
 
 const useIsomorphicLayoutEffect = typeof document === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -174,7 +225,7 @@ function renderer(ref: Ref<PricingRendererElement> = publishRef): ReactNode {
     selectionEnabled: true,
     ctaEnabled: true,
     locale: 'en-US',
-    ...slots(propsState.slotNames ?? slotNamesByMode[mode] ?? everySlot),
+    ...slots(propsState.slotNames ?? modeSlotNames()),
     ...(propsState.pendingActionId !== undefined && {
       pendingActionId: propsState.pendingActionId,
     }),
@@ -258,6 +309,27 @@ const onClick = (id: string, change: () => void): void => {
 onClick('add-render-prop', () => {
   propsState.slotNames = ['plan', 'summary'];
 });
+// Removes the render props of the group, or gives them again when they are all gone.
+const toggleSlot = (name: string): void => {
+  const names = propsState.slotNames ?? modeSlotNames();
+  propsState.slotNames = names.includes(name)
+    ? names.filter((entry) => entry !== name)
+    : [...names, name];
+};
+// These two buttons are made here, not in react-slots.html.
+const toggles: [string, string][] = [
+  ['toggle-plan-cta', 'Toggle plan CTA render prop'],
+  ['toggle-summary', 'Toggle summary render prop'],
+];
+for (const [id, label] of toggles) {
+  const button = document.createElement('button');
+  button.id = id;
+  button.type = 'button';
+  button.textContent = label;
+  document.body.append(button);
+}
+onClick('toggle-plan-cta', () => toggleSlot('plan'));
+onClick('toggle-summary', () => toggleSlot('summary'));
 onClick('set-pending', () => {
   propsState.pendingActionId = 'start-growth';
 });
