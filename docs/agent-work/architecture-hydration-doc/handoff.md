@@ -1,0 +1,1 @@
+Goal: update docs/architecture.md SSR model passage to the fixed hydration behaviour (PR 94). State: task 5d7bfd1fa82f4829 integrated, head f68ef98. Prettier not runnable in worktree; CI runs format check. Next: push, open PR, low-risk reviewer panel, lead_ready. Ruled out: prettier locally (not installed).
