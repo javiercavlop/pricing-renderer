@@ -496,7 +496,7 @@ async function measureExpanded(page: Page, viewport: Viewport): Promise<Metrics>
   };
 }
 
-// [utest->req~spectra-expanded-height~1] At 1440 and 375 the metrics also report the expanded
+// At 1440 and 375 the metrics also report the expanded
 // height (report-only, no assertion on it).
 test.describe('spectra metrics', () => {
   for (const fixture of fixtures) {
@@ -528,7 +528,7 @@ test.describe('spectra metrics', () => {
   }
 });
 
-// [utest->req~sticky-table-scroll~1] A table layout never reports a header that scrolled away
+// A table layout never reports a header that scrolled away
 // (2 px tolerance in collectMetrics); a table with 20 or more rows is taller than 80% of any
 // tested viewport, so its box scrolls and the check must run and pass. Card layouts are exempt.
 function expectStickyHeader(metrics: {
@@ -563,7 +563,6 @@ async function openWithoutAddOns(page: Page, viewport: Viewport, layout: string)
 }
 
 test.describe('summary position and compactness', () => {
-  // [utest->req~sticky-summary-compact~1]
   test('docks one compact non-sticky line before the comparison at 1440', async ({ page }) => {
     await openWithoutAddOns(page, viewports[0], 'auto');
     const docked = await page.evaluate(() => {
@@ -592,7 +591,6 @@ test.describe('summary position and compactness', () => {
     ['600 with layout="table"', { width: 600, height: 800 }, 'table'],
     ['375 compact', viewports[2], 'auto'],
   ] as const) {
-    // [utest->req~sticky-summary-compact~1]
     test(`keeps the summary last and stuck to the bottom at ${label}`, async ({ page }) => {
       await openWithoutAddOns(page, viewport, layout);
       const bar = await page.evaluate(() => {

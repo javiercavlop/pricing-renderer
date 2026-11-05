@@ -104,7 +104,6 @@ async function render(yaml: string, onlyDifferences: boolean | undefined): Promi
   return flatten(element.render());
 }
 
-// [utest->req~shorter-page-only-differences~2]
 describe('only-differences with a hidden toolbar', () => {
   it('is ignored under the threshold: no toolbar and every row', async () => {
     const text = await render(pricingYaml(20), true);
@@ -127,7 +126,6 @@ describe('only-differences with a hidden toolbar', () => {
   });
 });
 
-// [utest->req~shorter-page-only-differences~2]
 describe('only-differences with a visible toolbar', () => {
   it('filters the rows and checks the box over the threshold', async () => {
     const text = await render(pricingYaml(50), true);

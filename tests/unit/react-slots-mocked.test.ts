@@ -73,7 +73,6 @@ async function render(props: Record<string, unknown>): Promise<Record<string, un
   return last!;
 }
 
-// [utest->req~react-render-props-slots~1]
 describe('PricingRenderer slots prop', () => {
   it('sets slots from the render props given as functions, then undefined', async () => {
     const fn = () => null;
@@ -96,7 +95,6 @@ describe('PricingRenderer slots prop', () => {
   });
 });
 
-// [utest->req~react-slots-attach-read~1]
 describe('PricingRenderer slot events', () => {
   it('listens for pricing-slots-change through the events map', async () => {
     await render({ yaml: 'name: x' });
@@ -113,7 +111,6 @@ describe('PricingRenderer slot events', () => {
   });
 });
 
-// [utest->req~react-slot-portals~2]
 describe('PricingRenderer portals', () => {
   it('renders into connected nodes only and only for render props that are functions', async () => {
     const live = { isConnected: true };

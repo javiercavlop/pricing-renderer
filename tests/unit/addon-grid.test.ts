@@ -8,7 +8,7 @@ import * as renderers from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-// SPECTRA item 7 (docs/agent-work/spectra-item7-addon-grid/spec.md): dense add-on cards, the
+// SPECTRA item 7: dense add-on cards, the
 // threshold exports and the unchanged look of small pricings. The new exports are reached through a
 // typed cast and the new state fields through an intersection type, so a missing one fails when the
 // test runs and not when the file loads.
@@ -202,23 +202,19 @@ function disclosureOf(card: string): string | undefined {
 }
 
 describe('add-on threshold exports', () => {
-  // [utest->req~addon-grid-dense-details~1]
   it('exports the dense threshold 8', () => {
     expect(api.ADDON_DENSE_THRESHOLD).toBe(8);
   });
 
-  // [utest->req~addon-grid-cap~1]
   it('exports the visible cap 8', () => {
     expect(api.ADDON_VISIBLE_CAP).toBe(8);
   });
 
-  // [utest->req~addon-grid-filter~1]
   it('exports the default filter threshold 13', () => {
     expect(api.DEFAULT_ADDON_FILTER_THRESHOLD).toBe(13);
   });
 });
 
-// [utest->req~addon-grid-threshold-attribute~1]
 describe('addOnFilterThresholdOf', () => {
   it('keeps a finite number of 0 or more', () => {
     expect(api.addOnFilterThresholdOf(13)).toBe(13);
@@ -245,7 +241,6 @@ describe('addOnFilterThresholdOf', () => {
   });
 });
 
-// [utest->req~addon-grid-threshold-attribute~1]
 describe('add-on filter threshold in the state', () => {
   const hasToolbar = (total: number, addOnFilterThreshold?: number): boolean =>
     render(synthetic(total), { addOnFilterThreshold }).includes(TOOLBAR);
@@ -278,7 +273,6 @@ describe('add-on filter threshold in the state', () => {
   });
 });
 
-// [utest->req~addon-grid-no-look-change~1]
 describe('the demo pricing keeps its look', () => {
   const source = readFileSync(join(repoRoot, 'tests/fixtures/acme-pricing.yml'), 'utf8');
   const parsed = parsePricingYaml(source);
@@ -327,7 +321,6 @@ describe('the demo pricing keeps its look', () => {
 });
 
 describe('dense mode threshold', () => {
-  // [utest->req~addon-grid-no-look-change~1]
   it('is off for 8 add-ons or fewer', () => {
     for (const total of [1, 5, 8]) {
       const text = render(synthetic(total));
@@ -337,7 +330,6 @@ describe('dense mode threshold', () => {
     }
   });
 
-  // [utest->req~addon-grid-dense-details~1]
   it('is on from 9 add-ons, with a dense card each', () => {
     for (const total of [9, 10]) {
       const text = render(synthetic(total));
@@ -347,7 +339,6 @@ describe('dense mode threshold', () => {
     }
   });
 
-  // [utest->req~addon-grid-filter~1]
   it('is dense only, without toolbar or wrapper, up to 13 add-ons', () => {
     const text = render(synthetic(13));
     expect(text).toContain('pr-addon-grid--dense');
@@ -357,7 +348,6 @@ describe('dense mode threshold', () => {
   });
 });
 
-// [utest->req~addon-grid-dense-details~1]
 describe('dense details', () => {
   const special: Record<string, AddOnSpec> = {
     a02: { name: 'SSO login', availableFor: ['one'] },
@@ -469,7 +459,6 @@ describe('dense details', () => {
   });
 });
 
-// [utest->req~addon-grid-total-visible~1]
 describe('the summary', () => {
   it('is rendered once, outside the add-on wrapper, in filter mode', () => {
     const filtered = render(synthetic(18));

@@ -1,1 +1,0 @@
-Change phase3-react-headless-d, one PR (#88). Delivered: F, P3-10, P3-11, P3-12, P3-12b. Wave 4 deferred. Now: R3 fix a9eb206a integrated; push, CI green, ONE reviewer re-check on the new head, then set_review_package + lead_ready (panel: re-check, 755b4d3b, 0e5edea5).

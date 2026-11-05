@@ -14,7 +14,7 @@ const allCss = readdirSync(stylesRoot)
   .map((file) => readFileSync(`${stylesRoot}${file}`, 'utf8'))
   .join('\n');
 const gridSpec = readFileSync(
-  fileURLToPath(new URL('../../docs/agent-work/spectra-item8-grid/spec.md', import.meta.url)),
+  fileURLToPath(new URL('../../tests/fixtures/layout/plan-grid-spec.md', import.meta.url)),
   'utf8',
 );
 
@@ -304,14 +304,12 @@ const fluid = (columns: number) => `repeat(${columns}, minmax(0, 1fr))`;
 const planCounts = Array.from({ length: 14 }, (_, index) => index + 3);
 
 describe('plan grid columns (spectra-item8)', () => {
-  // [utest->spectra-item8:AC1]
   it('has container query blocks for the 840, 1040 and 1280 bands', () => {
     expect(layer).toBeDefined();
     const mins = (layer?.blocks ?? []).map((block) => containerMin(block.prelude));
     for (const min of [600, 840, 1040, 1280]) expect(mins).toContain(min);
   });
 
-  // [utest->req~plan-columns-token~1]
   it('wraps every plan grid value in --pr-plan-columns', () => {
     const wrong: string[] = [];
     let checked = 0;
@@ -331,7 +329,6 @@ describe('plan grid columns (spectra-item8)', () => {
     });
   });
 
-  // [utest->spectra-item8:AC2]
   it('uses fixed 320px plan tracks only in rules for one or two plans', () => {
     const offending: string[] = [];
     for (const rule of allRules(layer ?? sheet)) {
@@ -346,7 +343,6 @@ describe('plan grid columns (spectra-item8)', () => {
     expect(offending).toEqual([]);
   });
 
-  // [utest->spectra-item8:AC3]
   it('keeps one column below 600px and two fluid columns from 600 to 839px', () => {
     for (const plans of [1, 2, ...planCounts]) {
       expect(planColumnsAt(0, plans)?.value, `${plans} plans below 600`).toBe('minmax(0, 1fr)');
@@ -359,7 +355,6 @@ describe('plan grid columns (spectra-item8)', () => {
     }
   });
 
-  // [utest->spectra-item8:AC4]
   it('selects the balanced fluid column count for 3 to 16 plans in every band', () => {
     for (const band of bands) {
       for (const width of [band.min, band.max]) {
@@ -371,7 +366,6 @@ describe('plan grid columns (spectra-item8)', () => {
     }
   });
 
-  // [utest->spectra-item8:AC4]
   it('keeps the centered one and two plan tracks of at most 320px', () => {
     for (const plans of [1, 2]) {
       for (const width of [600, 839]) {
@@ -387,7 +381,6 @@ describe('plan grid columns (spectra-item8)', () => {
     }
   });
 
-  // [utest->spectra-item8:AC4]
   it('matches the column table of the spec', () => {
     const rows = gridSpec
       .split('\n')
@@ -473,7 +466,6 @@ function namesForbiddenTarget(compound: string): boolean {
 describe('word breaking (spectra-item10)', () => {
   const rules = allRules(parseBlock(stripComments(allCss)));
 
-  // [utest->spectra-item10:AC4]
   it('declares overflow-wrap: anywhere on no shell, cell, table, card or flow selector', () => {
     const offending = rules.flatMap((rule) => {
       const values = [
@@ -486,7 +478,6 @@ describe('word breaking (spectra-item10)', () => {
     expect(offending).toEqual([]);
   });
 
-  // [utest->spectra-item10:AC4]
   it('still lets long strings wrap somewhere in the stylesheet', () => {
     const values = rules.flatMap((rule) => [
       rule.declarations.get('overflow-wrap') ?? '',
@@ -495,7 +486,6 @@ describe('word breaking (spectra-item10)', () => {
     expect(values.some((value) => /\b(break-word|anywhere)\b/.test(value))).toBe(true);
   });
 
-  // [utest->spectra-item10:AC4]
   it('never enables automatic hyphenation', () => {
     expect(allCss).not.toMatch(/(^|[\s;{])(-webkit-)?hyphens\s*:\s*auto/);
   });

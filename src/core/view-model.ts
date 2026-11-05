@@ -37,7 +37,7 @@ const highlightKinds = new Set(['feature', 'usage-limit']);
 const highlightModes = new Set(['auto', 'manual', 'hybrid']);
 const badgeTones = new Set(['accent', 'success', 'warning', 'neutral']);
 
-// [impl->req~cta-relation-labels-config~1] only non-empty string entries of the four known keys
+// only non-empty string entries of the four known keys
 // are kept, trimmed like cta.label
 function normalizeCtaLabels(input: unknown): PricingCtaLabels | undefined {
   if (!isRecord(input)) return undefined;
@@ -380,11 +380,10 @@ function createComparisonGroups(
     });
   }
 
-  // [impl->req~tag-groups-declared~1] a tag is declared only when the source object carries one
+  // a tag is declared only when the source object carries one
   const declared = (row: PricingComparisonRow): boolean => asString(row.raw.tag) !== undefined;
   const tagged = rows.filter(declared);
 
-  // [impl->req~tag-groups-none~1] [impl->req~tag-groups-i18n~1]
   if (rows.length > 0 && tagged.length === 0) {
     return [
       {
@@ -396,7 +395,6 @@ function createComparisonGroups(
     ];
   }
 
-  // [impl->req~tag-groups-partial~1]
   const groups = new Map<string, PricingComparisonGroup>();
   for (const row of tagged) {
     const id = asString(row.raw.tag) ?? row.category;
@@ -610,7 +608,6 @@ function isEmptyCell(value: unknown): boolean {
   return value === false || value === null || value === undefined;
 }
 
-// [impl->req~addon-marker-per-plan-availability~1]
 function addOnProvidesRow(addOn: PricingViewModel['addOns'][number], row: PricingComparisonRow) {
   if (row.kind === 'feature') return !isEmptyCell(unwrapValue(addOn.features[row.id]));
   return (
@@ -624,8 +621,6 @@ export function isAddOnOnlyRow(viewModel: PricingViewModel, row: PricingComparis
   return viewModel.addOns.some((addOn) => addOnProvidesRow(addOn, row));
 }
 
-// [impl->req~addon-marker-per-plan-availability~1]
-// [impl->req~addon-marker-helper-internal~1]
 export function addOnProvidesForPlan(
   viewModel: PricingViewModel,
   row: PricingComparisonRow,

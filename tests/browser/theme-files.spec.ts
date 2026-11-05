@@ -4,8 +4,6 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openRenderer } from './helpers/spectra.js';
 
-// [utest->req~host-dark-class~2] [utest->req~tokens-shadcn-overlay~2]
-// [utest->req~tokens-shadcn-mapping~1] [utest->req~theme-minimal-flat~1]
 // The theme files are read from disk and injected into the demo, so the specs do not depend on how
 // the demo imports its styles.
 
@@ -105,7 +103,7 @@ async function setPageTheme(page: Page, theme: string): Promise<void> {
   await setThemeAttribute(page, theme);
 }
 
-// CRP-B: a `.dark` ancestor darkens the renderer only with theme="auto". The system scheme is
+// A `.dark` ancestor darkens the renderer only with theme="auto". The system scheme is
 // emulated as light, so auto is light unless the class is there.
 test.describe('host .dark class', () => {
   test.beforeEach(async ({ page }) => {
@@ -288,7 +286,6 @@ test.describe('theme-minimal', () => {
     expect(await token(page, '--pr-shadow-sm')).toBe('none');
   });
 
-  // [utest->req~theme-minimal-contrast~1]
   const minimalTokens = {
     light: { text: '#111111', surface: '#ffffff' },
     dark: { text: '#f2f2f2', surface: '#121212' },

@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-// Shared by current-selection.spec.ts and plan-cta.spec.ts. The fixtures are the definitions of
-// openspec/changes/add-subscription-change-flow/design.md (C, PV, PQ, PS). This module imports
+// Shared by current-selection.spec.ts and plan-cta.spec.ts. The fixtures are the definitions C, PV, PQ
+// and PS of the subscription change flow. This module imports
 // @playwright/test, so vitest cannot load it.
 
 type Raw = Record<string, unknown>;

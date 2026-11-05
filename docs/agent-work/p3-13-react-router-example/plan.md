@@ -1,1 +1,0 @@
-Done: implementation integrated (head abc8426). Next: push, open PR (audit + licence in body), CI, panel (reviewer + test-reviewer), ready. Ready summary: P3-13 to be marked done in tasks.md; docs/react.md Examples section still calls examples/react basic (owned by the other change).

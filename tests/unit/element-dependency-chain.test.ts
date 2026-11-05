@@ -75,7 +75,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// [utest->req~core-addon-select-change~1]
 describe('selecting an add-on with a two-level dependsOn chain in the element', () => {
   it('asks to add the whole chain and selects it on confirm', async () => {
     const element = await ready(chain);
@@ -99,7 +98,6 @@ describe('selecting an add-on with a two-level dependsOn chain in the element', 
   });
 });
 
-// [utest->req~core-addon-deselect-change~1]
 describe('deselecting an add-on with a two-level dependsOn chain in the element', () => {
   it('asks to remove the dependants and deselects the chain on confirm', async () => {
     const element = await ready(chain);
@@ -125,7 +123,6 @@ describe('deselecting an add-on with a two-level dependsOn chain in the element'
   });
 });
 
-// [utest->req~core-selection-in-effect~1]
 describe('the selection in effect of the element follows variablesEnabled', () => {
   it.each([undefined, null, false, 0, ''])('uses the pricing variables for %j', async (value) => {
     const element = await ready(withVariables);

@@ -9,9 +9,9 @@ import {
   type Viewport,
 } from './helpers/spectra.js';
 
-// Spectra item 6 (docs/agent-work/spectra-item6-addon-marker/spec.md): comparison rows that only an
+// Spectra item 6: comparison rows that only an
 // add-on provides show an "Add-on" marker instead of an em dash. GitHub has 32 such rows (R9).
-// Since P-20261101-1 (CRP-U7) a cell shows the marker only in a plan where a providing add-on can
+// A cell shows the marker only in a plan where a providing add-on can
 // be bought; every other cell of the row keeps the em dash.
 
 const saas = 'github';
@@ -274,8 +274,6 @@ test.describe('spectra add-on marker', () => {
     const layout = compact ? 'compact' : 'table';
 
     test.describe(`${layout} layout (${viewport.width}px)`, () => {
-      // [utest->spectra-item6:AC7] [utest->spectra-item6:AC2]
-      // [utest->req~addon-marker-per-plan-availability~1]
       test('marks each add-on-only row in the plans that can buy an add-on, a dash elsewhere', async ({
         page,
       }) => {
@@ -309,7 +307,6 @@ test.describe('spectra add-on marker', () => {
       });
 
       for (const theme of ['light', 'dark']) {
-        // [utest->spectra-item6:AC6] [utest->req~addon-marker-per-plan-availability~1]
         test(`marker contrast is at least 4.5:1 in the ${theme} theme`, async ({ page }) => {
           test.setTimeout(60_000);
           await openComparison(page, viewport, 'en', theme);
@@ -321,8 +318,6 @@ test.describe('spectra add-on marker', () => {
       }
 
       for (const locale of ['en', 'es'] as const) {
-        // [utest->spectra-item6:AC2] [utest->spectra-item6:AC3]
-        // [utest->req~addon-marker-per-plan-availability~1]
         test(`marker text and single line in ${locale}`, async ({ page }) => {
           test.setTimeout(60_000);
           await openComparison(page, viewport, locale);

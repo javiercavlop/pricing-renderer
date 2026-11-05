@@ -9,8 +9,6 @@
  * defaults of theme.css. Import theme.css first or after this file; the layer order below makes this
  * file win either way.
  *
- * [impl->req~tokens-shadcn-overlay~2]
- * [impl->req~tokens-shadcn-mapping~1]
  */
 @layer pricing-renderer.theme, pricing-renderer.shadcn;
 

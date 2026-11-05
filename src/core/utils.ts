@@ -87,7 +87,6 @@ function ownValue(container: object, key: string): unknown {
   return hasOwn(container, key) ? (container as Record<string, unknown>)[key] : undefined;
 }
 
-// [impl->req~core-selection-variable-path-safe~1]
 export function getAtPath(source: unknown, path: string): unknown {
   let current = source;
   for (const segment of pathSegments(path)) {
@@ -146,7 +145,6 @@ function assignOwn(container: object, key: string, value: unknown): void {
   }
 }
 
-// [impl->req~core-selection-variable-path-safe~1]
 export function setAtPath(source: Record<string, unknown>, path: string, value: unknown): void {
   const segments = pathSegments(path);
   if (segments.length === 0 || isUnsafePath(source, segments)) {

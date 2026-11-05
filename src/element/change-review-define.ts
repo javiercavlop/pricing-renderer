@@ -2,7 +2,6 @@ import { PricingChangeReviewElement } from './change-review-element.js';
 
 export const PRICING_CHANGE_REVIEW_TAG = 'pricing-change-review';
 
-// [impl->req~review-element-defined~1] [impl->req~review-define-conflict~1]
 // No side effect on import: define-change-review.ts calls this where a registry exists.
 export function definePricingChangeReview(): typeof PricingChangeReviewElement {
   if (typeof globalThis.customElements === 'undefined') {

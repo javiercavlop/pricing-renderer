@@ -16,10 +16,8 @@ import {
   setReview,
 } from './helpers/change-review.js';
 
-// The review UI of <pricing-change-review> (add-subscription-change-flow, phase F). The scenarios
-// are those of openspec/changes/add-subscription-change-flow/specs/change-review/spec.md, the
-// requirements marked [pending CRP]; the layout is the approved mock in
-// docs/agent-work/phase2-subscription-change/review-mock/. The comparisons (R_ENT, R_START,
+// The review UI of <pricing-change-review> (add-subscription-change-flow, phase F). The layout is
+// the approved review mock. The comparisons (R_ENT, R_START,
 // R_CUR, R_QUOTE, R_V12) are defined in design.md and computed in helpers/change-review.ts.
 // The data contract (events, guards, base parts) is in change-review-data.spec.ts.
 
@@ -39,7 +37,6 @@ function sectionParts(page: Page): Promise<string[]> {
     .evaluateAll((elements) => elements.map((element) => element.getAttribute('data-pr-part')!));
 }
 
-// [utest->req~review-ui-structure~1]
 test.describe('structure', () => {
   test('upgrade to Enterprise', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT });
@@ -131,7 +128,6 @@ test.describe('structure', () => {
   });
 });
 
-// [utest->req~review-ui-plan~1]
 test.describe('plan section', () => {
   test('upgrade and new version', async ({ page }) => {
     await addReview(page, { comparison: R_ENT });
@@ -174,7 +170,6 @@ test.describe('plan section', () => {
   });
 });
 
-// [utest->req~review-ui-price~1]
 test.describe('price section', () => {
   test('cheaper upgrade', async ({ page }) => {
     await addReview(page, { comparison: R_ENT });
@@ -234,7 +229,6 @@ test.describe('price section', () => {
   });
 });
 
-// [utest->req~review-ui-add-ons~1]
 test.describe('add-ons section', () => {
   test('removed by the downgrade', async ({ page }) => {
     await addReview(page, { comparison: R_START });
@@ -284,7 +278,6 @@ test.describe('add-ons section', () => {
   });
 });
 
-// [utest->req~review-ui-features~1]
 test.describe('features section', () => {
   test('audit log lost', async ({ page }) => {
     await addReview(page, { comparison: R_START });
@@ -322,7 +315,6 @@ test.describe('features section', () => {
   });
 });
 
-// [utest->req~review-ui-limits~1]
 test.describe('limits section', () => {
   test('storage below the current usage', async ({ page }) => {
     await addReview(page, { comparison: R_START });
@@ -375,7 +367,6 @@ test.describe('limits section', () => {
   });
 });
 
-// [utest->req~review-ui-unchanged~1]
 test('the unchanged summary counts add-ons, features and limits', async ({ page }) => {
   await addReview(page, { comparison: R_ENT });
   const unchanged = section(page, 'review-unchanged');
@@ -383,7 +374,6 @@ test('the unchanged summary counts add-ons, features and limits', async ({ page 
   await expect(unchanged).toContainText('2 add-ons, 3 features and 0 usage limits stay the same.');
 });
 
-// [utest->req~review-ui-status~1]
 test.describe('pending status', () => {
   test('pending', async ({ page }) => {
     await addReview(page, { comparison: R_ENT });
@@ -411,7 +401,6 @@ test.describe('pending status', () => {
   });
 });
 
-// [utest->req~review-ui-error~1]
 test.describe('error region', () => {
   test('error', async ({ page }) => {
     await addReview(page, { comparison: R_ENT, pending: true });
@@ -429,7 +418,6 @@ test.describe('error region', () => {
   });
 });
 
-// [utest->req~review-ui-focus~1]
 test.describe('focus on the review heading', () => {
   test('comparison shown', async ({ page }) => {
     await addReview(page);
@@ -452,7 +440,6 @@ test.describe('focus on the review heading', () => {
   });
 });
 
-// [utest->req~review-ui-focus-error~1]
 test.describe('focus on Confirm after an error', () => {
   test('error shown', async ({ page }) => {
     await addReview(page, { comparison: R_ENT });
@@ -472,7 +459,6 @@ test.describe('focus on Confirm after an error', () => {
   });
 });
 
-// [utest->req~review-ui-forced-colors~1]
 test.describe('forced colors', () => {
   test('every section and both buttons keep a visible border', async ({ page }) => {
     await page.emulateMedia({ forcedColors: 'active' });
@@ -511,7 +497,6 @@ test.describe('forced colors', () => {
   });
 });
 
-// [utest->req~review-ui-axe~1]
 test.describe('accessibility', () => {
   async function seriousViolations(page: Page) {
     const results = await new AxeBuilder({ page })
@@ -644,7 +629,6 @@ test.describe('themes', () => {
   });
 });
 
-// [utest->req~review-text-only~1]
 test('plan and add-on names are text, never markup', async ({ page }) => {
   const dialogs: string[] = [];
   page.on('dialog', (dialog) => {
@@ -665,7 +649,6 @@ test('plan and add-on names are text, never markup', async ({ page }) => {
   expect(dialogs).toEqual([]);
 });
 
-// [utest->req~review-i18n~1]
 test.describe('Spanish review', () => {
   test('headings and buttons', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT, locale: 'es-ES' });

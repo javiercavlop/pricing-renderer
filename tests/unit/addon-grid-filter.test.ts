@@ -5,7 +5,7 @@ import { renderAddOns } from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-// SPECTRA item 7 (docs/agent-work/spectra-item7-addon-grid/spec.md): the add-on filter mode, the cap
+// SPECTRA item 7: the add-on filter mode, the cap
 // of 8 cards, the show-more button, the search and the empty state. The new state fields and
 // actions are reached through intersection types, so a missing one fails when the test runs and not
 // when the file loads.
@@ -236,7 +236,6 @@ const moreLabel = (text: string): string | undefined => showMore(text)?.[1];
 const first = (total: number): string[] =>
   Array.from({ length: total }, (_, index) => `a${String(index + 1).padStart(2, '0')}`);
 
-// [utest->req~addon-grid-filter~1]
 describe('filter mode markup', () => {
   const text = render(synthetic());
 
@@ -275,7 +274,6 @@ describe('filter mode markup', () => {
   });
 });
 
-// [utest->req~addon-grid-cap~1]
 describe('cap of 8 cards', () => {
   it('renders the first 8 add-ons and a show-more button', () => {
     const text = render(synthetic());
@@ -324,7 +322,7 @@ describe('cap of 8 cards', () => {
     expect(reveal.calls).toBe(1);
   });
 
-  // [utest->req~reveal-focus-visible~1] a keyboard click has detail 0, a pointer click does not
+  // a keyboard click has detail 0, a pointer click does not
   it('tells revealAddOns whether the click came from the keyboard', () => {
     const seen: Array<boolean | undefined> = [];
     const actions: FilterActions = {
@@ -373,7 +371,6 @@ function repeatsOf(node: unknown, found: RepeatResult[] = []): RepeatResult[] {
   return found;
 }
 
-// [utest->req~addon-grid-cap~1]
 describe('keyed rendering', () => {
   const keysOf = (overrides: Partial<FilterState> = {}, selected: string[] = []): unknown[] => {
     const state = stateFor(synthetic(), selected, overrides) as RenderState;
@@ -396,7 +393,6 @@ describe('keyed rendering', () => {
   });
 });
 
-// [utest->req~addon-grid-cap~1]
 describe('search', () => {
   it('matches the name and the description, trimmed and case-insensitive', () => {
     for (const addOnSearch of ['SSO', 'sso', ' SSO ', '\tSso\n']) {
@@ -465,7 +461,6 @@ describe('search', () => {
   });
 });
 
-// [utest->req~addon-grid-cap~1]
 describe('empty state', () => {
   const text = render(synthetic(), [], { addOnSearch: 'zzzz-no-match' });
 
@@ -491,7 +486,6 @@ describe('empty state', () => {
   });
 });
 
-// [utest->req~addon-grid-filter~1]
 describe('es locale', () => {
   it('translates the toolbar, the counter and the button', () => {
     const text = render(synthetic(18, 'es'));

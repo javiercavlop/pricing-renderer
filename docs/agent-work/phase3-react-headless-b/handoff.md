@@ -1,1 +1,0 @@
-State: round-1 fixes integrated (22f804c6, 6c8f4aec); head 264d329 plus checkpoint commit. Next: push, check CI, round-2 panel (reviewer + test-reviewer) on pushed head, update PR body with reason for P3-4+P3-5 combination, pr_ready, set_review_package, lead_ready. Deferred to P3-15b docs: redirect caveat, shared loader must check context.url, SSRF.

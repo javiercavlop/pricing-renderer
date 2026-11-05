@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// [utest->req~theme-builder-page~1]
 // The theme builder page of the demo: live token edits, the export block and the presets.
 
 test.beforeEach(({ browserName }) => {

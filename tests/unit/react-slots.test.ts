@@ -70,7 +70,6 @@ const planNode = (dataset: Record<string, string>): StandIn => ({ isConnected: t
 const planContext = (node: StandIn, element: StandIn = {}): Context =>
   fn('planCtaContextOf')(element, node) as Context;
 
-// [utest->req~react-render-props-slots~1]
 describe('slotNamesOf', () => {
   it('lists the slot names of the render props given as functions, in a fixed order', () => {
     const slotNamesOf = fn('slotNamesOf');
@@ -93,7 +92,6 @@ describe('slotNamesOf', () => {
   });
 });
 
-// [utest->req~react-slots-attach-read~1]
 describe('currentSlotNodes', () => {
   it('reads the [data-pr-slot] nodes that the element owns', () => {
     const currentSlotNodes = fn('currentSlotNodes');
@@ -118,7 +116,6 @@ describe('currentSlotNodes', () => {
 describe('acceptedSlotNodes', () => {
   const growth = { prSlot: 'plan-cta', planId: 'growth' };
 
-  // [utest->req~react-slots-event-target~1]
   it('returns undefined for the event of another element', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -127,7 +124,6 @@ describe('acceptedSlotNodes', () => {
     expect(acceptedSlotNodes(own, { target: other, detail: { nodes: [n] } })).toBeUndefined();
   });
 
-  // [utest->req~react-slots-event-target~1]
   it('returns the nodes of its own event', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -137,7 +133,6 @@ describe('acceptedSlotNodes', () => {
     expect(result[0]).toBe(n);
   });
 
-  // [utest->req~react-slot-node-accept~3]
   it('leaves out foreign, detached and unknown nodes and keeps the order', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -158,7 +153,6 @@ describe('acceptedSlotNodes', () => {
     expect(result[1]).toBe(f);
   });
 
-  // [utest->req~react-slot-node-accept~3]
   it('leaves out an empty plan id', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -166,7 +160,6 @@ describe('acceptedSlotNodes', () => {
     expect(acceptedSlotNodes(own, { target: own, detail: { nodes: [empty] } })).toEqual([]);
   });
 
-  // [utest->req~react-slot-node-accept~3]
   it('leaves out the slot nodes of a nested renderer and nodes without a parent', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -184,7 +177,6 @@ describe('acceptedSlotNodes', () => {
     expect(selectors).toContain('[data-pr-root], [data-pr-slot]');
   });
 
-  // [utest->req~react-slot-node-accept~3]
   it('skips items that are not elements without throwing', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -205,7 +197,6 @@ describe('acceptedSlotNodes', () => {
 });
 
 describe('acceptedSlotNodes with a malformed event', () => {
-  // [utest->req~react-slot-node-accept~3]
   it('returns an empty list for a null detail and for nodes that are not an array', () => {
     const acceptedSlotNodes = fn('acceptedSlotNodes');
     const own: StandIn = {};
@@ -216,7 +207,6 @@ describe('acceptedSlotNodes with a malformed event', () => {
 });
 
 describe('slotEntriesOf keys', () => {
-  // [utest->req~react-slot-portals~2]
   it('keeps plan keys and slot keys apart even for a plan id that looks like a slot key', () => {
     const slotEntriesOf = fn('slotEntriesOf');
     const plan = planNode({ prSlot: 'plan-cta', planId: 'slot:summary-actions' });
@@ -233,7 +223,6 @@ describe('slotEntriesOf keys', () => {
 });
 
 describe('planCtaContextOf', () => {
-  // [utest->req~react-plan-context-reader~1]
   it('reads the values of a plan node', () => {
     const context = planContext(planNode(planDataset));
     expect(context).toMatchObject({
@@ -248,7 +237,6 @@ describe('planCtaContextOf', () => {
     });
   });
 
-  // [utest->req~react-plan-context-reader~1]
   it('reads true flags and ignores an unknown relation', () => {
     const base = { prSlot: 'plan-cta', planId: 'starter', planName: 'Starter', label: 'Go' };
     const flags = planContext(planNode({ ...base, selected: 'true', current: 'true' }));
@@ -259,7 +247,6 @@ describe('planCtaContextOf', () => {
     expect(context.pending).toBe(false);
   });
 
-  // [utest->req~react-plan-context-any-pending~1]
   it('reads anyPending apart from pending', () => {
     const context = planContext(
       planNode({
@@ -275,26 +262,22 @@ describe('planCtaContextOf', () => {
     expect(context.pending).toBe(false);
   });
 
-  // [utest->req~react-plan-context-any-pending~1]
   it('reports nothing pending when the attributes are absent', () => {
     const withoutPending = without(planDataset, 'pending');
     const context = planContext(planNode({ ...withoutPending, relation: 'sideways' }));
     expect(context.anyPending).toBe(false);
   });
 
-  // [utest->req~react-slot-href-safe~1]
   it('drops a script link and keeps the label', () => {
     const context = planContext(planNode({ ...planDataset, href: 'javascript:alert(1)' }));
     expect(context.href).toBeUndefined();
     expect(context.label).toBe('Upgrade to Growth');
   });
 
-  // [utest->req~react-slot-href-safe~1]
   it('has no link without data-href', () => {
     expect(planContext(planNode(without(planDataset, 'href'))).href).toBeUndefined();
   });
 
-  // [utest->req~react-plan-context-trigger~1]
   it('forwards trigger() to the element and returns its result', () => {
     const calls: unknown[][] = [];
     const element = {
@@ -309,7 +292,6 @@ describe('planCtaContextOf', () => {
   });
 });
 
-// [utest->req~react-summary-context-reader~1]
 describe('summaryActionsContextOf', () => {
   const s = { planId: 'growth' };
   const r = { total: 1 };
@@ -332,7 +314,6 @@ describe('summaryActionsContextOf', () => {
   });
 });
 
-// [utest->req~react-error-context-reload~1]
 describe('errorContextOf', () => {
   it('returns the diagnostics and a reload that calls the element each time', () => {
     const errorContextOf = fn('errorContextOf');
@@ -352,7 +333,6 @@ describe('errorContextOf', () => {
   });
 });
 
-// [utest->req~react-error-diagnostics-reader~1]
 describe('errorDiagnosticsOf', () => {
   it('keeps the valid entries and only their known fields', () => {
     const errorDiagnosticsOf = fn('errorDiagnosticsOf');
@@ -383,7 +363,6 @@ describe('errorDiagnosticsOf', () => {
   });
 });
 
-// [utest->req~react-slots-client-only~1]
 describe('Server output', () => {
   it('renders the tag and calls no render prop', async () => {
     fn('slotNamesOf');
@@ -453,7 +432,6 @@ type ManifestMember = { kind: string; name: string; attribute?: string; return?:
 type ManifestEvent = { name: string; type?: { text: string } };
 type Declaration = { name: string; members?: ManifestMember[]; events?: ManifestEvent[] };
 
-// [utest->req~composition-types-manifest~1]
 describe('composition types and manifest (React entry)', () => {
   const snippet = `
     import type {

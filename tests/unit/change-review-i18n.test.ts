@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { enUS, esES, getMessages, translate } from '../../src/core/index.js';
 
-// The "Review" table of openspec/changes/add-subscription-change-flow/design.md, "i18n keys":
-// 36 keys with an en-US and an es-ES text. The rendering of the texts is covered by
+// The i18n keys of the review: 36 keys with an en-US and an es-ES text. The rendering of the texts is covered by
 // tests/browser/change-review-ui.spec.ts.
 
 const table: readonly (readonly [key: string, en: string, es: string])[] = [
@@ -84,19 +83,16 @@ const placeholders = (text: string): string[] =>
   [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]!).sort();
 
 describe('review messages', () => {
-  // [utest->req~review-i18n~1]
   it('has the 36 keys of the Review table', () => {
     expect(table).toHaveLength(36);
     expect(new Set(table.map(([key]) => key)).size).toBe(36);
   });
 
-  // [utest->req~review-i18n~1]
   it.each(table)('%s has its en-US and es-ES text', (key, en, es) => {
     expect(enUS[key]).toBe(en);
     expect(esES[key]).toBe(es);
   });
 
-  // [utest->req~review-i18n~1]
   it('defines no other review key in either catalog', () => {
     const expected = table.map(([key]) => key).sort();
     // pricing.reviewChangeCta belongs to the plan CTA (phase C), not to the review element
@@ -108,14 +104,12 @@ describe('review messages', () => {
     expect(reviewKeys(esES)).toEqual(expected);
   });
 
-  // [utest->req~review-i18n~1]
   it('uses the same placeholders in both languages', () => {
     for (const [key, en, es] of table) {
       expect(placeholders(es), key).toEqual(placeholders(en));
     }
   });
 
-  // [utest->req~review-i18n~1]
   it('resolves through getMessages and translate for each locale', () => {
     expect(translate(getMessages('en-US'), 'pricing.reviewTitle')).toBe('Review your change');
     expect(translate(getMessages('es-ES'), 'pricing.reviewTitle')).toBe('Revisa tu cambio');

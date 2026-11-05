@@ -1,1 +1,0 @@
-Items 1, 2, 3a done and documented; 3b (split) deferred by owner/coordinator (option B), documented in release-split-deferred.md. Remaining: CI green on final head, review panel (high risk: reviewer, test-reviewer, security-auditor, arch-reviewer), set_review_package, lead_ready.

@@ -139,7 +139,6 @@ function badgeLabel(state: Loose, planId: string): string | undefined {
   return viewModelOf(state).presentation.planBadges[planId]?.[0]?.label;
 }
 
-// [utest->req~use-pricing-selection-uncontrolled~1] [utest->req~use-pricing-selection-state~1]
 describe('usePricingSelection holds the selection between renders', () => {
   it('shows a plan change on the next render and notifies the subscribers once', () => {
     const acme = load();
@@ -176,7 +175,6 @@ describe('usePricingSelection holds the selection between renders', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-view-model~2]
 describe('usePricingSelection snapshot stability', () => {
   const options = () => ({
     defaultSelection: { planId: 'growth' },
@@ -222,7 +220,6 @@ describe('usePricingSelection snapshot stability', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-notify~1] [utest->req~use-pricing-selection-controlled~1]
 describe('usePricingSelection reports changes', () => {
   it('calls the latest onSelectionChange with selection and resolved', () => {
     const acme = load();
@@ -249,7 +246,6 @@ describe('usePricingSelection reports changes', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pending~1] [utest->req~use-pricing-selection-apply~1]
 describe('usePricingSelection pending changes and apply', () => {
   const growth = { defaultSelection: { planId: 'growth' } };
 
@@ -295,7 +291,6 @@ describe('usePricingSelection pending changes and apply', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pricing-change~1]
 describe('usePricingSelection with a new pricing', () => {
   it('restarts from the default selection and drops pending', () => {
     const options = { defaultSelection: { planId: 'growth' } };
@@ -317,7 +312,6 @@ describe('usePricingSelection with a new pricing', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-current~1] [utest->req~use-pricing-selection-compare~1]
 describe('usePricingSelection current plan', () => {
   const options = {
     currentSelection: { planId: 'growth' },
@@ -346,7 +340,6 @@ describe('usePricingSelection current plan', () => {
   });
 });
 
-// [utest->req~provider-config-precedence~1]
 describe('usePricingSelection reads a hand-driven provider context', () => {
   const defaultSelection = { variables: { seats: 40 } };
 
@@ -382,7 +375,6 @@ describe('usePricingSelection reads a hand-driven provider context', () => {
   });
 });
 
-// [utest->req~provider-presentation-precedence~1]
 describe('usePricingSelection presentation layers from a hand-driven context', () => {
   it('orders custom, global, provider config, provider and instance', () => {
     const global = badge('Global');
@@ -409,7 +401,6 @@ describe('usePricingSelection presentation layers from a hand-driven context', (
   });
 });
 
-// [utest->req~provider-messages-merge~1]
 describe('usePricingSelection messages from a hand-driven context', () => {
   it('replaces one key of the provider catalog and keeps the others', () => {
     provide({ messages: { 'summary.title': 'Your plan', 'cta.select': 'Pick' } });
@@ -419,7 +410,6 @@ describe('usePricingSelection messages from a hand-driven context', () => {
   });
 });
 
-// [utest->req~provider-nearest~1]
 describe('usePricingSelection reads only the context value', () => {
   it('takes nothing from a value that holds messages only', () => {
     configurePricingRenderer({ locale: 'es-ES' });
@@ -430,7 +420,6 @@ describe('usePricingSelection reads only the context value', () => {
   });
 });
 
-// [utest->req~provider-absent-global~1]
 describe('usePricingSelection reads the global configuration at render time', () => {
   it('uses the configuration of each render', () => {
     const acme = load();

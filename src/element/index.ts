@@ -1,5 +1,4 @@
 export { PricingRendererElement } from './pricing-renderer-element.js';
-// [impl->req~review-element-defined~1] [impl->req~review-define-separate~1]
 // Exported, not registered: only define-change-review.ts registers the tag on import.
 export { PricingChangeReviewElement } from './change-review-element.js';
 export { PRICING_CHANGE_REVIEW_TAG, definePricingChangeReview } from './change-review-define.js';
@@ -24,9 +23,7 @@ export type {
   PricingSlotsChangeDetail,
   PricingSlotsChangeEvent,
 } from './events.js';
-// [impl->req~hide-sections-react-manifest~1]
 export type { PricingSectionName } from './renderers.js';
-// [impl->req~cta-event-types~1]
 export type { SelectionRelation } from '../core/index.js';
 
 declare global {

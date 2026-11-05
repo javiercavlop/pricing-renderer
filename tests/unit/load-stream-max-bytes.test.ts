@@ -81,7 +81,6 @@ function expectOnlyTooLarge(result: LoadedPricingResult) {
 const neverSettles = () => new Promise<void>(() => {});
 const rejects = () => Promise.reject(new Error('cancel failed'));
 
-// [utest->req~fetch-max-bytes-while-reading~1]
 describe('maxBytes while the response body is read', () => {
   it('cancels a chunked body without content-length once it crosses the limit', async () => {
     const { stream, pull, cancel } = finiteStream(chunksOf(64, 1024));

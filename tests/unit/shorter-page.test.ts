@@ -13,7 +13,7 @@ import * as renderers from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-// SPECTRA item 2 (docs/agent-work/spectra-item2-shorter-page/spec.md). The new exports are reached
+// SPECTRA item 2. The new exports are reached
 // through typed casts, so a missing export fails when the test runs and not when the file loads.
 
 interface ShorterPageApi {
@@ -199,7 +199,6 @@ describe('synthetic pricings', () => {
   });
 });
 
-// [utest->req~shorter-page-auto-default~1]
 describe('resolveOnlyDifferences', () => {
   it('exports the thresholds and the row total', () => {
     expect(api.AUTO_DIFFERENCES_MIN_ROWS).toBe(100);
@@ -248,7 +247,6 @@ describe('resolveOnlyDifferences', () => {
   });
 });
 
-// [utest->req~shorter-page-only-differences~2]
 describe('onlyDifferencesConverter', () => {
   it('maps the attribute to a tri-state value', async () => {
     const loaded: unknown = await import('../../src/element/pricing-renderer-element.js');
@@ -263,7 +261,6 @@ describe('onlyDifferencesConverter', () => {
   });
 });
 
-// [utest->req~shorter-page-toolbar-threshold~1]
 describe('toolbar threshold', () => {
   const hasToolbar = (viewModel: PricingViewModel, overrides: Partial<ShorterState> = {}) =>
     flatten(renderComparison(stateFor(viewModel, overrides))).includes(TOOLBAR);
@@ -293,7 +290,6 @@ describe('toolbar threshold', () => {
   }
 });
 
-// [utest->req~shorter-page-counter~1]
 describe('counter', () => {
   function firstGroupState(viewModel: PricingViewModel, compact = false): ShorterState {
     const first = viewModel.comparisonGroups[0]!;
@@ -351,7 +347,6 @@ describe('counter', () => {
   });
 });
 
-// [utest->req~shorter-page-empty-state~1]
 describe('empty state', () => {
   const noMatch = 'zzzz-no-such-row';
 
@@ -408,7 +403,6 @@ describe('empty state', () => {
   }
 });
 
-// [utest->req~shorter-page-no-look-change~1]
 describe('demo pricing', () => {
   for (const compact of [false, true]) {
     it(`renders no toolbar and no empty state by default (compact=${compact})`, () => {

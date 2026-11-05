@@ -2,7 +2,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { setProps } from './helpers/change-flow.js';
 import { openRenderer } from './helpers/spectra.js';
 
-// [utest->req~host-reset-spec~1]
 // A Tailwind-preflight-like global reset in the host page (docs/design-systems.md). The reset is
 // unlayered, so it outranks the layered renderer styles and wipes the background of the primary CTA
 // in its <button> form. The fix rule of the docs restores it.

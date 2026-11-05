@@ -4,7 +4,6 @@ import { openRenderer } from './helpers/spectra.js';
 // A src load in flight must be cancelled when reload() finds no source or more than one: the late
 // result must not emit pricing-ready or replace the error. The unit test with the same name is
 // tests/unit/element-stale-load.test.ts.
-// [utest->req~reload-source-error-cancels-load~1]
 
 type StaleElement = HTMLElement & {
   src?: string;

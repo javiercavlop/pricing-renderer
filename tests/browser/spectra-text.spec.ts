@@ -12,7 +12,7 @@ import {
   type Viewport,
 } from './helpers/spectra.js';
 
-// Spectra item 10 (docs/agent-work/spectra-item10-text/spec.md): short words are never split while
+// Spectra item 10: short words are never split while
 // long unbroken strings still wrap. Every test prints one SPECTRA_TEXT JSON line.
 
 const viewports: Viewport[] = [
@@ -76,17 +76,15 @@ test.describe('spectra text', () => {
         );
 
         expect(state).toBe('ready');
-        // [utest->spectra-item10:AC1] inspectedWords > 0 shows the measurement saw text; the
+        // inspectedWords > 0 shows the measurement saw text; the
         // word limit may cap it on large pricings, which is printed only.
         if (gatedBreaks.has(fixture.saas)) {
           expect(text.awkwardBreaks.examples).toEqual([]);
           expect(text.awkwardBreaks.inspectedWords).toBeGreaterThan(0);
         }
-        // [utest->spectra-item10:AC2]
         expect(text.truncatedTexts.examples).toEqual([]);
-        // [utest->spectra-item10:AC5]
         expect(overflow.examples).toEqual([]);
-        // [utest->spectra-item10:AC3] Every pricing with plans must offer both targets. A pricing
+        // Every pricing with plans must offer both targets. A pricing
         // without plans (okta) may have none outside the table; a target it has must still wrap.
         const required = planCount(fixture.saas) > 0;
         for (const probe of probes) {
@@ -96,7 +94,7 @@ test.describe('spectra text', () => {
           expect(probe.insideCard).toBe(true);
           expect(probe.insideRenderer).toBe(true);
         }
-        // [utest->spectra-item10:AC7] The hero is not wider than the renderer with a long title;
+        // The hero is not wider than the renderer with a long title;
         // every pricing renders a hero title.
         if (narrow) expect(hero?.found).toBe(true);
         if (hero?.found) {
@@ -104,7 +102,7 @@ test.describe('spectra text', () => {
           expect(hero.insideRenderer).toBe(true);
           expect(heroOverflow?.examples).toEqual([]);
         }
-        // [utest->spectra-item10:AC8] Skipped when no add-on effect value or breakdown name is
+        // Skipped when no add-on effect value or breakdown name is
         // rendered without opening anything.
         if (detail?.found) {
           expect(detail.lines).toBeGreaterThan(1);

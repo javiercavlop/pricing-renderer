@@ -93,7 +93,6 @@ function badgeLabel(state: Loose, planId: string): string | undefined {
   return viewModelOf(state).presentation.planBadges[planId]?.[0]?.label;
 }
 
-// [utest->req~use-pricing-selection-state~1]
 describe('usePricingSelection state on the server', () => {
   it('renders the default selection of the pricing', () => {
     const acme = loadAcme();
@@ -173,7 +172,6 @@ describe('usePricingSelection state on the server', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-view-model~2]
 describe('usePricingSelection view model', () => {
   it('passes locale, mode and visibility to the view model', () => {
     const options = { locale: 'es-ES', mode: 'catalog', visibility: 'all' };
@@ -258,7 +256,6 @@ const reviewHeader = `
   declare const result: SelectionComparison;
 `;
 
-// [utest->req~use-pricing-selection-compare~1]
 describe('usePricingSelection review types', () => {
   it('compiles PricingChangeReview with a SelectionComparison', () => {
     expect(usePricingSelection).toBeTypeOf('function');
@@ -288,7 +285,6 @@ describe('usePricingSelection review types', () => {
   });
 });
 
-// [utest->req~provider-config-precedence~1]
 describe('usePricingSelection: provider config below instance options', () => {
   const config = { locale: 'es-ES', variablesEnabled: false };
   const defaultSelection = { variables: { seats: 40 } };
@@ -317,7 +313,6 @@ describe('usePricingSelection: provider config below instance options', () => {
   });
 });
 
-// [utest->req~provider-presentation-precedence~1]
 describe('usePricingSelection: presentation layers', () => {
   it('merges the provider presentation with the instance presentation', () => {
     const providers = [{ presentation: { planBadges: { growth: badge('Provider') } } }];
@@ -354,7 +349,6 @@ describe('usePricingSelection: presentation layers', () => {
   });
 });
 
-// [utest->req~provider-messages-merge~1]
 describe('usePricingSelection: messages merge per key', () => {
   it('replaces one key of the provider catalog and keeps the others', () => {
     const catalog = { 'summary.title': 'Your plan', 'cta.select': 'Pick' };
@@ -372,7 +366,6 @@ describe('usePricingSelection: messages merge per key', () => {
   });
 });
 
-// [utest->req~provider-nearest~1]
 describe('usePricingSelection: nearest provider wins', () => {
   it('does not take the config of an outer provider', () => {
     const outer = { config: { locale: 'es-ES' } };
@@ -392,7 +385,6 @@ describe('usePricingSelection: nearest provider wins', () => {
   });
 });
 
-// [utest->req~provider-no-global-write~1]
 describe('usePricingSelection: provider keeps the global configuration', () => {
   it('leaves the global locale alone and gives a tree without a provider the global one', () => {
     const provider = createElement(PricingRendererProvider, { config: { locale: 'es-ES' } });
@@ -420,7 +412,6 @@ describe('usePricingSelection: provider keeps the global configuration', () => {
   });
 });
 
-// [utest->req~provider-absent-global~1]
 describe('usePricingSelection: global configuration without a provider', () => {
   const defaultSelection = { variables: { seats: 40 } };
 

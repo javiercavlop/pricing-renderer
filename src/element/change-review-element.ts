@@ -17,7 +17,6 @@ let instances = 0;
 // The review of a subscription change: the properties, the events, the Confirm default action and
 // the guards, and the review UI rendered by change-review-renderers.ts.
 export class PricingChangeReviewElement extends LitElement {
-  // [impl->req~review-properties~1]
   static properties = {
     comparison: { attribute: false },
     notices: { attribute: false },
@@ -45,13 +44,10 @@ export class PricingChangeReviewElement extends LitElement {
     this.locale = 'en-US';
   }
 
-  // [impl->req~review-light-dom~1]
   protected createRenderRoot(): HTMLElement | DocumentFragment {
     return this;
   }
 
-  // [impl->req~review-confirm-event~1] [impl->req~review-confirm-pending~1]
-  // [impl->req~review-confirm-blocked~1]
   // A canceled event leaves `pending` to the host. Otherwise `pending` is set before this returns,
   // so a second activation is ignored before the host reacts.
   private _confirm = (): void => {
@@ -66,7 +62,7 @@ export class PricingChangeReviewElement extends LitElement {
     if (this.dispatchEvent(event)) this.pending = true;
   };
 
-  // [impl->req~review-back-event~1] No default action and no guard: Back never changes `pending`.
+  // No default action and no guard: Back never changes `pending`.
   private _back = (): void => {
     const comparison = this.comparison;
     if (!comparison) return;
@@ -80,7 +76,6 @@ export class PricingChangeReviewElement extends LitElement {
     );
   };
 
-  // [impl->req~review-ui-focus~1] [impl->req~review-ui-focus-error~1]
   // A new comparison moves focus to the heading, so a screen reader starts at the review. A new
   // error moves it to Confirm, which `pending = false` has enabled again, so the user can retry.
   // The comparison wins when both change in one update.
@@ -97,7 +92,6 @@ export class PricingChangeReviewElement extends LitElement {
     return typeof this.error === 'string' && this.error !== '' ? this.error : undefined;
   }
 
-  // [impl->req~review-base-parts~1]
   protected render(): unknown {
     const comparison = this.comparison;
     if (!comparison) return nothing;

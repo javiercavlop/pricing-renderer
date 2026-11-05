@@ -59,7 +59,6 @@ function normalizeSyntaxVersion(
     );
     return undefined;
   }
-  // [impl->req~version-major-upgrade-hint~1]
   if (match[1] !== '3') {
     diagnostics.push(
       diagnostic(
@@ -361,7 +360,6 @@ function validateAddOnReferences(
   addOns.forEach((addOn) => visit(addOn.id, []));
 }
 
-// [impl->req~value-type-mismatch-diagnostic~1]
 const DIGIT_SEPARATOR_TEXT = /^-?\d{1,3}(_\d{3})+(\.\d+)?$/;
 
 function checkNumericValue(

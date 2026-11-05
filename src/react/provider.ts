@@ -30,7 +30,6 @@ function originOf(url: string): string | undefined {
   }
 }
 
-// [impl->req~provider-request-origin~1]
 // Headers and credentials of a provider request only go to the page origin or a listed origin.
 export function filterProviderRequest(
   request: PricingRequestOptions | undefined,
@@ -52,7 +51,6 @@ export function filterProviderRequest(
   return rest;
 }
 
-// [impl->req~provider-no-global-write~1]
 // The provider only publishes its props to its tree; it never writes the global configuration.
 export function PricingRendererProvider(props: PricingRendererProviderProps): ReactElement {
   const { children, config, messages, presentation, request, requestOrigins, loadPricing } = props;

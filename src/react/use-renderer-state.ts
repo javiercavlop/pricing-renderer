@@ -35,10 +35,7 @@ function detailOf<T>(event: Event): T | undefined {
   return typeof detail === 'object' && detail !== null ? (detail as T) : undefined;
 }
 
-// [impl->req~react-no-module-state~1] every piece of state below belongs to one store instance
-// [impl->req~renderer-state-events~1] [impl->req~renderer-state-cached-snapshot~1]
-// [impl->req~renderer-state-server-snapshot~1] [impl->req~renderer-state-ref-change~1]
-// [impl->req~renderer-state-early-listen~1] [impl->req~renderer-state-apply~1]
+// every piece of state below belongs to one store instance
 export function createRendererStateStore(): RendererStateStore {
   const listeners = new Set<() => void>();
   let target: SelectionTarget | undefined;
@@ -131,12 +128,10 @@ export function createRendererStateStore(): RendererStateStore {
   };
 }
 
-// [impl->req~renderer-state-early-listen~1] the client check is evaluated once, at module load,
+// the client check is evaluated once, at module load,
 // so the hook order stays the same on every render of a process (design.md D7)
 const useClientLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
-// [impl->req~renderer-state-early-listen~1] [impl->req~renderer-state-server-snapshot~1]
-// [impl->req~renderer-state-ref-change~1]
 export function usePricingRendererState(ref: {
   readonly current: EventTarget | null;
 }): RendererState | undefined {

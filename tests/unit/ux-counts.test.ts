@@ -584,7 +584,6 @@ describe('UX-2 unit-level counts', () => {
     expect(sources.map((source) => countFixture(source))).toEqual(counts);
   }, 60_000);
 
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('renders no add-on marker cell in a plan that cannot buy a providing add-on', () => {
     for (const item of counts) {
       expect(item.addOnMarkerCellsMisleading, item.fixture).toBe(0);

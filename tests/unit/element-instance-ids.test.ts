@@ -142,7 +142,6 @@ function viewModelFromYaml(yaml: string): PricingViewModel {
   return createPricingViewModel(parsed.value);
 }
 
-// [utest->req~element-instance-ids~2]
 describe('two elements of the same pricing', () => {
   it('render no id twice in the combined output', async () => {
     const first = flatten((await ready()).render());
@@ -219,7 +218,6 @@ describe('two elements of the same pricing', () => {
   });
 });
 
-// [utest->req~element-instance-ids~2]
 describe('renderer output with an instance prefix', () => {
   it('sanitizes a group id with spaces', () => {
     const viewModel = viewModelFromYaml(
@@ -299,7 +297,6 @@ describe('renderer output with an instance prefix', () => {
   });
 });
 
-// [utest->req~element-instance-ids~2]
 describe('renderer output without an instance prefix', () => {
   it('keeps the ids of today', () => {
     const viewModel = viewModelFromYaml(acmeYaml);
@@ -329,7 +326,6 @@ function withControls(specs: ControlSpec[]): string {
 const duplicatesOf = (values: string[]): string[] =>
   values.filter((value, index) => values.indexOf(value) !== index);
 
-// [utest->req~element-instance-ids~2]
 describe('injective data part of an id', () => {
   it('tells a space from a hyphen in variable paths', () => {
     const found = ids(withControls([{ path: 'a b' }, { path: 'a-b' }]));

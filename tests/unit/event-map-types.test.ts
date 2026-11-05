@@ -48,7 +48,6 @@ describe('typed event map', { timeout: 30_000 }, () => {
       declare const el: HTMLElement;
     `;
 
-    // [utest->req~typed-event-map~1]
     it('types the detail of every pricing event without a cast', () => {
       const diagnostics = typeCheckSnippet(`${header}
         el.addEventListener('pricing-ready', (e) => {
@@ -73,7 +72,6 @@ describe('typed event map', { timeout: 30_000 }, () => {
       expect(messages(diagnostics)).toEqual([]);
     });
 
-    // [utest->req~typed-event-map~1]
     it('reports a wrong detail field', () => {
       const diagnostics = typeCheckSnippet(`${header}
         el.addEventListener('pricing-action', (e) => e.detail.noSuchField);
@@ -83,7 +81,6 @@ describe('typed event map', { timeout: 30_000 }, () => {
       expect(found[0]).toContain('noSuchField');
     });
 
-    // [utest->req~typed-event-map~1]
     it('reports a detail field of another event', () => {
       const diagnostics = typeCheckSnippet(`${header}
         el.addEventListener('pricing-diagnostic', (e) => e.detail.actionId);
@@ -94,7 +91,6 @@ describe('typed event map', { timeout: 30_000 }, () => {
     });
   });
 
-  // [utest->req~typed-event-map~1]
   it('types a listener on the element returned by createElement', () => {
     const diagnostics = typeCheckSnippet(`
       import '../../src/element/index.js';

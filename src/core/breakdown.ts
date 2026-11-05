@@ -17,8 +17,6 @@ interface BreakdownInput {
   addOnQuantity: (addOnId: string) => number;
 }
 
-// [impl->req~breakdown-priced-line~1] [impl->req~breakdown-label-line~1]
-// [impl->req~breakdown-error-line~1] [impl->req~breakdown-json~1]
 function createLine(
   kind: PriceBreakdownLine['kind'],
   id: string,
@@ -42,19 +40,15 @@ function createLine(
   return { ...base, requiresQuote: true };
 }
 
-// [impl->req~breakdown-field~1] [impl->req~breakdown-detached~1]
 export function buildBreakdown(input: BreakdownInput): PriceBreakdown {
   const { pricing, selection, reconciled, planPrices, addOnPrices, billingPeriod } = input;
   const billingMultiplier = billingPeriod?.multiplier ?? 1;
 
-  // [impl->req~breakdown-plan-line~1] [impl->req~breakdown-no-plan-line~1]
   const plan = pricing.plans.find((candidate) => candidate.id === selection.planId);
   const planLine = plan
     ? createLine('plan', plan.id, plan.name, 1, billingMultiplier, planPrices[plan.id])
     : undefined;
 
-  // [impl->req~breakdown-addon-lines~1] [impl->req~breakdown-addon-order~1]
-  // [impl->req~breakdown-addon-quantity~1]
   const addOns = pricing.addOns
     .filter((addOn) => reconciled.addOns[addOn.id]?.selected)
     .map((addOn) =>
@@ -68,13 +62,11 @@ export function buildBreakdown(input: BreakdownInput): PriceBreakdown {
       ),
     );
 
-  // [impl->req~breakdown-subtotal-order~1] [impl->req~breakdown-subtotal-equals~1]
   let subtotal = planLine?.amount ?? 0;
   for (const line of addOns) {
     if (line.amount !== undefined) subtotal += line.amount;
   }
 
-  // [impl->req~breakdown-requires-quote~1]
   const knownAddOnIds = new Set(pricing.addOns.map((addOn) => addOn.id));
   const requiresQuote =
     planLine === undefined ||
@@ -85,9 +77,7 @@ export function buildBreakdown(input: BreakdownInput): PriceBreakdown {
     );
 
   return {
-    // [impl->req~breakdown-currency~1]
     currency: pricing.metadata.currency,
-    // [impl->req~breakdown-billing-period~1] [impl->req~breakdown-unknown-billing-period~1]
     ...(billingPeriod
       ? {
           billingPeriod: {

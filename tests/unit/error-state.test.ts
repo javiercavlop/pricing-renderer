@@ -88,7 +88,6 @@ const sentences = {
   },
 } as const;
 
-// [utest->req~error-state-human-message~1]
 describe('error state: source error in English', () => {
   it('shows the sentence and no code outside a closed details', async () => {
     const element = await failed([diagnostic('PR_SOURCE_HTTP_ERROR')], { locale: 'en-US' });
@@ -130,7 +129,6 @@ describe('error state: source error in English', () => {
   });
 });
 
-// [utest->req~error-state-human-message~1]
 describe('error state: version error in Spanish', () => {
   it('shows the Spanish sentence and the Spanish summary', async () => {
     const element = await failed([diagnostic('PR_VERSION_UNSUPPORTED_MAJOR')], { locale: 'es-ES' });
@@ -144,7 +142,6 @@ describe('error state: version error in Spanish', () => {
   });
 });
 
-// [utest->req~error-state-human-message~1]
 describe('error state: unknown code', () => {
   it('shows the generic sentence', async () => {
     const element = await failed([diagnostic('PR_PLAN_PRICE_INVALID')], { locale: 'en-US' });
@@ -161,7 +158,6 @@ describe('error state: unknown code', () => {
   });
 });
 
-// [utest->req~error-state-human-message~1]
 describe('error state: category by code', () => {
   const cases: [string, keyof (typeof sentences)['en-US']][] = [
     ['PR_SOURCE_MISSING', 'errorSource'],
@@ -219,7 +215,6 @@ describe('error state: category by code', () => {
   });
 });
 
-// [utest->req~error-state-human-message~1]
 describe('error state: styles', () => {
   it('removes the second box of the details inside the error box', () => {
     const css = readFileSync(new URL('../../src/styles/base.css', import.meta.url), 'utf8');
@@ -234,7 +229,6 @@ describe('error state: styles', () => {
   });
 });
 
-// [utest->req~loading-label-localized~1]
 describe('loading state', () => {
   async function loading(setup: Partial<Pick<Host, 'locale' | 'messages' | 'loadingLabel'>>) {
     const element = await build();

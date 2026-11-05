@@ -5,7 +5,7 @@ import * as renderers from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-// SPECTRA item 2 (docs/agent-work/spectra-item2-shorter-page/spec.md): an invalid toolbar threshold
+// SPECTRA item 2: an invalid toolbar threshold
 // falls back to 40. The new export is reached through a typed cast, so a missing export fails when
 // the test runs and not when the file loads.
 
@@ -127,7 +127,6 @@ const TOOLBAR = 'data-pr-part="comparison-toolbar"';
 const hasToolbar = (viewModel: PricingViewModel, overrides: Partial<ThresholdState> = {}) =>
   flatten(renderComparison(stateFor(viewModel, overrides))).includes(TOOLBAR);
 
-// [utest->req~shorter-page-toolbar-threshold~1]
 describe('toolbarThresholdOf', () => {
   it('falls back to 40 for anything but a finite number of 0 or more', () => {
     const invalid: unknown[] = [
@@ -153,7 +152,6 @@ describe('toolbarThresholdOf', () => {
   });
 });
 
-// [utest->req~shorter-page-toolbar-threshold~1]
 describe('invalid thresholds in the state', () => {
   it('behave as 40 in renderComparison', () => {
     for (const toolbarThreshold of [Number.NaN, -5]) {

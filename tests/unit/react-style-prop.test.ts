@@ -51,7 +51,6 @@ const header = `
 const element = (attributes: string): string =>
   `${header}\nexport const element = <PricingRenderer yaml={s} ${attributes} />;`;
 
-// [utest->req~react-style-prop~1]
 describe('React style prop', () => {
   it('accepts custom properties with string or number values next to CSS properties', () => {
     const diagnostics = typeCheckSnippet(
@@ -84,7 +83,6 @@ describe('React style prop', () => {
   });
 });
 
-// [utest->req~react-classname~1]
 describe('React className prop', () => {
   it('accepts a string', () => {
     expect(messages(typeCheckSnippet(element(`className="x"`)))).toEqual([]);

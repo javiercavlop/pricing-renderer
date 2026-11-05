@@ -94,7 +94,7 @@ function rowTotal(viewModel: PricingViewModel): number {
   return viewModel.comparisonGroups.reduce((total, group) => total + group.rows.length, 0);
 }
 
-// Measured from the data (docs/agent-work/visual-review-spectra/metrics.json agrees).
+// Measured from the data (tests/fixtures/layout/spectra-metrics.json agrees).
 const AUTO_ON = ['canva', 'clickup', 'dropbox', 'postman', 'salesforce', 'webflow', 'zoom'];
 
 describe('SPECTRA fixtures', () => {
@@ -108,7 +108,6 @@ describe('SPECTRA fixtures', () => {
     expect(fixtures).toHaveLength(37);
   });
 
-  // [utest->req~shorter-page-auto-default~1]
   describe('automatic only differences', () => {
     it('counts every comparison row before any filter', () => {
       for (const { saas, viewModel } of fixtures) {
@@ -141,7 +140,6 @@ describe('SPECTRA fixtures', () => {
     });
   });
 
-  // [utest->req~shorter-page-counter~1]
   it('prints a counter that matches the rendered rows in every combination', () => {
     const failures: string[] = [];
     let checked = 0;

@@ -107,14 +107,12 @@ function confirmOf(result: Result): Pending {
 }
 
 describe('planSelectionChange', () => {
-  // [utest->req~core-plan-change-immediate~1]
   it('applies a plan change without removals at once', () => {
     const result = api.planSelectionChange(acme, defaults, { type: 'plan', planId: 'growth' });
     expect(result.kind).toBe('apply');
     expect((result as { selection: PricingSelection }).selection.planId).toBe('growth');
   });
 
-  // [utest->req~core-plan-change-pending~1]
   it('makes a plan change that removes add-ons pending', () => {
     const selection = selectionOf(acme, 'growth', { extraStorage: 2, prioritySuccess: 1 });
     const result = api.planSelectionChange(acme, selection, { type: 'plan', planId: 'starter' });
@@ -130,7 +128,6 @@ describe('planSelectionChange', () => {
     });
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('adds the dependency of a selected add-on', () => {
     const result = api.planSelectionChange(
       acme,
@@ -148,7 +145,6 @@ describe('planSelectionChange', () => {
     });
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('removes the add-on that the selected add-on excludes', () => {
     const selection = selectionOf(acme, 'enterprise', { extraStorage: 1, compliance: 1 });
     const pending = confirmOf(
@@ -158,7 +154,6 @@ describe('planSelectionChange', () => {
     expect(pending.removeIds).toEqual(['compliance']);
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('removes the add-on whose excludes name the selected add-on', () => {
     const selection = selectionOf(acme, 'enterprise', { extraStorage: 1, prioritySuccess: 1 });
     const result = api.planSelectionChange(acme, selection, addOnIntent('compliance', true));
@@ -168,7 +163,6 @@ describe('planSelectionChange', () => {
     });
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('adds a two-level dependency chain', () => {
     const result = api.planSelectionChange(
       chain,
@@ -182,7 +176,6 @@ describe('planSelectionChange', () => {
     expect(pending.removeIds).toEqual([]);
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('removes the add-on that an added dependency excludes', () => {
     const pending = confirmOf(
       api.planSelectionChange(
@@ -195,7 +188,6 @@ describe('planSelectionChange', () => {
     expect(pending.removeIds).toEqual(['legacy']);
   });
 
-  // [utest->req~core-addon-deselect-change~1]
   it('removes the dependents of a deselected add-on', () => {
     const selection = selectionOf(acme, 'growth', { extraStorage: 1, prioritySuccess: 1 });
     const pending = confirmOf(
@@ -204,7 +196,6 @@ describe('planSelectionChange', () => {
     expect(pending.removeIds).toEqual(['prioritySuccess']);
   });
 
-  // [utest->req~core-addon-deselect-change~1]
   it('removes only the selected dependents of a deselected add-on', () => {
     const selection = selectionOf(chain, 'basic', { base: 1, middle: 1 });
     const pending = confirmOf(
@@ -213,7 +204,6 @@ describe('planSelectionChange', () => {
     expect(pending.removeIds).toEqual(['middle']);
   });
 
-  // [utest->req~core-addon-deselect-change~1]
   it('removes transitive dependents of a deselected add-on', () => {
     const selection = selectionOf(chain, 'basic', { base: 1, middle: 1, top: 1 });
     const pending = confirmOf(
@@ -225,7 +215,6 @@ describe('planSelectionChange', () => {
     expect([...pending.removeIds].sort()).toEqual(['middle', 'top']);
   });
 
-  // [utest->req~core-addon-change-direct~1]
   it('applies an add-on change without side effects at once', () => {
     const selection = selectionOf(acme, 'growth');
     const result = api.planSelectionChange(acme, selection, addOnIntent('extraStorage', true));
@@ -242,7 +231,6 @@ describe('planSelectionChange', () => {
     );
   });
 
-  // [utest->req~core-addon-change-direct~1]
   it('applies the selection of an add-on whose dependency is already selected', () => {
     const selection = selectionOf(acme, 'growth', { extraStorage: 1 });
     const result = api.planSelectionChange(acme, selection, addOnIntent('prioritySuccess', true));
@@ -251,7 +239,6 @@ describe('planSelectionChange', () => {
     expect(applied.addOns.prioritySuccess).toEqual({ selected: true, quantity: 1 });
   });
 
-  // [utest->req~core-addon-change-direct~1]
   it('applies the deselection of an add-on that nothing depends on', () => {
     const selection = selectionOf(acme, 'growth', { extraStorage: 1 });
     const result = api.planSelectionChange(acme, selection, addOnIntent('extraStorage', false));
@@ -259,14 +246,12 @@ describe('planSelectionChange', () => {
     expect((result as Applied).selection.addOns.extraStorage?.selected).toBe(false);
   });
 
-  // [utest->req~core-addon-change-unknown~1]
   it('changes nothing for an unknown add-on', () => {
     const result = api.planSelectionChange(acme, defaults, addOnIntent('ghost', true));
     expect(result.kind).toBe('apply');
     expect((result as { selection: PricingSelection }).selection).toEqual(defaults);
   });
 
-  // [utest->req~core-plan-change-pending~1]
   it('lists the removed add-ons in the order of the pricing', () => {
     const selection = selectionOf(acme, 'enterprise', { compliance: 1, extraStorage: 1 });
     const pending = confirmOf(
@@ -286,7 +271,6 @@ describe('planSelectionChange', () => {
   const addIdsOf = (result: Result): string[] =>
     result.kind === 'confirm' ? result.pending.addIds : [];
 
-  // [utest->req~core-addon-select-change~1]
   it('never lists the selected add-on among the dependencies of a cycle', () => {
     const cycle = cycleOf({
       a: { price: 1, dependsOn: ['b'] },
@@ -297,7 +281,6 @@ describe('planSelectionChange', () => {
     expect(addIdsOf(result)).toEqual(['b']);
   });
 
-  // [utest->req~core-addon-select-change~1]
   it('never lists an add-on that depends on itself', () => {
     const cycle = cycleOf({ a: { price: 1, dependsOn: ['a'] } });
     const selection = selectionOf(cycle, 'basic');
@@ -307,7 +290,6 @@ describe('planSelectionChange', () => {
 });
 
 describe('applySelectionChange', () => {
-  // [utest->req~core-apply-selection-change~1]
   it('applies a confirmed dependency', () => {
     const next = api.applySelectionChange(acme, selectionOf(acme, 'growth'), {
       addOnId: 'prioritySuccess',
@@ -319,7 +301,6 @@ describe('applySelectionChange', () => {
     expect(next.addOns.extraStorage).toEqual({ selected: true, quantity: 1 });
   });
 
-  // [utest->req~core-apply-selection-change~1]
   it('applies a confirmed plan change and keeps the quantities', () => {
     const selection = selectionOf(acme, 'growth', { extraStorage: 2, prioritySuccess: 1 });
     const pending = confirmOf(
@@ -346,7 +327,6 @@ describe('applySelectionChange', () => {
     } as never).value!;
   const seatChange: Pending = { addOnId: 'seat', select: true, addIds: [], removeIds: [] };
 
-  // [utest->req~core-apply-selection-change~1]
   it('starts a new entry at the minimum quantity of the add-on', () => {
     const pricing = quantityPricing({ minQuantity: 3 });
     const selection = { ...createDefaultSelection(pricing), addOns: {} };
@@ -354,7 +334,6 @@ describe('applySelectionChange', () => {
     expect(next.addOns.seat).toEqual({ selected: true, quantity: 3 });
   });
 
-  // [utest->req~core-apply-selection-change~1]
   it('starts a new entry at quantity 1 without a minimum', () => {
     const pricing = quantityPricing();
     const selection = { ...createDefaultSelection(pricing), addOns: {} };
@@ -364,7 +343,6 @@ describe('applySelectionChange', () => {
 });
 
 describe('selection helpers', () => {
-  // [utest->req~core-selection-with-variable~1]
   it('sets a nested variable and keeps the others', () => {
     const next = api.selectionWithVariable(defaults, 'priceByRegion.us-price', 12);
     expect(next.variables.priceByRegion).toEqual({ 'eu-price': 8, 'us-price': 12 });
@@ -376,7 +354,6 @@ describe('selection helpers', () => {
       delete (Object.prototype as Record<string, unknown>).polluted;
     });
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('treats constructor and prototype as ordinary names', () => {
       let next: PricingSelection | undefined;
       try {
@@ -394,7 +371,6 @@ describe('selection helpers', () => {
       }
     });
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('updates an own variable named prototype', () => {
       const selection = { ...defaults, variables: { prototype: 1 } };
       const next = api.selectionWithVariable(selection, 'prototype', 2);
@@ -403,7 +379,6 @@ describe('selection helpers', () => {
 
     const paths = ['__proto__.polluted', 'a.__proto__.polluted'];
     for (const path of paths) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the path ${path}`, () => {
         let next: PricingSelection | undefined;
         try {
@@ -429,7 +404,6 @@ describe('selection helpers', () => {
 
   describe('array index cap', () => {
     for (const path of ['a[4294967294]', 'list[1001]']) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the path ${path}`, () => {
         const started = performance.now();
         const next = api.selectionWithVariable(defaults, path, 1);
@@ -439,21 +413,18 @@ describe('selection helpers', () => {
       });
     }
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('still writes list[1000]', () => {
       const list = api.selectionWithVariable(defaults, 'list[1000]', 1).variables.list;
       expect(Array.isArray(list)).toBe(true);
       expect((list as unknown[])[1000]).toBe(1);
     });
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('still writes list[0].x', () => {
       const next = api.selectionWithVariable(defaults, 'list[0].x', 1);
       expect(next.variables.list).toEqual([{ x: 1 }]);
     });
 
     for (const path of ['tiers.1e9', 'tiers.abc', 'tiers.-1', 'tiers.0x10']) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the non-canonical index ${path} on an existing array`, () => {
         const tiers: unknown[] = [];
         const selection = { ...defaults, variables: { tiers } };
@@ -465,7 +436,6 @@ describe('selection helpers', () => {
     }
 
     for (const path of ['tiers.01', 'tiers[00]']) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the leading-zero index ${path}`, () => {
         const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
         const next = api.selectionWithVariable(selection, path, 1);
@@ -475,7 +445,6 @@ describe('selection helpers', () => {
     }
 
     for (const path of ['x.01', 'x.0.01']) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the leading-zero index ${path} under a missing parent`, () => {
         const next = api.selectionWithVariable(defaults, path, 1);
         expect(next.variables).toEqual(defaults.variables);
@@ -483,7 +452,6 @@ describe('selection helpers', () => {
     }
 
     for (const path of ['tiers[1001]', 'tiers.4294967294']) {
-      // [utest->req~core-selection-variable-path-safe~1]
       it(`refuses the new index ${path} on an existing array`, () => {
         const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
         const next = api.selectionWithVariable(selection, path, 1);
@@ -492,7 +460,6 @@ describe('selection helpers', () => {
       });
     }
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('writes the new index tiers[1000] on an existing array', () => {
       const selection = { ...defaults, variables: { tiers: [] as unknown[] } };
       const tiers = api.selectionWithVariable(selection, 'tiers[1000]', 1).variables
@@ -500,7 +467,6 @@ describe('selection helpers', () => {
       expect(tiers[1000]).toBe(1);
     });
 
-    // [utest->req~core-selection-variable-path-safe~1]
     it('overwrites an existing index above 1000 and refuses a different new one', () => {
       const tiers: unknown[] = [0];
       tiers[1500] = 1;
@@ -516,7 +482,6 @@ describe('selection helpers', () => {
     });
   });
 
-  // [utest->req~core-selection-variable-path-safe~1]
   it('reads own properties only with getAtPath', () => {
     const getAtPath = (core as unknown as { getAtPath: (s: unknown, p: string) => unknown })
       .getAtPath;
@@ -526,13 +491,11 @@ describe('selection helpers', () => {
     expect(getAtPath({ a: 1 }, 'a')).toBe(1);
   });
 
-  // [utest->req~core-selection-with-addon-quantity~1]
   it('caps an add-on quantity at the maximum', () => {
     const next = api.selectionWithAddOnQuantity(acme, defaults, 'extraStorage', 40);
     expect(next.addOns.extraStorage).toEqual({ selected: true, quantity: 10 });
   });
 
-  // [utest->req~core-selection-in-effect~1]
   it('follows variablesEnabled', () => {
     const selection = api.selectionWithVariable(defaults, 'seats', 40);
     const off = api.selectionInEffect(acme, selection, { variablesEnabled: false });
@@ -543,7 +506,6 @@ describe('selection helpers', () => {
     expect(on.variables).not.toBe(selection.variables);
   });
 
-  // [utest->req~core-selection-in-effect~1]
   it('keeps the variables of the selection by default', () => {
     const selection = api.selectionWithVariable(defaults, 'seats', 40);
     expect(api.selectionInEffect(acme, selection).variables.seats).toBe(40);
@@ -551,7 +513,6 @@ describe('selection helpers', () => {
 });
 
 describe('no mutation', () => {
-  // [utest->req~core-selection-no-mutation~1]
   it('leaves frozen inputs unchanged', () => {
     const pricing = deepFreeze(structuredClone(acme));
     const selection = deepFreeze(
@@ -618,7 +579,6 @@ function typeCheckSnippet(source: string): string[] {
 }
 
 describe('exports', () => {
-  // [utest->req~pending-change-type-shared~1]
   it('names one PendingAddOnChange type on the core and element entries', () => {
     expect(api.planSelectionChange).toBeTypeOf('function');
     const diagnostics = typeCheckSnippet(`

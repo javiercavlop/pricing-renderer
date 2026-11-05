@@ -38,7 +38,6 @@ function presenceOf(inBefore: boolean, inAfter: boolean): ItemPresence {
 }
 
 /** After-pricing declaration order, then the ids only the before pricing defines. */
-// [impl->req~compare-order~1] [impl->req~compare-item-presence~1]
 function mergeItems<T extends { id: string }>(before: T[], after: T[]): Merged<T>[] {
   const beforeIds = new Set(before.map((item) => item.id));
   const afterIds = new Set(after.map((item) => item.id));
@@ -63,7 +62,6 @@ function catalogOnlyIn(from: NormalizedPricing, other: NormalizedPricing): Catal
   };
 }
 
-// [impl->req~compare-plan~1]
 function comparedPlan(pricing: NormalizedPricing, id: string | undefined): ComparedPlan {
   const plan = pricing.plans.find((candidate) => candidate.id === id);
   const result: ComparedPlan = { known: plan !== undefined };
@@ -101,9 +99,6 @@ function sideValue(
   return effectiveValue(pricing, side.selection, kind, id, definition.defaultValue);
 }
 
-// [impl->req~compare-addons-added~1] [impl->req~compare-addons-removed-by-user~1]
-// [impl->req~compare-addons-removed-by-reconciliation~1] [impl->req~compare-addons-quantity~1]
-// [impl->req~compare-addons-unchanged~1]
 function compareAddOns(
   beforePricing: NormalizedPricing,
   afterPricing: NormalizedPricing,
@@ -146,7 +141,6 @@ function compareAddOns(
   return result;
 }
 
-// [impl->req~compare-features~1] [impl->req~compare-effective-features~1]
 function compareFeatures(
   beforePricing: NormalizedPricing,
   afterPricing: NormalizedPricing,
@@ -183,7 +177,6 @@ interface UsageReading {
   diagnostics: PricingDiagnostic[];
 }
 
-// [impl->req~compare-usage-diagnostics~1]
 function readCurrentUsage(input: unknown, knownIds: Set<string>): UsageReading {
   const valid = new Map<string, number>();
   const diagnostics: PricingDiagnostic[] = [];
@@ -212,8 +205,6 @@ function readCurrentUsage(input: unknown, knownIds: Set<string>): UsageReading {
   return { valid, diagnostics };
 }
 
-// [impl->req~compare-limits~1] [impl->req~compare-effective-limits~1]
-// [impl->req~compare-current-usage~1] [impl->req~compare-current-usage-entry~1]
 function compareUsageLimits(
   beforePricing: NormalizedPricing,
   afterPricing: NormalizedPricing,
@@ -252,8 +243,6 @@ function compareUsageLimits(
   return result;
 }
 
-// [impl->req~compare-price-sides~1] [impl->req~compare-price-difference~1]
-// [impl->req~compare-price-difference-omitted~1]
 function comparePrice(before: ComparedSideState, after: ComparedSideState): PriceComparison {
   const beforePrice = before.breakdown;
   const afterPrice = after.breakdown;
@@ -280,7 +269,6 @@ function selectedQuantities(side: ComparedSideState): Map<string, number> {
   return quantities;
 }
 
-// [impl->req~compare-relation-current~1]
 function isCurrent(
   versions: VersionComparison,
   before: ComparedSideState,
@@ -295,7 +283,6 @@ function isCurrent(
   return was.size === now.size && [...was].every(([id, quantity]) => now.get(id) === quantity);
 }
 
-// [impl->req~compare-version~1] [impl->req~compare-version-items~1]
 function compareVersions(before: NormalizedPricing, after: NormalizedPricing): VersionComparison {
   const version: VersionComparison = {
     changed: before.metadata.version !== after.metadata.version,
@@ -307,7 +294,6 @@ function compareVersions(before: NormalizedPricing, after: NormalizedPricing): V
   return version;
 }
 
-// [impl->req~compare-addon-dropped~1]
 function droppedDiagnostics(before: ComparedSideState, after: ComparedSideState) {
   const dropped: PricingDiagnostic[] = [];
   for (const id of after.removedAddOnIds) {
@@ -327,8 +313,6 @@ function droppedDiagnostics(before: ComparedSideState, after: ComparedSideState)
  * Compares a contract with an edit: which plan, add-ons, features and limits change, what the
  * price does, and which pricing items exist in only one version. Never throws on unknown ids.
  */
-// [impl->req~compare-selections-export~1] [impl->req~compare-headless~1]
-// [impl->req~compare-no-mutation~1] [impl->req~compare-detached~1] [impl->req~compare-json~1]
 export function compareSelections(input: SelectionComparisonInput): SelectionComparison {
   const beforePricing = input.before.pricing;
   const afterPricing = input.after.pricing;
@@ -342,7 +326,6 @@ export function compareSelections(input: SelectionComparisonInput): SelectionCom
 
   const beforePlanId = before.selection.planId;
   const afterPlanId = after.selection.planId;
-  // [impl->req~compare-relation-plan-order~1] [impl->req~compare-relation-change~1]
   let relation: SelectionRelation;
   if (isCurrent(version, before, after)) relation = 'current';
   else if (beforePlanId === afterPlanId) relation = 'change';
@@ -361,7 +344,6 @@ export function compareSelections(input: SelectionComparisonInput): SelectionCom
     usageLimits: compareUsageLimits(beforePricing, afterPricing, before, after, usage.valid),
     price: comparePrice(before, after),
     selections: { before: before.selection, after: after.selection },
-    // [impl->req~compare-diagnostics-order~1]
     diagnostics: [
       ...before.diagnostics,
       ...after.diagnostics,

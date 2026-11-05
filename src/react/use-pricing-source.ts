@@ -52,7 +52,6 @@ export interface UsePricingSourceResult extends PricingSourceSnapshot {
 type SourceResult = PricingResult<NormalizedPricing>;
 type Held = PricingSourceStoreInput & PricingSourceStoreOptions;
 
-// [impl->req~load-source-request-bounds~1]
 // A bound that is not usable falls back to its default, so a provider value of 0, NaN or Infinity
 // cannot disable a limit. 2147483647 ms is the largest delay a timer honours.
 function boundedRequest(request: PricingRequestOptions | undefined): PricingRequestOptions {
@@ -77,7 +76,6 @@ function boundedRequest(request: PricingRequestOptions | undefined): PricingRequ
   };
 }
 
-// [impl->req~use-pricing-source-stable~1]
 // pricing, request and normalizeOptions compare by structure; yaml, src and loadPricing by identity.
 function sameHeld(left: Held, right: Held): boolean {
   return (
@@ -110,8 +108,6 @@ export function createSourceStore(): SourceStore {
     for (const listener of [...listeners]) listener();
   }
 
-  // [impl->req~use-pricing-source-success~1]
-  // [impl->req~use-pricing-source-failure-keeps-pricing~1]
   function resultSnapshot(result: SourceResult): PricingSourceSnapshot {
     if (result.value !== undefined) {
       return { status: 'ready', pricing: result.value, diagnostics: result.diagnostics };
@@ -176,8 +172,6 @@ export function createSourceStore(): SourceStore {
     getSnapshot() {
       return snapshot;
     },
-    // [impl->req~use-pricing-source-render~1]
-    // [impl->req~use-pricing-source-stale-load~1]
     setInput(input, options) {
       const next: Held = { ...input, ...options };
       if (held !== undefined && sameHeld(held, next)) return;
@@ -192,7 +186,6 @@ export function createSourceStore(): SourceStore {
     get inputVersion() {
       return version;
     },
-    // [impl->req~use-pricing-source-src-effect~1]
     start() {
       active = true;
       if (held === undefined || !isRemote(held) || loadState !== 'idle') return;
@@ -202,7 +195,6 @@ export function createSourceStore(): SourceStore {
       }
       load(held);
     },
-    // [impl->req~use-pricing-source-abort~1]
     stop() {
       active = false;
       if (loadState === 'inflight') {
@@ -211,7 +203,6 @@ export function createSourceStore(): SourceStore {
       }
       abortInFlight();
     },
-    // [impl->req~use-pricing-source-reload~1]
     reload() {
       if (held === undefined) return;
       if (isRemote(held)) {
@@ -240,8 +231,6 @@ function definedFields<T extends object>(fields: T): T {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as T;
 }
 
-// [impl->req~provider-request-loader~1]
-// [impl->req~provider-request-origin~1]
 export function usePricingSource(props: UsePricingSourceProps): UsePricingSourceResult {
   const provider = useContext(PricingRendererContext);
   const [store] = useState(createSourceStore);

@@ -48,12 +48,10 @@ export interface PlanCtaView {
   pending: boolean;
 }
 
-// [impl->req~cta-pending-state~1] [impl->req~cta-pending-others~1]
 export function isPendingActionId(pendingActionId: string | undefined, actionId: string): boolean {
   return pendingActionId !== undefined && pendingActionId === actionId;
 }
 
-// [impl->req~cta-href-template~1]
 // The plan id is encoded here, before the caller checks the safety of the result.
 export function expandCtaHref(href: string | undefined, planId: string): string | undefined {
   return href?.split('{planId}').join(encodeURIComponent(planId));
@@ -65,12 +63,10 @@ function relationLabel(
   cta: PricingCta | undefined,
   relation: SelectionRelation,
 ): string | undefined {
-  // [impl->req~cta-contact-sales~1]
   const price = viewModel.resolved.planPrices[plan.id];
   if (price?.kind === 'label' || price?.kind === 'error') {
     return cta?.labels?.contactSales ?? translate(viewModel.messages, 'pricing.contactSales');
   }
-  // [impl->req~current-selection-relation-labels~1]
   if (relation === 'upgrade') {
     return (
       cta?.labels?.upgrade ??
@@ -87,8 +83,6 @@ function relationLabel(
 }
 
 /** The label, link and state of one plan CTA. */
-// [impl->req~current-selection-plan-cta~1] [impl->req~current-selection-unknown-plan~1]
-// [impl->req~cta-event-unchanged~1]
 export function planCtaView(
   viewModel: PricingViewModel,
   plan: NormalizedPlan,
@@ -98,7 +92,7 @@ export function planCtaView(
   const actionId = cta?.id ?? `choose-${plan.id}`;
   const { currentPlanId, pendingActionId } = context;
   const kind: PlanCtaView['kind'] = cta?.kind === 'secondary' ? 'secondary' : 'primary';
-  // [impl->req~cta-href-template-unsafe~1] an unsafe expanded link renders as a button
+  // an unsafe expanded link renders as a button
   const eventHref = expandCtaHref(cta?.href, plan.id) || undefined;
   const href = isSafeLink(eventHref) ? eventHref : undefined;
   const base = {
@@ -136,8 +130,6 @@ export function planCtaView(
 }
 
 /** The summary action for a known current plan and the relation of the selection in effect. */
-// [impl->req~cta-summary-action~1] [impl->req~cta-summary-action-quote~1]
-// [impl->req~cta-summary-action-current~1]
 export function summaryActionState(
   viewModel: PricingViewModel,
   relation: SelectionRelation,

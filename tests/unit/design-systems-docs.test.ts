@@ -57,7 +57,6 @@ const squash = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 const markdownLink = /\]\([^)\s]*design-systems\.md(#[^)\s]*)?\)/;
 
-// [utest->req~design-systems-guide~1]
 describe('docs/design-systems.md', () => {
   const guide = (): string => read('docs/design-systems.md');
 
@@ -146,7 +145,6 @@ describe('docs/design-systems.md', () => {
   });
 });
 
-// [utest->req~theming-docs-accuracy~1]
 describe('docs/theming.md', () => {
   const theming = (): string => read('docs/theming.md');
 

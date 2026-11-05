@@ -86,7 +86,6 @@ const readText = (path: string): Promise<string> =>
   readFile(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
 
 describe('definition', () => {
-  // [utest->req~review-element-defined~1]
   it('is a no-op in node, where there is no registry', async () => {
     noRegistry();
     expect(globalThis.customElements).toBeUndefined();
@@ -95,7 +94,6 @@ describe('definition', () => {
     expect(element.definePricingChangeReview()).toBe(element.PricingChangeReviewElement);
   });
 
-  // [utest->req~review-element-defined~1]
   it('registers the class under the tag when the side-effect module is imported', async () => {
     const registry = stubRegistry();
     await import('../../src/element/define-change-review.js');
@@ -107,7 +105,6 @@ describe('definition', () => {
     expect(registry.calls).toEqual([tag]);
   });
 
-  // [utest->req~review-define-separate~1]
   it('is not registered by define, the element index or the React entry point', async () => {
     const registry = stubRegistry();
     await import('../../src/element/define.js');
@@ -117,7 +114,6 @@ describe('definition', () => {
     expect(registry.classes.has(tag)).toBe(false);
   });
 
-  // [utest->req~review-define-conflict~1]
   it('throws an error naming the tag when another class holds it', async () => {
     class Other {}
     const registry = stubRegistry({ [tag]: Other });
@@ -149,7 +145,6 @@ describe('properties', () => {
     return (loaded as { PricingChangeReviewElement: ReviewClass }).PricingChangeReviewElement;
   }
 
-  // [utest->req~review-properties~1]
   it('declares the seven properties with their attributes', async () => {
     const { properties } = await loadClass();
     expect(Object.keys(properties).sort()).toEqual([
@@ -173,7 +168,6 @@ describe('properties', () => {
     expect(properties.confirmLabel).toMatchObject({ type: String, attribute: 'confirm-label' });
   });
 
-  // [utest->req~review-properties~1]
   it('starts with no comparison, no notices, not pending and en-US', async () => {
     const Element = await loadClass();
     const element = new Element();
@@ -186,7 +180,6 @@ describe('properties', () => {
     expect(new Element().notices).not.toBe(element.notices);
   });
 
-  // [utest->req~review-properties~1]
   it('types the seven properties', async () => {
     const header = `
       import type { MessageCatalog, SelectionComparison } from '../../src/core/index.js';
@@ -224,7 +217,6 @@ describe('React wrapper', () => {
     return { createElement, renderToString, PricingChangeReview };
   }
 
-  // [utest->req~review-react~1]
   it('renders the tag on the server', async () => {
     noRegistry();
     const { createElement, renderToString, PricingChangeReview } = await loadReact();
@@ -232,7 +224,6 @@ describe('React wrapper', () => {
     expect(html).toContain('<pricing-change-review');
   });
 
-  // [utest->req~review-react~1]
   it('types the props and gives the confirm handler a PricingChangeConfirmEvent', () => {
     const header = `
       import * as React from 'react';
@@ -263,7 +254,6 @@ describe('React wrapper', () => {
     expect(codes(rejected)).toEqual([2769]);
   });
 
-  // [utest->req~review-react-registers~1]
   it('registers the element when it renders where a registry exists', async () => {
     const registry = stubRegistry();
     const { createElement, renderToString, PricingChangeReview } = await loadReact();
@@ -296,7 +286,6 @@ describe('event types', () => {
     declare const reactBack: ReactBackEvent;
   `;
 
-  // [utest->req~review-event-types~1]
   it('exports the four types from the element and the React entry points', () => {
     const accepted = typeCheckSnippet(`${header}
       export const a: SelectionComparison = confirm.detail.comparison;
@@ -313,7 +302,6 @@ describe('event types', () => {
     expect(messages(accepted)).toEqual([]);
   });
 
-  // [utest->req~review-event-types~1]
   it('requires a SelectionComparison in each detail', () => {
     const rejected = typeCheckSnippet(`${header}
       export const bad: PricingChangeConfirmDetail = { comparison: 'upgrade' };
@@ -347,7 +335,6 @@ describe('custom elements manifest', () => {
     return declaration!;
   }
 
-  // [utest->req~review-manifest~1]
   it('declares the tag, the seven fields and the two events', async () => {
     const declaration = await reviewDeclaration();
     expect(declaration.tagName).toBe(tag);
@@ -368,7 +355,6 @@ describe('custom elements manifest', () => {
     expect(events.sort()).toEqual(['pricing-change-back', 'pricing-change-confirm']);
   });
 
-  // [utest->req~review-manifest~1]
   it('types the events and lists the attributes', async () => {
     const declaration = await reviewDeclaration();
     const typeOf = (name: string) =>
@@ -398,7 +384,6 @@ describe('package manifest', () => {
     return JSON.parse(await readText('../../package.json')) as PackageJson;
   }
 
-  // [utest->req~review-define-subpath~1]
   it('exports ./define-change-review as a side-effect module', async () => {
     const pkg = await readPackage();
     expect(pkg.exports['./define-change-review']).toEqual({
@@ -408,7 +393,6 @@ describe('package manifest', () => {
     expect(pkg.sideEffects).toContain('./dist/element/define-change-review.js');
   });
 
-  // [utest->req~review-define-subpath~1]
   it('checks the entry point with attw', async () => {
     const { scripts } = await readPackage();
     const script = scripts['package:check'] ?? '';
@@ -421,7 +405,6 @@ describe('package manifest', () => {
 });
 
 describe('messages', () => {
-  // [utest->req~review-base-parts~1]
   it('defines the Confirm and Back texts in English and Spanish', () => {
     expect(enUS['pricing.reviewConfirm']).toBe('Confirm change');
     expect(enUS['pricing.reviewBack']).toBe('Back');

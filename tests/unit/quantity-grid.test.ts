@@ -47,21 +47,18 @@ describe('add-on quantity grid', () => {
     }
   });
 
-  // [utest->req~quantity-grid-max-cap~1]
   it('computes the largest valid quantity with one shared function', () => {
     expect(maxQuantityOnGrid({ minQuantity: 1, quantityStep: 5, maxQuantity: 8 })).toBe(6);
     expect(maxQuantityOnGrid({ minQuantity: 1, quantityStep: 5, maxQuantity: 11 })).toBe(11);
     expect(maxQuantityOnGrid({ minQuantity: 1, quantityStep: 5 })).toBeUndefined();
   });
 
-  // [utest->req~quantity-grid-max-cap~1]
   it('returns the maximum itself with decimal steps', () => {
     // 3 * 0.1 is 0.30000000000000004 and 7 * 0.1 is 0.7000000000000001
     expect(maxQuantityOnGrid({ minQuantity: 0, quantityStep: 0.1, maxQuantity: 0.3 })).toBe(0.3);
     expect(maxQuantityOnGrid({ minQuantity: 0, quantityStep: 0.1, maxQuantity: 0.7 })).toBe(0.7);
   });
 
-  // [utest->req~quantity-normalized-max-cap~1]
   it.each([0.3, 5])('bills a decimal maximum of 0.3 for the quantity %s', (quantity) => {
     const constraints = { minQuantity: 0, quantityStep: 0.1, maxQuantity: 0.3 };
     const pricing = pricingWith(constraints);

@@ -125,7 +125,6 @@ const providerRequest = {
   timeoutMs: 5000,
 };
 
-// [utest->req~load-source-request-bounds~1]
 describe('usePricingSource: provider bounds through the hook', () => {
   it('replaces provider bounds that are not usable by the defaults', async () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -147,7 +146,6 @@ describe('usePricingSource: provider bounds through the hook', () => {
   });
 });
 
-// [utest->req~provider-request-loader~1]
 describe('usePricingSource: provider request and loader', () => {
   it('uses the instance request alone, so the provider timeout does not apply', async () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -185,7 +183,6 @@ describe('usePricingSource: provider request and loader', () => {
   });
 });
 
-// [utest->req~provider-request-origin~1]
 describe('usePricingSource: provider request headers stay on allowed origins', () => {
   it('drops headers and credentials for a foreign origin', async () => {
     vi.stubGlobal('location', { origin: 'https://app.example.com' });
@@ -252,7 +249,6 @@ describe('usePricingSource: provider request headers stay on allowed origins', (
   });
 });
 
-// [utest->req~use-pricing-source-src-effect~1]
 describe('usePricingSource: the load starts from an effect', () => {
   it('returns loading and calls no loader until the effects run', async () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -277,7 +273,6 @@ describe('usePricingSource: the load starts from an effect', () => {
   });
 });
 
-// [utest->req~use-pricing-source-render~1]
 describe('usePricingSource: inline sources resolve during the call', () => {
   it('returns ready for yaml and error for no source, with no effect run', () => {
     expect(callHook({ yaml: acmeYaml }).status).toBe('ready');
@@ -288,7 +283,6 @@ describe('usePricingSource: inline sources resolve during the call', () => {
   });
 });
 
-// [utest->req~use-pricing-source-abort~1]
 describe('usePricingSource: the effect cleanup aborts the load', () => {
   it('aborts the signal of the load when the cleanup runs', async () => {
     const signals: AbortSignal[] = [];
@@ -305,7 +299,6 @@ describe('usePricingSource: the effect cleanup aborts the load', () => {
   });
 });
 
-// [utest->req~use-pricing-source-reload~1]
 describe('usePricingSource: reload through the hook', () => {
   it('loads the source again and aborts the load in flight', async () => {
     const signals: AbortSignal[] = [];

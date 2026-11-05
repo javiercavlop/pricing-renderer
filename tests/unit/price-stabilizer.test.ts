@@ -100,14 +100,12 @@ function keptStarter(): Stabilizer {
 }
 
 describe('last valid price', () => {
-  // [utest->req~price-stabilizer-last-valid~1]
   it('keeps the plan price over an error', () => {
     const stabilizer = keptStarter();
     const result = stabilizer.stabilize(viewModel({ planPrices: { starter: { ...errorPrice } } }));
     expect(result.resolved.planPrices.starter).toEqual(starterAmount);
   });
 
-  // [utest->req~price-stabilizer-last-valid~1]
   it('keeps the add-on price over an error', () => {
     const stabilizer = createPriceStabilizer();
     stabilizer.stabilize(
@@ -119,7 +117,6 @@ describe('last valid price', () => {
     expect(result.resolved.addOnPrices.prioritySuccess).toEqual(prioritySuccessAmount);
   });
 
-  // [utest->req~price-stabilizer-last-valid~1]
   it('does not replace an add-on label price', () => {
     const stabilizer = createPriceStabilizer();
     stabilizer.stabilize(
@@ -158,7 +155,6 @@ describe('latest valid price', () => {
     quantity: 1,
   });
 
-  // [utest->req~price-stabilizer-last-valid~1]
   it('keeps the newest plan price over an error', () => {
     const stabilizer = keptStarter();
     stabilizer.stabilize(viewModel({ planPrices: { starter: amountOf(30) } }));
@@ -166,7 +162,6 @@ describe('latest valid price', () => {
     expect(result.resolved.planPrices.starter).toEqual(amountOf(30));
   });
 
-  // [utest->req~price-stabilizer-last-valid~1]
   it('keeps the newest add-on price over an error', () => {
     const stabilizer = createPriceStabilizer();
     stabilizer.stabilize(viewModel({ addOnPrices: { extraStorage: amountOf(20) } }));
@@ -177,7 +172,6 @@ describe('latest valid price', () => {
     expect(result.resolved.addOnPrices.extraStorage).toEqual(amountOf(30));
   });
 
-  // [utest->req~price-stabilizer-last-valid~1]
   it('keeps an error for ids that name Object.prototype members', () => {
     const result = createPriceStabilizer().stabilize(
       viewModel({
@@ -191,7 +185,6 @@ describe('latest valid price', () => {
 });
 
 describe('records', () => {
-  // [utest->req~price-stabilizer-records~1]
   it('records the prices of a call whose result is dropped', () => {
     const stabilizer = createPriceStabilizer();
     stabilizer.stabilize(
@@ -209,7 +202,6 @@ describe('records', () => {
 });
 
 describe('breakdown line', () => {
-  // [utest->req~price-stabilizer-breakdown-line~1]
   it('gives the plan line the kept factors', () => {
     const stabilizer = keptStarter();
     const result = stabilizer.stabilize(
@@ -227,7 +219,6 @@ describe('breakdown line', () => {
     });
   });
 
-  // [utest->req~price-stabilizer-breakdown-line~1]
   it('gives the add-on line the kept factors and no label', () => {
     const stabilizer = createPriceStabilizer();
     stabilizer.stabilize(
@@ -265,7 +256,6 @@ describe('breakdown line', () => {
 });
 
 describe('subtotal', () => {
-  // [utest->req~price-stabilizer-subtotal~1]
   it('folds a kept plan line and a resolved add-on line', () => {
     const stabilizer = keptStarter();
     const result = stabilizer.stabilize(
@@ -279,7 +269,6 @@ describe('subtotal', () => {
     expect(result.resolved.breakdown.subtotal).toBe(25);
   });
 
-  // [utest->req~price-stabilizer-subtotal~1]
   it('counts a missing plan line as 0', () => {
     const result = createPriceStabilizer().stabilize(
       viewModel({
@@ -290,7 +279,6 @@ describe('subtotal', () => {
     expect(result.resolved.breakdown.subtotal).toBe(5);
   });
 
-  // [utest->req~price-stabilizer-subtotal~1]
   it('counts a plan line with no amount as 0 and keeps the error', () => {
     const result = createPriceStabilizer().stabilize(
       viewModel({
@@ -308,7 +296,6 @@ describe('subtotal', () => {
 });
 
 describe('reset', () => {
-  // [utest->req~price-stabilizer-reset~1]
   it('forgets the kept prices', () => {
     const stabilizer = keptStarter();
     stabilizer.reset();
@@ -344,7 +331,6 @@ function typeCheckSnippet(source: string): string[] {
 }
 
 describe('exports', () => {
-  // [utest->req~selection-logic-exported~1]
   it('exports the six functions and the four types from the core entry', () => {
     for (const name of functionNames) {
       expect((core as Record<string, unknown>)[name], name).toBeTypeOf('function');

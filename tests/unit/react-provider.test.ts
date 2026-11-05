@@ -105,7 +105,6 @@ const absentKeys = [
   'loadPricing',
 ];
 
-// [utest->req~provider-config-precedence~1]
 describe('provider config below instance settings', () => {
   const config = {
     locale: 'es-ES',
@@ -135,7 +134,6 @@ describe('provider config below instance settings', () => {
   });
 });
 
-// [utest->req~provider-presentation-precedence~1]
 describe('provider presentation precedence', () => {
   const badge = (label: string) => [{ id: label, label, tone: 'accent' as const }];
 
@@ -191,7 +189,6 @@ describe('provider presentation precedence', () => {
   });
 });
 
-// [utest->req~provider-messages-merge~1]
 describe('provider messages merge per key', () => {
   it('replaces one key and keeps the others', async () => {
     const props = await renderWrapper({ yaml: acmeYaml, messages: { 'cta.select': 'Choose' } }, [
@@ -206,7 +203,6 @@ describe('provider messages merge per key', () => {
   });
 });
 
-// [utest->req~provider-request-loader~1]
 describe('provider request and loader reach the wrapper', () => {
   const loader = (): Promise<string> => Promise.resolve('name: Acme\n');
   const src = 'https://example.com/acme.yml';
@@ -234,7 +230,6 @@ describe('provider request and loader reach the wrapper', () => {
   });
 });
 
-// [utest->req~provider-request-origin~1]
 describe('provider request headers stay on allowed origins', () => {
   const request = {
     headers: { Authorization: 'Bearer t' },
@@ -348,7 +343,6 @@ describe('provider request headers stay on allowed origins', () => {
   });
 });
 
-// [utest->req~provider-nearest~1]
 describe('nearest provider wins', () => {
   it('passes the messages of the inner provider only', async () => {
     const props = await renderWrapper({ yaml: acmeYaml }, [
@@ -368,7 +362,6 @@ describe('nearest provider wins', () => {
   });
 });
 
-// [utest->req~provider-no-global-write~1]
 describe('provider keeps the global configuration', () => {
   it('renders its children and leaves the global locale alone', () => {
     const html = renderToString(
@@ -403,7 +396,6 @@ describe('provider keeps the global configuration', () => {
   });
 });
 
-// [utest->req~provider-absent-unchanged~2]
 describe('no provider, no added settings', () => {
   it('passes none of the settings the host did not pass', async () => {
     configurePricingRenderer({ locale: 'es-ES', variablesEnabled: false });
@@ -475,7 +467,6 @@ const reactRoot = fileURLToPath(new URL('../../src/react/', import.meta.url));
 const headlessFile = join(reactRoot, 'headless.ts');
 const litPackage = /^(lit|lit-html|lit-element|@lit\/.*|lit\/.*)$/;
 
-// [utest->req~react-headless-entry~1]
 describe('headless entry loads no element code', () => {
   it('has a runtime import graph without lit, @lit/react or the element definition', () => {
     expect(existsSync(headlessFile), 'src/react/headless.ts exists').toBe(true);
@@ -502,7 +493,6 @@ describe('headless entry loads no element code', () => {
   });
 });
 
-// [utest->req~react-entry-reexports-headless~1]
 describe('react entry re-exports the headless entry', () => {
   it('exports every runtime export of the headless entry with the same identity', async () => {
     const keys = Object.keys(headlessMod);
@@ -588,7 +578,6 @@ function reactUses(file: string): { module: string; name: string }[] {
   return uses;
 }
 
-// [utest->req~react-hooks-common-api~1]
 describe('React API common to 18.2 and 19', () => {
   it('uses only the allowed runtime values and never use', () => {
     const files = listSources(reactRoot);
@@ -604,7 +593,6 @@ describe('React API common to 18.2 and 19', () => {
   });
 });
 
-// [utest->req~react-headless-no-new-peer~1]
 describe('no new peer dependency', () => {
   it('lists exactly react and react-dom, optional, at the same range', () => {
     const manifestPath = fileURLToPath(new URL('../../package.json', import.meta.url));

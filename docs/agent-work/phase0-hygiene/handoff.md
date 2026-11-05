@@ -1,4 +1,0 @@
-Goal: Phase 0 hygiene, PR 64 (fix/phase0-hygiene -> develop). Local head after integrating 79f661df (redo of 9de99662: radio names, aria-controls collapsed, test minors) and bd9b97ca (unlimited strings, .prettierignore). All 13 items + X1 implemented; round 1 fixes applied.
-Panel round 1: reviewer changes-requested (2 major, fixed: R1-REV-001 unlimited strings, R1-REV-002 prettier), test-reviewer/security/ui-qa approve.
-Deferred follow-ups (state in PR): R1-REV-005/UIQ-004 sanitizer non-injective ids; R1-REV-006/UIQ-003 aria-describedby variable help (pre-existing); UIQ-001 loading text announced twice; UIQ-005 empty loading-label.
-Next: push, wait full CI (quality 22/24, chromium/firefox/webkit browser shards incl. changed radio selectors), panel round 2 (reviewer, test-reviewer, security-auditor) on pushed head, set_review_package, lead_ready. Round 2 failures: escalate.

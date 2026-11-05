@@ -27,7 +27,7 @@ test.beforeEach(({ browserName }) => {
 });
 
 test.describe('spectra follow-ups', () => {
-  // [utest->spectra-followups:AC1] One probe per fresh applyPricing: probes change the DOM.
+  // One probe per fresh applyPricing: probes change the DOM.
   const pills = [
     { name: 'hero tag', selector: '.pr-tag', card: '[data-pr-part="hero"]' },
     { name: 'plan badge', selector: '[data-pr-part="plan-badge"]', card: '.pr-plan-card' },
@@ -47,7 +47,7 @@ test.describe('spectra follow-ups', () => {
     });
   }
 
-  // [utest->spectra-followups:AC2] .pr-content gets the capped padding and gap from 840px.
+  // .pr-content gets the capped padding and gap from 840px.
   for (const width of [1024, 1440]) {
     test(`token caps at ${width}px`, async ({ page }) => {
       await openRenderer(page, { width, height: 900 });
@@ -70,7 +70,7 @@ test.describe('spectra follow-ups', () => {
     });
   }
 
-  // [utest->spectra-followups:AC2] The margin after the plans adds back what the gap cap removed.
+  // The margin after the plans adds back what the gap cap removed.
   for (const width of [1024, 1440]) {
     test(`space after the plans at ${width}px`, async ({ page }) => {
       await openRenderer(page, { width, height: 900 });
@@ -97,7 +97,7 @@ test.describe('spectra follow-ups', () => {
     });
   }
 
-  // [utest->spectra-followups:AC2] Below 840px the caps do not apply: the demo token (>= 40px) is kept.
+  // Below 840px the caps do not apply: the demo token (>= 40px) is kept.
   test('keeps the full section gap below 840px', async ({ page }) => {
     await openRenderer(page, { width: 800, height: 900 });
     expect(await applyPricing(page, acme)).toBe('ready');

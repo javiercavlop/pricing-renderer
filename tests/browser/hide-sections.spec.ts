@@ -1,9 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openDemo } from './helpers/change-flow.js';
 
-// hideSections (add-react-headless). The scenarios are those of
-// openspec/changes/add-react-headless/specs/hide-sections/spec.md that need a DOM; the others are
-// in tests/unit/hide-sections-element.test.ts. A new element is a <pricing-renderer> with the
+// hideSections (add-react-headless). These are the scenarios that need a DOM;
+// the others are in tests/unit/hide-sections-element.test.ts. A new element is a <pricing-renderer> with the
 // pricing of the demo page (Acme), en-US and catalog mode, appended to document.body.
 
 const parts = [
@@ -44,7 +43,6 @@ test.beforeEach(async ({ page }) => {
   await openDemo(page);
 });
 
-// [utest->req~hide-sections-property~1]
 test('Attribute to property', async ({ page }) => {
   await addRenderer(page);
   const value = await page.evaluate(() => {
@@ -55,7 +53,6 @@ test('Attribute to property', async ({ page }) => {
   expect(value).toEqual(['hero', 'addOns']);
 });
 
-// [utest->req~hide-sections-hero-name~1]
 test.describe('accessible name without the hero', () => {
   test('Hero hidden', async ({ page }) => {
     await addRenderer(page, 'hero');
@@ -72,7 +69,6 @@ test.describe('accessible name without the hero', () => {
   });
 });
 
-// [utest->req~hide-sections-unknown~2]
 test.describe('unknown section tokens', () => {
   test('Unknown and differently cased tokens', async ({ page }) => {
     const problems: string[] = [];

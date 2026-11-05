@@ -283,7 +283,7 @@ describe('SPECTRA layout metrics', () => {
   // When the output variable is set, the file is regenerated first and the comparison is moot.
   it.skipIf(Boolean(process.env.SPECTRA_METRICS_OUT))('equals the committed metrics.json', () => {
     const committed = JSON.parse(
-      readFileSync(join(repoRoot, 'docs/agent-work/visual-review-spectra/metrics.json'), 'utf8'),
+      readFileSync(join(repoRoot, 'tests/fixtures/layout/spectra-metrics.json'), 'utf8'),
     ) as unknown;
     const computed = JSON.parse(
       JSON.stringify({ summary: summarize(metrics), pricings: metrics }),

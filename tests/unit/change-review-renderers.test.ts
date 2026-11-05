@@ -20,7 +20,6 @@ describe('formatComparedValue', () => {
   const en = (value: ComparedValue, unit?: string) =>
     formatComparedValue(value, enUS, 'en-US', unit);
 
-  // [utest->req~review-ui-limits~1] [utest->req~review-ui-features~1]
   it('names no value, unlimited and booleans with the catalog texts', () => {
     expect(en({ kind: 'none' })).toBe('Not included');
     expect(en({ kind: 'unlimited' })).toBe('Unlimited');
@@ -29,7 +28,6 @@ describe('formatComparedValue', () => {
     expect(formatComparedValue({ kind: 'unlimited' }, esES, 'es-ES')).toBe('Ilimitado');
   });
 
-  // [utest->req~review-ui-limits~1]
   it('formats numbers with Intl for the locale and appends the unit', () => {
     expect(en({ kind: 'number', value: 1234.5 })).toBe('1,234.5');
     expect(en({ kind: 'number', value: 200 }, 'GB')).toBe('200 GB');
@@ -37,7 +35,6 @@ describe('formatComparedValue', () => {
     expect(formatComparedValue({ kind: 'number', value: 12345.5 }, esES, 'es-ES')).toBe('12.345,5');
   });
 
-  // [utest->req~review-ui-features~1]
   it('keeps text as is and writes json with JSON.stringify', () => {
     expect(en({ kind: 'text', value: 'Business hours' })).toBe('Business hours');
     expect(en({ kind: 'text', value: '<b>x</b>' })).toBe('<b>x</b>');
@@ -46,30 +43,25 @@ describe('formatComparedValue', () => {
 });
 
 describe('formatSignedCurrency', () => {
-  // [utest->req~review-ui-price~1]
   it('signs the difference in en-US and drops the sign of zero', () => {
     expect(formatSignedCurrency(-5, 'EUR', 'en-US')).toBe('-€5');
     expect(formatSignedCurrency(2, 'EUR', 'en-US')).toBe('+€2');
     expect(formatSignedCurrency(0, 'EUR', 'en-US')).toBe('€0');
   });
 
-  // [utest->req~review-ui-price~1]
   it('keeps two decimals for a fractional difference', () => {
     expect(formatSignedCurrency(1.5, 'USD', 'en-US')).toBe('+$1.50');
   });
 
-  // [utest->req~review-ui-price~1]
   it('formats for the locale of the element', () => {
     expect(formatSignedCurrency(-5, 'EUR', 'es-ES')).toContain('-5');
     expect(formatSignedCurrency(-5, 'EUR', 'es-ES')).toContain('€');
   });
 
-  // [utest->req~review-ui-price~1]
   it('accepts a locale written with an underscore', () => {
     expect(formatSignedCurrency(-5, 'EUR', 'es_ES')).toContain('-5');
   });
 
-  // [utest->req~review-ui-price~1]
   it('falls back to a plain number for an invalid currency code', () => {
     expect(formatSignedCurrency(3, 'not a currency', 'en-US')).toBe('+3');
   });
@@ -106,7 +98,6 @@ function reviewText(comparison: SelectionComparison, locale = 'en-US'): string {
 const upgrade = (): SelectionComparison => cmp(Side(acme, C()), Side(acme, ENT()));
 
 describe('renderChangeReview', () => {
-  // [utest->req~review-ui-price~1]
   it('renders the review for a locale that Intl rejects', () => {
     const text = reviewText(upgrade(), '!!');
     expect(text).toContain('80');
@@ -114,7 +105,6 @@ describe('renderChangeReview', () => {
     expect(text).toContain('review-price');
   });
 
-  // [utest->req~review-ui-limits~1]
   it('shows no limit row and no warning for a limit that is only unchanged and exceeded', () => {
     const comparison = upgrade();
     comparison.usageLimits = { changed: [], unchanged: ['storage'], exceeded: ['storage'] };
@@ -123,7 +113,6 @@ describe('renderChangeReview', () => {
     expect(text).not.toContain('above the new limit');
   });
 
-  // [utest->req~review-ui-limits~1]
   it('warns only for the changed limit that is exceeded', () => {
     const comparison = upgrade();
     const [storage] = comparison.usageLimits.changed;
@@ -141,7 +130,6 @@ describe('renderChangeReview', () => {
     expect(text.match(/above the new limit/g)).toHaveLength(1);
   });
 
-  // [utest->req~review-ui-plan~1]
   it('names a plan that is not in the pricing by its id', () => {
     const comparison = upgrade();
     comparison.plan = {
@@ -160,13 +148,11 @@ describe('text-only rendering', () => {
     (file) => file.startsWith('change-review-') && file.endsWith('.ts'),
   );
 
-  // [utest->req~review-text-only~1]
   it('finds the review modules', () => {
     expect(files).toContain('change-review-element.ts');
     expect(files).toContain('change-review-renderers.ts');
   });
 
-  // [utest->req~review-text-only~1]
   it.each(files)('%s never parses text as HTML', (file) => {
     const comments = /\/\*[\s\S]*?\*\/|\/\/.*$/gm;
     const source = readFileSync(`${elementRoot}${file}`, 'utf8').replace(comments, '');

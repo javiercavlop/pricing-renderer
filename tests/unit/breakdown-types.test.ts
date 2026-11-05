@@ -54,7 +54,6 @@ const resolvedHeader = `
 `;
 
 describe('breakdown types', () => {
-  // [utest->req~breakdown-types-exported~1]
   it('exports PriceBreakdownLine and PriceBreakdown with every field and its type', () => {
     const diagnostics = typeCheckSnippet(`${breakdownHeader}
       export const kind: 'plan' | 'addOn' = line.kind;
@@ -77,7 +76,6 @@ describe('breakdown types', () => {
     expect(messages(diagnostics)).toEqual([]);
   });
 
-  // [utest->req~breakdown-types-exported~1]
   it('rejects a line kind that is neither plan nor addOn (TS2322)', () => {
     const diagnostics = typeCheckSnippet(`${breakdownHeader}
       export const kind: PriceBreakdownLine['kind'] = 'tier';
@@ -85,7 +83,6 @@ describe('breakdown types', () => {
     expect(codes(diagnostics)).toEqual([2322]);
   });
 
-  // [utest->req~breakdown-types-exported~1]
   it('keeps the optional fields optional and the others required', () => {
     const minimal = typeCheckSnippet(`${breakdownHeader}
       export const bare: PriceBreakdownLine = {
@@ -122,7 +119,6 @@ describe('breakdown types', () => {
     expect(messages(noSubtotal).join('\n')).toMatch(/'subtotal' is missing/);
   });
 
-  // [utest->req~breakdown-types-exported~1]
   it('types the optional fields as possibly undefined', () => {
     const diagnostics = typeCheckSnippet(`${breakdownHeader}
       export const unit: number = line.unitAmount;
@@ -130,7 +126,6 @@ describe('breakdown types', () => {
     expect(codes(diagnostics)).toEqual([2322]);
   });
 
-  // [utest->req~breakdown-field~1]
   it('types the breakdown of a resolvePricing result as PriceBreakdown', () => {
     const diagnostics = typeCheckSnippet(`
       import { resolvePricing } from '../../src/core/index.js';
@@ -143,7 +138,6 @@ describe('breakdown types', () => {
 });
 
 describe('ResolvedPricing breakdown property', () => {
-  // [utest->req~breakdown-required-field~1]
   it('reports a missing breakdown on a hand-built result and accepts one with it', () => {
     const missing = typeCheckSnippet(`${resolvedHeader}
       export const resolved: ResolvedPricing = {

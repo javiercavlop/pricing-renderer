@@ -281,13 +281,11 @@ const distTagName = Object.entries(publishStep?.env ?? {}).find(
 )?.[0];
 
 describe('release workflow', () => {
-  // [utest->req~release-dist-tag-env~1]
   it('has no expression interpolated into a run script', () => {
     const offenders = steps.filter((step) => step.run?.includes('${{')).map((step) => step.run);
     expect(offenders).toEqual([]);
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it('passes the dist tag to npm publish through an env variable', () => {
     expect(publishSteps).toHaveLength(1);
     expect(distTagName).toMatch(/^[A-Z_][A-Z0-9_]*$/);
@@ -299,7 +297,6 @@ describe('release workflow', () => {
     expect(publishRun).not.toContain('steps.release');
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it('rejects any dist tag other than latest and next before publishing', () => {
     expect(distTagName).toBeDefined();
     const code = stripComments(publishRun);
@@ -309,7 +306,6 @@ describe('release workflow', () => {
     expect((match?.index ?? Infinity) + (match?.[0].length ?? 0)).toBeLessThanOrEqual(publishAt);
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it('does not accept a guard whose exit 1 is only in a comment', () => {
     const publish = [
       'case "$DIST_TAG" in',
@@ -326,7 +322,6 @@ describe('release workflow', () => {
     expect(distTagGuard('DIST_TAG', uncommented)).not.toBeNull();
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it('does not accept a guard whose exit 1 is a comment right after a semicolon', () => {
     const publish = [
       'case "$DIST_TAG" in',
@@ -340,7 +335,6 @@ describe('release workflow', () => {
     expect(distTagGuard('DIST_TAG', stripComments(publish))).toBeNull();
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it('does not accept a guard whose exit 1 follows a semicolon inside a trailing comment', () => {
     const publish = [
       'case "$DIST_TAG" in',
@@ -355,7 +349,6 @@ describe('release workflow', () => {
     expect(distTagGuard('DIST_TAG', stripComments(publish))).toBeNull();
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it.each([
     ['an exit command after a semicolon', '*) echo bad; exit 1 ;;', true],
     ['an exit command on its own line', '*)\n    echo bad\n    exit 1\n    ;;', true],
@@ -385,7 +378,6 @@ describe('release workflow', () => {
     expect(distTagGuard('DIST_TAG', stripComments(publish)) !== null).toBe(accepted);
   });
 
-  // [utest->req~release-dist-tag-env~1]
   it.each([
     ['a # inside double quotes', 'echo "a # b"; exit 1', 'echo "a # b"; exit 1'],
     ['$# and ${#x} and an escaped #', 'echo $# ${#x} a\\#b', 'echo $# ${#x} a\\#b'],
@@ -397,7 +389,6 @@ describe('release workflow', () => {
     expect(stripComments(input)).toBe(expected);
   });
 
-  // [utest->req~release-dist-tag-prerelease-map~1]
   it('maps isPrerelease true to next and false to latest and fails on anything else', () => {
     expect(releaseSteps).toHaveLength(1);
     const problems = distTagMappingProblems(releaseSteps[0]?.run ?? '');
@@ -463,7 +454,6 @@ describe('release workflow', () => {
         ...output,
       ].join('\n');
 
-    // [utest->req~release-dist-tag-prerelease-map~1]
     it.each([
       ['case, assignment then one output write', mapped(failBranch, output)],
       ['case, direct output writes', caseScript(direct('next'), direct('latest'), failBranch, [])],
@@ -495,7 +485,6 @@ describe('release workflow', () => {
       expect(distTagMappingProblems(script)).toEqual([]);
     });
 
-    // [utest->req~release-dist-tag-prerelease-map~1]
     it.each([
       [
         'the base-style else writing latest',
@@ -735,7 +724,6 @@ describe('release workflow', () => {
     });
   });
 
-  // [utest->req~release-single-unit-test-run~1]
   it('runs the unit tests once, in the workflow and not in prepublishOnly', () => {
     expect(scripts.prepublishOnly).toBe('pnpm package:check');
     const commandLines = steps.flatMap((step) =>
@@ -745,7 +733,6 @@ describe('release workflow', () => {
     expect(commandLines).toContain('pnpm test:browser');
   });
 
-  // [utest->req~release-check-substrings-kept~1]
   it('keeps what scripts/check-release-ready.mjs requires and forbids', () => {
     const checker = read('scripts/check-release-ready.mjs');
     const list = /const requiredWorkflowContent = \[([^\]]*)\]/u.exec(checker)?.[1] ?? '';

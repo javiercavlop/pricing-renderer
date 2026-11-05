@@ -5,7 +5,6 @@ import type { NormalizedPricing, SelectionRelation } from './types.js';
  * (private plans included), not by price. `'current'` for the same defined id, `'change'` when
  * either id is not a plan of the pricing.
  */
-// [impl->req~compare-relation-plan-order~1] [impl->req~compare-relation-change~1]
 export function planRelation(
   pricing: NormalizedPricing,
   fromPlanId: string | undefined,

@@ -63,7 +63,7 @@ export interface RenderActions {
   revealAddOns?(byKeyboard?: boolean): void;
 }
 
-// [impl->req~hide-sections-property~1] the sections a host can hide
+// the sections a host can hide
 export const PRICING_SECTION_NAMES = [
   'hero',
   'metadata',
@@ -76,7 +76,7 @@ export const PRICING_SECTION_NAMES = [
 ] as const;
 export type PricingSectionName = (typeof PRICING_SECTION_NAMES)[number];
 
-// [impl->req~slots-property~1] the slots a host can request
+// the slots a host can request
 export const PRICING_SLOT_NAMES = ['plan-cta', 'summary-actions', 'loading', 'error'] as const;
 
 export interface RenderState {
@@ -112,7 +112,7 @@ export interface RenderState {
   actions: RenderActions;
 }
 
-// [impl->req~element-instance-ids~2] ids are global in the light DOM, so every id carries the
+// ids are global in the light DOM, so every id carries the
 // instance prefix. The data part (a path, a group or add-on id) keeps [A-Za-z0-9]; every other
 // code point becomes _<lowercase hex>_, so distinct data never yields the same id.
 export function instanceId(
@@ -131,7 +131,6 @@ export function instanceId(
 
 export const DEFAULT_TOOLBAR_THRESHOLD = 40;
 export const AUTO_DIFFERENCES_MIN_ROWS = 100;
-// [impl->req~addon-grid-dense-details~1]
 export const ADDON_DENSE_THRESHOLD = 8;
 export const ADDON_VISIBLE_CAP = 8;
 export const DEFAULT_ADDON_FILTER_THRESHOLD = 13;
@@ -140,21 +139,20 @@ export function comparisonRowTotal(viewModel: PricingViewModel): number {
   return viewModel.comparisonGroups.reduce((total, group) => total + group.rows.length, 0);
 }
 
-// [impl->req~shorter-page-toolbar-threshold~1] a missing, non-finite or negative value gives 40
+// a missing, non-finite or negative value gives 40
 export function toolbarThresholdOf(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
     : DEFAULT_TOOLBAR_THRESHOLD;
 }
 
-// [impl->req~addon-grid-threshold-attribute~1] a missing, non-finite or negative value gives 13
+// a missing, non-finite or negative value gives 13
 export function addOnFilterThresholdOf(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
     : DEFAULT_ADDON_FILTER_THRESHOLD;
 }
 
-// [impl->req~shorter-page-auto-default~1]
 // An explicit initial state wins. Otherwise a long comparison with several plans starts with only
 // the differences, as long as the toolbar is there to switch the filter off.
 export function resolveOnlyDifferences(
@@ -297,7 +295,7 @@ function renderRowMetadata(
     : nothing;
 }
 
-// [impl->req~hide-sections-hero-name~1] also the text of the title that stays when the hero is hidden
+// also the text of the title that stays when the hero is hidden
 export function heroTitle(viewModel: PricingViewModel): string {
   return (
     viewModel.presentation.title ??
@@ -359,7 +357,7 @@ export function renderBilling(state: RenderState): TemplateResult | typeof nothi
   `;
 }
 
-// [impl->req~cta-pending-state~1] the pending text replaces the label of the busy control
+// the pending text replaces the label of the busy control
 function renderCtaLabel(
   viewModel: PricingViewModel,
   label: string,
@@ -370,9 +368,7 @@ function renderCtaLabel(
     : label;
 }
 
-// [impl->req~current-selection-plan-cta~1] [impl->req~cta-pending-others~1]
-// [impl->req~cta-pending-no-event~1] [impl->req~cta-event-relation~1]
-// [impl->req~cta-pending-focus~1] aria-disabled replaces disabled while an action is pending, so
+// aria-disabled replaces disabled while an action is pending, so
 // the control that became pending keeps the focus
 function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult {
   const { viewModel, actions } = state;
@@ -380,7 +376,7 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
     currentPlanId: state.currentPlanId,
     pendingActionId: state.pendingActionId,
   });
-  // [impl->req~state-kind~1] data-kind agrees with the pr-button--<kind> class
+  // data-kind agrees with the pr-button--<kind> class
   const kind = cta.kind === 'secondary' ? 'secondary' : 'primary';
   const origin: ActionOrigin | undefined = cta.relation
     ? { relation: cta.relation, source: 'plan' }
@@ -421,8 +417,6 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
       </button>`;
 }
 
-// [impl->req~slot-plan-cta~1] [impl->req~slot-plan-cta-keyed~1] [impl->req~slot-plan-cta-context~1]
-// [impl->req~slot-plan-cta-any-pending~1]
 // An empty node the host fills; it carries the state of the built-in CTA and card as data-*. The
 // keyed directive gives each plan its own node, so a node never moves to another plan.
 function renderPlanCtaSlot(
@@ -476,7 +470,6 @@ export function renderPlans(state: RenderState): TemplateResult {
                 const selected = selection.planId === plan.id;
                 const current = state.currentPlanId === plan.id;
                 const highlightSummary = getPlanHighlightSummary(viewModel, plan.id);
-                // [impl->req~state-featured~1] [impl->req~state-current~1]
                 const featured = highlightSummary.badges.some((badge) => badge.emphasize);
                 return html`
                   <article
@@ -499,7 +492,6 @@ export function renderPlans(state: RenderState): TemplateResult {
                           ? html`<div class="pr-plan-card__status">
                               <div class="pr-plan-card__badges">
                                 ${
-                                  // [impl->req~current-selection-plan-mark~1]
                                   current
                                     ? html`<span
                                         class="pr-badge"
@@ -521,7 +513,7 @@ export function renderPlans(state: RenderState): TemplateResult {
                                 )}
                               </div>
                               ${
-                                // [impl->req~plan-change-cancel~1] live() resets the radio on cancel
+                                // live() resets the radio on cancel
                                 selectionEnabled
                                   ? html`<label
                                       class="pr-selection-control pr-plan-card__selector"
@@ -613,7 +605,6 @@ function controlInput(
   const { selection, actions } = state;
   const value = getAtPath(selection.variables, control.path);
   const id = instanceId(state, 'variable', control.path);
-  // [impl->req~variable-field-describedby~1]
   const describedBy =
     [control.description ? `${id}-help` : '', invalid ? `${id}-error` : '']
       .filter(Boolean)
@@ -773,12 +764,11 @@ function isHeaderless(group: PricingComparisonGroup): boolean {
   return group.kind === 'untagged';
 }
 
-// [impl->req~tag-groups-headerless-expanded~1] a group with no header cannot be toggled
+// a group with no header cannot be toggled
 function isGroupExpanded(state: RenderState, group: PricingComparisonGroup): boolean {
   return isHeaderless(group) || state.expandedGroups.has(group.id) || Boolean(state.search);
 }
 
-// [impl->req~shorter-page-counter~1]
 // The rows that are on the page: those of expanded groups, after the cap per group.
 function renderedRowCount(state: RenderState, groups: PricingComparisonGroup[]): number {
   return groups.reduce(
@@ -794,7 +784,7 @@ function renderComparisonToolbar(
 ): TemplateResult | typeof nothing {
   const { viewModel, actions } = state;
   const total = comparisonRowTotal(viewModel);
-  // [impl->req~shorter-page-no-look-change~1] a short comparison gets no toolbar and looks as before
+  // a short comparison gets no toolbar and looks as before
   if (total <= toolbarThresholdOf(state.toolbarThreshold)) return nothing;
   const shown = renderedRowCount(state, groups);
   return html`
@@ -819,7 +809,6 @@ function renderComparisonToolbar(
         <span>${t(viewModel, 'pricing.onlyDifferences')}</span>
       </label>
       ${
-        /* [impl->req~tag-groups-headerless-toolbar~1] */
         viewModel.comparisonGroups.every(isHeaderless)
           ? nothing
           : html`<div class="pr-toolbar-actions">
@@ -848,7 +837,6 @@ function renderCompactComparison(
       return html`
         <section class="pr-comparison-group">
           ${
-            /* [impl->req~tag-groups-headerless~1] */
             isHeaderless(group)
               ? nothing
               : html`<h4>
@@ -894,7 +882,6 @@ function renderCompactComparison(
                                   viewModel,
                                   cell.value,
                                   row.unit,
-                                  // [impl->req~addon-marker-per-plan-availability~1]
                                   addOnOnly && addOnProvidesForPlan(viewModel, row, cell.planId),
                                 )}
                               </dd>
@@ -959,7 +946,6 @@ function renderTableComparison(
           return html`
             <tbody>
               ${
-                /* [impl->req~tag-groups-headerless~1] */
                 isHeaderless(group)
                   ? nothing
                   : html`<tr class="pr-category-row">
@@ -997,7 +983,6 @@ function renderTableComparison(
                                   viewModel,
                                   cell.value,
                                   row.unit,
-                                  // [impl->req~addon-marker-per-plan-availability~1]
                                   addOnOnly && addOnProvidesForPlan(viewModel, row, cell.planId),
                                 )}
                               </td>`,
@@ -1055,7 +1040,6 @@ export function renderComparison(state: RenderState): TemplateResult | typeof no
           ? html`<p class="pr-empty">${t(viewModel, 'pricing.noComparison')}</p>`
           : html`${renderComparisonToolbar(state, groups)}
             ${
-              /* [impl->req~shorter-page-empty-state~1] */
               groups.length === 0
                 ? html`<p class="pr-empty" role="status" data-pr-part="comparison-empty">
                     ${t(viewModel, 'pricing.noMatches')}
@@ -1154,7 +1138,7 @@ function renderAddOnEffects(
     })),
   ];
   if (dense) {
-    // [impl->req~addon-grid-dense-details~1] the paragraphs join the effects behind one disclosure
+    // the paragraphs join the effects behind one disclosure
     if (effects.length === 0 && !hasAddOnNotes(addOn)) return nothing;
     return html`
       <details class="pr-addon-effects">
@@ -1214,7 +1198,7 @@ function renderAddOnCard(
   const available = addOnAvailability(addOn, selection.planId);
   const constraints = addOn.subscriptionConstraints;
   const current = state.currentAddOnIds?.has(addOn.id) ?? false;
-  // [impl->req~state-available~1] data-available is the negation of is-unavailable
+  // data-available is the negation of is-unavailable
   const helpId = instanceId(state, 'addon-help', addOn.id);
   return html`
     <article
@@ -1234,7 +1218,6 @@ function renderAddOnCard(
       <div class="pr-addon-card__heading">
         <div>
           ${
-            // [impl->req~current-selection-addons~1]
             current
               ? html`<span class="pr-badge" data-pr-part="current-add-on-badge" data-tone="success"
                   >${t(viewModel, 'pricing.currentAddOn')}</span
@@ -1347,7 +1330,6 @@ function renderAddOnGrid(
   </div>`;
 }
 
-// [impl->req~addon-grid-filter~1] [impl->req~addon-grid-cap~1]
 function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResult {
   const { viewModel, selection, actions } = state;
   const all = viewModel.addOns;
@@ -1407,11 +1389,8 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
 
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel } = state;
-  // [impl->req~hide-sections-render~1]
   if (viewModel.addOns.length === 0 || state.hiddenSections?.has('addOns')) return nothing;
-  // [impl->req~addon-grid-dense-details~1]
   const dense = viewModel.addOns.length > ADDON_DENSE_THRESHOLD;
-  // [impl->req~addon-grid-filter~1] [impl->req~addon-grid-threshold-attribute~1]
   const filtered = viewModel.addOns.length > addOnFilterThresholdOf(state.addOnFilterThreshold);
   const titleId = instanceId(state, 'addons-title');
   return html`
@@ -1464,8 +1443,6 @@ function renderBreakdownLine(
   </li>`;
 }
 
-// [impl->req~summary-breakdown-lines~1] [impl->req~summary-breakdown-totals~1]
-// [impl->req~summary-breakdown-axe~1] [impl->req~summary-breakdown-stays-open~1]
 // The panel is rendered from the element's open state whatever the selection, as a labelled group
 // of a list and a definition list. The closed panel is a template without bindings in its content, so it has no child nodes.
 function renderBreakdownPanel(state: RenderState): TemplateResult {
@@ -1522,13 +1499,9 @@ function renderBreakdownPanel(state: RenderState): TemplateResult {
   `;
 }
 
-// [impl->req~cta-summary-action~1] [impl->req~cta-summary-action-current~1]
-// [impl->req~cta-summary-action-absent~1] [impl->req~cta-summary-action-event~1]
-// [impl->req~cta-pending-state~1] [impl->req~cta-pending-others~1] [impl->req~cta-pending-focus~1]
 // Rendered outside the live region, so a change of label is not announced by the summary.
 function renderSummaryAction(state: RenderState): TemplateResult | typeof nothing {
   const { viewModel, summaryAction, pendingActionId, selection, actions } = state;
-  // [impl->req~slot-summary-actions~1] [impl->req~slot-summary-actions-context~1]
   // The slot node stands in for the summary action with or without a current plan; data-pending
   // follows aria-disabled of the built-in action (any pending action), not its own-id state.
   if (state.ctaEnabled && state.slots?.has('summary-actions')) {
@@ -1559,9 +1532,6 @@ function renderSummaryAction(state: RenderState): TemplateResult | typeof nothin
   </button>`;
 }
 
-// [impl->req~summary-live-region~1] [impl->req~summary-breakdown-not-live~1]
-// [impl->req~summary-breakdown-toggle~1] [impl->req~summary-breakdown-activate~1]
-// [impl->req~summary-breakdown-unique-ids~1]
 export function renderSummary(state: RenderState): TemplateResult {
   const { viewModel, breakdownOpen, breakdownId, actions } = state;
   const subtotal = formatCurrency(
@@ -1639,7 +1609,7 @@ export function renderCatalogMetadata(state: RenderState): TemplateResult | type
   `;
 }
 
-// [impl->req~slot-loading~1] the shell keeps its labelled heading; the slot node replaces the skeleton
+// the shell keeps its labelled heading; the slot node replaces the skeleton
 export function renderLoadingSlotShell(titleId: string, label: string): TemplateResult {
   return html`
     <section class="pr-shell pr-shell--loading" aria-labelledby=${titleId}>
@@ -1649,7 +1619,6 @@ export function renderLoadingSlotShell(titleId: string, label: string): Template
   `;
 }
 
-// [impl->req~slot-error~1] [impl->req~slot-error-diagnostics~1]
 // The slot node is the only child; the diagnostics travel as JSON in data-diagnostics.
 export function renderErrorSlotShell(diagnostics: readonly PricingDiagnostic[]): TemplateResult {
   const entries = diagnostics.map((item) => ({

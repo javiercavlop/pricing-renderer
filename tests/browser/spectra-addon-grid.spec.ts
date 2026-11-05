@@ -1,11 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { applyPricing, openRenderer, readFixture, type Viewport } from './helpers/spectra.js';
 
-// Spectra item 7 (docs/agent-work/spectra-item7-addon-grid/spec.md, criterion e): equal card height
+// Spectra item 7 (criterion e): equal card height
 // per grid row, the initial cap of 8 cards and the add-on search. Every test prints one
 // SPECTRA_ADDON_GRID JSON line.
-// [utest->req~addon-grid-equal-height~1] [utest->req~addon-grid-cap~1]
-// [utest->req~addon-grid-filter~1] [utest->req~addon-grid-total-visible~1]
 
 const viewports: Viewport[] = [
   { width: 1440, height: 900 },
@@ -65,7 +63,7 @@ test.describe('spectra add-on grid', () => {
           expect(names.length).toBeGreaterThan(visibleCap);
           const term = names[visibleCap].trim();
 
-          // [utest->req~addon-grid-filter~1] Fill the search first, then a new load resets both the
+          // Fill the search first, then a new load resets both the
           // revealed flag and the search.
           const search = page.locator(
             'pricing-renderer [data-pr-part="addon-toolbar"] input[type=search]',
@@ -116,7 +114,6 @@ async function setAttribute(page: Page, name: string, value: string): Promise<vo
 }
 
 test.describe('spectra add-on grid threshold attribute', () => {
-  // [utest->req~addon-grid-threshold-attribute~1]
   test('add-on-filter-threshold="20" removes the toolbar on okta', async ({ page }) => {
     test.setTimeout(60_000);
     await openRenderer(page, viewports[0]);
@@ -127,7 +124,6 @@ test.describe('spectra add-on grid threshold attribute', () => {
     await expect(page.locator(cardSelector)).toHaveCount(18);
   });
 
-  // [utest->req~addon-grid-threshold-attribute~1]
   test('an invalid add-on-filter-threshold keeps the toolbar on okta', async ({ page }) => {
     test.setTimeout(60_000);
     await openRenderer(page, viewports[0]);
@@ -143,7 +139,6 @@ test.describe('spectra add-on grid threshold attribute', () => {
     }
   });
 
-  // [utest->req~addon-grid-threshold-attribute~1]
   test('add-on-filter-threshold="0" filters the demo pricing without a cap', async ({ page }) => {
     await openRenderer(page, viewports[0]);
     await expect(page.locator(toolbar)).toHaveCount(0);

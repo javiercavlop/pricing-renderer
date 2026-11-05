@@ -43,14 +43,12 @@ const invalidQuantities = () => ({
 const addOnsOnly = () => ({ subscriptionAddOns: { acme: { extraStorage: 3 } } });
 
 describe('selectionFromContract', () => {
-  // [utest->req~space-map-plan~1]
   it('maps the plan name of the service', () => {
     expect(selectionFromContract({ subscriptionPlans: { acme: 'growth' } }, 'acme')).toEqual({
       planId: 'growth',
     });
   });
 
-  // [utest->req~space-map-addons~1]
   it('maps the add-on quantities of the Delivera contract', () => {
     const result = selectionFromContract(deliveraContract(), 'acme');
     expect(result).toEqual({
@@ -64,7 +62,6 @@ describe('selectionFromContract', () => {
     expect(resolvePricing(acme, applied.selection).subtotal).toBe(80);
   });
 
-  // [utest->req~space-map-service-only~1]
   it('ignores the entries of other services', () => {
     expect(selectionFromContract(twoServices(), 'acme')).toEqual({
       planId: 'growth',
@@ -72,7 +69,6 @@ describe('selectionFromContract', () => {
     });
   });
 
-  // [utest->req~space-map-missing-service~1]
   it('returns an empty object when the service has no entry', () => {
     expect(selectionFromContract({}, 'acme')).toEqual({});
     expect(
@@ -83,19 +79,16 @@ describe('selectionFromContract', () => {
     ).toEqual({});
   });
 
-  // [utest->req~space-map-invalid-quantity~1]
   it('omits zero, negative and non-finite quantities', () => {
     expect(selectionFromContract(invalidQuantities(), 'acme')).toEqual({ planId: 'growth' });
   });
 
-  // [utest->req~space-map-addons-only~1]
   it('maps add-ons without a plan and without a planId key', () => {
     const result = selectionFromContract(addOnsOnly(), 'acme');
     expect(result).toEqual({ addOns: { extraStorage: { selected: true, quantity: 3 } } });
     expect(Object.prototype.hasOwnProperty.call(result, 'planId')).toBe(false);
   });
 
-  // [utest->req~space-map-result-keys~1]
   it('returns only planId and addOns keys', () => {
     expect(Object.keys(selectionFromContract(deliveraContract(), 'acme'))).toEqual([
       'planId',
@@ -105,7 +98,6 @@ describe('selectionFromContract', () => {
     expect(Object.keys(selectionFromContract(addOnsOnly(), 'acme'))).toEqual(['addOns']);
   });
 
-  // [utest->req~space-map-no-mutation~1]
   it('does not mutate the contract', () => {
     const contract = twoServices();
     const copy = structuredClone(contract);
@@ -117,7 +109,6 @@ describe('selectionFromContract', () => {
     expect(contract).toEqual(copy);
   });
 
-  // [utest->req~space-map-not-exported~1]
   it('is not exported from any package entry point', () => {
     expect(typeof selectionFromContract).toBe('function');
     for (const entryPoint of [core, yaml, element, react]) {

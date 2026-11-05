@@ -5,10 +5,8 @@ export {
   getPricingRendererConfig,
 } from './config.js';
 export { compareSelections } from './compare.js';
-// [impl->req~apply-input-exported~1]
 export { applySelectionInput } from './apply-selection.js';
 export type { ApplySelectionInputResult } from './apply-selection.js';
-// [impl->req~selection-logic-exported~1]
 export {
   applySelectionChange,
   planSelectionChange,
@@ -17,7 +15,6 @@ export {
   selectionWithVariable,
 } from './selection-change.js';
 export { createPriceStabilizer } from './price-stabilizer.js';
-// [impl->req~search-params-no-dom~1]
 export { selectionFromSearchParams, selectionToSearchParams } from './search-params.js';
 export type {
   SelectionFromSearchParamsOptions,

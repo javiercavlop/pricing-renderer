@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { applyPricing, openRenderer, readFixture } from './helpers/spectra.js';
 
-// Optional design tokens of base.css (phase 1a, docs/agent-work/phase1a-design-system/intake.md):
+// Optional design tokens of base.css (phase 1a):
 // a host sets --pr-sticky-top, --pr-plan-columns, --pr-z-dialog and --pr-table-min-width and the
 // computed styles follow; unset, the defaults stay. The CSS text is checked by
 // tests/unit/design-tokens.test.ts.
@@ -125,7 +125,6 @@ async function setRendererToken(page: Page, name: string, value: string | null):
 }
 
 test.describe('optional design tokens', () => {
-  // [utest->req~sticky-top-token~1]
   test('--pr-sticky-top on the document moves the sticky comparison toolbar', async ({ page }) => {
     test.setTimeout(60_000);
     await openClickup(page);
@@ -139,7 +138,6 @@ test.describe('optional design tokens', () => {
     expect(await stuckToolbarTop(page), 'removed again').toBeCloseTo(0, 0);
   });
 
-  // [utest->req~plan-columns-token~1]
   test('--pr-plan-columns on the element sets the plan columns at 1440', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     const columns = () =>
@@ -158,7 +156,6 @@ test.describe('optional design tokens', () => {
     expect(await columns(), 'unset leaves the default count').toBe(fallback);
   });
 
-  // [utest->req~dialog-z-token~1]
   test('--pr-z-dialog changes the z-index of the dialog backdrop', async ({ page }) => {
     await openRenderer(page, { width: 1280, height: 800 });
     // The add-on confirmation dialog opens through the private pending change, as in
@@ -190,7 +187,6 @@ test.describe('optional design tokens', () => {
     expect(await zIndex()).toBe('2000');
   });
 
-  // [utest->req~table-size-tokens~1]
   test('--pr-table-min-width changes the comparison table min-width', async ({ page }) => {
     test.setTimeout(60_000);
     await openClickup(page);
@@ -207,7 +203,6 @@ test.describe('optional design tokens', () => {
     expect(await minWidth()).toBe('900px');
   });
 
-  // [utest->req~table-size-tokens~1]
   test('--pr-table-max-height changes the max-height of the table scroll box', async ({ page }) => {
     test.setTimeout(60_000);
     await openClickup(page);
@@ -222,7 +217,6 @@ test.describe('optional design tokens', () => {
     expect(await maxHeight()).toBe('300px');
   });
 
-  // [utest->req~token-fallbacks~1]
   test('without a host token the defaults are unchanged', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     await clearDemoButtonFont(page);
@@ -234,14 +228,12 @@ test.describe('optional design tokens', () => {
     expect(await computed(page, cta, 'fontWeight')).toBe('750');
   });
 
-  // [utest->req~line-height-token~1]
   test('--pr-line-height sets the line height of the root', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     await hostRule(page, 'pricing-renderer { font-size: 16px; --pr-line-height: 1.7; }');
     expect(await computed(page, 'pricing-renderer', 'lineHeight')).toBe('27.2px');
   });
 
-  // [utest->req~font-weight-tokens~1]
   test('--pr-font-weight-bold unifies the bold group', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     await clearDemoButtonFont(page);
@@ -263,7 +255,6 @@ test.describe('optional design tokens', () => {
     ]);
   });
 
-  // [utest->req~font-family-tokens~1]
   test.describe('font family tokens', () => {
     test('unset tokens inherit the host font', async ({ page }) => {
       await openRenderer(page, { width: 1440, height: 900 });

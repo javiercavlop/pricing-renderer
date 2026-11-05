@@ -73,7 +73,6 @@ function flatten(template: unknown): string {
 const summaryMarker = 'data-pr-part="summary"';
 const comparisonMarker = 'data-pr-part="comparison"';
 
-// [utest->req~sticky-summary-position~1]
 describe('summary position after the plans', () => {
   it('puts the summary before the comparison when a plan is selected and there are no add-ons', async () => {
     const base = await loadViewModel();

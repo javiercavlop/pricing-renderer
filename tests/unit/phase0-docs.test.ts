@@ -25,7 +25,6 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-// [utest->req~pricing-path-deprecated~1]
 describe('pricingPath is documented as deprecated metadata', () => {
   const pages = [
     'README.md',
@@ -67,7 +66,6 @@ describe('pricingPath is documented as deprecated metadata', () => {
   });
 });
 
-// [utest->req~theming-layer-docs~1]
 describe('the theming guide matches the stylesheets', () => {
   const guide = read('docs/theming.md');
   const text = prose('docs/theming.md');
@@ -97,7 +95,6 @@ describe('the theming guide matches the stylesheets', () => {
   });
 });
 
-// [utest->req~breakdown-kept-price-doc~1]
 describe('the API reference states the kept-price breakdown line of the element', () => {
   // the list items of the breakdown section: a line that starts with "- " up to the next one
   const items = read('docs/api-reference.md')

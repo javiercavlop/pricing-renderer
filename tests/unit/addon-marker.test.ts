@@ -430,7 +430,6 @@ describe('add-on marker per plan availability', () => {
   for (const compact of [false, true]) {
     const layout = compact ? 'compact' : 'table';
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`marks only the plan an add-on is available for (${layout})`, () => {
       const viewModel = viewModelFromYaml(restricted);
       expect(viewModel.plans.map((plan) => plan.id)).toEqual(['planA', 'planB']);
@@ -449,7 +448,6 @@ describe('add-on marker per plan availability', () => {
       expect(count(text, MARKER)).toBe(1);
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`leaves the row every plan includes unmarked (${layout})`, () => {
       const viewModel = viewModelFromYaml(restricted);
       const text = flatten(renderComparison(stateFor(viewModel, compact)));
@@ -458,7 +456,6 @@ describe('add-on marker per plan availability', () => {
       expect(count(chunk, EXCLUDED)).toBe(0);
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`marks both plans when the add-on has no availableFor (${layout})`, () => {
       const viewModel = viewModelFromYaml(TWO_PLANS + alphaAddOn('packAll', []));
       const text = flatten(renderComparison(stateFor(viewModel, compact)));
@@ -467,7 +464,6 @@ describe('add-on marker per plan availability', () => {
       expect(chunk).not.toContain('pr-value--excluded');
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`marks both plans when two add-ons cover one plan each (${layout})`, () => {
       const yaml = TWO_PLANS + alphaAddOn('packA', ['planA']) + alphaAddOn('packB', ['planB']);
       const viewModel = viewModelFromYaml(yaml);
@@ -479,7 +475,6 @@ describe('add-on marker per plan availability', () => {
     });
   }
 
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('localizes both the marker and the dash with the es catalog', () => {
     const spanish = viewModelFromYaml(restricted, {}, 'es');
     const text = flatten(renderComparison(stateFor(spanish)));
@@ -505,7 +500,6 @@ describe('add-on marker per plan availability', () => {
   for (const compact of [false, true]) {
     const layout = compact ? 'compact' : 'table';
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`takes availability and provision from the same add-on (${layout})`, () => {
       const other = `  other:
     name: Pack other
@@ -525,7 +519,6 @@ describe('add-on marker per plan availability', () => {
       expect(count(planB, EXCLUDED)).toBe(0);
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`marks a usage-limit row only in the plan its restricted extension is for (${layout})`, () => {
       const extension = `  seatPack:
     name: Seat pack
@@ -547,7 +540,6 @@ describe('add-on marker per plan availability', () => {
       expect(planA).toContain('Not included');
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`keeps the em dash in a mixed row (${layout})`, () => {
       const planB = '  planB:\n    name: Plan B\n    price: 20\n    unit: month\n    features:\n';
       const alphaTrue = `${planB}      alpha:\n        value: true\n`;
@@ -562,7 +554,6 @@ describe('add-on marker per plan availability', () => {
       expect(count(chunk, MARKER)).toBe(0);
     });
 
-    // [utest->req~addon-marker-per-plan-availability~1]
     it(`shows no marker in the Mailchimp FREE column (${layout})`, () => {
       const source = readFileSync(join(fixturesRoot, 'mailchimp/2024.yml'), 'utf8');
       const viewModel = viewModelFromYaml(source);
@@ -586,12 +577,10 @@ describe('add-on marker per plan availability', () => {
 describe('per-plan helper', () => {
   const yaml = TWO_PLANS + alphaAddOn('packB', ['planB']);
 
-  // [utest->req~addon-marker-helper-internal~1]
   it('is a function exported from the view model module', () => {
     expect(typeof addOnProvidesForPlan).toBe('function');
   });
 
-  // [utest->req~addon-marker-helper-internal~1]
   it('answers per plan for a restricted add-on', () => {
     const viewModel = viewModelFromYaml(yaml);
     const row = rowById(viewModel, 'alpha');
@@ -599,7 +588,6 @@ describe('per-plan helper', () => {
     expect(addOnProvidesForPlan(viewModel, row, 'planA')).toBe(false);
   });
 
-  // [utest->req~addon-marker-helper-internal~1]
   it('renders no data-pr-part value or attribute name that the unrestricted pricing lacks', () => {
     const hooks = (source: string): { parts: Set<string>; attributes: Set<string> } => {
       const viewModel = viewModelFromYaml(source);
@@ -639,7 +627,6 @@ describe('no public API change', () => {
     expect(entry).not.toContain('isAddOnOnlyRow');
   });
 
-  // [utest->req~addon-marker-helper-internal~1]
   it('does not expose the per-plan helper from the core entry point', () => {
     expect('addOnProvidesForPlan' in core).toBe(false);
     const entry = readFileSync(join(repoRoot, 'src/core/index.ts'), 'utf8');
@@ -878,7 +865,7 @@ function listFixtures(): string[] {
   return found.sort();
 }
 
-const METRICS = 'docs/agent-work/visual-review-spectra/metrics.json';
+const METRICS = 'tests/fixtures/layout/spectra-metrics.json';
 
 interface MetricsFile {
   pricings: Array<{ fixture: string; addOnOnlyRows: number }>;
@@ -967,7 +954,6 @@ describe('SPECTRA fixtures', () => {
     expect(sum(withoutOkta().map((item) => item.markedCompact))).toBe(166);
   });
 
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('renders one marker per plan that can buy a providing add-on in every row', () => {
     for (const item of withoutOkta()) {
       expect(item.plans, item.fixture).toBeGreaterThan(0);
@@ -975,7 +961,6 @@ describe('SPECTRA fixtures', () => {
     }
   });
 
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('renders no marker cell in a plan that cannot buy a providing add-on', () => {
     for (const item of results) {
       expect(item.misleadingTable, `${item.fixture} table`).toBe(0);
@@ -984,7 +969,6 @@ describe('SPECTRA fixtures', () => {
   });
 
   // Q1: R9 keeps its marked-row counts only if every add-on-only row stays marked in some plan.
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('keeps a marker in as many rows as metrics.json counts add-on-only rows', () => {
     const wanted = (item: FixtureResult): number => expected.get(item.fixture)!;
     const below = withoutOkta()
@@ -1022,7 +1006,6 @@ describe('SPECTRA fixtures', () => {
 });
 
 describe('stress fixtures', () => {
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('renders no marker cell in a plan that cannot buy a providing add-on', () => {
     expect(stressFixtures).not.toHaveLength(0);
     for (const fixture of stressFixtures) {
@@ -1034,7 +1017,6 @@ describe('stress fixtures', () => {
     }
   }, 120_000);
 
-  // [utest->req~addon-marker-per-plan-availability~1]
   it('renders one marker per plan that can buy a providing add-on in each row', () => {
     for (const fixture of stressFixtures) {
       const viewModel = viewModelFromYaml(buildStressYaml(fixture));

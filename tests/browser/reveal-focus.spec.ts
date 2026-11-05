@@ -1,10 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { applyPricing, openRenderer, readFixture, type Viewport } from './helpers/spectra.js';
 
-// Keyboard focus after "Show N more" (P-20261026-3): the button disappears when it is activated, so
+// Keyboard focus after "Show N more": the button disappears when it is activated, so
 // focus must move to the first newly shown comparison row or add-on card. Runs in every project.
-// [utest->req~reveal-focus-comparison~1] [utest->req~reveal-focus-addons~1]
-// [utest->req~reveal-focus-visible~1]
 
 const showMore = /^Show \d+ more$/;
 const rowPart = '[data-pr-part="comparison-row"]';
@@ -48,7 +46,7 @@ async function activeInsideRenderer(page: Page): Promise<boolean> {
   });
 }
 
-// [utest->req~reveal-focus-visible~1] The target shows a focus ring (:focus-visible and a solid
+// The target shows a focus ring (:focus-visible and a solid
 // outline) and is the only rendered row or card made programmatically focusable.
 async function expectVisibleFocus(page: Page, target: Locator): Promise<void> {
   const style = await target.evaluate((element) => ({

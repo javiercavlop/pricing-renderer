@@ -1,8 +1,5 @@
 import type { PriceBreakdownLine, PriceStabilizer, ResolvedPrice } from './types.js';
 
-// [impl->req~price-stabilizer-last-valid~1] [impl->req~price-stabilizer-records~1]
-// [impl->req~price-stabilizer-breakdown-line~1] [impl->req~price-stabilizer-subtotal~1]
-// [impl->req~price-stabilizer-reset~1]
 // A line whose price is replaced by the last valid price takes that price's own factors, and
 // the subtotal is the line amount fold of the stabilized breakdown, so both stay in sync.
 export function createPriceStabilizer(): PriceStabilizer {

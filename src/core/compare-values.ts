@@ -14,7 +14,6 @@ export const UNLIMITED_TEXT = new Set(['.inf', 'Infinity', 'unlimited']);
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key) && record[key] !== undefined;
 
-// [impl->req~compare-limit-unlimited~1]
 export function toComparedValue(raw: unknown, kind: ComparedValueKind): ComparedValue {
   if (raw === undefined) return { kind: 'none' };
   if (raw === null) return kind === 'usage-limit' ? { kind: 'unlimited' } : { kind: 'none' };
@@ -37,7 +36,6 @@ export function toComparedValue(raw: unknown, kind: ComparedValueKind): Compared
   return { kind: 'none' };
 }
 
-// [impl->req~compare-limit-extensions~1]
 function extendLimit(current: ComparedValue, amount: number): ComparedValue {
   if (current.kind === 'unlimited') return current;
   if (current.kind === 'number') return { kind: 'number', value: current.value + amount };
@@ -49,7 +47,6 @@ function extendLimit(current: ComparedValue, amount: number): ComparedValue {
  * The value of a feature or usage limit for a reconciled selection: the plan value (or the
  * definition's default), replaced or extended by each selected add-on in declaration order.
  */
-// [impl->req~compare-effective-features~1] [impl->req~compare-effective-limits~1]
 export function effectiveValue(
   pricing: NormalizedPricing,
   selection: PricingSelection,
@@ -78,7 +75,6 @@ export function effectiveValue(
   return value;
 }
 
-// [impl->req~compare-features~1]
 export function hasCapability(value: ComparedValue): boolean {
   switch (value.kind) {
     case 'none':
@@ -100,7 +96,6 @@ const LIMIT_RANK: Partial<Record<ComparedValue['kind'], number>> = {
   unlimited: 2,
 };
 
-// [impl->req~compare-limits~1]
 export function limitDirection(
   before: ComparedValue,
   after: ComparedValue,
@@ -114,7 +109,6 @@ export function limitDirection(
   return afterRank > beforeRank ? 'increased' : 'decreased';
 }
 
-// [impl->req~compare-current-usage~1]
 export function exceedsUsage(after: ComparedValue, consumed: number): boolean {
   if (after.kind === 'number') return consumed > after.value;
   if (after.kind === 'none') return consumed > 0;

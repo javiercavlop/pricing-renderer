@@ -115,7 +115,6 @@ function renderHook(props: Loose): string {
   return renderToString(createElement(Probe));
 }
 
-// [utest->req~use-pricing-source-render~1]
 describe('usePricingSource: inline sources resolve during render', () => {
   it('renders ready and the pricing name for yaml on the server', () => {
     const html = renderHook({ yaml: acmeYaml });
@@ -159,7 +158,6 @@ describe('usePricingSource: inline sources resolve during render', () => {
   });
 });
 
-// [utest->req~use-pricing-source-stable~1]
 describe('usePricingSource: stable source inputs keep the result', () => {
   it('keeps the pricing object for a structurally equal inline pricing', () => {
     const store = createStore();
@@ -229,7 +227,6 @@ describe('usePricingSource: stable source inputs keep the result', () => {
   });
 });
 
-// [utest->req~use-pricing-source-src-effect~1]
 describe('usePricingSource: a URL source loads in an effect', () => {
   it('renders loading on the server and calls no loader', () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -273,7 +270,6 @@ describe('usePricingSource: a URL source loads in an effect', () => {
   });
 });
 
-// [utest->req~use-pricing-source-abort~1]
 describe('usePricingSource: cleanup aborts the load', () => {
   it('aborts the first signal and applies the second load once (StrictMode)', async () => {
     const signals: AbortSignal[] = [];
@@ -337,7 +333,6 @@ describe('usePricingSource: cleanup aborts the load', () => {
   });
 });
 
-// [utest->req~use-pricing-source-reload~1]
 describe('usePricingSource: reload loads the current source again', () => {
   it('applies only the last load when the results arrive out of order', async () => {
     const gates: Deferred<string>[] = [deferred<string>(), deferred<string>()];
@@ -470,7 +465,6 @@ describe('usePricingSource: reload loads the current source again', () => {
   });
 });
 
-// [utest->req~use-pricing-source-stale-load~1]
 describe('usePricingSource: a changed source makes the load in flight stale', () => {
   it('ignores a URL result that settles after a switch to yaml, before stop()', async () => {
     const gate = deferred<string>();
@@ -507,7 +501,6 @@ describe('usePricingSource: a changed source makes the load in flight stale', ()
   });
 });
 
-// [utest->req~use-pricing-source-success~1]
 describe('usePricingSource: a successful load', () => {
   it('is ready with the pricing after a URL load settles', async () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -554,7 +547,6 @@ describe('usePricingSource: a successful load', () => {
   });
 });
 
-// [utest->req~use-pricing-source-failure-keeps-pricing~1]
 describe('usePricingSource: a failed load keeps the last pricing', () => {
   it('stays ready with the pricing and PR_SOURCE_LOAD_FAILED after a failed reload', async () => {
     let fail = false;
@@ -626,7 +618,6 @@ describe('usePricingSource: a failed load keeps the last pricing', () => {
   });
 });
 
-// [utest->req~load-source-request-bounds~1]
 describe('createSourceStore: request bounds', () => {
   // A small document, so that it fits the 4096-byte limits some cases send.
   const smallYaml = JSON.stringify({ ...inlinePricing, saasName: 'Acme Cloud' });

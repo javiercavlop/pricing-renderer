@@ -34,13 +34,11 @@ const messages = (diagnostics: ts.Diagnostic[]): string[] =>
   diagnostics.map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
 
 describe('compareSelections export', () => {
-  // [utest->req~compare-selections-export~1]
   it('is a function of length 1 in the core entry point', () => {
     expect(typeof core.compareSelections).toBe('function');
     expect(core.compareSelections.length).toBe(1);
   });
 
-  // [utest->req~compare-selections-export~1]
   it('exports the comparison types with their fields', () => {
     const diagnostics = typeCheckSnippet(`
       import type {
@@ -59,7 +57,6 @@ describe('compareSelections export', () => {
     expect(messages(diagnostics)).toEqual([]);
   });
 
-  // [utest->req~compare-selections-export~1]
   it('rejects a relation outside the four values (TS2322)', () => {
     const diagnostics = typeCheckSnippet(`
       import type { SelectionRelation } from '../../src/core/index.js';
