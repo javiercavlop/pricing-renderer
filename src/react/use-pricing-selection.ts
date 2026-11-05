@@ -22,9 +22,6 @@ export type UsePricingSelectionChange = SelectionStoreChange;
 export type UsePricingSelectionResult = SelectionStoreSnapshot &
   Omit<SelectionStore, 'subscribe' | 'getSnapshot' | 'setInput'>;
 
-// [impl->req~provider-config-precedence~1] [impl->req~provider-presentation-precedence~1]
-// [impl->req~provider-messages-merge~1] [impl->req~provider-nearest~1]
-// [impl->req~provider-no-global-write~1] [impl->req~provider-absent-global~1]
 // Instance option, then the nearest provider, then the global configuration read at render time;
 // `custom.pricingRenderer` is the lowest presentation layer and the view model applies it.
 function resolveOptions(
@@ -53,8 +50,6 @@ function resolveOptions(
   };
 }
 
-// [impl->req~use-pricing-selection-state~1] [impl->req~use-pricing-selection-view-model~2]
-// [impl->req~use-pricing-selection-compare~1]
 // A thin layer over a store of its own: the store gets its input during render, and
 // `useSyncExternalStore` reads the cached snapshot, on the server too.
 export function usePricingSelection(

@@ -43,10 +43,6 @@ function selectedDependents(
   return [...dependents];
 }
 
-// [impl->req~core-plan-change-immediate~1] [impl->req~core-plan-change-pending~1]
-// [impl->req~core-addon-select-change~1] [impl->req~core-addon-deselect-change~1]
-// [impl->req~core-addon-change-direct~1] [impl->req~core-addon-change-unknown~1]
-// [impl->req~core-selection-no-mutation~1]
 export function planSelectionChange(
   pricing: NormalizedPricing,
   selection: PricingSelection,
@@ -93,7 +89,6 @@ export function planSelectionChange(
   return { kind: 'apply', selection: applySelectionChange(pricing, selection, pending) };
 }
 
-// [impl->req~core-apply-selection-change~1] [impl->req~core-selection-no-mutation~1]
 export function applySelectionChange(
   pricing: NormalizedPricing,
   selection: PricingSelection,
@@ -121,7 +116,6 @@ export function applySelectionChange(
   ).selection;
 }
 
-// [impl->req~core-selection-with-variable~1] [impl->req~core-selection-no-mutation~1]
 export function selectionWithVariable(
   selection: PricingSelection,
   path: string,
@@ -132,7 +126,6 @@ export function selectionWithVariable(
   return { ...selection, variables };
 }
 
-// [impl->req~core-selection-with-addon-quantity~1] [impl->req~core-selection-no-mutation~1]
 export function selectionWithAddOnQuantity(
   pricing: NormalizedPricing,
   selection: PricingSelection,
@@ -151,7 +144,6 @@ export function selectionWithAddOnQuantity(
   };
 }
 
-// [impl->req~core-selection-in-effect~1] [impl->req~core-selection-no-mutation~1]
 export function selectionInEffect(
   pricing: NormalizedPricing,
   selection: PricingSelection,

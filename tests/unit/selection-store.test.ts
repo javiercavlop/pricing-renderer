@@ -152,7 +152,6 @@ function starterKind(store: Store): string | undefined {
   return store.getSnapshot().viewModel?.resolved.planPrices.starter?.kind;
 }
 
-// [utest->req~use-pricing-selection-changes~1]
 describe('changes go through the core', () => {
   it('limits a quantity above the maximum', () => {
     const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
@@ -219,7 +218,6 @@ describe('changes go through the core', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-notify~1]
 describe('selection changes are reported', () => {
   it('reports a plan change at once', () => {
     const onSelectionChange = spy();
@@ -323,7 +321,6 @@ describe('selection changes are reported', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-controlled~1]
 describe('controlled selection is never stored', () => {
   it('reports the change and keeps the controlled selection when the host ignores it', () => {
     const onSelectionChange = spy();
@@ -351,7 +348,6 @@ describe('controlled selection is never stored', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-uncontrolled~1]
 describe('uncontrolled selection is held', () => {
   it('keeps a plan change', () => {
     const store = newStore(acme, {});
@@ -366,7 +362,6 @@ describe('uncontrolled selection is held', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pricing-change~1]
 describe('a new pricing restarts the selection', () => {
   it('sets the default selection again and drops the pending change', () => {
     const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
@@ -419,7 +414,6 @@ describe('a new pricing restarts the selection', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pending~1]
 describe('pending change, confirm and cancel', () => {
   it('confirms a dependency', () => {
     const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
@@ -463,7 +457,6 @@ describe('pending change, confirm and cancel', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-confirm-input~1]
 describe('confirm reads the selection at confirm time', () => {
   it('confirms on the controlled selection that changed while pending', () => {
     const onSelectionChange = spy();
@@ -494,7 +487,6 @@ describe('confirm reads the selection at confirm time', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-apply~1]
 describe('apply a partial selection', () => {
   it('keeps the plan and reports an unknown plan', () => {
     const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
@@ -534,7 +526,6 @@ describe('apply a partial selection', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-current~1]
 describe('current plan and relations', () => {
   it('reads the relation of every plan for a customer on growth', () => {
     const store = newStore(acme, { currentSelection: { planId: 'growth' } });
@@ -569,7 +560,6 @@ describe('current plan and relations', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-compare~1]
 describe('review from the hooks', () => {
   it('compares the selection with the current one', () => {
     const store = newStore(acme, {
@@ -617,7 +607,6 @@ describe('review from the hooks', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pending~1]
 describe('a pending change does not survive a direct commit', () => {
   function withPending(): Store {
     const store = newStore(acme, { defaultSelection: { planId: 'growth' } });
@@ -650,7 +639,6 @@ describe('a pending change does not survive a direct commit', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-notify~1]
 describe('an add-on that the pricing does not have', () => {
   it('reports the unchanged selection once and sets no pending change', () => {
     const onSelectionChange = spy();
@@ -680,7 +668,6 @@ describe('an add-on that the pricing does not have', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-controlled~1] [utest->req~use-pricing-selection-uncontrolled~1]
 describe('a store that goes from controlled to uncontrolled', () => {
   it('keeps no selection of its own while controlled and holds the next ones after', () => {
     const onSelectionChange = spy();
@@ -711,7 +698,6 @@ describe('a store that goes from controlled to uncontrolled', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-pricing-change~1]
 describe('the same pricing object keeps the selection', () => {
   it('does not restart the selection or report when other options change', () => {
     const onSelectionChange = spy();
@@ -724,7 +710,6 @@ describe('the same pricing object keeps the selection', () => {
   });
 });
 
-// [utest->req~use-pricing-selection-view-model~2]
 describe('the resolved prices of the snapshot', () => {
   it('keeps the identical object for an equal selection and replaces it for a price change', () => {
     const store = newStore(acme, {});
@@ -898,7 +883,6 @@ function scanModuleScope(file: string, text: string): string[] {
     .map((statement) => `${file}: ${statement.getText(source).split('\n')[0]}`);
 }
 
-// [utest->req~react-no-module-state~1]
 describe('no shared state at module scope', () => {
   it('passes the allow-list scan for every module under src/react', () => {
     const files = listSources(reactRoot);

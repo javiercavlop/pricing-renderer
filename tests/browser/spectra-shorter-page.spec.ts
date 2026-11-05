@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { applyPricing, openRenderer, readFixture, type Viewport } from './helpers/spectra.js';
 
-// SPECTRA item 2 (docs/agent-work/spectra-item2-shorter-page/spec.md): only differences is on by
+// SPECTRA item 2: only differences is on by
 // default for pricings over 100 rows with at least 2 plans, the toolbar threshold is configurable,
 // the counter reads "{shown} of {total} items" and a search with no match shows an empty state.
 
@@ -81,7 +81,6 @@ async function readCounter(page: Page): Promise<{ shown: number; total: number }
 
 test.describe('spectra shorter page', () => {
   for (const [saas, baseline] of Object.entries(baselines)) {
-    // [utest->req~shorter-page-auto-default~1] [utest->req~shorter-page-counter~1]
     test(`${saas} starts with only differences and is shorter`, async ({ page }) => {
       test.setTimeout(60_000);
       await openPricing(page, saas);
@@ -121,7 +120,6 @@ test.describe('spectra shorter page', () => {
     });
   }
 
-  // [utest->req~shorter-page-empty-state~1]
   test('clickup shows an empty state when the search matches nothing', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -135,7 +133,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(counter)).toHaveText('0 of 174 items');
   });
 
-  // [utest->req~shorter-page-only-differences~2]
   test('notion starts unchecked and the empty attribute checks it', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'notion');
@@ -145,7 +142,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).toBeChecked();
   });
 
-  // [utest->req~shorter-page-only-differences~2]
   test('only-differences="false" unchecks it on clickup', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -154,7 +150,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).not.toBeChecked();
   });
 
-  // [utest->req~shorter-page-toolbar-threshold~1]
   test('toolbar-threshold="200" removes the toolbar on clickup', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -163,7 +158,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(toolbar)).toHaveCount(0);
   });
 
-  // [utest->req~shorter-page-toolbar-threshold~1]
   test('an invalid toolbar-threshold falls back to 40 on the demo page', async ({ page }) => {
     await openRenderer(page, viewport);
     await expect(page.locator(toolbar)).toHaveCount(0);
@@ -177,7 +171,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(toolbar)).toHaveCount(1);
   });
 
-  // [utest->req~shorter-page-only-differences~2]
   test('the checkbox overrides the property until the next change', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -217,7 +210,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).not.toBeChecked();
   });
 
-  // [utest->req~shorter-page-only-differences~2]
   test('a reload drops the checkbox override', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -230,7 +222,6 @@ test.describe('spectra shorter page', () => {
     await expect(page.locator(checkbox)).toBeChecked();
   });
 
-  // [utest->req~shorter-page-toolbar-threshold~1] [utest->req~shorter-page-empty-state~1]
   test('a hidden toolbar ignores the search text', async ({ page }) => {
     test.setTimeout(60_000);
     await openPricing(page, 'clickup');
@@ -245,7 +236,6 @@ test.describe('spectra shorter page', () => {
     expect(await page.locator(rows).count(), 'the rows are back').toBeGreaterThan(0);
   });
 
-  // [utest->req~shorter-page-no-look-change~1]
   test('the demo pricing has no toolbar', async ({ page }) => {
     await openRenderer(page, viewport);
     await expect(page.locator('pricing-renderer [data-pr-part="comparison"]')).toHaveCount(1);

@@ -4,9 +4,6 @@
  * It is a full replacement of theme.css (same selectors and tokens), so import it instead of
  * theme.css. Use it as a starting point for a custom theme: copy it and change the values.
  *
- * [impl->req~theme-minimal-tokens~1]
- * [impl->req~theme-minimal-flat~1]
- * [impl->req~theme-minimal-contrast~1]
  */
 @layer pricing-renderer.theme {
   pricing-renderer[data-pr-root],
@@ -53,7 +50,7 @@
   [data-theme='dark'] pricing-renderer[data-pr-root],
   pricing-change-review[theme='dark'],
   [data-theme='dark'] pricing-change-review,
-  /* [impl->req~host-dark-class~2] A host `.dark` ancestor darkens the renderer with theme=auto. */
+  /* A host `.dark` ancestor darkens the renderer with theme=auto. */
   .dark pricing-renderer[data-pr-root][theme='auto'],
   .dark pricing-change-review[theme='auto'] {
     color-scheme: dark;

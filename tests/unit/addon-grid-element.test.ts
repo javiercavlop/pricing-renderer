@@ -18,7 +18,6 @@ async function loadElement(): Promise<ElementClass> {
   return (loaded as { PricingRendererElement: ElementClass }).PricingRendererElement;
 }
 
-// [utest->req~addon-grid-threshold-attribute~1]
 describe('addOnFilterThreshold property', () => {
   it('maps the add-on-filter-threshold attribute to a number', async () => {
     const element = await loadElement();
@@ -50,7 +49,6 @@ describe('addOnFilterThreshold property', () => {
   });
 });
 
-// [utest->req~addon-grid-cap~1]
 describe('add-on cap state', () => {
   it('starts with the cap on, so the list is not revealed on a new element', async () => {
     const Element = await loadElement();

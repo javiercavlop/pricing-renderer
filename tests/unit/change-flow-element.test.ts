@@ -114,7 +114,6 @@ function planOf(viewModel: PricingViewModel, id: string): PricingViewModel['plan
 }
 
 describe('property declarations', () => {
-  // [utest->req~current-selection-property~1]
   it('declares currentSelection without an attribute', async () => {
     const Element = await loadElement();
     expect(Element.properties.currentSelection).toEqual({
@@ -123,7 +122,6 @@ describe('property declarations', () => {
     });
   });
 
-  // [utest->req~cta-pending-property~1]
   it('declares pendingActionId with the attribute pending-action-id', async () => {
     const Element = await loadElement();
     expect(Element.properties.pendingActionId).toEqual({
@@ -132,7 +130,6 @@ describe('property declarations', () => {
     });
   });
 
-  // [utest->req~current-selection-detached~1]
   it('keeps a deep copy of the value it receives and leaves the value unmutated', async () => {
     const Element = await loadElement();
     const element = new Element();
@@ -148,7 +145,6 @@ describe('property declarations', () => {
     expect(element.currentSelection).toBeUndefined();
   });
 
-  // [utest->req~current-selection-detached~1]
   it('returns a copy, so a change by the host does not alter what the element keeps', async () => {
     const Element = await loadElement();
     const element = new Element();
@@ -160,7 +156,6 @@ describe('property declarations', () => {
     expect(element.currentSelection).not.toBe(element.currentSelection);
   });
 
-  // [utest->req~current-selection-diagnostics~1]
   it('keeps the stored copy when an equal value is set again', async () => {
     const Element = await loadElement();
     const element = new Element();
@@ -175,7 +170,6 @@ describe('property declarations', () => {
     expect(stored()).toEqual({ planId: 'legacy2' });
   });
 
-  // [utest->req~current-selection-diagnostics~1]
   it('reports a change for Lit only when the value differs by content', async () => {
     const Element = await loadElement();
     const { hasChanged } = Element.properties.currentSelection as {
@@ -200,7 +194,6 @@ describe('types through the compiler API', () => {
     declare const source: string;
   `;
 
-  // [utest->req~current-selection-property~1]
   it('types the currentSelection property of the element', () => {
     const accepted = typeCheckSnippet(
       `${elementHeader}\nelement.currentSelection = { planId: 'growth' };\nelement.currentSelection = undefined;`,
@@ -216,7 +209,6 @@ describe('types through the compiler API', () => {
     expect(codes(wrongField)).toEqual([2322]);
   });
 
-  // [utest->req~cta-pending-react-manifest~1]
   it('types the pendingActionId property of the element', () => {
     const accepted = typeCheckSnippet(
       `${elementHeader}\nelement.pendingActionId = 'start-growth';\nelement.pendingActionId = undefined;`,
@@ -226,7 +218,6 @@ describe('types through the compiler API', () => {
     expect(codes(rejected)).toEqual([2322]);
   });
 
-  // [utest->req~current-selection-react~1]
   it('types the currentSelection prop of PricingRenderer', () => {
     const accepted = typeCheckSnippet(
       `${reactHeader}\nexport const ok = React.createElement(PricingRenderer, { yaml: source, currentSelection: { planId: 'growth' } });`,
@@ -239,7 +230,6 @@ describe('types through the compiler API', () => {
     expect(codes(rejected)).toEqual([2769]);
   });
 
-  // [utest->req~cta-pending-react-manifest~1]
   it('types the pendingActionId prop of PricingRenderer', () => {
     const accepted = typeCheckSnippet(
       `${reactHeader}\nexport const ok = React.createElement(PricingRenderer, { yaml: source, pendingActionId: 'start-growth' });`,
@@ -251,7 +241,6 @@ describe('types through the compiler API', () => {
     expect(codes(rejected)).toEqual([2769]);
   });
 
-  // [utest->req~cta-types~1]
   it('types PricingCta.labels and exports SelectionRelation from the core', () => {
     const header = `
       import type { PricingCta, PricingCtaLabels, SelectionRelation } from '../../src/core/index.js';
@@ -273,7 +262,6 @@ describe('types through the compiler API', () => {
     expect(codes(rejected)).toEqual([2353]);
   });
 
-  // [utest->req~cta-event-types~1]
   it('types relation and source of PricingActionDetail and re-exports SelectionRelation', () => {
     const header = `
       import type { PricingSelection, ResolvedPricing } from '../../src/core/index.js';
@@ -297,7 +285,6 @@ describe('types through the compiler API', () => {
 });
 
 describe('messages', () => {
-  // [utest->req~current-selection-i18n~1]
   it('defines the current selection texts in English and Spanish', () => {
     expect(enUS['pricing.currentPlanBadge']).toBe('Your plan');
     expect(enUS['pricing.currentPlanCta']).toBe('Current plan');
@@ -311,7 +298,6 @@ describe('messages', () => {
     expect(esES['pricing.currentAddOn']).toBe('Actual');
   });
 
-  // [utest->req~cta-i18n~1]
   it('defines the summary action and pending texts in English and Spanish', () => {
     expect(enUS['pricing.reviewChangeCta']).toBe('Review change ({total})');
     expect(enUS['pricing.pending']).toBe('Processing…');
@@ -337,7 +323,6 @@ describe('custom elements manifest', () => {
     return declaration!;
   }
 
-  // [utest->req~current-selection-manifest~1]
   it('lists the currentSelection field', async () => {
     const { members = [] } = await rendererDeclaration();
     const field = members.find((member) => member.name === 'currentSelection');
@@ -345,7 +330,6 @@ describe('custom elements manifest', () => {
     expect(field?.type?.text).toBe('Partial<PricingSelection> | undefined');
   });
 
-  // [utest->req~cta-pending-react-manifest~1]
   it('lists the pendingActionId field and its attribute', async () => {
     const { members = [], attributes = [] } = await rendererDeclaration();
     const field = members.find((member) => member.name === 'pendingActionId');
@@ -358,7 +342,6 @@ describe('custom elements manifest', () => {
 });
 
 describe('expandCtaHref', () => {
-  // [utest->req~cta-href-template~1]
   it('replaces every {planId} with the encoded plan id', () => {
     expect(expandCtaHref('/checkout/{planId}?again={planId}', 'pro plus/x')).toBe(
       '/checkout/pro%20plus%2Fx?again=pro%20plus%2Fx',
@@ -382,7 +365,6 @@ describe('expandCtaHref', () => {
 describe('planCtaView', () => {
   const acme = loadAcme();
 
-  // [utest->req~cta-event-unchanged~1]
   it('keeps the 0.1.0 label and link without a current plan', () => {
     const viewModel = viewModelOf(acme);
     const starter = planCtaView(viewModel, planOf(viewModel, 'starter'), {});
@@ -393,7 +375,6 @@ describe('planCtaView', () => {
     expect(growth.label).toBe('Start free trial');
   });
 
-  // [utest->req~current-selection-plan-cta~1] [utest->req~current-selection-relation-labels~1]
   it('labels the plans around the current plan by relation', () => {
     const viewModel = viewModelOf(acme);
     const context = { currentPlanId: 'growth' };
@@ -410,7 +391,6 @@ describe('planCtaView', () => {
     });
   });
 
-  // [utest->req~cta-relation-labels-config~1]
   it('uses the configured labels and ignores the ones that are not strings', () => {
     const ctas = [
       { id: 's', label: 'S', planId: 'starter', labels: { downgrade: 'Move to Starter' } },
@@ -434,7 +414,6 @@ describe('planCtaView', () => {
     expect(invalid.presentation.ctas?.[0]?.labels).toBeUndefined();
   });
 
-  // [utest->req~cta-relation-labels-config~1]
   it('ignores empty and whitespace-only labels and trims the others', () => {
     const viewModel = viewModelOf(acme, undefined, [
       {
@@ -454,7 +433,6 @@ describe('planCtaView', () => {
     expect(planCtaView(viewModel, planOf(viewModel, 'growth'), context).label).toBe('Mine');
   });
 
-  // [utest->req~cta-contact-sales~1]
   it('labels a plan without a price Contact sales', () => {
     const viewModel = viewModelOf(PQ);
     const context = { currentPlanId: 'basic' };
@@ -469,7 +447,6 @@ describe('planCtaView', () => {
     expect(planCtaView(custom, planOf(custom, 'enterprise'), context).label).toBe('Talk to us');
   });
 
-  // [utest->req~current-selection-private-plan~1]
   it('labels the visible plans by the order of all plans, private ones included', () => {
     const viewModel = viewModelOf(PV);
     expect(viewModel.plans.map((plan) => plan.id)).toEqual(['basic', 'pro']);
@@ -480,7 +457,6 @@ describe('planCtaView', () => {
     expect(planCtaView(viewModel, planOf(viewModel, 'pro'), context).label).toBe('Upgrade to Pro');
   });
 
-  // [utest->req~cta-pending-state~1] [utest->req~cta-pending-others~1]
   it('marks the pending control busy and every control aria-disabled', () => {
     const viewModel = viewModelOf(acme);
     const context = { pendingActionId: 'start-growth' };
@@ -492,7 +468,6 @@ describe('planCtaView', () => {
     expect(idle).toMatchObject({ pending: false, ariaDisabled: false });
   });
 
-  // [utest->req~cta-href-template-unsafe~1] [utest->req~cta-href-template~1]
   it('renders an expanded link as a button when it is not safe', () => {
     const viewModel = viewModelOf(PS, undefined, [
       { id: 'bad', label: 'Bad', planId: 'javascript:alert(1)', href: '{planId}' },
@@ -510,7 +485,6 @@ describe('planCtaView', () => {
 describe('summaryActionState', () => {
   const acme = loadAcme();
 
-  // [utest->req~cta-summary-action~1] [utest->req~cta-summary-action-current~1]
   it('reviews the change, disabled while nothing changes', () => {
     const viewModel = viewModelOf(acme, C);
     expect(summaryActionState(viewModel, 'current')).toEqual({
@@ -522,7 +496,6 @@ describe('summaryActionState', () => {
     expect(summaryActionState(viewModel, 'upgrade')).toMatchObject({ disabled: false });
   });
 
-  // [utest->req~cta-summary-action-quote~1]
   it('asks for a quote when the selection requires one', () => {
     const viewModel = viewModelOf(PQ, { planId: 'enterprise' });
     expect(summaryActionState(viewModel, 'upgrade')).toEqual({
@@ -537,14 +510,12 @@ describe('summaryActionState', () => {
 describe('current selection', () => {
   const acme = loadAcme();
 
-  // [utest->req~current-selection-plan-mark~1] [utest->req~current-selection-addons~1]
   it('derives the plan and the reconciled add-ons', () => {
     const context = deriveCurrentContext(acme, C);
     expect(context?.planId).toBe('growth');
     expect([...context!.addOnIds].sort()).toEqual(['extraStorage', 'prioritySuccess']);
   });
 
-  // [utest->req~current-selection-addons~1]
   it('drops the add-ons that reconciliation removes and ignores unknown ids', () => {
     const starter = deriveCurrentContext(acme, {
       planId: 'starter',
@@ -562,7 +533,6 @@ describe('current selection', () => {
     expect(ghost?.addOnIds.size).toBe(0);
   });
 
-  // [utest->req~current-selection-unknown-plan~1] [utest->req~current-selection-unset~1]
   it('has no context without a known plan', () => {
     expect(deriveCurrentContext(acme, undefined)).toBeUndefined();
     expect(deriveCurrentContext(acme, {})).toBeUndefined();
@@ -573,12 +543,10 @@ describe('current selection', () => {
     expect(deriveCurrentContext(acme, 42 as never)).toBeUndefined();
   });
 
-  // [utest->req~current-selection-private-plan~1]
   it('knows a private plan of the pricing', () => {
     expect(deriveCurrentContext(PV, { planId: 'legacy' })?.planId).toBe('legacy');
   });
 
-  // [utest->req~current-selection-diagnostics~1]
   it('reports one warning per unknown plan or add-on id', () => {
     const diagnostics = currentSelectionDiagnostics(acme, {
       planId: 'legacy',

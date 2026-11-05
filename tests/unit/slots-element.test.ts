@@ -1,8 +1,7 @@
 // The element is built in the node environment (no DOM): its render() returns a lit template that
 // is flattened to text, as in tests/unit/hide-sections-element.test.ts. The scenarios that need a
 // DOM (node identity, setAttribute, user input, events from updated()) are in
-// tests/browser/element-slots.spec.ts. The scenarios are those of
-// openspec/changes/add-react-headless/specs/composition/spec.md.
+// tests/browser/element-slots.spec.ts.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { keyed } from 'lit/directives/keyed.js';
@@ -208,7 +207,6 @@ function openTags(html: string, index: number): { tag: string; attrs: Map<string
 const acmeLabel = 'Start free trial';
 const growthHref = 'https://example.com/signup?plan=growth';
 
-// [utest->req~slots-property~1]
 describe('slots: the property', () => {
   it('is declared as a property without an attribute', () => {
     const declared = (
@@ -225,7 +223,6 @@ describe('slots: the property', () => {
   });
 });
 
-// [utest->req~slots-default-markup~1]
 describe('slots: markup without slots', () => {
   it('Empty and unknown lists render the markup of no property', async () => {
     const built = await ready();
@@ -249,7 +246,6 @@ describe('slots: markup without slots', () => {
   });
 });
 
-// [utest->req~slots-not-array~1]
 describe('slots: a value that is not an array', () => {
   it('Null, string, number and array-like', async () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -269,7 +265,6 @@ describe('slots: a value that is not an array', () => {
   });
 });
 
-// [utest->req~slot-plan-cta~1]
 describe('plan CTA slot nodes', () => {
   it('Three plan slots', async () => {
     const html = markup(await ready({ slots: ['plan-cta'] }));
@@ -296,7 +291,6 @@ describe('plan CTA slot nodes', () => {
   });
 });
 
-// [utest->req~slot-plan-cta-keyed~1]
 describe('plan slot nodes belong to one plan', () => {
   // Template-shape check only; the behavioural proof is tests/browser/element-slots.spec.ts.
   it('wraps each plan slot node in a keyed directive with the plan id', async () => {
@@ -320,7 +314,6 @@ describe('plan slot nodes belong to one plan', () => {
   });
 });
 
-// [utest->req~slot-summary-actions~1]
 describe('summary actions slot node', () => {
   it('With and without a current plan', async () => {
     const setups: Partial<Host>[] = [{}, { currentSelection: { planId: 'growth' } }];
@@ -345,7 +338,6 @@ describe('summary actions slot node', () => {
   });
 });
 
-// [utest->req~slot-loading~1]
 describe('loading slot node', () => {
   it('Before the first load', () => {
     const html = flatten(create({ slots: ['loading'] }).element.render());
@@ -370,7 +362,6 @@ async function failedLoad(): Promise<{ html: string; built: Built }> {
   return { html: markup(built), built };
 }
 
-// [utest->req~slot-error~1]
 describe('error slot node', () => {
   it('Invalid YAML', async () => {
     const { html } = await failedLoad();
@@ -392,7 +383,6 @@ describe('error slot node', () => {
   });
 });
 
-// [utest->req~slot-error-diagnostics~1]
 describe('error slot node diagnostics', () => {
   it('Diagnostics of invalid YAML', async () => {
     const { html, built } = await failedLoad();
@@ -418,7 +408,6 @@ describe('error slot node diagnostics', () => {
   });
 });
 
-// [utest->req~slots-change-event~3]
 describe('slots change event: no slots, no event', () => {
   it('records no pricing-slots-change after ready and a reload', async () => {
     const built = await ready();
@@ -427,7 +416,6 @@ describe('slots change event: no slots, no event', () => {
   });
 });
 
-// [utest->req~slot-plan-cta-context~1]
 describe('plan slot node context attributes', () => {
   it('Values follow the state', async () => {
     const built = await ready({ slots: ['plan-cta'] });
@@ -468,7 +456,6 @@ describe('plan slot node context attributes', () => {
   });
 });
 
-// [utest->req~slot-summary-actions-context~1]
 describe('summary slot node context attributes', () => {
   it('Relation and pending', async () => {
     const built = await ready({
@@ -493,7 +480,6 @@ describe('summary slot node context attributes', () => {
   });
 });
 
-// [utest->req~slot-plan-cta-any-pending~1]
 describe('plan slot nodes report any pending action', () => {
   it('Pending plan action', async () => {
     const html = markup(await ready({ slots: ['plan-cta'], pendingActionId: 'start-growth' }));
@@ -524,7 +510,6 @@ function ctaHandlers(template: unknown): ((event: unknown) => unknown)[] {
   return handlers;
 }
 
-// [utest->req~trigger-plan-action~1]
 describe('triggerPlanAction', () => {
   it('Same detail as a click', async () => {
     const first = await ready({ currentSelection: { planId: 'growth' }, slots: ['plan-cta'] });
@@ -549,7 +534,6 @@ describe('triggerPlanAction', () => {
   });
 });
 
-// [utest->req~trigger-plan-action-guard~1]
 describe('triggerPlanAction: ignored calls', () => {
   it('Four ignored calls', async () => {
     const cases: [Partial<Host>, string][] = [
@@ -598,7 +582,6 @@ function typeCheckSnippet(source: string): ts.Diagnostic[] {
 const messages = (diagnostics: ts.Diagnostic[]): string[] =>
   diagnostics.map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
 
-// [utest->req~composition-types-manifest~1]
 describe('composition types and manifest', () => {
   const header = `
     import type {

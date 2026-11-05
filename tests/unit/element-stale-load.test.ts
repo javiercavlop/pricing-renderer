@@ -56,7 +56,6 @@ const flush = async (): Promise<void> => {
   for (let turn = 0; turn < 5; turn += 1) await Promise.resolve();
 };
 
-// [utest->req~reload-source-error-cancels-load~1]
 describe('reload() with a source error while a src load is pending', () => {
   it('aborts the pending load and never emits pricing-ready when the source is missing', async () => {
     const { element, events } = await build();

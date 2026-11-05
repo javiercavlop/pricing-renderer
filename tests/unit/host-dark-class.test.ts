@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// [utest->req~host-dark-class~2]
 // A host `.dark` class darkens the renderer with theme="auto", with the same tokens as
 // [data-theme='dark'].
 

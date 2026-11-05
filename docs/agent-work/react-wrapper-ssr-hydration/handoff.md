@@ -1,1 +1,0 @@
-Round 2 complete and integrated at f1e9e457 (tests 3de27cf3 + docs eb0381e9). Next: push, wait CI incl. webkit, then round-2 panel on the pushed head (reviewer, test-reviewer, security-auditor), set_review_package, lead_ready. Followups for coordinator: docs/architecture.md:101-104 stale (outside scope); React 18 CI job; unit server-HTML test outside scope.

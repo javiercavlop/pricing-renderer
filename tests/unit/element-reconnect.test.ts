@@ -79,7 +79,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// [utest->req~element-reconnect-resumes~1]
 describe('reconnecting an element that has updated', () => {
   it('first update observes the size, measures once and starts the first load', async () => {
     const element = await build();

@@ -154,7 +154,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     expect(results).toHaveLength(37);
   });
 
-  // [utest->req~addon-grid-dense-details~1]
   it('is dense exactly when there are more than 8 add-ons', () => {
     for (const item of results) {
       expect(item.dense, `${item.saas} (${item.addOns} add-ons)`).toBe(item.addOns > 8);
@@ -162,7 +161,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     }
   });
 
-  // [utest->req~addon-grid-filter~1]
   it('has the filter exactly when there are more than 13 add-ons', () => {
     for (const item of results) {
       expect(item.filter, `${item.saas} (${item.addOns} add-ons)`).toBe(item.addOns > 13);
@@ -170,7 +168,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     }
   });
 
-  // [utest->req~addon-grid-cap~1]
   it('renders at most 8 cards at first, and every card without the filter', () => {
     for (const item of results) {
       const expected = item.addOns > 13 ? 8 : item.addOns;
@@ -179,7 +176,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     }
   });
 
-  // [utest->req~addon-grid-cap~1]
   it('offers a show-more button for the hidden add-ons only', () => {
     for (const item of results) {
       const hidden = item.addOns > 13 ? item.addOns - 8 : undefined;
@@ -187,14 +183,12 @@ describe('SPECTRA fixtures add-on grid', () => {
     }
   });
 
-  // [utest->req~addon-grid-filter~1]
   it('counts the rendered cards of the total in the filter pricings', () => {
     for (const item of results.filter((candidate) => candidate.filter)) {
       expect(item.counter, item.saas).toBe(`8 of ${item.addOns} items`);
     }
   });
 
-  // [utest->req~addon-grid-filter~1]
   describe.each([
     ['okta', 18, 10],
     ['zoom', 16, 8],
@@ -212,7 +206,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     });
   });
 
-  // [utest->req~addon-grid-filter~1]
   describe.each([
     ['postman', 12],
     ['userguiding', 11],
@@ -230,7 +223,6 @@ describe('SPECTRA fixtures add-on grid', () => {
     });
   });
 
-  // [utest->req~addon-grid-no-look-change~1]
   it('leaves the other pricings with the plain grid', () => {
     const others = results.filter((item) => ![...FILTER, ...DENSE_ONLY].includes(item.saas));
     expect(others).toHaveLength(30);

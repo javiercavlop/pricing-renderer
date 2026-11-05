@@ -1,7 +1,6 @@
 // The element is built in the node environment (no DOM): its render() returns a lit template that
 // is flattened to text, as in tests/unit/error-state.test.ts. The scenarios that need a DOM are in
-// tests/browser/hide-sections.spec.ts. The scenarios are those of
-// openspec/changes/add-react-headless/specs/hide-sections/spec.md.
+// tests/browser/hide-sections.spec.ts.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -92,7 +91,6 @@ const partCount = (html: string, part: string): number =>
 const partCountOf = (html: string, name: SectionName): number =>
   partCount(html, sectionParts[name]);
 
-// [utest->req~hide-sections-attribute-converter~1]
 describe('hideSectionsConverter', () => {
   it('keeps the tokens that are section names, in their order', () => {
     expect(converter?.fromAttribute).toBeTypeOf('function');
@@ -104,7 +102,6 @@ describe('hideSectionsConverter', () => {
   });
 });
 
-// [utest->req~hide-sections-property~1]
 describe('hideSections: not set', () => {
   it('renders each of the eight section parts once', async () => {
     const html = markup(await ready());
@@ -112,7 +109,6 @@ describe('hideSections: not set', () => {
   });
 });
 
-// [utest->req~hide-sections-property~1]
 describe('hideSections: the property and the attribute', () => {
   it('is declared as a property that reads the hide-sections attribute', async () => {
     const declared = (
@@ -127,7 +123,6 @@ describe('hideSections: the property and the attribute', () => {
   });
 });
 
-// [utest->req~hide-sections-render~1]
 describe('hidden sections render nothing', () => {
   it.each(sectionNames)('hides %s only', async (name) => {
     const html = markup(await ready({ hideSections: [name] }));
@@ -145,7 +140,6 @@ describe('hidden sections render nothing', () => {
   });
 });
 
-// [utest->req~hide-sections-addons-summary~1]
 describe('hidden add-ons keep the summary', () => {
   it('renders one summary outside any add-on layout, with the subtotal', async () => {
     const shown = markup(await ready());
@@ -161,7 +155,6 @@ describe('hidden add-ons keep the summary', () => {
   });
 });
 
-// [utest->req~hide-sections-addons-summary~1]
 describe('all sections hidden', () => {
   it('renders the shell and no section part', async () => {
     const html = markup(await ready({ hideSections: [...sectionNames] }));
@@ -170,7 +163,6 @@ describe('all sections hidden', () => {
   });
 });
 
-// [utest->req~hide-sections-addons-summary~1]
 describe('loading and error are not sections', () => {
   it('renders the error state with every section hidden', async () => {
     const element = await ready({ hideSections: [...sectionNames], yaml: 'plans: [' });
@@ -208,7 +200,6 @@ function hiddenTitle(html: string): {
   };
 }
 
-// [utest->req~hide-sections-hero-name~1]
 describe('accessible name without the hero', () => {
   it('Hidden title markup', async () => {
     const html = markup(await ready({ hideSections: ['hero'] }));
@@ -232,7 +223,6 @@ describe('accessible name without the hero', () => {
   });
 });
 
-// [utest->req~hide-sections-unknown~2]
 describe('unknown section tokens', () => {
   it('Unknown value set as a property', async () => {
     const html = markup(await ready({ hideSections: ['plans', 'footer'] }));
@@ -294,7 +284,6 @@ function typeCheckSnippet(source: string): ts.Diagnostic[] {
 const messages = (diagnostics: ts.Diagnostic[]): string[] =>
   diagnostics.map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
 
-// [utest->req~hide-sections-react-manifest~1]
 describe('React prop and manifest for hidden sections', () => {
   const header = `
     import * as React from 'react';

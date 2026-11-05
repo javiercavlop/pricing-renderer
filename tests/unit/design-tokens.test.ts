@@ -2,8 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// Optional design tokens of base.css (phase 1a, decisions D2-D6 of
-// docs/agent-work/phase1a-design-system/intake.md), read from the stylesheet text. Every token is
+// Optional design tokens of base.css, read from the stylesheet text. Every token is
 // optional: base.css uses var(--pr-x, <value it had before>) and theme.css declares none of them,
 // so the default look does not change. Computed values are measured by
 // tests/browser/design-tokens.spec.ts.
@@ -131,14 +130,12 @@ function valuesAt(selector: string, property: string): string[] {
 }
 
 describe('optional design tokens (phase 1a)', () => {
-  // [utest->req~token-fallbacks~1]
   it('has a layered renderer stylesheet to read', () => {
     expect(rules.length).toBeGreaterThan(100);
     expect(rendererRules.length).toBeGreaterThan(100);
     expect(rules.every((rule) => rule.context.length === 0 || inLayer(rule))).toBe(true);
   });
 
-  // [utest->req~token-fallbacks~1]
   it('declares none of the new tokens in theme.css or in base.css', () => {
     const declared = new RegExp(`(^|[\\s;{])(${newTokens.join('|')})\\s*:`, 'g');
     for (const [name, css] of [
@@ -150,7 +147,6 @@ describe('optional design tokens (phase 1a)', () => {
     }
   });
 
-  // [utest->req~token-fallbacks~1]
   it('uses every new token in base.css, each with a fallback (font-family aside)', () => {
     const used = new Map<string, string[]>();
     for (const match of stripComments(baseCss).matchAll(/var\(\s*(--pr-[\w-]+)\s*([,)])/g)) {
@@ -166,7 +162,6 @@ describe('optional design tokens (phase 1a)', () => {
     }
   });
 
-  // [utest->req~font-family-tokens~1]
   it('sets the font-family of both roots from --pr-font-family after font: inherit', () => {
     for (const selector of [root, 'pricing-change-review']) {
       const rootRule = only(selector, single);
@@ -178,7 +173,6 @@ describe('optional design tokens (phase 1a)', () => {
     }
   });
 
-  // [utest->req~font-family-tokens~1]
   it('sets the display font on the hero title, section h3, plan h4 and price amount', () => {
     const display = 'var(--pr-font-family-display, var(--pr-font-family))';
     const sites = [
@@ -195,14 +189,12 @@ describe('optional design tokens (phase 1a)', () => {
     expect(all.some((value) => /inherit/.test(value))).toBe(false);
   });
 
-  // [utest->req~font-weight-tokens~1]
   it('has no bare numeric font-weight in any rule of base.css', () => {
     const weights = rules.flatMap((rule) => values(rule, 'font-weight'));
     expect(weights).toHaveLength(37);
     expect(weights.filter((value) => /^\d+$/.test(value))).toEqual([]);
   });
 
-  // [utest->req~font-weight-tokens~1]
   it('groups the weights into four tokens with the old literal as fallback', () => {
     const group: Record<number, string> = {
       400: 'regular',
@@ -244,7 +236,6 @@ describe('optional design tokens (phase 1a)', () => {
     });
   });
 
-  // [utest->req~font-weight-tokens~1]
   it('gives the six heading rules that took the user-agent bold an explicit bold weight', () => {
     const bold = 'var(--pr-font-weight-bold, 700)';
     for (const site of [
@@ -259,7 +250,6 @@ describe('optional design tokens (phase 1a)', () => {
     }
   });
 
-  // [utest->req~line-height-token~1]
   it('reads the line height of both roots from --pr-line-height', () => {
     const renderer = only(root, single);
     const review = only('pricing-change-review', single);
@@ -271,7 +261,6 @@ describe('optional design tokens (phase 1a)', () => {
     }
   });
 
-  // [utest->req~sticky-top-token~1]
   it('classifies every sticky rule, so a new one needs a decision', () => {
     const sticky = rules
       .filter((rule) => values(rule, 'position').includes('sticky'))
@@ -293,7 +282,6 @@ describe('optional design tokens (phase 1a)', () => {
     expect(sticky).toEqual(expected.sort());
   });
 
-  // [utest->req~sticky-top-token~1]
   it('offsets the toolbar and the 840px summary by --pr-sticky-top, and nothing else', () => {
     const toolbar = only(`${root} .pr-comparison-toolbar`);
     expect(values(toolbar, 'inset-block-start')).toEqual(['var(--pr-sticky-top, 0px)']);
@@ -314,7 +302,6 @@ describe('optional design tokens (phase 1a)', () => {
     expect(users.sort()).toEqual([`${root} .pr-comparison-toolbar`, `${root} .pr-summary`].sort());
   });
 
-  // [utest->req~sticky-top-token~1]
   it('keeps the table header offsets inside the scroll box at 0', () => {
     const head = only(`${root} .pr-comparison-table thead th`);
     expect(values(head, 'inset-block-start')).toEqual(['0']);
@@ -322,7 +309,6 @@ describe('optional design tokens (phase 1a)', () => {
     expect(values(column, 'inset-inline-start')).toEqual(['0']);
   });
 
-  // [utest->req~table-size-tokens~1]
   it('keeps max-block-size 80vh and sets the token with 80dvh inside @supports', () => {
     const scroll = `${root} .pr-table-scroll`;
     const plain = rules.filter((rule) => rule.selectors.includes(scroll) && inLayer(rule));
@@ -341,20 +327,17 @@ describe('optional design tokens (phase 1a)', () => {
     expect(plain.flatMap((rule) => values(rule, 'max-block-size'))).not.toContain('80dvh');
   });
 
-  // [utest->req~table-size-tokens~1]
   it('reads the comparison table min-width from --pr-table-min-width', () => {
     const table = only(`${root} .pr-comparison-table`);
     expect(values(table, 'min-width')).toEqual(['var(--pr-table-min-width, 720px)']);
   });
 
-  // [utest->req~dialog-z-token~1]
   it('reads the dialog z-index from --pr-z-dialog', () => {
     const dialog = only(`${root} .pr-dialog-backdrop`);
     expect(values(dialog, 'z-index')).toEqual(['var(--pr-z-dialog, 1000)']);
     expect(rules.flatMap((rule) => values(rule, 'z-index'))).not.toContain('1000');
   });
 
-  // [utest->req~plan-columns-token~1]
   it('wraps every plan grid grid-template-columns in --pr-plan-columns', () => {
     const planGrid = (selector: string) => /\.pr-plan-grid(?![\w-])/.test(selector);
     const planRules = rules.filter((rule) => rule.selectors.some(planGrid));
@@ -379,7 +362,6 @@ describe('optional design tokens (phase 1a)', () => {
     });
   });
 
-  // [utest->req~plan-columns-token~1]
   it('splits the shared rules so the add-on and variable grids never get the token', () => {
     const grids = (selector: string) => /\.pr-(addon|variable)-grid(?![\w-])/.test(selector);
     const planGrid = (selector: string) => /\.pr-plan-grid(?![\w-])/.test(selector);

@@ -1,6 +1,5 @@
 import type { SelectionComparison } from '../core/index.js';
 
-// [impl->req~review-event-types~1]
 export interface PricingChangeConfirmDetail {
   comparison: SelectionComparison;
 }

@@ -28,9 +28,6 @@ function hasOwn(target: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(target, key);
 }
 
-// [impl->req~search-params-write~1] [impl->req~search-params-write-variables~1]
-// [impl->req~search-params-prefix~1] [impl->req~search-params-round-trip~2]
-// [impl->req~search-params-round-trip-variables~1] [impl->req~search-params-no-dom~1]
 export function selectionToSearchParams(
   selection: PricingSelection,
   options: SelectionToSearchParamsOptions = {},
@@ -54,7 +51,6 @@ export function selectionToSearchParams(
   return pairs;
 }
 
-// [impl->req~search-params-var-path-split~1]
 function pathSegments(path: string): string[] {
   return path
     .replace(/\[(\d+)\]/g, '.$1')
@@ -62,7 +58,6 @@ function pathSegments(path: string): string[] {
     .filter(Boolean);
 }
 
-// [impl->req~search-params-var-path-safe~3] [impl->req~search-params-var-depth-limit~1]
 function isSafePath(variables: Record<string, unknown>, segments: string[]): boolean {
   if (segments.length === 0 || segments.length > MAX_DEPTH) return false;
   let parent: unknown = variables;
@@ -83,7 +78,6 @@ function isSafePath(variables: Record<string, unknown>, segments: string[]): boo
   return true;
 }
 
-// [impl->req~search-params-var-path-split~1]
 function setAtSegments(
   variables: Record<string, unknown>,
   segments: string[],
@@ -107,9 +101,6 @@ function depthOf(value: unknown): number {
   return 1 + members.reduce<number>((deepest, member) => Math.max(deepest, depthOf(member)), 0);
 }
 
-// [impl->req~search-params-var-text~1] [impl->req~search-params-var-proto-keys~1]
-// [impl->req~search-params-var-length-limit~1] [impl->req~search-params-var-depth-limit~1]
-// [impl->req~search-params-var-type-unchecked~1]
 function parseVariableValue(text: string): { ok: true; value: unknown } | { ok: false } {
   if (text.length > MAX_VALUE_LENGTH) return { ok: false };
   let value: unknown;
@@ -140,10 +131,6 @@ function isStringPair(entry: unknown): entry is [string, string] {
   );
 }
 
-// [impl->req~search-params-read~1] [impl->req~search-params-read-no-throw~1]
-// [impl->req~search-params-prefix~1] [impl->req~search-params-unknown-ids~1]
-// [impl->req~search-params-round-trip~2] [impl->req~search-params-round-trip-variables~1]
-// [impl->req~search-params-no-dom~1]
 export function selectionFromSearchParams(
   pricing: NormalizedPricing,
   params: Iterable<[string, string]>,
@@ -167,7 +154,6 @@ export function selectionFromSearchParams(
       } else if (key === 'billing') {
         billingPeriod ??= value;
       } else if (key === 'addon') {
-        // [impl->req~search-params-read-addon-quantity-nan~1] [impl->req~search-params-read-repeated-addon~1]
         const colon = value.lastIndexOf(':');
         const id = colon === -1 ? value : value.slice(0, colon);
         const quantity = colon === -1 ? 1 : Number(value.slice(colon + 1));
@@ -180,7 +166,6 @@ export function selectionFromSearchParams(
         }
       }
     }
-    // [impl->req~search-params-entry-limit~1]
     if (taken >= MAX_ENTRIES) break;
   }
 
@@ -193,7 +178,7 @@ export function selectionFromSearchParams(
     input,
   );
 
-  // [impl->req~search-params-diagnostic-id-length~2] the whole id was matched; only the report is cut
+  // the whole id was matched; only the report is cut
   const diagnostics = result.diagnostics.map((diagnostic) => {
     let id: string | undefined;
     if (diagnostic.code === 'PR_SELECTION_UNKNOWN_PLAN') id = planId;

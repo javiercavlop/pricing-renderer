@@ -13,8 +13,7 @@ import {
 } from './helpers/change-review.js';
 
 // The data contract of <pricing-change-review> (add-subscription-change-flow, phase E). The
-// scenarios are those of openspec/changes/add-subscription-change-flow/specs/change-review/spec.md;
-// the comparisons (R_ENT, R_START, R_CUR) are defined in its design.md and computed in
+// comparisons (R_ENT, R_START, R_CUR) are computed in
 // tests/browser/helpers/change-review.ts. The unit tests of the registration, the types, the
 // manifest and the package entries are in tests/unit/change-review.test.ts.
 
@@ -26,7 +25,6 @@ function isPending(review: Locator): Promise<boolean> {
   return review.evaluate((element) => (element as unknown as { pending: boolean }).pending);
 }
 
-// [utest->req~review-element-defined~1]
 test('the demo page registers the review element', async ({ page }) => {
   const registered = await page.evaluate(() => {
     const constructor = customElements.get('pricing-change-review');
@@ -39,7 +37,6 @@ test('the demo page registers the review element', async ({ page }) => {
   expect(registered).toEqual({ name: 'PricingChangeReviewElement', upgraded: true });
 });
 
-// [utest->req~review-properties~1]
 test.describe('properties', () => {
   test('defaults and reflection of pending', async ({ page }) => {
     const review = await addReview(page);
@@ -78,14 +75,12 @@ test.describe('properties', () => {
   });
 });
 
-// [utest->req~review-light-dom~1]
 test('the review page renders into its own light DOM', async ({ page }) => {
   const review = await addReview(page, { comparison: R_ENT });
   expect(await review.evaluate((element) => element.shadowRoot)).toBeNull();
   await expect(review.locator('[data-pr-part="review-confirm"]')).toHaveCount(1);
 });
 
-// [utest->req~review-confirm-event~1]
 test('Confirm dispatches one pricing-change-confirm with a deep copy', async ({ page }) => {
   await addReview(page, { comparison: R_ENT });
   await recordReviewEvents(page, 'pricing-change-confirm');
@@ -100,7 +95,6 @@ test('Confirm dispatches one pricing-change-confirm with a deep copy', async ({ 
   expect(event?.sameNestedObject).toBe(false);
 });
 
-// [utest->req~review-confirm-pending~1]
 test.describe('the default action of Confirm', () => {
   test('sets pending when the event is not canceled', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT });
@@ -119,7 +113,6 @@ test.describe('the default action of Confirm', () => {
   });
 });
 
-// [utest->req~review-confirm-blocked~1]
 test.describe('Confirm is blocked', () => {
   test('a second click while pending dispatches nothing', async ({ page }) => {
     await addReview(page, { comparison: R_ENT });
@@ -155,7 +148,6 @@ test.describe('Confirm is blocked', () => {
   });
 });
 
-// [utest->req~review-back-event~1]
 test.describe('Back', () => {
   test('dispatches one pricing-change-back and leaves pending alone', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT });
@@ -179,7 +171,6 @@ test.describe('Back', () => {
   });
 });
 
-// [utest->req~review-text-only~1]
 test('notices and the error are text, never markup', async ({ page }) => {
   const dialogs: string[] = [];
   page.on('dialog', (dialog) => {
@@ -201,7 +192,6 @@ test('notices and the error are text, never markup', async ({ page }) => {
   expect(dialogs).toEqual([]);
 });
 
-// [utest->req~review-base-parts~1]
 test.describe('base parts', () => {
   test('notices, error and the two buttons', async ({ page }) => {
     const review = await addReview(page, {

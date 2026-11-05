@@ -92,7 +92,6 @@ async function clearDemoTokens(page: Page): Promise<void> {
   });
 }
 
-// [utest->req~density-attribute~1] [utest->req~density-compact-tokens~1]
 test.describe('density', () => {
   test('compact tightens the plan card padding and the plan grid gap', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
@@ -106,7 +105,6 @@ test.describe('density', () => {
     expect(compact.gap, 'grid gap').toBeLessThan(comfortable.gap);
   });
 
-  // [utest->req~density-attribute~1]
   test('default, an unknown value and a removed attribute measure the same', async ({ page }) => {
     await openRenderer(page, { width: 1440, height: 900 });
     const host = page.locator('pricing-renderer');

@@ -80,7 +80,7 @@ import {
   type RenderState,
 } from './renderers.js';
 
-// [impl->req~sticky-summary-position~1] Everything after the plans lives in one flex column, so a
+// Everything after the plans lives in one flex column, so a
 // sticky summary has the whole column as its containing block (a grid item would only have its own
 // row). Without add-ons, in the table layout and with a plan selected, the summary is the first
 // child and sticks near the plans while the comparison scrolls. In every other case it keeps its
@@ -91,7 +91,7 @@ import {
 export function renderAfterPlans(state: RenderState, wide = true): TemplateResult {
   const { viewModel, selection, compact } = state;
   const hidden = state.hiddenSections;
-  // [impl->req~hide-sections-addons-summary~1] hidden add-ons count as no add-ons, so the summary
+  // hidden add-ons count as no add-ons, so the summary
   // keeps a place outside the add-on layout
   const withoutAddOns = viewModel.addOns.length === 0 || Boolean(hidden?.has('addOns'));
   const docked = withoutAddOns && !compact && wide && selection.planId !== undefined;
@@ -113,7 +113,7 @@ const addOnCardSelector = '[data-pr-part="add-on-card"]';
 const breakdownPanelSelector = '[data-pr-part="breakdown"]';
 let breakdownPanelCount = 0;
 
-// [impl->req~error-state-human-message~1] the sentence is chosen by the first error diagnostic.
+// the sentence is chosen by the first error diagnostic.
 // The code prefix is cut off so that no partial code is spelled out: the docs test treats every
 // full code token of the source as a code to document.
 function errorMessageKey(diagnostics: PricingDiagnostic[]): string {
@@ -125,7 +125,7 @@ function errorMessageKey(diagnostics: PricingDiagnostic[]): string {
   return 'pricing.errorGeneric';
 }
 
-// [impl->req~shorter-page-only-differences~2] absent is automatic, `false` is off, anything else is on
+// absent is automatic, `false` is off, anything else is on
 export const onlyDifferencesConverter = {
   fromAttribute(value: string | null): boolean | undefined {
     if (value === null) return undefined;
@@ -133,7 +133,6 @@ export const onlyDifferencesConverter = {
   },
 };
 
-// [impl->req~hide-sections-attribute-converter~1] [impl->req~hide-sections-unknown~2]
 // Whitespace separated; only tokens that exactly match a section name are kept, in order.
 export const hideSectionsConverter = {
   fromAttribute(value: string | null): PricingSectionName[] | undefined {
@@ -158,7 +157,6 @@ function hiddenSectionsOf(value: unknown): ReadonlySet<PricingSectionName> {
   return names;
 }
 
-// [impl->req~slots-not-array~1] [impl->req~slots-default-markup~1]
 // A value that is not an array requests nothing, and neither does an item that is not a slot name.
 function requestedSlotsOf(value: unknown): ReadonlySet<PricingSlotName> {
   const names = new Set<PricingSlotName>();
@@ -183,7 +181,7 @@ const slotOwnerSelector = '[data-pr-root], [data-pr-slot]';
 
 export class PricingRendererElement extends LitElement {
   static properties = {
-    // [impl->req~element-input-structural-compare~1] a host that builds these objects in its render
+    // a host that builds these objects in its render
     // function does not reload on every render; call reload() to force a load. loadPricing, yaml
     // and src keep the identity compare.
     pricing: { attribute: false, hasChanged: inputChanged },
@@ -212,7 +210,6 @@ export class PricingRendererElement extends LitElement {
     layout: { type: String, reflect: true },
     visibility: { type: String, reflect: true },
     theme: { type: String, reflect: true },
-    // [impl->req~density-attribute~1]
     // The accessor below is the class's own, so Lit reads it on the first update and would reflect
     // density="comfortable" onto every host; useDefault records that value as the default instead.
     density: { type: String, reflect: true, noAccessor: true, useDefault: true },
@@ -220,14 +217,14 @@ export class PricingRendererElement extends LitElement {
     onlyDifferences: { attribute: 'only-differences', converter: onlyDifferencesConverter },
     toolbarThreshold: { type: Number, attribute: 'toolbar-threshold' },
     addOnFilterThreshold: { type: Number, attribute: 'add-on-filter-threshold' },
-    // [impl->req~hide-sections-property~1] a host that builds the array in its render function does
+    // a host that builds the array in its render function does
     // not re-render on every render
     hideSections: {
       attribute: 'hide-sections',
       converter: hideSectionsConverter,
       hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
     },
-    // [impl->req~slots-property~1] the slot names the host fills; no attribute
+    // the slot names the host fills; no attribute
     slots: { attribute: false },
   };
 
@@ -245,7 +242,6 @@ export class PricingRendererElement extends LitElement {
   declare expressionOptions?: ExpressionOptions;
   declare selection?: PricingSelection;
   declare defaultSelection?: Partial<PricingSelection>;
-  // [impl->req~cta-pending-property~1]
   declare pendingActionId?: string;
   declare presentation?: PricingPresentation;
   declare locale: string;
@@ -261,11 +257,8 @@ export class PricingRendererElement extends LitElement {
   declare loadingLabel?: string;
   declare onlyDifferences?: boolean;
   declare toolbarThreshold: number;
-  // [impl->req~addon-grid-threshold-attribute~1]
   declare addOnFilterThreshold: number;
-  // [impl->req~hide-sections-property~1]
   declare hideSections?: readonly PricingSectionName[];
-  // [impl->req~slots-property~1]
   declare slots?: readonly PricingSlotName[];
 
   private _lastSlotsDispatch: SlotsDispatch = { nodes: [], data: [] };
@@ -289,8 +282,7 @@ export class PricingRendererElement extends LitElement {
   private _addOnSearch = '';
   private _addOnsRevealed = false;
   private _pendingAddOnChange?: PendingAddOnChange;
-  // [impl->req~breakdown-element-stabilized~1] [impl->req~breakdown-in-element~1]
-  // [impl->req~element-subtotal-excludes-removed~1] every view model the element builds goes
+  // every view model the element builds goes
   // through the stabilizer, which keeps the last valid prices and folds the subtotal from the
   // breakdown, so a removed add-on has no line and no share of the subtotal
   private readonly _priceStabilizer = createPriceStabilizer();
@@ -301,10 +293,10 @@ export class PricingRendererElement extends LitElement {
   private _reloadOnPropertyChange = false;
   private _previousFocus?: HTMLElement;
   private _breakdownOpen = false;
-  // [impl->req~summary-breakdown-unique-ids~1] the element renders in light DOM, so ids are global
+  // the element renders in light DOM, so ids are global
   private readonly _instanceNumber = ++breakdownPanelCount;
   private readonly _breakdownId = `pr-breakdown-${this._instanceNumber}`;
-  // [impl->req~element-instance-ids~2] the prefix of every other id of this instance
+  // the prefix of every other id of this instance
   private readonly _idPrefix = `pr-${this._instanceNumber}`;
 
   constructor() {
@@ -348,12 +340,11 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate('density', previous);
   }
 
-  // [impl->req~current-selection-property~1] [impl->req~current-selection-detached~1]
   // The element keeps a deep copy, so a later change of the host's object is not seen until the
   // host sets the property again, and the getter returns a copy, so a change of what it returns is
   // not seen either. An equal value keeps the stored copy: a host that assigns its props on every
   // render does not report the diagnostics again. It never becomes the selection in effect, so
-  // setting it emits no `pricing-selection-change` [impl->req~current-selection-keeps-selection~1].
+  // setting it emits no `pricing-selection-change`.
   get currentSelection(): Partial<PricingSelection> | undefined {
     return cloneValue(this._currentSelection);
   }
@@ -381,7 +372,6 @@ export class PricingRendererElement extends LitElement {
     super.disconnectedCallback();
   }
 
-  // [impl->req~element-reconnect-resumes~1]
   // The disconnect stopped the observer and aborted the load in flight; an aborted load is dropped
   // without a result, so a status still `loading` would never end. A ready or failed element keeps
   // what it shows.
@@ -434,8 +424,6 @@ export class PricingRendererElement extends LitElement {
     this._reportSlots();
   }
 
-  // [impl->req~slots-change-event~3] [impl->req~slots-change-event-own-nodes~1]
-  // [impl->req~slots-change-event-summary~1]
   // Once per change of the slot nodes this element rendered, of their data-* values or, while a
   // summary slot node exists, of the selection and the resolved prices. A node that the host or a
   // nested renderer put inside a slot node has another owner and is not listed.
@@ -467,7 +455,6 @@ export class PricingRendererElement extends LitElement {
     );
   }
 
-  // [impl->req~trigger-plan-action~1] [impl->req~trigger-plan-action-guard~1]
   // The same pricing-action as a click on the plan's built-in CTA, for a host that draws its own.
   public triggerPlanAction(planId: string): boolean {
     if (!this.ctaEnabled || this.pendingActionId || !this._isReady()) return false;
@@ -487,7 +474,6 @@ export class PricingRendererElement extends LitElement {
     return this._triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   }
 
-  // [impl->req~current-selection-diagnostics~1]
   // Once per change of the current selection or of the loaded pricing; not in the rendered list.
   private _reportCurrentSelection(): void {
     if (!this._isReady()) return;
@@ -514,7 +500,7 @@ export class PricingRendererElement extends LitElement {
 
     const sourceError = pricingSourceError(input);
     if (sourceError) {
-      // [impl->req~reload-source-error-cancels-load~1] the load in flight must neither finish nor be
+      // the load in flight must neither finish nor be
       // applied after this error
       this._abortController?.abort();
       this._abortController = undefined;
@@ -545,17 +531,11 @@ export class PricingRendererElement extends LitElement {
     this._applyLoadResult(result);
   }
 
-  // [impl->req~resolved-state-not-ready~1] [impl->req~resolved-state-snapshot~1]
-  // [impl->req~resolved-state-detached~1] [impl->req~resolved-state-controlled~1]
-  // [impl->req~resolved-state-read-only~1] [impl->req~react-ref-load-api~1]
   public get resolvedState(): PricingSelectionChangeDetail | undefined {
     return this._snapshot();
   }
 
-  // [impl->req~apply-selection-replaces~1] [impl->req~apply-selection-result~1]
-  // [impl->req~react-ref-load-api~1]
   public applySelection(selection: Partial<PricingSelection>): ApplySelectionResult {
-    // [impl->req~apply-selection-not-ready~1] [impl->req~apply-selection-refusal-keeps-state~1]
     if (!this._isReady()) {
       return this._refuseSelection(undefined, {
         code: 'PR_SELECTION_NOT_READY',
@@ -563,7 +543,6 @@ export class PricingRendererElement extends LitElement {
         message: 'The pricing is not ready; applySelection was ignored.',
       });
     }
-    // [impl->req~apply-selection-controlled~1]
     if (this.selection !== undefined) {
       return this._refuseSelection(this._snapshot(), {
         code: 'PR_SELECTION_CONTROLLED',
@@ -571,16 +550,12 @@ export class PricingRendererElement extends LitElement {
         message: 'The selection property is set; applySelection was ignored.',
       });
     }
-    // [impl->req~apply-selection-uses-selection-in-effect~1] [impl->req~apply-selection-input-unmutated~1]
-    // [impl->req~apply-selection-input-detached~1]
     const { removedAddOnIds, diagnostics, ...next } = applySelectionInput(
       this._normalized!,
       this._selectionInEffect()!,
       cloneValue(selection),
     );
-    // [impl->req~apply-selection-silent~1] [impl->req~apply-selection-no-dialog~1]
     this._internalSelection = next.selection;
-    // [impl->req~apply-selection-discards-pending~1]
     if (this._pendingAddOnChange) this._cancelAddOnChange();
     this.requestUpdate();
     const state = this._snapshot()!;
@@ -630,8 +605,7 @@ export class PricingRendererElement extends LitElement {
     return result;
   }
 
-  // [impl->req~apply-selection-diagnostic-event~1] [impl->req~apply-selection-no-empty-diagnostic~1]
-  // [impl->req~apply-selection-diagnostics-not-rendered~1] the rendered list is left unchanged
+  // the rendered list is left unchanged
   private _dispatchSelectionDiagnostics(diagnostics: PricingDiagnostic[]): void {
     if (diagnostics.length === 0) return;
     this.dispatchEvent(
@@ -648,19 +622,17 @@ export class PricingRendererElement extends LitElement {
     if (result.value) {
       this._normalized = result.value;
       this._priceStabilizer.reset();
-      // [impl->req~default-selection-reconciled~1] [impl->req~apply-selection-reload-restarts~1]
       this._internalSelection = reconcileSelection(
         result.value,
         mergeSelection(result.value, this.defaultSelection),
       ).selection;
       this._expandedGroups = new Set();
-      // [impl->req~addon-grid-cap~1] the add-on search and reveal state start over with a new pricing
+      // the add-on search and reveal state start over with a new pricing
       this._addOnSearch = '';
       this._addOnsRevealed = false;
       this._onlyDifferencesOverride = undefined;
       this._pendingAddOnChange = undefined;
       this._previousFocus = undefined;
-      // [impl->req~summary-breakdown-closes-on-load~1]
       this._breakdownOpen = false;
       const viewModel = createPricingViewModel(
         result.value,
@@ -671,7 +643,6 @@ export class PricingRendererElement extends LitElement {
         this._expandedGroups.add(viewModel.comparisonGroups[0].id);
       }
       this._status = 'ready';
-      // [impl->req~ready-detail-selection~1] [impl->req~apply-selection-in-ready-listener~1]
       // Ready state and internal selection are set before the dispatch and not assigned after it,
       // so a listener's applySelection call stays in effect for this load.
       this.dispatchEvent(
@@ -696,7 +667,7 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   }
 
-  // [impl->req~core-selection-in-effect~1] the core treats only `false` as off, the element any
+  // the core treats only `false` as off, the element any
   // falsy value
   private _effectiveSelection(): PricingSelection | undefined {
     const selection = this.selection ?? this._internalSelection;
@@ -726,7 +697,7 @@ export class PricingRendererElement extends LitElement {
     );
   }
 
-  // [impl->req~cta-summary-action~1] the relation between the current side and the selection in
+  // the relation between the current side and the selection in
   // effect, both on the loaded pricing
   private _summaryAction(
     viewModel: PricingViewModel,
@@ -751,7 +722,6 @@ export class PricingRendererElement extends LitElement {
   }
 
   private _setSelection(input: PricingSelection): void {
-    // [impl->req~events-reconciled-selection~1] [impl->req~controlled-selection-untouched~1]
     const next = this._normalized ? reconcileSelection(this._normalized, input).selection : input;
     if (this.selection === undefined) {
       this._internalSelection = next;
@@ -775,18 +745,15 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   }
 
-  // [impl->req~core-plan-change-immediate~1] [impl->req~core-plan-change-pending~1]
   private _selectPlan = (planId: string): void => {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
     const change = planSelectionChange(this._normalized, selection, { type: 'plan', planId });
     if (change.kind === 'apply') {
-      // [impl->req~plan-change-immediate~1]
       this._setSelection(change.selection);
       return;
     }
-    // [impl->req~plan-change-confirmation~1] [impl->req~pending-plan-change-shape~1]
     this._openChangeDialog(change.pending);
   };
 
@@ -810,7 +777,6 @@ export class PricingRendererElement extends LitElement {
     this._setSelection({ ...selection, billingPeriod });
   };
 
-  // [impl->req~core-selection-with-variable~1]
   private _updateVariable = (path: string, value: unknown): void => {
     const selection = this._effectiveSelection();
     if (!selection) return;
@@ -823,8 +789,7 @@ export class PricingRendererElement extends LitElement {
     this._setSelection({ ...selection, variables: cloneValue(this._normalized.variables) });
   };
 
-  // [impl->req~core-addon-select-change~1] [impl->req~core-addon-deselect-change~1]
-  // [impl->req~core-addon-change-direct~1] the dependencies to add are the transitive closure of
+  // the dependencies to add are the transitive closure of
   // dependsOn, so a two-level chain is added whole
   private _toggleAddOn = (addOnId: string, selected: boolean): void => {
     if (!this._normalized) return;
@@ -847,19 +812,16 @@ export class PricingRendererElement extends LitElement {
     void this.updateComplete.then(() => this._restoreDialogFocus());
   };
 
-  // [impl->req~core-apply-selection-change~1]
   private _applyAddOnChange(change: PendingAddOnChange): void {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
     if (!selection) return;
-    // [impl->req~plan-change-apply~1]
     const next = applySelectionChange(this._normalized, selection, change);
     this._pendingAddOnChange = undefined;
     this._setSelection(next);
     void this.updateComplete.then(() => this._restoreDialogFocus());
   }
 
-  // [impl->req~core-selection-with-addon-quantity~1]
   private _updateAddOnQuantity = (addOnId: string, quantity: number): void => {
     if (!this._normalized) return;
     const selection = this._effectiveSelection();
@@ -873,7 +835,6 @@ export class PricingRendererElement extends LitElement {
     }
   };
 
-  // [impl->req~plan-change-cancel~1]
   private _cancelAddOnChange = (): void => {
     this._pendingAddOnChange = undefined;
     this.requestUpdate();
@@ -892,11 +853,10 @@ export class PricingRendererElement extends LitElement {
     metadata?: Record<string, unknown>,
     origin?: ActionOrigin,
   ): boolean => {
-    // [impl->req~cta-pending-no-event~1] a link CTA sees `false` and cancels its navigation
+    // a link CTA sees `false` and cancels its navigation
     if (this.pendingActionId) return false;
     const current = this._viewModel();
     if (!current || !this._normalized) return false;
-    // [impl->req~events-reconciled-selection~1]
     const reconciled = reconcileSelection(this._normalized, current.resolved.selection).selection;
     const viewModel = this._priceStabilizer.stabilize(
       createPricingViewModel(this._normalized, reconciled, { ...this._viewModelOptions() }),
@@ -908,7 +868,6 @@ export class PricingRendererElement extends LitElement {
       selection: reconciled,
       resolved: viewModel.resolved,
       ...(metadata ? { metadata } : {}),
-      // [impl->req~cta-event-relation~1] [impl->req~cta-summary-action-event~1]
       ...(origin ? { relation: origin.relation, source: origin.source } : {}),
     };
     const event: PricingActionEvent = new CustomEvent('pricing-action', {
@@ -936,7 +895,7 @@ export class PricingRendererElement extends LitElement {
     this.requestUpdate();
   };
 
-  // [impl->req~reveal-focus-comparison~1] focus moves to the first row the reveal adds
+  // focus moves to the first row the reveal adds
   private _revealGroup = (groupId: string, origin?: HTMLElement, byKeyboard = false): void => {
     const container = origin?.closest('tbody, .pr-comparison-group') ?? undefined;
     const before = container?.querySelectorAll(comparisonRowSelector).length ?? 0;
@@ -963,13 +922,12 @@ export class PricingRendererElement extends LitElement {
     else target.focus();
   }
 
-  // [impl->req~summary-breakdown-stays-open~1] no selection change resets the open state
+  // no selection change resets the open state
   private _toggleBreakdown = (): void => {
     this._breakdownOpen = !this._breakdownOpen;
     this.requestUpdate();
   };
 
-  // [impl->req~summary-breakdown-escape~1] [impl->req~summary-breakdown-escape-scope~1]
   // Escape closes the panel only from the toggle or from inside the panel; the dialog, which makes
   // the rest inert, keeps its own Escape handling and leaves the panel as it is.
   private _closeBreakdownOnEscape(event: KeyboardEvent): void {
@@ -989,7 +947,6 @@ export class PricingRendererElement extends LitElement {
       return;
     }
     if (event.key === 'Escape') {
-      // [impl->req~plan-change-cancel~1]
       event.preventDefault();
       this._cancelAddOnChange();
       return;
@@ -1035,7 +992,7 @@ export class PricingRendererElement extends LitElement {
       this._addOnSearch = value;
       this.requestUpdate();
     },
-    // [impl->req~reveal-focus-addons~1] focus moves to the first add-on card the reveal adds
+    // focus moves to the first add-on card the reveal adds
     revealAddOns: (byKeyboard = false) => {
       const shown = (): HTMLElement[] => [...this.querySelectorAll<HTMLElement>(addOnCardSelector)];
       const before = new Set(shown().map((card) => card.dataset.addOnId));
@@ -1055,7 +1012,6 @@ export class PricingRendererElement extends LitElement {
     const slots = requestedSlotsOf(this.slots);
     if (this._status === 'loading' || this._status === 'idle') {
       const loadingTitleId = `${this._idPrefix}-loading-title`;
-      // [impl->req~loading-label-localized~1]
       const loadingLabel =
         this.loadingLabel ?? translate(getMessages(this.locale, this.messages), 'pricing.loading');
       if (slots.has('loading')) return renderLoadingSlotShell(loadingTitleId, loadingLabel);
@@ -1074,7 +1030,7 @@ export class PricingRendererElement extends LitElement {
     if (!this._normalized || this._status === 'error') {
       if (slots.has('error')) return renderErrorSlotShell(this._diagnostics);
       const messages = getMessages(this.locale, this.messages);
-      // [impl->req~error-state-human-message~1] the codes and messages stay inside a closed details
+      // the codes and messages stay inside a closed details
       return html`
         <section class="pr-shell pr-error" role="alert">
           <h2>${translate(messages, 'pricing.error')}</h2>
@@ -1111,12 +1067,12 @@ export class PricingRendererElement extends LitElement {
     // Without a toolbar the user cannot undo a filter, so the search text and the checkbox override
     // are ignored while it is hidden (the stored values are kept).
     const toolbarShown = comparisonRowTotal(viewModel) > toolbarThreshold;
-    // [impl->req~shorter-page-only-differences~2] a forced value is ignored without the toolbar,
+    // a forced value is ignored without the toolbar,
     // because no checkbox exists to undo it
     const initialOnlyDifferences =
       this._onlyDifferencesOverride ??
       resolveOnlyDifferences(viewModel, this.onlyDifferences, toolbarThreshold);
-    // [impl->req~current-selection-private-plan~1] the pricing, not the visible plans, defines it
+    // the pricing, not the visible plans, defines it
     const current = deriveCurrentContext(this._normalized, this._currentSelection);
     const hidden = hiddenSectionsOf(this.hideSections);
     const state: RenderState = {
@@ -1174,7 +1130,6 @@ export class PricingRendererElement extends LitElement {
               : nothing
           }
           ${
-            // [impl->req~hide-sections-render~1] [impl->req~hide-sections-hero-name~1]
             // the shell stays labelled by the title when the hero is hidden
             hidden.has('hero')
               ? html`<h2 class="pr-sr-only" id=${instanceId(state, 'title')}>

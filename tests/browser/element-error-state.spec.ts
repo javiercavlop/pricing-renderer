@@ -4,7 +4,6 @@ import { openRenderer } from './helpers/spectra.js';
 // A loader that rejects puts the element in the error state: the reader sees one sentence and the
 // retry button, the codes stay in a closed details, and retry loads again. The stand-in version is
 // tests/unit/error-state.test.ts.
-// [utest->req~error-state-human-message~1]
 
 type ErrorElement = HTMLElement & {
   src?: string;

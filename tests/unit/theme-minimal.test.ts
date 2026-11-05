@@ -82,7 +82,6 @@ const summary = (rule: Rule): unknown => ({
 const minimalRules = (): Rule[] => parseRules(readCss(minimalPath));
 const themeRules = (): Rule[] => parseRules(readCss(themePath));
 
-// [utest->req~theme-minimal-tokens~1]
 describe('theme-minimal.css tokens', () => {
   it('uses the pricing-renderer.theme layer for every rule', () => {
     const rules = minimalRules();
@@ -132,7 +131,6 @@ const COLOR_TOKENS_FLAT_EXEMPT = new Set([
   '--pr-color-warning-surface',
 ]);
 
-// [utest->req~theme-minimal-flat~1]
 describe('theme-minimal.css is flat', () => {
   it('sets every --pr-shadow-* token to none', () => {
     const declared = minimalRules().flatMap((rule) =>
@@ -242,7 +240,6 @@ const pairs: Array<[string, string]> = [
   ['--pr-color-focus', '--pr-color-surface'],
 ];
 
-// [utest->req~theme-minimal-contrast~1]
 describe('theme-minimal.css contrast', () => {
   it('computes contrast with a known pair', () => {
     expect(contrast([0, 0, 0], [255, 255, 255])).toBeCloseTo(21, 5);
@@ -317,7 +314,6 @@ describe('theme-minimal.css leaves the background to the host', () => {
   });
 });
 
-// [utest->req~theme-minimal-export~1]
 describe('theme-minimal.css package export', () => {
   it('exports ./theme-minimal.css from dist/styles', () => {
     const manifest = JSON.parse(readFileSync(packagePath, 'utf8')) as {

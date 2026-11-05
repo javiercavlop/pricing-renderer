@@ -10,7 +10,6 @@ const radio = (planId: string): string =>
 
 const open = (page: Page): Promise<void> => page.goto('/react-slots.html?mode=state');
 
-// [utest->req~renderer-state-early-listen~1]
 test.describe('renderer state listens from the commit', () => {
   test('The first pricing-ready reaches the snapshot', async ({ page }) => {
     await open(page);

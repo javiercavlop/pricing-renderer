@@ -70,7 +70,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// [utest->req~renderer-state-early-listen~1]
 describe('usePricingRendererState: attach from the layout effect', () => {
   it('attaches the listeners when only the layout callbacks run', async () => {
     vi.stubGlobal('document', {});

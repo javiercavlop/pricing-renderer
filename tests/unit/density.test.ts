@@ -32,7 +32,6 @@ async function loadElement(): Promise<ElementClass> {
   return (loaded as { PricingRendererElement: ElementClass }).PricingRendererElement;
 }
 
-// [utest->req~density-attribute~1]
 describe('density property of the element', () => {
   it('is a reflected property with the density attribute, and the attribute is observed', async () => {
     const Element = await loadElement();
@@ -119,7 +118,6 @@ async function setDensityAttribute(element: Mounted, value: string | null): Prom
   await element.updateComplete;
 }
 
-// [utest->req~density-attribute~1]
 describe('density attribute of a connected element', () => {
   it('is not added when density is never set', async () => {
     const element = await mount();
@@ -192,7 +190,6 @@ describe('density attribute of a connected element', () => {
   });
 });
 
-// [utest->req~density-attribute~1]
 describe('density default stays unchanged', () => {
   it('writes no data-density attribute in any source of the element', () => {
     const files = readdirSync(elementRoot).filter((file) => file.endsWith('.ts'));
@@ -252,7 +249,6 @@ const header = `
 const element = (attributes: string): string =>
   `${header}\nexport const element = <PricingRenderer yaml={s} ${attributes} />;`;
 
-// [utest->req~density-react~1]
 describe('React density prop', () => {
   it('accepts comfortable and compact', () => {
     expect(messages(typeCheckSnippet(element(`density="comfortable"`)))).toEqual([]);
@@ -325,7 +321,6 @@ function themeDefaults(): Map<string, string> {
   return defaults;
 }
 
-// [utest->req~density-compact-tokens~1]
 describe('compact density block of base.css', () => {
   it('has one pricing-renderer[density=compact] block', () => {
     const blocks = compactBlocks();
@@ -399,7 +394,6 @@ describe('compact density block of base.css', () => {
   });
 });
 
-// [utest->req~density-manifest~1]
 describe('density in custom-elements.json', () => {
   interface Manifest {
     modules: Array<{

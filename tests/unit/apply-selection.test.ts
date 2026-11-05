@@ -48,7 +48,6 @@ function currentOf(
 }
 
 describe('applySelectionInput', () => {
-  // [utest->req~apply-input-result~1]
   it('returns the selection, removed ids and diagnostics for the Delivera contract', () => {
     expect(typeof applySelectionInput).toBe('function');
     const result = applySelectionInput(acme, acmeDefaults, contractC());
@@ -66,13 +65,11 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(acme, result.selection).subtotal).toBe(80);
   });
 
-  // [utest->req~apply-input-exported~1]
   it('is exported from the core entry point', () => {
     expect(Object.keys(core)).toContain('applySelectionInput');
     expect((core as Record<string, unknown>).applySelectionInput).toBe(applySelectionInput);
   });
 
-  // [utest->req~apply-input-unknown-plan~1]
   it('keeps the current plan when the input plan is unknown', () => {
     const result = applySelectionInput(acme, currentOf(acme, { planId: 'growth' }), {
       planId: 'legacy',
@@ -80,13 +77,11 @@ describe('applySelectionInput', () => {
     expect(result.selection.planId).toBe('growth');
   });
 
-  // [utest->req~apply-input-unknown-plan~1]
   it('compares plan ids with case sensitivity', () => {
     const result = applySelectionInput(acme, acmeDefaults, { planId: 'Growth' });
     expect(result.selection.planId).toBe('starter');
   });
 
-  // [utest->req~apply-input-unknown-billing~1]
   it('keeps the current billing period when the input period is unknown (acme)', () => {
     const result = applySelectionInput(acme, currentOf(acme, { billingPeriod: 'yearly' }), {
       planId: 'growth',
@@ -96,7 +91,6 @@ describe('applySelectionInput', () => {
     expect(result.selection.planId).toBe('growth');
   });
 
-  // [utest->req~apply-input-unknown-billing~1]
   it('keeps the base billing period on a pricing without billing (Slack)', () => {
     const result = applySelectionInput(slack, slackDefaults, {
       planId: 'PRO',
@@ -115,7 +109,6 @@ describe('applySelectionInput', () => {
     },
   });
 
-  // [utest->req~apply-input-unknown-addons~1]
   it('leaves unknown add-on ids out of the selection', () => {
     const result = applySelectionInput(acme, acmeDefaults, ghostInput());
     expect(result.selection.addOns).toEqual({ extraStorage: { selected: true, quantity: 2 } });
@@ -131,7 +124,6 @@ describe('applySelectionInput', () => {
     ['null', null],
     ['number', 2],
   ] as const) {
-    // [utest->req~apply-input-malformed-entries~1]
     it(`treats a ${label} entry of a known add-on as omitted`, () => {
       const input = { planId: 'growth', addOns: { extraStorage: entry } } as never;
       const apply = () => applySelectionInput(acme, malformedCurrent(), input);
@@ -140,7 +132,6 @@ describe('applySelectionInput', () => {
     });
   }
 
-  // [utest->req~apply-input-malformed-entries~1]
   it('treats addOns null as omitted', () => {
     const input = { planId: 'growth', addOns: null } as never;
     const apply = () => applySelectionInput(acme, malformedCurrent(), input);
@@ -149,7 +140,6 @@ describe('applySelectionInput', () => {
     expect(apply().selection.addOns).toEqual({});
   });
 
-  // [utest->req~apply-input-malformed-entries~1]
   it('treats variables null as omitted', () => {
     const current = currentOf(acme, {
       variables: { ...defaultVariables, seats: 40 },
@@ -160,7 +150,6 @@ describe('applySelectionInput', () => {
     expect(apply().selection.variables).toEqual(acmeDefaults.variables);
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps NaN and Infinity quantities of an unselected entry', () => {
     const quantityOf = (quantity: number) =>
       applySelectionInput(acme, acmeDefaults, {
@@ -177,19 +166,16 @@ describe('applySelectionInput', () => {
       addOns: { extraStorage: entry },
     } as never).selection.addOns.extraStorage;
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps an unselected entry without a quantity as it is', () => {
     const entry = entryOf({ selected: false });
     expect(entry).toEqual({ selected: false });
     expect(entry).not.toHaveProperty('quantity');
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps a non-numeric quantity of an unselected entry', () => {
     expect(entryOf({ selected: false, quantity: 'abc' })?.quantity).toBe('abc');
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps extra keys of an unselected entry', () => {
     expect(entryOf({ selected: false, quantity: 2, note: 'x' })).toEqual({
       selected: false,
@@ -198,7 +184,6 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps extra keys of a selected entry and normalizes its quantity', () => {
     expect(entryOf({ selected: true, quantity: 25, note: 'x' })).toEqual({
       selected: true,
@@ -207,7 +192,6 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('counts a truthy selected value as selected', () => {
     const entry = entryOf({ selected: 1, quantity: 25 });
     expect(entry?.selected).toBeTruthy();
@@ -219,7 +203,6 @@ describe('applySelectionInput', () => {
     ['string', 'x'],
     ['boolean', true],
   ] as const) {
-    // [utest->req~apply-input-malformed-entries~1]
     it(`treats a ${label} entry of a known add-on as omitted`, () => {
       const input = { planId: 'growth', addOns: { extraStorage: entry } } as never;
       const apply = () => applySelectionInput(acme, malformedCurrent(), input);
@@ -232,7 +215,6 @@ describe('applySelectionInput', () => {
     ['an array', []],
     ['a number', 7],
   ] as const) {
-    // [utest->req~apply-input-malformed-entries~1]
     it(`treats variables as omitted when it is ${label}`, () => {
       const current = currentOf(acme, { variables: { ...defaultVariables, seats: 40 } });
       const input = { planId: 'starter', variables } as never;
@@ -246,7 +228,6 @@ describe('applySelectionInput', () => {
     ['a string', 'x'],
     ['an array', []],
   ] as const) {
-    // [utest->req~apply-input-malformed-entries~1]
     it(`treats addOns as omitted when it is ${label}`, () => {
       const input = { planId: 'growth', addOns } as never;
       const apply = () => applySelectionInput(acme, malformedCurrent(), input);
@@ -255,7 +236,6 @@ describe('applySelectionInput', () => {
     });
   }
 
-  // [utest->req~apply-input-warnings~1]
   it('warns about an unknown plan', () => {
     const result = applySelectionInput(acme, currentOf(acme, { planId: 'growth' }), {
       planId: 'legacy',
@@ -270,7 +250,6 @@ describe('applySelectionInput', () => {
     expect(result.diagnostics[0]?.message).not.toBe('');
   });
 
-  // [utest->req~apply-input-warnings~1]
   it('warns about an unknown billing period', () => {
     const result = applySelectionInput(acme, currentOf(acme, { billingPeriod: 'yearly' }), {
       planId: 'growth',
@@ -284,7 +263,6 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-warnings~1]
   it('warns about unknown add-ons in the key order of the input', () => {
     const result = applySelectionInput(acme, acmeDefaults, ghostInput());
     expect(result.diagnostics).toHaveLength(2);
@@ -300,13 +278,11 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-warnings~1]
   it('reports no diagnostics for valid or omitted fields', () => {
     expect(applySelectionInput(acme, acmeDefaults, {}).diagnostics).toEqual([]);
     expect(applySelectionInput(acme, acmeDefaults, contractC()).diagnostics).toEqual([]);
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('normalizes the quantity of selected add-ons (above maximum, zero, NaN)', () => {
     const quantities = [25, 0, Number.NaN].map(
       (quantity) =>
@@ -318,7 +294,6 @@ describe('applySelectionInput', () => {
     expect(quantities).toEqual([10, 1, 1]);
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('keeps the input quantity of an unselected entry', () => {
     const result = applySelectionInput(acme, acmeDefaults, {
       planId: 'growth',
@@ -327,7 +302,6 @@ describe('applySelectionInput', () => {
     expect(result.selection.addOns.extraStorage).toEqual({ selected: false, quantity: 25 });
   });
 
-  // [utest->req~apply-input-quantities~1]
   it('applies no maximum when the add-on has none (Slack)', () => {
     const result = applySelectionInput(slack, slackDefaults, {
       planId: 'PRO',
@@ -339,7 +313,6 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-merge-defaults~1]
   it('takes the schema defaults for omitted fields, not the current selection', () => {
     const current = currentOf(acme, {
       planId: 'growth',
@@ -356,7 +329,6 @@ describe('applySelectionInput', () => {
     });
   });
 
-  // [utest->req~apply-input-merge-defaults~1]
   it('drops explicit undefined fields', () => {
     const result = applySelectionInput(acme, currentOf(acme, { planId: 'growth' }), {
       planId: undefined,
@@ -367,7 +339,6 @@ describe('applySelectionInput', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  // [utest->req~apply-input-merge-defaults~1]
   it('merges variables without validating them', () => {
     const result = applySelectionInput(acme, acmeDefaults, {
       planId: 'starter',
@@ -383,7 +354,6 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(acme, result.selection).subtotal).toBe(48);
   });
 
-  // [utest->req~apply-input-merge-defaults~1]
   it('replaces the current add-ons', () => {
     const current = currentOf(acme, {
       planId: 'growth',
@@ -393,7 +363,6 @@ describe('applySelectionInput', () => {
     expect(result.selection.addOns).toEqual({});
   });
 
-  // [utest->req~apply-input-reconcile~1]
   it('reconciles Starter with extraStorage on acme', () => {
     const result = applySelectionInput(acme, acmeDefaults, {
       planId: 'starter',
@@ -404,7 +373,6 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(acme, result.selection).subtotal).toBe(20);
   });
 
-  // [utest->req~apply-input-reconcile~1]
   it('removes the Business+ add-on on Slack PRO and keeps the overage add-on', () => {
     const result = applySelectionInput(slack, slackDefaults, {
       planId: 'PRO',
@@ -424,7 +392,6 @@ describe('applySelectionInput', () => {
     expect(resolved.requiresQuote).toBe(false);
   });
 
-  // [utest->req~apply-input-reconcile~1]
   it('drops the overage add-on on Slack FREE', () => {
     const result = applySelectionInput(slack, slackDefaults, {
       planId: 'FREE',
@@ -434,7 +401,6 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(slack, result.selection).subtotal).toBe(0);
   });
 
-  // [utest->req~apply-input-removed-diagnostics~1]
   it('reports each removed add-on as an info diagnostic in removal order', () => {
     const result = applySelectionInput(acme, acmeDefaults, {
       planId: 'starter',
@@ -468,7 +434,6 @@ describe('applySelectionInput', () => {
     },
   });
 
-  // [utest->req~apply-input-diagnostic-order~1]
   it('orders warnings by step before the removal diagnostics', () => {
     const result = applySelectionInput(acme, acmeDefaults, everyStepInput());
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
@@ -482,7 +447,6 @@ describe('applySelectionInput', () => {
     expect(resolvePricing(acme, result.selection).subtotal).toBe(20);
   });
 
-  // [utest->req~apply-input-no-mutation~1]
   it('does not mutate pricing, current or input', () => {
     const current = currentOf(acme, { planId: 'growth' });
     const input = everyStepInput();

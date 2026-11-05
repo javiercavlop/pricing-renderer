@@ -26,7 +26,6 @@ function discard(cancel: () => Promise<void> | undefined): void {
   }
 }
 
-// [impl->req~load-timeout-covers-every-step~1]
 // Settles with the promise, or rejects with the signal's reason as soon as the signal aborts (at
 // once when it is already aborted). A step that ignores the signal is abandoned: its late result is
 // dropped and its rejection is swallowed. The abort listener is removed when the race ends.
@@ -167,7 +166,6 @@ export async function loadPricingFromUrl(
       if (typeof loaded !== 'string') {
         return normalizePricing(loaded as IPricingLike, options.normalize);
       }
-      // [impl->req~custom-loader-max-bytes~1]
       if (new TextEncoder().encode(loaded).byteLength > maxBytes) {
         return loadError(
           'PR_SOURCE_TOO_LARGE',
@@ -200,7 +198,6 @@ export async function loadPricingFromUrl(
         `Pricing request failed with HTTP ${response.status}.`,
       );
     }
-    // [impl->req~fetch-max-bytes-while-reading~1]
     const declaredLength = Number(response.headers.get('content-length'));
     if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
       discard(() => response.body?.cancel());

@@ -37,7 +37,6 @@ class Box {
   constructor(readonly value: number) {}
 }
 
-// [utest->req~element-input-structural-compare~1]
 describe('sameInput', () => {
   it('compares primitives with Object.is', () => {
     expect(sameInput(1, 1)).toBe(true);

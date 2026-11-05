@@ -8,7 +8,7 @@ import { renderComparison } from '../../src/element/renderers.js';
 import type { RenderActions, RenderState } from '../../src/element/renderers.js';
 import { parsePricingYaml } from '../../src/yaml/index.js';
 
-// SPECTRA item 9 (docs/agent-work/spectra-item9-tags/spec.md): comparison groups follow the
+// SPECTRA item 9: comparison groups follow the
 // declared tags. `kind` is read through a loose view, so a missing field fails by assertion.
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -190,7 +190,6 @@ function ids(group: PricingComparisonGroup | undefined): string[] {
 }
 
 describe('classification by declared tags', () => {
-  // [utest->req~tag-groups-declared~1]
   it('does not count the default tags as declared', () => {
     const viewModel = build(fixtureYaml(CLICKUP));
     const rows = viewModel.comparisonGroups.flatMap((group) => group.rows);
@@ -199,7 +198,6 @@ describe('classification by declared tags', () => {
     expect(viewModel.comparisonGroups.map((group) => group.id)).toEqual(['pr-untagged']);
   });
 
-  // [utest->req~tag-groups-declared~1]
   it('counts a declared tag named General', () => {
     const viewModel = build(tiny({ a: 'General', b: null }));
     expect(actualGroups(viewModel)).toEqual([
@@ -208,7 +206,6 @@ describe('classification by declared tags', () => {
     ]);
   });
 
-  // [utest->req~tag-groups-declared~1]
   it('does not count a blank tag', () => {
     const viewModel = build(tiny({ a: '"   "' }, { l: null }));
     expect(viewModel.comparisonGroups.map((group) => group.id)).toEqual(['pr-untagged']);
@@ -217,7 +214,6 @@ describe('classification by declared tags', () => {
 });
 
 describe('one headerless group for an untagged pricing', () => {
-  // [utest->req~tag-groups-none~1]
   it('gives ClickUp one group with features then usage limits', () => {
     const viewModel = build(fixtureYaml(CLICKUP));
     const groups = viewModel.comparisonGroups;
@@ -233,9 +229,6 @@ describe('one headerless group for an untagged pricing', () => {
     expect(ids(group)).toEqual(expected);
   });
 
-  // [utest->req~tag-groups-none~1]
-  // [utest->req~tag-groups-declared~1]
-  // [utest->req~tag-groups-partial~1]
   it('follows the declared tags in every SPECTRA fixture', () => {
     const failures: string[] = [];
     let untagged = 0;
@@ -258,7 +251,6 @@ describe('one headerless group for an untagged pricing', () => {
 });
 
 describe('no group header for the headerless group', () => {
-  // [utest->req~tag-groups-headerless~1]
   it('renders the ClickUp table without category rows', () => {
     const text = render(build(fixtureYaml(CLICKUP)));
     expect(count(text, /<tbody/g)).toBe(1);
@@ -266,7 +258,6 @@ describe('no group header for the headerless group', () => {
     expect(count(text, /data-pr-part="comparison-row"/g)).toBeGreaterThan(0);
   });
 
-  // [utest->req~tag-groups-headerless~1]
   it('renders the ClickUp compact layout without headings or toggles', () => {
     const text = render(build(fixtureYaml(CLICKUP)), { compact: true });
     expect(count(text, /<section class="pr-comparison-group"/g)).toBe(1);
@@ -275,7 +266,6 @@ describe('no group header for the headerless group', () => {
     expect(count(text, /class="pr-feature-card"/g)).toBeGreaterThan(0);
   });
 
-  // [utest->req~tag-groups-headerless~1]
   it('keeps headers for the zoom groups, the last one Other features', () => {
     const viewModel = build(fixtureYaml(ZOOM));
     const table = render(viewModel);
@@ -287,14 +277,12 @@ describe('no group header for the headerless group', () => {
 });
 
 describe('the headerless group is always expanded', () => {
-  // [utest->req~tag-groups-headerless-expanded~1]
   it('shows 30 rows and the remainder button without a click', () => {
     const text = render(build(fixtureYaml(CLICKUP)));
     expect(count(text, /data-pr-part="comparison-row"/g)).toBe(30);
     expect(text).toContain('Show 144 more');
   });
 
-  // [utest->req~tag-groups-headerless-expanded~1]
   it('shows every row once the group is revealed', () => {
     const text = render(build(fixtureYaml(CLICKUP)), {
       compact: true,
@@ -306,7 +294,6 @@ describe('the headerless group is always expanded', () => {
 });
 
 describe('no Expand all / Collapse all for a headerless comparison', () => {
-  // [utest->req~tag-groups-headerless-toolbar~1]
   it('keeps the ClickUp toolbar but drops both buttons', () => {
     const text = render(build(fixtureYaml(CLICKUP)));
     expect(text).toContain('data-pr-part="comparison-toolbar"');
@@ -316,7 +303,6 @@ describe('no Expand all / Collapse all for a headerless comparison', () => {
     expect(text).not.toContain('Collapse all');
   });
 
-  // [utest->req~tag-groups-headerless-toolbar~1]
   it('keeps both buttons for zoom', () => {
     const text = render(build(fixtureYaml(ZOOM)));
     expect(text).toContain('Expand all');
@@ -325,7 +311,6 @@ describe('no Expand all / Collapse all for a headerless comparison', () => {
 });
 
 describe('Other features group for a partly tagged pricing', () => {
-  // [utest->req~tag-groups-partial~1]
   it('puts the untagged zoom features then its usage limits in the last group', () => {
     const viewModel = build(fixtureYaml(ZOOM));
     const groups = viewModel.comparisonGroups;
@@ -350,7 +335,6 @@ describe('Other features group for a partly tagged pricing', () => {
     expect(groups.slice(0, -1).every((group) => kindOf(group) === 'tag')).toBe(true);
   });
 
-  // [utest->req~tag-groups-partial~1]
   it.each([SHOPIFY, ZENHUB])('holds only the untagged usage limits for %s', (path) => {
     const viewModel = build(fixtureYaml(path));
     const groups = viewModel.comparisonGroups;
@@ -364,7 +348,6 @@ describe('Other features group for a partly tagged pricing', () => {
     expect(groups.map((group) => group.id)).not.toContain('Usage limits');
   });
 
-  // [utest->req~tag-groups-partial~1]
   it('keeps a declared tag named like the special group separate', () => {
     const viewModel = build(tiny({ a: 'Other features', b: null }));
     expect(actualGroups(viewModel)).toEqual([
@@ -373,7 +356,6 @@ describe('Other features group for a partly tagged pricing', () => {
     ]);
   });
 
-  // [utest->req~tag-groups-partial~1]
   it('names the last group in Spanish and keeps the tag names', () => {
     const viewModel = build(fixtureYaml(ZOOM), { locale: 'es-ES' });
     const groups = viewModel.comparisonGroups;
@@ -383,7 +365,6 @@ describe('Other features group for a partly tagged pricing', () => {
 });
 
 describe('fully tagged pricing unchanged', () => {
-  // [utest->req~tag-groups-full-unchanged~1]
   it('keeps the acme groups, with kind tag', () => {
     const viewModel = build(fixtureYaml(ACME));
     expect(viewModel.comparisonGroups.map((group) => group.name)).toEqual([
@@ -394,7 +375,6 @@ describe('fully tagged pricing unchanged', () => {
     expect(viewModel.comparisonGroups.every((group) => kindOf(group) === 'tag')).toBe(true);
   });
 
-  // [utest->req~tag-groups-full-unchanged~1]
   it('keeps headers in the acme table and compact layouts', () => {
     const viewModel = build(fixtureYaml(ACME));
     const all = new Set(viewModel.comparisonGroups.map((group) => group.id));
@@ -408,7 +388,6 @@ describe('fully tagged pricing unchanged', () => {
 });
 
 describe('group marker on the public type', () => {
-  // [utest->req~tag-groups-kind~1]
   it('renders a hand-built group without kind with a header', () => {
     const base = build(fixtureYaml(ACME));
     const row = base.comparisonGroups[0]!.rows[0]!;
@@ -421,7 +400,6 @@ describe('group marker on the public type', () => {
     expect(text).toContain('Custom');
   });
 
-  // [utest->req~tag-groups-kind~1]
   it('marks the generated groups', () => {
     const kinds = (path: string) =>
       build(fixtureYaml(path)).comparisonGroups.map((group) => kindOf(group));
@@ -431,13 +409,11 @@ describe('group marker on the public type', () => {
 });
 
 describe('group names from the message catalog', () => {
-  // [utest->req~tag-groups-i18n~1]
   it('has the catalog values', () => {
     expect(enUS['pricing.otherFeatures']).toBe('Other features');
     expect(esES['pricing.otherFeatures']).toBe('Otras características');
   });
 
-  // [utest->req~tag-groups-i18n~1]
   it('takes the name from a host override', () => {
     const viewModel = build(fixtureYaml(ZOOM), { messages: { 'pricing.otherFeatures': 'More' } });
     const other = viewModel.comparisonGroups.find((group) => group.id === 'pr-other-features');
@@ -446,7 +422,6 @@ describe('group names from the message catalog', () => {
 });
 
 describe('normalized data and row category compatible', () => {
-  // [utest->req~tag-groups-compat~1]
   it('keeps the zoom tags and categories', () => {
     const parsed = parsePricingYaml(fixtureYaml(ZOOM));
     const normalized = parsed.value!;

@@ -8,7 +8,6 @@ import {
 import { expandCtaHref, planCtaView } from '../../src/element/cta.js';
 
 describe('expandCtaHref in one pass', () => {
-  // [utest->req~cta-href-template~1]
   it('does not expand a placeholder that the encoded plan id produces', () => {
     expect(expandCtaHref('/c/{planId}', '{planId}')).toBe('/c/%7BplanId%7D');
     expect(expandCtaHref('/c/{planId}/{planId}', 'a{planId}')).toBe(
@@ -34,21 +33,18 @@ describe('planCtaView with a link to another host', () => {
     return planCtaView(viewModel, viewModel.plans[0]!, {});
   }
 
-  // [utest->req~cta-href-template-unsafe~1]
   it('renders it as a button and keeps the raw value for the event', () => {
     const view = viewOf('//evil.example/{planId}');
     expect(view.href).toBeUndefined();
     expect(view.eventHref).toBe('//evil.example/pro%20plus%2Fx');
   });
 
-  // [utest->req~cta-href-template-unsafe~1]
   it('keeps the href of a single-slash path', () => {
     expect(viewOf('/checkout/{planId}').href).toBe('/checkout/pro%20plus%2Fx');
   });
 });
 
 describe('isSafeLink as docs/events.md describes it', () => {
-  // [utest->req~cta-href-template-unsafe~1]
   it('accepts http, https, mailto, a single leading slash, ./, ../ and #', () => {
     for (const href of [
       'http://example.com',
@@ -66,7 +62,6 @@ describe('isSafeLink as docs/events.md describes it', () => {
     }
   });
 
-  // [utest->req~cta-href-template-unsafe~1]
   it('rejects values that browsers read as another host', () => {
     for (const href of [
       '//evil.example',
@@ -86,7 +81,6 @@ describe('isSafeLink as docs/events.md describes it', () => {
     }
   });
 
-  // [utest->req~cta-href-template-unsafe~1]
   it('rejects a relative path, a query only, script schemes and nothing', () => {
     for (const href of [
       'checkout/growth',

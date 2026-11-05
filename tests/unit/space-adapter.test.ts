@@ -81,7 +81,6 @@ function runtimeImports(source: string): string[] {
 }
 
 describe('space subpath packaging', () => {
-  // [utest->req~space-subpath-export~1]
   it('maps ./space in package.json', async () => {
     const pkg = await readJson('../../package.json');
     expect(pkg.exports['./space']).toStrictEqual({
@@ -90,7 +89,6 @@ describe('space subpath packaging', () => {
     });
   });
 
-  // [utest->req~space-build~1]
   it('builds the subpath through its own tsconfig and checks it with attw', async () => {
     const root = await readJson('../../tsconfig.json');
     const project = await readJson('../../tsconfig.space.json');
@@ -103,7 +101,6 @@ describe('space subpath packaging', () => {
     );
   });
 
-  // [utest->req~space-no-runtime-deps~1]
   it('imports only types', async () => {
     const source = await readText('../../src/space/index.ts');
     const lines = source
@@ -114,14 +111,12 @@ describe('space subpath packaging', () => {
     }
   });
 
-  // [utest->req~space-no-runtime-deps~1]
   it('has no run-time import, multi-line or dynamic', async () => {
     const source = await readText('../../src/space/index.ts');
     expect(source).toMatch(/^import type\b/m);
     expect(runtimeImports(source)).toEqual([]);
   });
 
-  // [utest->req~space-no-runtime-deps~1]
   it('finds run-time imports that a line scan misses', () => {
     const sample = [
       "import type {\n  A,\n} from './types.js';",
@@ -134,7 +129,6 @@ describe('space subpath packaging', () => {
     expect(runtimeImports(sample)).toEqual(['import', 'export {\n  c,\n} from', 'import(']);
   });
 
-  // [utest->req~space-no-runtime-deps~1]
   it('loads in node without DOM globals', () => {
     expect(typeof (globalThis as { document?: unknown }).document).toBe('undefined');
     expect(Object.keys(space).sort()).toEqual([
@@ -147,17 +141,14 @@ describe('space subpath packaging', () => {
 });
 
 describe('selectionFromContract in the subpath', () => {
-  // [utest->req~space-select-from-contract~1]
   it('maps the Delivera contract', () => {
     expect(selectionFromContract(contractC(), 'acme')).toEqual(selectionC('growth'));
   });
 
-  // [utest->req~space-example-reexport~1]
   it('is the same function as the example re-export', () => {
     expect(exampleSelectionFromContract).toBe(selectionFromContract);
   });
 
-  // [utest->req~space-example-reexport~1]
   it('re-exports the SpaceContractLike type from the subpath', async () => {
     const probe: ExampleContractLike = contractC();
     const same: SpaceContractLike = probe;
@@ -170,7 +161,6 @@ describe('selectionFromContract in the subpath', () => {
 });
 
 describe('selectionFromContract with hostile keys', () => {
-  // [utest->req~space-map-missing-service~1]
   it('finds no plan for a service key that names an inherited property', () => {
     const contract = { subscriptionPlans: { acme: 'growth' }, subscriptionAddOns: {} };
     for (const serviceKey of ['constructor', 'toString', 'hasOwnProperty', '__proto__']) {
@@ -178,7 +168,6 @@ describe('selectionFromContract with hostile keys', () => {
     }
   });
 
-  // [utest->req~space-map-plan~1] [utest->req~space-map-addons~1]
   it('reads an own __proto__ key of parsed JSON without changing a prototype', () => {
     const contract = JSON.parse(
       '{"subscriptionPlans":{"__proto__":"growth"},' +
@@ -197,7 +186,6 @@ describe('selectionFromContract with hostile keys', () => {
     expect(({} as { selected?: boolean }).selected).toBeUndefined();
   });
 
-  // [utest->req~space-map-plan~1]
   it('ignores a plan id that is not a string', () => {
     const contract = { subscriptionPlans: { acme: 5 } } as unknown as SpaceContractLike;
     expect(selectionFromContract(contract, 'acme')).toStrictEqual({});
@@ -205,7 +193,6 @@ describe('selectionFromContract with hostile keys', () => {
 });
 
 describe('subscriptionFromSelection', () => {
-  // [utest->req~space-subscription-body~1]
   it('builds the novation body for the Delivera contract', () => {
     const s = afterOf(Side(acme, C()), Side(acme, C()));
     const body = subscriptionFromSelection('acme', '2026.07', s);
@@ -221,7 +208,6 @@ describe('subscriptionFromSelection', () => {
     ]);
   });
 
-  // [utest->req~space-subscription-body~1]
   it('drops the add-ons removed by a downgrade to Starter', () => {
     const s = afterOf(Side(acme, C()), Side(acme, START()));
     expect(subscriptionFromSelection('acme', '2026.07', s)).toStrictEqual({
@@ -231,7 +217,6 @@ describe('subscriptionFromSelection', () => {
     });
   });
 
-  // [utest->req~space-subscription-addons~1]
   it('sends the billed quantity of an add-on above its maximum', () => {
     const addOns = { extraStorage: addOn(25), prioritySuccess: addOn(1) };
     const s = afterOf(Side(acme, C()), Side(acme, { planId: 'growth', addOns }));
@@ -242,14 +227,12 @@ describe('subscriptionFromSelection', () => {
     });
   });
 
-  // [utest->req~space-subscription-version~1]
   it('keeps the dotted version as given', () => {
     const s = afterOf(Side(V1, M2()), Side(V2, M2()));
     const body = subscriptionFromSelection('mailer', V2.metadata.version!, s);
     expect(body.contractedServices).toStrictEqual({ mailer: '2.0' });
   });
 
-  // [utest->req~space-subscription-plan~1]
   it('leaves subscriptionPlans empty without a plan', () => {
     const noPlan = subscriptionFromSelection('acme', '2026.07', {
       addOns: { extraStorage: { selected: true, quantity: 3 } },
@@ -260,14 +243,12 @@ describe('subscriptionFromSelection', () => {
     expect(noPlan.subscriptionAddOns).toStrictEqual({ acme: { extraStorage: 3 } });
   });
 
-  // [utest->req~space-subscription-addons~1]
   it('keeps only selected add-ons with a finite quantity above 0, in key order', () => {
     const body = subscriptionFromSelection('acme', '1', oddSelection());
     expect(body.subscriptionAddOns).toStrictEqual({ acme: { f: 1.5, g: 4 } });
     expect(Object.keys(body.subscriptionAddOns.acme!)).toEqual(['f', 'g']);
   });
 
-  // [utest->req~space-subscription-body~1]
   it('keeps a __proto__ service key and add-on name as own keys', () => {
     const selection = JSON.parse(
       '{"planId":"growth","addOns":{"__proto__":{"selected":true,"quantity":2}}}',
@@ -281,7 +262,6 @@ describe('subscriptionFromSelection', () => {
     expect(Object.keys(body.subscriptionPlans)).toEqual(['__proto__']);
   });
 
-  // [utest->req~space-roundtrip~1]
   it('round-trips an upgrade to Enterprise through selectionFromContract', () => {
     const s = afterOf(Side(acme, C()), Side(acme, ENT()));
     const body = subscriptionFromSelection('acme', '2026.07', s);
@@ -296,7 +276,6 @@ describe('subscriptionFromSelection', () => {
 });
 
 describe('contractedVersion', () => {
-  // [utest->req~space-contracted-version~1]
   it('turns the escaped separator back into a dot', () => {
     const contract = { contractedServices: { acme: '2026_07', mailer: '1.0' } };
     expect(contractedVersion(contract, 'acme')).toBe('2026.07');
@@ -305,13 +284,11 @@ describe('contractedVersion', () => {
     expect(contractedVersion({}, 'acme')).toBeUndefined();
   });
 
-  // [utest->req~space-contracted-version~1]
   it('replaces every separator of the stored version', () => {
     const contract = { contractedServices: { acme: '2026_07_1_rc_2' } };
     expect(contractedVersion(contract, 'acme')).toBe('2026.07.1.rc.2');
   });
 
-  // [utest->req~space-contracted-version~1]
   it('finds no version for a service key that names an inherited property', () => {
     const contract = { contractedServices: { acme: '1_0' } };
     for (const serviceKey of ['constructor', 'toString', '__proto__']) {
@@ -321,7 +298,6 @@ describe('contractedVersion', () => {
 });
 
 describe('currentUsageFromContract', () => {
-  // [utest->req~space-current-usage~1]
   it('maps valid consumed values only', () => {
     const contract = usageContract();
     expect(currentUsageFromContract(contract, 'acme')).toStrictEqual({ storage: 150 });
@@ -329,7 +305,6 @@ describe('currentUsageFromContract', () => {
     expect(currentUsageFromContract(contract, 'other')).toStrictEqual({});
   });
 
-  // [utest->req~space-current-usage~1]
   it('accepts a consumed amount of 0 and rejects Infinity', () => {
     const contract = {
       usageLevels: {
@@ -343,7 +318,6 @@ describe('currentUsageFromContract', () => {
     expect(currentUsageFromContract(contract, 'acme')).toStrictEqual({ idle: 0 });
   });
 
-  // [utest->req~space-current-usage~1]
   it('keeps an own __proto__ limit name as data', () => {
     const contract = JSON.parse(
       '{"usageLevels":{"acme":{"__proto__":{"consumed":4},"storage":{"consumed":1}}}}',
@@ -356,7 +330,6 @@ describe('currentUsageFromContract', () => {
 });
 
 describe('space helpers and mutation', () => {
-  // [utest->req~space-no-mutation~1]
   it('leaves the arguments unchanged', () => {
     const usage = usageContract();
     const usageCopy = structuredClone(usage);

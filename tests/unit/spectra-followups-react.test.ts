@@ -49,7 +49,6 @@ describe('React adapter props for the toolbar and add-on filter', () => {
     declare const pricing: IPricingLike;
   `;
 
-  // [utest->spectra-followups:AC3]
   it('accepts onlyDifferences, toolbarThreshold and addOnFilterThreshold', () => {
     const diagnostics = typeCheckSnippet(
       `${header}\nexport const element = React.createElement(PricingRenderer, { pricing, onlyDifferences: false, toolbarThreshold: 10, addOnFilterThreshold: 3 });`,

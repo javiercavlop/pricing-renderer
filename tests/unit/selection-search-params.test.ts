@@ -79,7 +79,6 @@ const selectedQuantities = (selection: PricingSelection): Record<string, number>
   );
 
 describe('selectionToSearchParams', () => {
-  // [utest->req~search-params-write~1] [utest->req~search-params-write-variables~1]
   it('writes plan, billing, the selected add-ons and the variables in order', () => {
     const { selectionToSearchParams } = api();
     const selection: PricingSelection = {
@@ -102,7 +101,6 @@ describe('selectionToSearchParams', () => {
     ]);
   });
 
-  // [utest->req~search-params-write~1]
   it('writes the quantity of an id that contains a colon', () => {
     const { selectionToSearchParams } = api();
     const selection: PricingSelection = {
@@ -112,7 +110,6 @@ describe('selectionToSearchParams', () => {
     expect(selectionToSearchParams(selection)).toEqual([['addon', 'a:b:1']]);
   });
 
-  // [utest->req~search-params-write-variables~1]
   it('writes nested values as JSON and skips undefined values', () => {
     const { selectionToSearchParams } = api();
     const selection: PricingSelection = {
@@ -127,7 +124,6 @@ describe('selectionToSearchParams', () => {
 });
 
 describe('selectionFromSearchParams', () => {
-  // [utest->req~search-params-read~1]
   it('reads the entries of a shared link', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -150,7 +146,6 @@ describe('selectionFromSearchParams', () => {
     expect(diagnostics).toEqual([]);
   });
 
-  // [utest->req~search-params-read~1]
   it('returns the result of applySelectionInput with the current selection', () => {
     const { selectionFromSearchParams } = api();
     const current: PricingSelection = {
@@ -174,7 +169,6 @@ describe('selectionFromSearchParams', () => {
     expect(codesOf(result.diagnostics)).toEqual(['PR_SELECTION_UNKNOWN_PLAN']);
   });
 
-  // [utest->req~search-params-read~1]
   it('takes the first plan and billing entries', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -189,7 +183,6 @@ describe('selectionFromSearchParams', () => {
     expect(diagnostics).toEqual([]);
   });
 
-  // [utest->req~search-params-read-addon-quantity-nan~1]
   it('selects an add-on with a quantity that is not a number at its minimum', () => {
     const { selectionFromSearchParams } = api();
     const { selection, diagnostics } = selectionFromSearchParams(tiers, [['addon', 'pack:abc']]);
@@ -197,7 +190,6 @@ describe('selectionFromSearchParams', () => {
     expect(diagnostics).toEqual([]);
   });
 
-  // [utest->req~search-params-read-addon-quantity-nan~1]
   it('selects an add-on without a minimum and a quantity that is not a number at 1', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -215,7 +207,6 @@ describe('selectionFromSearchParams', () => {
     ['extraStorage:5', 'extraStorage:3', 3],
   ];
   for (const [first, last, quantity] of repeated) {
-    // [utest->req~search-params-read-repeated-addon~1]
     it(`takes the last of ${first} and ${last}`, () => {
       const { selectionFromSearchParams } = api();
       const entries: Pair[] = [
@@ -229,7 +220,6 @@ describe('selectionFromSearchParams', () => {
     });
   }
 
-  // [utest->req~search-params-var-text~1]
   it('keeps variable text that is not JSON as a string', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -241,7 +231,6 @@ describe('selectionFromSearchParams', () => {
     expect(selection.variables.prioritySupport).toBe(true);
   });
 
-  // [utest->req~search-params-var-type-unchecked~1]
   it('sets values of another type than the default without a diagnostic', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -256,7 +245,6 @@ describe('selectionFromSearchParams', () => {
 });
 
 describe('variable paths', () => {
-  // [utest->req~search-params-var-path-safe~3]
   it('ignores prototype pollution attempts', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -275,7 +263,6 @@ describe('variable paths', () => {
     expect(Object.hasOwn(selection.variables, 'prototype')).toBe(false);
   });
 
-  // [utest->req~search-params-var-path-safe~3]
   it('ignores a digit segment under a missing or scalar parent', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -290,7 +277,6 @@ describe('variable paths', () => {
     expect(result!.selection.variables.seats).toBe(5);
   });
 
-  // [utest->req~search-params-var-path-safe~3]
   it('ignores a non-digit segment under a scalar parent', () => {
     const { selectionFromSearchParams } = api();
     const before = structuredClone(acme.variables);
@@ -302,7 +288,6 @@ describe('variable paths', () => {
     expect(acme.variables).toEqual(before);
   });
 
-  // [utest->req~search-params-var-path-safe~3]
   it('ignores a digit segment under a record parent', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [['var.priceByRegion.0', '1']];
@@ -310,7 +295,6 @@ describe('variable paths', () => {
     expect(selection.variables.priceByRegion).toEqual({ 'eu-price': 8, 'us-price': 10 });
   });
 
-  // [utest->req~search-params-var-path-safe~3]
   it('ignores array indexes that are not canonical or not below the length', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -331,7 +315,6 @@ describe('variable paths', () => {
     expect(Object.keys(variables)).toEqual(['tiers']);
   });
 
-  // [utest->req~search-params-var-path-safe~3]
   it('writes an existing array element', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -342,7 +325,6 @@ describe('variable paths', () => {
     expect(selection.variables.tiers).toEqual([4, 2, 9]);
   });
 
-  // [utest->req~search-params-var-path-split~1]
   it('reads only bracketed digits as an index', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -355,7 +337,6 @@ describe('variable paths', () => {
     expect(selection.variables['tiers[ 5]']).toBe(7);
   });
 
-  // [utest->req~search-params-var-path-split~1]
   it('drops empty segments', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -368,7 +349,6 @@ describe('variable paths', () => {
     expect(Object.hasOwn(selection.variables, '')).toBe(false);
   });
 
-  // [utest->req~search-params-var-proto-keys~1]
   it('leaves __proto__ keys out of a JSON value', () => {
     const { selectionFromSearchParams } = api();
     const value =
@@ -382,7 +362,6 @@ describe('variable paths', () => {
     expect(Object.hasOwn(Object.prototype, 'x')).toBe(false);
   });
 
-  // [utest->req~search-params-var-proto-keys~1]
   it('leaves __proto__ keys out of objects inside an array', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [['var.seats', '[{"__proto__":{"x":1},"v":1}]']];
@@ -395,7 +374,6 @@ describe('variable paths', () => {
 });
 
 describe('malformed and large input', () => {
-  // [utest->req~search-params-read-no-throw~1]
   it('ignores entries that are not two strings', () => {
     const { selectionFromSearchParams } = api();
     const entries = [
@@ -415,7 +393,6 @@ describe('malformed and large input', () => {
     expect(result!.selection.variables.seats).toBe('{');
   });
 
-  // [utest->req~search-params-var-length-limit~1]
   it('ignores twenty thousand nested brackets and reads 2048 code units', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -430,7 +407,6 @@ describe('malformed and large input', () => {
     expect(result!.selection.variables.region).toBe('a'.repeat(2046));
   });
 
-  // [utest->req~search-params-var-length-limit~1]
   it('ignores a value of 2049 code units', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -444,7 +420,6 @@ describe('malformed and large input', () => {
     expect(selection.variables.memo).toBe('c'.repeat(2048));
   });
 
-  // [utest->req~search-params-var-depth-limit~1]
   it('ignores a value nested nine levels and reads eight', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -463,7 +438,6 @@ describe('malformed and large input', () => {
     ['eight arrays, the last one empty', '['.repeat(8) + ']'.repeat(8), true],
   ];
   for (const [name, value, read] of depths) {
-    // [utest->req~search-params-var-depth-limit~1]
     it(`${read ? 'reads' : 'ignores'} a value of ${name}`, () => {
       const { selectionFromSearchParams } = api();
       const { selection } = selectionFromSearchParams(acme, [['var.region', value]]);
@@ -471,7 +445,6 @@ describe('malformed and large input', () => {
     });
   }
 
-  // [utest->req~search-params-var-depth-limit~1]
   it('ignores a path of nine segments and reads eight', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -483,7 +456,6 @@ describe('malformed and large input', () => {
     expect(selection.variables.k).toEqual({ b: { c: { d: { e: { f: { g: { h: 1 } } } } } } });
   });
 
-  // [utest->req~search-params-entry-limit~1]
   it('reads the hundredth entry', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -493,7 +465,6 @@ describe('malformed and large input', () => {
     expect(selectionFromSearchParams(acme, entries).selection.planId).toBe('growth');
   });
 
-  // [utest->req~search-params-entry-limit~1]
   it('ignores the entry after one hundred entries', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -503,7 +474,6 @@ describe('malformed and large input', () => {
     expect(selectionFromSearchParams(acme, entries).selection.planId).toBe('starter');
   });
 
-  // [utest->req~search-params-entry-limit~1]
   it('stops an endless iterable after one hundred entries', () => {
     const { selectionFromSearchParams } = api();
     let pulls = 0;
@@ -525,7 +495,6 @@ describe('malformed and large input', () => {
 });
 
 describe('diagnostics of unknown ids', () => {
-  // [utest->req~search-params-diagnostic-id-length~2]
   it('cuts five thousand character ids to 64 code units', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -545,7 +514,6 @@ describe('diagnostics of unknown ids', () => {
     expect(addOn!.message).not.toContain('y'.repeat(65));
   });
 
-  // [utest->req~search-params-diagnostic-id-length~2]
   it('cuts a five thousand character billing id to 64 code units', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [['billing', 'v'.repeat(5000)]];
@@ -557,7 +525,6 @@ describe('diagnostics of unknown ids', () => {
     expect(selection.billingPeriod).toBe('monthly');
   });
 
-  // [utest->req~search-params-diagnostic-id-length~2]
   it('never cuts a surrogate pair in half', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -579,7 +546,6 @@ describe('diagnostics of unknown ids', () => {
     }
   });
 
-  // [utest->req~search-params-diagnostic-id-length~2]
   it('keeps an id of exactly 64 code units that ends in a high surrogate', () => {
     const { selectionFromSearchParams } = api();
     const id = 'q'.repeat(63) + '\uD83D';
@@ -588,7 +554,6 @@ describe('diagnostics of unknown ids', () => {
     expect(diagnostics[0]!.path).toBe('selection.addOns.' + id);
   });
 
-  // [utest->req~search-params-diagnostic-id-length~2]
   it('matches a long id in full', () => {
     const { selectionFromSearchParams } = api();
     const a64 = 'a'.repeat(64);
@@ -609,7 +574,6 @@ describe('diagnostics of unknown ids', () => {
     expect(diagnostics[0]!.path).toBe('selection.addOns.' + a64);
   });
 
-  // [utest->req~search-params-unknown-ids~1]
   it('warns about a legacy plan, a weekly billing and a ghost add-on', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -628,7 +592,6 @@ describe('diagnostics of unknown ids', () => {
     expect(selection.billingPeriod).toBe('monthly');
   });
 
-  // [utest->req~search-params-unknown-ids~1]
   it('warns about ids named like prototype properties', () => {
     const { selectionFromSearchParams } = api();
     const before = Object.getOwnPropertyNames(Object.prototype);
@@ -659,7 +622,6 @@ describe('diagnostics of unknown ids', () => {
 });
 
 describe('prefix', () => {
-  // [utest->req~search-params-prefix~1]
   it('writes every key with the prefix', () => {
     const { selectionToSearchParams } = api();
     const selection: PricingSelection = {
@@ -675,7 +637,6 @@ describe('prefix', () => {
     expect(pairs.every(([key]) => key.startsWith('pr-'))).toBe(true);
   });
 
-  // [utest->req~search-params-prefix~1]
   it('reads only the keys with the prefix', () => {
     const { selectionFromSearchParams } = api();
     const entries: Pair[] = [
@@ -689,7 +650,6 @@ describe('prefix', () => {
     expect(diagnostics).toEqual([]);
   });
 
-  // [utest->req~search-params-prefix~1]
   it('ignores prefixed keys without the prefix option', () => {
     const { selectionFromSearchParams } = api();
     const { selection } = selectionFromSearchParams(acme, [['pr-plan', 'growth']]);
@@ -699,7 +659,6 @@ describe('prefix', () => {
 
 describe('round trip', () => {
   for (const options of [undefined, { prefix: 'pr-' }]) {
-    // [utest->req~search-params-round-trip~2]
     it(`round-trips the acme selection with options ${JSON.stringify(options)}`, () => {
       const { selectionToSearchParams, selectionFromSearchParams } = api();
       const defaults = createDefaultSelection(acme);
@@ -739,7 +698,6 @@ describe('round trip', () => {
     ['tiers', () => tiers, { tiers: [4, 5, 6] }],
   ];
   for (const [name, pricingOf, variables] of variableRows) {
-    // [utest->req~search-params-round-trip-variables~1]
     it(`round-trips the URL-safe variables of ${name}`, () => {
       const { selectionToSearchParams, selectionFromSearchParams } = api();
       const pricing = pricingOf();
@@ -756,7 +714,6 @@ describe('round trip', () => {
 });
 
 describe('DOM-free signatures', () => {
-  // [utest->req~search-params-no-dom~1]
   it('reads a URLSearchParams and writes pairs a URLSearchParams accepts', () => {
     const { selectionToSearchParams, selectionFromSearchParams } = api();
     const { selection } = selectionFromSearchParams(acme, new URLSearchParams('plan=growth'));
@@ -766,7 +723,6 @@ describe('DOM-free signatures', () => {
     expect(new URLSearchParams(pairs).get('plan')).toBe('growth');
   });
 
-  // [utest->req~search-params-no-dom~1]
   it('names no DOM type in src/core/search-params.ts', async () => {
     api();
     const url = new URL('../../src/core/search-params.ts', import.meta.url);

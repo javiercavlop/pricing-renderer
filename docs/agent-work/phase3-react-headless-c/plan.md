@@ -1,1 +1,0 @@
-Wave 2 PR: P3-6, P3-7a, P3-7b, P3-8 (hooks usePricingSource, usePricingSelection, usePricingRendererState and their framework-free stores). Waves 3 (P3-10..12b) and 4 (P3-13..15) follow as separate PRs.

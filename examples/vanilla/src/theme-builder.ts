@@ -6,8 +6,6 @@ import shadcnCss from 'pricing-renderer/tokens-shadcn.css?inline';
 import minimalCss from 'pricing-renderer/theme-minimal.css?inline';
 import pricingYaml from '../../../tests/fixtures/acme-pricing.yml?raw';
 
-// [impl->req~theme-builder-page~1]
-
 configurePricingRenderer({
   locale: 'en-US',
   pricingPath: '/pricing',

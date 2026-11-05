@@ -115,7 +115,6 @@ function classOf(tag: string): string {
   return match?.[1] ?? match?.[2] ?? '';
 }
 
-// [utest->req~state-featured~1]
 describe('data-featured on plan cards', () => {
   it('is present on every plan card as true or false', () => {
     const cards = planCards(stateFor());
@@ -139,7 +138,6 @@ describe('data-featured on plan cards', () => {
   });
 });
 
-// [utest->req~state-available~1]
 describe('data-available on add-on cards', () => {
   it('matches the is-unavailable class on every add-on card', () => {
     const cards = addOnCards(stateFor());
@@ -169,7 +167,6 @@ describe('data-available on add-on cards', () => {
   });
 });
 
-// [utest->req~state-kind~1]
 describe('data-kind on plan CTAs', () => {
   it('is on the link and on the button form, from cta.kind', () => {
     const byPlan = Object.fromEntries(
@@ -207,7 +204,6 @@ describe('data-kind on plan CTAs', () => {
   });
 });
 
-// [utest->req~state-current~1]
 describe('data-current guard', () => {
   const state = (): RenderState =>
     stateFor({ currentPlanId: 'growth', currentAddOnIds: new Set(['extraStorage']) });

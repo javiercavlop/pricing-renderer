@@ -11,7 +11,7 @@ import {
   type Viewport,
 } from './helpers/spectra.js';
 
-// Spectra item 8 (docs/agent-work/spectra-item8-grid/spec.md): balanced plan columns and the first
+// Spectra item 8 (tests/fixtures/layout/plan-grid-spec.md): balanced plan columns and the first
 // CTA inside the first screen. Every test prints one SPECTRA_GRID JSON line.
 
 const viewports: Viewport[] = [
@@ -60,15 +60,13 @@ test.describe('spectra plan grid', () => {
 
         expect(state).toBe('ready');
         expect(grid.planCardCount).toBeGreaterThan(0);
-        // [utest->spectra-item8:AC2]
         expect(grid.cardWidths?.min ?? 0).toBeGreaterThanOrEqual(220);
-        // [utest->spectra-item8:AC5]
         expect(grid.cardsPerRow).toEqual(expected);
         const rows = grid.cardsPerRow;
         if (rows.length > 1 && rows[rows.length - 1] === 1) {
           expect(exempt(grid.planCardCount, grid.containerWidth)).toBe(true);
         }
-        // [utest->spectra-item8:AC6] A hard gate at 1440x900 only; 1200x800 and 1024x768 are
+        // A hard gate at 1440x900 only; 1200x800 and 1024x768 are
         // printed above.
         if (viewport.width === 1440) {
           const layout = grid.layoutBreakdown;
@@ -82,9 +80,7 @@ test.describe('spectra plan grid', () => {
           ].join(' ');
           expect(grid.firstCtaVisible, message).toBe(true);
         }
-        // [utest->spectra-item8:AC7]
         expect(overflow.examples).toEqual([]);
-        // [utest->spectra-item8:AC8]
         expect(grid.minTargetHeight ?? 44).toBeGreaterThanOrEqual(44);
         expect(errors).toEqual([]);
       });

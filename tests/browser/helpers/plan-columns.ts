@@ -1,4 +1,4 @@
-// Plan column rules of spectra item 8 (docs/agent-work/spectra-item8-grid/spec.md), shared by
+// Plan column rules of spectra item 8 (tests/fixtures/layout/plan-grid-spec.md), shared by
 // tests/browser/spectra-grid.spec.ts and tests/unit/plan-grid-columns.test.ts. Pure: it imports
 // nothing, so vitest can load it.
 

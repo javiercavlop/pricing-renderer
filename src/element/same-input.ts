@@ -45,7 +45,6 @@ function same(left: unknown, right: unknown, depth: number): boolean {
   return count === 0;
 }
 
-// [impl->req~element-input-structural-compare~1]
 export function sameInput(left: unknown, right: unknown): boolean {
   return same(left, right, 0);
 }

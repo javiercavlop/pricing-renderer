@@ -73,7 +73,6 @@ function stalledStream(cancel?: () => Promise<void>): ReadableStream<Uint8Array>
   });
 }
 
-// [utest->req~load-timeout-covers-every-step~1]
 describe('timeout and abort cover every load step', () => {
   beforeEach(() => {
     vi.useFakeTimers();

@@ -250,7 +250,7 @@ export interface VariableControl {
   hidden?: boolean;
 }
 
-// [impl->req~cta-types~1] labels a CTA uses while the current plan is known
+// labels a CTA uses while the current plan is known
 export interface PricingCtaLabels {
   upgrade?: string;
   downgrade?: string;

@@ -37,7 +37,6 @@ function jsonCopy(value: Record<string, unknown>): Record<string, unknown> {
   }
 }
 
-// [impl->req~compare-json~1]
 function readInput(selection: unknown): Partial<PricingSelection> {
   if (!isRecord(selection)) return {};
   const input: Partial<PricingSelection> = {};
@@ -58,7 +57,6 @@ const warning = (code: string, message: string, path: string): PricingDiagnostic
 });
 
 /** Decision 2, steps 1 to 5: derive one side without throwing. */
-// [impl->req~compare-selections-output~1] [impl->req~compare-price-sides~1]
 export function deriveSide(
   name: SideName,
   side: SelectionComparisonSide,
@@ -68,7 +66,6 @@ export function deriveSide(
   const merged = mergeSelection(pricing, readInput(side.selection));
   const diagnostics: PricingDiagnostic[] = [];
 
-  // [impl->req~compare-unknown-plan~1]
   if (merged.planId !== undefined && !pricing.plans.some((plan) => plan.id === merged.planId)) {
     diagnostics.push(
       warning(
@@ -78,7 +75,6 @@ export function deriveSide(
       ),
     );
   }
-  // [impl->req~compare-unknown-billing~1]
   if (
     merged.billingPeriod !== undefined &&
     !pricing.billing.some((period) => period.id === merged.billingPeriod)
@@ -97,7 +93,6 @@ export function deriveSide(
   for (const [id, value] of Object.entries(merged.addOns as Record<string, unknown>)) {
     const entry = isRecord(value) && typeof value.selected === 'boolean' ? value : undefined;
     if (entry?.selected) requestedAddOnIds.add(id);
-    // [impl->req~compare-unknown-addon~1]
     if (!pricing.addOns.some((addOn) => addOn.id === id)) {
       diagnostics.push(
         warning(

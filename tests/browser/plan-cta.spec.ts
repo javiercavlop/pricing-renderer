@@ -13,9 +13,7 @@ import {
   summaryAction,
 } from './helpers/change-flow.js';
 
-// Plan CTAs and the summary action (add-subscription-change-flow, phase C). The scenarios are
-// those of openspec/changes/add-subscription-change-flow/specs/plan-cta/spec.md; the definitions
-// (C, PQ, PS) are in its design.md. The unit tests of the types, the messages, the React prop and
+// Plan CTAs and the summary action (add-subscription-change-flow, phase C). The unit tests of the types, the messages, the React prop and
 // the manifest are in tests/unit/change-flow-element.test.ts.
 
 const planCards = '[data-pr-part="plan-card"]';
@@ -32,7 +30,6 @@ async function applyAndMarkContract(page: Page): Promise<void> {
   await setProps(page, { currentSelection: C });
 }
 
-// [utest->req~cta-pending-property~1]
 test('pending-action-id is an attribute of pendingActionId', async ({ page }) => {
   const value = await page.evaluate(() => {
     const element = document.querySelector('pricing-renderer') as HTMLElement & {
@@ -44,7 +41,6 @@ test('pending-action-id is an attribute of pendingActionId', async ({ page }) =>
   expect(value).toBe('start-growth');
 });
 
-// [utest->req~cta-pending-state~1]
 test.describe('pending CTA state', () => {
   test('Growth trial pending', async ({ page }) => {
     await setProps(page, { pendingActionId: 'start-growth' });
@@ -81,7 +77,6 @@ test.describe('pending CTA state', () => {
   });
 });
 
-// [utest->req~cta-pending-others~1]
 test('every other CTA is aria-disabled while an action is pending', async ({ page }) => {
   await applyAndMarkContract(page);
   await setProps(page, { pendingActionId: 'review-change' });
@@ -90,7 +85,6 @@ test('every other CTA is aria-disabled while an action is pending', async ({ pag
   await expect(summaryAction(page)).toHaveAttribute('aria-disabled', 'true');
 });
 
-// [utest->req~cta-pending-no-event~1]
 test('a pending action ignores activations, then CTAs work again', async ({ page }) => {
   await recordActions(page);
   const url = page.url();
@@ -106,7 +100,6 @@ test('a pending action ignores activations, then CTAs work again', async ({ page
   expect(actions[0]?.detail.actionId).toBe('start-starter');
 });
 
-// [utest->req~cta-pending-no-event~1]
 test('the summary action ignores activations while an action is pending', async ({ page }) => {
   await applyAndMarkContract(page);
   await page.locator(radio('enterprise')).check({ force: true });
@@ -124,7 +117,6 @@ test('the summary action ignores activations while an action is pending', async 
   expect(actions[0]?.detail.actionId).toBe('review-change');
 });
 
-// [utest->req~cta-pending-focus~1]
 test('focus stays on the CTA that became pending', async ({ page }) => {
   await recordActions(page, { cancel: true, pendingFromAction: true });
   const growth = planCta(page, 'growth');
@@ -135,7 +127,6 @@ test('focus stays on the CTA that became pending', async ({ page }) => {
   await expect(growth).toBeFocused();
 });
 
-// [utest->req~cta-relation-labels-config~1]
 test.describe('configured relation labels', () => {
   test('custom labels', async ({ page }) => {
     await setProps(page, {
@@ -187,7 +178,6 @@ test.describe('configured relation labels', () => {
   });
 });
 
-// [utest->req~cta-contact-sales~1]
 test('a plan without a price is labelled Contact sales', async ({ page }) => {
   await addRenderer(page, { pricing: PQ, currentSelection: { planId: 'basic' } });
   await expect(planCta(page, 'basic', '#extra')).toHaveText('Current plan');
@@ -197,7 +187,6 @@ test('a plan without a price is labelled Contact sales', async ({ page }) => {
   await expect(enterprise).toHaveAttribute('data-relation', 'upgrade');
 });
 
-// [utest->req~cta-summary-action~1]
 test('the summary action reviews the change and is outside every live region', async ({ page }) => {
   await applyAndMarkContract(page);
   await page.locator(radio('enterprise')).check({ force: true });
@@ -210,7 +199,6 @@ test('the summary action reviews the change and is outside every live region', a
   expect(liveAncestor).toBeNull();
 });
 
-// [utest->req~cta-summary-action-quote~1]
 test('the summary action asks for a quote when the selection requires one', async ({ page }) => {
   await addRenderer(page, { pricing: PQ, currentSelection: { planId: 'basic' } });
   await page.locator(radio('enterprise', '#extra')).check({ force: true });
@@ -219,7 +207,6 @@ test('the summary action asks for a quote when the selection requires one', asyn
   await expect(action).toBeEnabled();
 });
 
-// [utest->req~cta-summary-action-current~1]
 test('the summary action is disabled while the selection equals the contract', async ({ page }) => {
   await applyAndMarkContract(page);
   const action = summaryAction(page);
@@ -227,7 +214,6 @@ test('the summary action is disabled while the selection equals the contract', a
   await expect(action).toHaveText('Review change (€80)');
 });
 
-// [utest->req~cta-summary-action-event~1]
 test.describe('summary action event', () => {
   test('review an upgrade', async ({ page }) => {
     await applyAndMarkContract(page);
@@ -262,7 +248,6 @@ test.describe('summary action event', () => {
   });
 });
 
-// [utest->req~cta-summary-action-absent~1]
 test('no summary action without ctas or without a known current plan', async ({ page }) => {
   const action = summaryAction(page);
   await expect(action).toHaveCount(0);
@@ -272,7 +257,6 @@ test('no summary action without ctas or without a known current plan', async ({ 
   await expect(action).toHaveCount(0);
 });
 
-// [utest->req~cta-href-template~1]
 test.describe('plan id in CTA links', () => {
   test('Growth signup link', async ({ page }) => {
     await setProps(page, {
@@ -315,7 +299,6 @@ test.describe('plan id in CTA links', () => {
   });
 });
 
-// [utest->req~cta-href-template-unsafe~1]
 test('an expanded link that is not safe renders as a button', async ({ page }) => {
   await addRenderer(page, {
     pricing: PS,
@@ -329,7 +312,6 @@ test('an expanded link that is not safe renders as a button', async ({ page }) =
   await expect(cta).not.toHaveAttribute('href', /.*/);
 });
 
-// [utest->req~cta-event-relation~1]
 test('plan CTA events carry the relation and the source', async ({ page }) => {
   await setProps(page, { currentSelection: C });
   await recordActions(page, { cancel: true });
@@ -355,7 +337,6 @@ test('plan CTA events carry the relation and the source', async ({ page }) => {
   ]);
 });
 
-// [utest->req~cta-event-unchanged~1]
 test('without a current plan the event detail is the 0.1.0 detail', async ({ page }) => {
   await recordActions(page);
   await planCta(page, 'starter').click();

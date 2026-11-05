@@ -1,4 +1,3 @@
-// [utest->req~load-timeout-covers-every-step~1]
 import { describe, expect, it, vi } from 'vitest';
 import { loadPricingFromUrl } from '../../src/yaml/index.js';
 

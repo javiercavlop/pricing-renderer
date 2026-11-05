@@ -6,8 +6,8 @@ import type { PricingSelection, SelectionComparison } from '../../../src/core/in
 import { parsePricingYaml } from '../../../src/yaml/index.js';
 import { M2, QUOTE, V1, V2 } from '../../unit/helpers/compare-fixtures.js';
 
-// Shared by the review page specs. The comparisons are those of the "Definitions" of
-// openspec/changes/add-subscription-change-flow/design.md. They are computed here, in the test
+// Shared by the review page specs. The comparisons are the definitions of the subscription
+// change flow. They are computed here, in the test
 // process, and passed to the page as JSON (they are JSON-safe).
 
 type Raw = Record<string, unknown>;

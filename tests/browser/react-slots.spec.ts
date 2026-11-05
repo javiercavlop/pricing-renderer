@@ -2,9 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-// React render props (add-react-headless, P3-12b). The scenarios are those of
-// openspec/changes/add-react-headless/specs/composition/spec.md that need a browser (listed in
-// tasks.md, "Browser-only requirements"). The page is examples/vanilla/react-slots.html, which
+// React render props (add-react-headless, P3-12b). These are the composition scenarios
+// that need a browser. The page is examples/vanilla/react-slots.html, which
 // mounts PricingRenderer with the Acme pricing and the render props the `mode` query selects; every
 // render prop output carries a data-testid.
 
@@ -145,7 +144,6 @@ const unmounted = async (page: Page, kind: string): Promise<number> =>
 const mounted = async (page: Page, kind: string): Promise<number> =>
   (await lifecycle(page, 'mounts'))[kind] ?? 0;
 
-// [utest->req~react-slot-portals~2]
 test.describe('React portals fill the slot nodes', () => {
   test('One plan CTA per plan slot node', async ({ page }) => {
     await open(page, 'all');
@@ -273,7 +271,6 @@ test.describe('React portals fill the slot nodes', () => {
   });
 });
 
-// [utest->req~react-plan-cta-context~2]
 test.describe('plan CTA render context', () => {
   test('Label, link and state of each plan', async ({ page }) => {
     await open(page, 'plan');
@@ -388,7 +385,6 @@ test.describe('plan CTA render context', () => {
   });
 });
 
-// [utest->req~react-other-slot-contexts~1]
 test.describe('summary, loading and error render contexts', () => {
   test('Summary follows the selection', async ({ page }) => {
     await open(page, 'summary');
@@ -434,7 +430,6 @@ test.describe('summary, loading and error render contexts', () => {
   });
 });
 
-// [utest->req~react-error-diagnostics-source~1]
 test.describe('error diagnostics come from the slot node', () => {
   const codesOfNode = (page: Page): Promise<string> =>
     page.evaluate(() => {
@@ -473,7 +468,6 @@ test.describe('error diagnostics come from the slot node', () => {
   });
 });
 
-// [utest->req~react-slots-attach-read~1]
 test.describe('slot nodes and state read on attach', () => {
   test('Render prop given after the first event', async ({ page }) => {
     await open(page, 'late');
@@ -521,7 +515,6 @@ test.describe('slot nodes and state read on attach', () => {
   });
 });
 
-// [utest->req~react-slots-client-only~1]
 test.describe('render props wait for the client', () => {
   test('No render prop in the first client render, no hydration error', async ({ page }) => {
     await open(page, 'hydrate');

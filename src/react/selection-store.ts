@@ -119,7 +119,7 @@ function withoutCallback(options: SelectionStoreOptions): BuiltFrom['rest'] {
  * price stabilizer. `getSnapshot` gives the identical object until the state changes.
  */
 export function createSelectionStore(): SelectionStore {
-  // [impl->req~react-no-module-state~1] the stabilizer belongs to this store, never to the module
+  // the stabilizer belongs to this store, never to the module
   const stabilizer = createPriceStabilizer();
   const listeners = new Set<() => void>();
   let pricing: NormalizedPricing | undefined;
@@ -130,7 +130,6 @@ export function createSelectionStore(): SelectionStore {
   let snapshot: SelectionStoreSnapshot = emptySnapshot();
   let builtFrom: BuiltFrom | undefined;
 
-  // [impl->req~use-pricing-selection-controlled~1] [impl->req~use-pricing-selection-uncontrolled~1]
   const heldSelection = (): PricingSelection | undefined => options.selection ?? internal;
 
   // the not reconciled selection in effect (design D1)
@@ -189,7 +188,6 @@ export function createSelectionStore(): SelectionStore {
     for (const listener of [...listeners]) listener();
   };
 
-  // [impl->req~use-pricing-selection-notify~1]
   // Holds the next selection when uncontrolled, then reports it, also when it equals the previous.
   const commit = (next: PricingSelection): void => {
     if (!pricing) return;
@@ -209,7 +207,6 @@ export function createSelectionStore(): SelectionStore {
     nextOptions: SelectionStoreOptions,
   ): void => {
     options = nextOptions;
-    // [impl->req~use-pricing-selection-pricing-change~1]
     if (!Object.is(nextPricing, pricing)) {
       pricing = nextPricing;
       stabilizer.reset();
@@ -222,7 +219,6 @@ export function createSelectionStore(): SelectionStore {
     refresh();
   };
 
-  // [impl->req~use-pricing-selection-changes~1] [impl->req~use-pricing-selection-pending~1]
   const selectPlan = (planId: string): void => {
     const state = target();
     if (!state) return;
@@ -275,7 +271,6 @@ export function createSelectionStore(): SelectionStore {
     commit({ ...state.selection, variables: cloneValue(state.pricing.variables) });
   };
 
-  // [impl->req~use-pricing-selection-confirm-input~1]
   // The selection in effect is read now, not when the change became pending.
   const confirm = (): void => {
     const state = target();
@@ -291,7 +286,6 @@ export function createSelectionStore(): SelectionStore {
     publish();
   };
 
-  // [impl->req~use-pricing-selection-apply~1]
   const apply = (input: Partial<PricingSelection>): ApplySelectionInputResult | undefined => {
     const state = target();
     if (!state) return undefined;
@@ -302,14 +296,12 @@ export function createSelectionStore(): SelectionStore {
     return result;
   };
 
-  // [impl->req~use-pricing-selection-current~1]
   const relationOf = (planId: string): SelectionRelation | undefined => {
     const { current } = snapshot;
     if (!pricing || !current) return undefined;
     return planRelation(pricing, current.planId, planId);
   };
 
-  // [impl->req~use-pricing-selection-compare~1]
   const compareWithCurrent = (): SelectionComparison | undefined => {
     const { current, selection } = snapshot;
     const currentSelection = options.currentSelection;

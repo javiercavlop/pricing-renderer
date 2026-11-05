@@ -37,7 +37,6 @@ async function focusRevealed(target: Target, byKeyboard: boolean): Promise<void>
   element._focusRevealed!.call(element, target, byKeyboard);
 }
 
-// [utest->req~reveal-focus-visible~1]
 describe('focus after Show more', () => {
   it('asks for :focus-visible when the button was activated from the keyboard', async () => {
     const target = fakeTarget();

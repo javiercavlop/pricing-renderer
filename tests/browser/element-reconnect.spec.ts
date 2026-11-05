@@ -4,7 +4,6 @@ import { openRenderer } from './helpers/spectra.js';
 // Moving the element to another parent disconnects and reconnects it. During a slow src load the
 // disconnect aborted the load, so the reconnect must start it again and observe the size again. The
 // stand-in version is tests/unit/element-reconnect.test.ts.
-// [utest->req~element-reconnect-resumes~1]
 
 type ReconnectElement = HTMLElement & {
   src?: string;

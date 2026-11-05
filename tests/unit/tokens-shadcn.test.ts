@@ -75,7 +75,6 @@ function declarationsWhere(filter: (rule: Block) => boolean): Record<string, str
   return merged;
 }
 
-// [utest->req~tokens-shadcn-overlay~2]
 describe('tokens-shadcn.css overlay', () => {
   it('starts with the layer order statement', () => {
     const blocks = topLevel(readOverlay());
@@ -99,7 +98,6 @@ describe('tokens-shadcn.css overlay', () => {
   });
 });
 
-// [utest->req~tokens-shadcn-mapping~1]
 describe('tokens-shadcn.css mapping', () => {
   const mapping: Record<string, string> = {
     '--pr-color-accent': 'var(--primary)',
@@ -151,7 +149,6 @@ describe('tokens-shadcn.css mapping', () => {
   });
 });
 
-// [utest->req~tokens-shadcn-export~1]
 describe('tokens-shadcn.css package export', () => {
   it('exports ./tokens-shadcn.css from dist/styles', () => {
     const manifest = JSON.parse(readFileSync(packagePath, 'utf8')) as {

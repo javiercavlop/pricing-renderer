@@ -88,18 +88,16 @@ export const enUS: MessageCatalog = {
   'pricing.noPlans': 'No plans are available.',
   'pricing.noComparison': 'There are no plans to compare.',
   'pricing.configurationUpdated': 'Pricing configuration updated.',
-  // [impl->req~current-selection-i18n~1]
   'pricing.currentPlanBadge': 'Your plan',
   'pricing.currentPlanCta': 'Current plan',
   'pricing.upgradeTo': 'Upgrade to {plan}',
   'pricing.downgradeTo': 'Downgrade to {plan}',
   'pricing.currentAddOn': 'Current',
-  // [impl->req~cta-i18n~1]
   'pricing.reviewChangeCta': 'Review change ({total})',
   'pricing.pending': 'Processing…',
   'pricing.reviewConfirm': 'Confirm change',
   'pricing.reviewBack': 'Back',
-  // [impl->req~review-i18n~1] the other keys of the "Review" table of design.md
+  // the other keys of the "Review" table of design.md
   'pricing.reviewTitle': 'Review your change',
   'pricing.reviewPlan': 'Plan',
   'pricing.reviewChangeArrow': '{before} → {after}',
@@ -235,7 +233,7 @@ export const esES: MessageCatalog = {
   'pricing.pending': 'Procesando…',
   'pricing.reviewConfirm': 'Confirmar cambio',
   'pricing.reviewBack': 'Volver',
-  // [impl->req~review-i18n~1] the other keys of the "Review" table of design.md
+  // the other keys of the "Review" table of design.md
   'pricing.reviewTitle': 'Revisa tu cambio',
   'pricing.reviewPlan': 'Plan',
   'pricing.reviewChangeArrow': '{before} → {after}',

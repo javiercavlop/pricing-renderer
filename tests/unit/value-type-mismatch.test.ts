@@ -13,7 +13,6 @@ function mismatches(pricing: IPricingLike) {
 
 const base = { syntaxVersion: '3.1', saasName: 'Values' } as const;
 
-// [utest->req~value-type-mismatch-diagnostic~1]
 describe('NUMERIC value given as text', () => {
   it('warns for a default value and a plan override with the digit separator hint', () => {
     const parsed = parsePricingYaml(`

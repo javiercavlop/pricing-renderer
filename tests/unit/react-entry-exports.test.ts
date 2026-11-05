@@ -27,7 +27,6 @@ function exportedNames(text: string, kind: 'runtime' | 'type', from: string): st
   );
 }
 
-// [utest->req~react-entry-reexports-headless~1]
 describe('the react entry names every export of the headless entry', () => {
   const headless = sourceOf('headless.ts');
   const index = sourceOf('index.ts');

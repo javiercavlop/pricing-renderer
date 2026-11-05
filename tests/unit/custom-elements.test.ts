@@ -58,7 +58,6 @@ const messages = (diagnostics: ts.Diagnostic[]): string[] =>
   diagnostics.map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
 
 describe('load API in the custom elements manifest', () => {
-  // [utest->req~custom-elements-lists-load-api~1]
   it('lists applySelection, resolvedState and the event descriptions', async () => {
     const declaration = await rendererDeclaration();
     const members = declaration.members ?? [];
@@ -88,7 +87,6 @@ describe('load API in the custom elements manifest', () => {
 });
 
 describe('load API types and exports', () => {
-  // [utest->req~react-ref-load-api~1]
   it('exposes applySelection and the resolvedState getter on the React element class', () => {
     const prototype = PricingRendererElement.prototype as unknown as Record<string, unknown>;
     expect(typeof prototype.applySelection).toBe('function');
@@ -96,7 +94,6 @@ describe('load API types and exports', () => {
     expect(typeof descriptor?.get).toBe('function');
   });
 
-  // [utest->req~ready-detail-required-fields~1]
   it('requires selection and resolved in PricingReadyDetail', () => {
     const header = `
       import type { NormalizedPricing, PricingSelection, ResolvedPricing } from '../../src/core/index.js';
@@ -120,7 +117,6 @@ describe('load API types and exports', () => {
     expect(messages(complete)).toEqual([]);
   });
 
-  // [utest->req~apply-selection-result-type~1]
   it('declares ApplySelectionResult as a union discriminated by applied', () => {
     const header = `
       import type { PricingSelection, ResolvedPricing } from '../../src/core/index.js';
@@ -149,7 +145,6 @@ describe('load API types and exports', () => {
     expect(unnarrowed.map((diagnostic) => diagnostic.code)).toContain(2322);
   });
 
-  // [utest->req~react-reexports-result-type~1]
   it('re-exports ApplySelectionResult from the React entry point', () => {
     const diagnostics = typeCheckSnippet(`
       import type { ApplySelectionResult as FromReact } from '../../src/react/index.js';

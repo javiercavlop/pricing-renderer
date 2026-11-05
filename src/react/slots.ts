@@ -17,7 +17,6 @@ import type {
 
 // No constant lives at module scope: the allow-list scan of the React modules refuses it.
 
-// [impl->req~react-render-props-slots~1]
 // The slot names of the render props given as functions, in the fixed order of `slots`, or
 // undefined when there is none.
 export function slotNamesOf(props: {
@@ -39,7 +38,6 @@ function isSlotName(value: string | undefined): boolean {
   return value !== undefined && names.includes(value);
 }
 
-// [impl->req~react-slots-event-target~1] [impl->req~react-slot-node-accept~3]
 // The nodes of the event that this wrapper's element owns, in their order; undefined for the event
 // of another element. A node is left out when it is detached, is not a known slot, is a plan node
 // without a plan id, or sits in a nested renderer or inside another slot node.
@@ -70,7 +68,6 @@ function isElementLike(node: unknown): node is HTMLElement {
   return typeof dataset === 'object' && dataset !== null;
 }
 
-// [impl->req~react-slots-attach-read~1]
 // The slot nodes that exist now, for an event that fired before the wrapper listened.
 export function currentSlotNodes(element: HTMLElement): HTMLElement[] {
   const nodes = [...element.querySelectorAll<HTMLElement>('[data-pr-slot]')];
@@ -83,8 +80,6 @@ function relationOf(value: string | undefined): SelectionRelation | undefined {
   return value as SelectionRelation;
 }
 
-// [impl->req~react-plan-context-reader~1] [impl->req~react-plan-context-any-pending~1]
-// [impl->req~react-slot-href-safe~1] [impl->req~react-plan-context-trigger~1]
 export function planCtaContextOf(
   element: Pick<PricingRendererElement, 'triggerPlanAction'>,
   node: HTMLElement,
@@ -107,7 +102,6 @@ export function planCtaContextOf(
   };
 }
 
-// [impl->req~react-summary-context-reader~1]
 export function summaryActionsContextOf(
   node: HTMLElement,
   state: Pick<PricingSelectionChangeDetail, 'selection' | 'resolved'>,
@@ -121,7 +115,6 @@ export function summaryActionsContextOf(
   };
 }
 
-// [impl->req~react-error-context-reload~1]
 export function errorContextOf(
   element: Pick<PricingRendererElement, 'reload'>,
   diagnostics: readonly PricingDiagnostic[],
@@ -144,7 +137,6 @@ function diagnosticOf(value: unknown): PricingDiagnostic | undefined {
   };
 }
 
-// [impl->req~react-error-diagnostics-reader~1] [impl->req~react-error-diagnostics-source~1]
 // The diagnostics of the failed load come from the error slot node only.
 export function errorDiagnosticsOf(node: HTMLElement): PricingDiagnostic[] {
   const text = node.dataset.diagnostics;
@@ -172,7 +164,6 @@ export type SlotEntry =
   | { slot: 'loading'; node: HTMLElement; key: string }
   | { slot: 'error'; node: HTMLElement; key: string; context: PricingErrorContext };
 
-// [impl->req~react-plan-cta-context~2] [impl->req~react-other-slot-contexts~1]
 // The summary context needs the state read when the event fired; without a state (the element is
 // not ready) a summary node gets no entry.
 export function slotEntriesOf(

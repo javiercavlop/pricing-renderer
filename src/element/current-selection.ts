@@ -20,8 +20,6 @@ const hasId = (items: readonly { id: string }[], id: string): boolean =>
   items.some((item) => item.id === id);
 
 /** The current side of Decision 2 (steps 1 to 4), or `undefined` without a known current plan. */
-// [impl->req~current-selection-plan-mark~1] [impl->req~current-selection-addons~1]
-// [impl->req~current-selection-unknown-plan~1] [impl->req~current-selection-unset~1]
 // Without a known plan, reconciling would use the default plan, which is not the customer's, so no
 // add-on is marked either. Unknown add-on ids are ignored.
 export function deriveCurrentContext(
@@ -50,7 +48,6 @@ export function deriveCurrentContext(
 }
 
 /** One warning per plan id or add-on id of the current selection that the pricing does not define. */
-// [impl->req~current-selection-diagnostics~1]
 export function currentSelectionDiagnostics(
   pricing: NormalizedPricing,
   current: Partial<PricingSelection> | undefined,

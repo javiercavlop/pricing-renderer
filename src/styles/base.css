@@ -5,15 +5,14 @@
     min-inline-size: 0;
     color: var(--pr-color-text);
     font: inherit;
-    /* [impl->req~font-family-tokens~1] unset, the token is invalid at computed-value time and the
+    /* unset, the token is invalid at computed-value time and the
        inherited property inherits, like font: inherit */
     font-family: var(--pr-font-family);
-    /* [impl->req~line-height-token~1] */
     line-height: var(--pr-line-height, 1.5);
     text-rendering: optimizeLegibility;
   }
 
-  /* [impl->req~density-compact-tokens~1] opt-in compact spacing; comfortable adds no rule */
+  /* opt-in compact spacing; comfortable adds no rule */
   pricing-renderer[density='compact'] {
     --pr-space-1: 0.2rem;
     --pr-space-2: 0.4rem;
@@ -41,7 +40,7 @@
     outline-offset: 3px;
   }
 
-  /* [impl->req~reveal-focus-visible~1] rows and cards take focus after "show more" */
+  /* rows and cards take focus after "show more" */
   pricing-renderer[data-pr-root]
     :where([data-pr-part='comparison-row'], [data-pr-part='add-on-card']):focus-visible {
     outline: 2px solid var(--pr-color-focus);
@@ -129,7 +128,6 @@
     margin: 0 0 var(--pr-space-2);
     color: var(--pr-color-accent);
     font-size: var(--pr-font-size-sm);
-    /* [impl->req~font-weight-tokens~1] */
     font-weight: var(--pr-font-weight-bold, 750);
     letter-spacing: 0.09em;
     text-transform: uppercase;
@@ -137,7 +135,6 @@
 
   pricing-renderer[data-pr-root] .pr-hero__title {
     margin: 0;
-    /* [impl->req~font-family-tokens~1] */
     font-family: var(--pr-font-family-display, var(--pr-font-family));
     font-size: clamp(2rem, 8cqi, 4rem);
     font-weight: var(--pr-font-weight-bold, 780);
@@ -201,10 +198,37 @@
     color: var(--pr-color-warning);
   }
 
-  /* [impl->req~current-selection-plan-mark~1] [impl->req~current-selection-addons~1]
-     The current plan and the current add-ons get a success-toned border and badge. The badge also
-     names the state in text, so colour is not the only cue. */
-  pricing-renderer[data-pr-root] .pr-plan-card[data-current='true'],
+  The
+    current
+    plan
+    and
+    the
+    current
+    add-ons
+    get
+    a
+    success-toned
+    border
+    and
+    badge.
+    The
+    badge
+    also
+    names
+    the
+    state
+    in
+    text,
+  so
+    colour
+    is
+    not
+    the
+    only
+    cue.
+    */
+    pricing-renderer[data-pr-root]
+    .pr-plan-card[data-current='true'],
   pricing-renderer[data-pr-root] .pr-addon-card[data-current='true'] {
     border-color: color-mix(in srgb, var(--pr-color-success) 55%, var(--pr-color-border));
   }
@@ -291,7 +315,7 @@
     font-weight: var(--pr-font-weight-bold, 750);
   }
 
-  /* [impl->req~plan-columns-token~1] the plan grid takes the token; the add-on and variable grids
+  /* the plan grid takes the token; the add-on and variable grids
      keep their own columns */
   pricing-renderer[data-pr-root] .pr-plan-grid {
     display: grid;
@@ -473,13 +497,13 @@
     letter-spacing: -0.02em;
   }
 
-  /* [impl->req~font-family-tokens~1] [impl->req~font-weight-tokens~1] the plan name only */
+  /* the plan name only */
   pricing-renderer[data-pr-root] .pr-plan-card__top h4 {
     font-family: var(--pr-font-family-display, var(--pr-font-family));
     font-weight: var(--pr-font-weight-bold, 700);
   }
 
-  /* [impl->req~font-weight-tokens~1] the add-on name: the user-agent bold, now explicit */
+  /* the add-on name: the user-agent bold, now explicit */
   pricing-renderer[data-pr-root] .pr-addon-card h4 {
     font-weight: var(--pr-font-weight-bold, 700);
   }
@@ -507,7 +531,7 @@
     line-height: 1;
   }
 
-  /* [impl->req~font-family-tokens~1] the amount only, not the quote */
+  /* the amount only, not the quote */
   pricing-renderer[data-pr-root] .pr-price__amount {
     font-family: var(--pr-font-family-display, var(--pr-font-family));
   }
@@ -604,7 +628,7 @@
     padding-inline: 0.8rem;
   }
 
-  /* [impl->req~current-selection-plan-cta~1] The current plan's CTA and a summary action without a
+  /* The current plan's CTA and a summary action without a
      change are disabled controls, so they read as inactive in the light and dark themes. */
   pricing-renderer[data-pr-root] .pr-button:disabled {
     border-color: var(--pr-color-border);
@@ -613,7 +637,7 @@
     cursor: default;
   }
 
-  /* [impl->req~cta-pending-state~1] A pending host action keeps every CTA in place (aria-disabled,
+  /* A pending host action keeps every CTA in place (aria-disabled,
      not disabled, so focus stays) and marks the busy control with a spinner. */
   pricing-renderer[data-pr-root] .pr-button[aria-disabled='true'] {
     cursor: progress;
@@ -643,7 +667,7 @@
     }
   }
 
-  /* [impl->req~cta-summary-action~1] The summary action takes its own row under the total. */
+  /* The summary action takes its own row under the total. */
   pricing-renderer[data-pr-root] .pr-summary > [data-pr-part='summary-action'] {
     inline-size: 100%;
   }
@@ -751,7 +775,7 @@
   pricing-renderer[data-pr-root] .pr-comparison-toolbar {
     position: sticky;
     z-index: 3;
-    /* [impl->req~sticky-top-token~1] measured against the page */
+    /* measured against the page */
     inset-block-start: var(--pr-sticky-top, 0px);
     display: flex;
     flex-wrap: wrap;
@@ -870,7 +894,7 @@
     color: var(--pr-color-muted);
   }
 
-  /* [impl->req~sticky-table-scroll~1] The height limit makes the box scroll vertically, so the
+  /* The height limit makes the box scroll vertically, so the
      sticky header cells pin to it. 80vh is the fallback for browsers without dvh. */
   pricing-renderer[data-pr-root] .pr-flow {
     display: flex;
@@ -894,7 +918,7 @@
     overscroll-behavior-inline: contain;
   }
 
-  /* [impl->req~table-size-tokens~1] a var() declaration is valid when parsed, so it sits behind a
+  /* a var() declaration is valid when parsed, so it sits behind a
      dvh guard, after the 80vh rule it replaces where dvh is supported. */
   @supports (max-block-size: 1dvh) {
     pricing-renderer[data-pr-root] .pr-table-scroll {
@@ -904,7 +928,6 @@
 
   pricing-renderer[data-pr-root] .pr-comparison-table {
     width: 100%;
-    /* [impl->req~table-size-tokens~1] */
     min-width: var(--pr-table-min-width, 720px);
     border-collapse: separate;
     border-spacing: 0;
@@ -1124,7 +1147,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--pr-space-2) var(--pr-space-4);
     padding: var(--pr-space-4);
-    /* [impl->req~summary-breakdown-closed-layout~1] room for the breakdown toggle, which is
+    /* room for the breakdown toggle, which is
        positioned and so never changes the block size */
     padding-inline-end: calc(var(--pr-space-4) + 24px + var(--pr-space-2));
     background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
@@ -1152,13 +1175,13 @@
     font-size: var(--pr-font-size-sm);
   }
 
-  /* [impl->req~summary-breakdown-target-size~1] 24px visual box; the ::after layer extends the
+  /* 24px visual box; the ::after layer extends the
      pointer target to 44px without layout effect. An absolute layer is placed against the 22px
      padding box (24px minus the 1px border on each side), so inset -11px gives 22 + 2 * 11 = 44px
      centered on the toggle.
-     [impl->req~summary-breakdown-icon-contrast~1] the icon uses --pr-color-muted, 5.9:1 on the
+ the icon uses --pr-color-muted, 5.9:1 on the
      light and 7.5:1 on the dark surface.
-     [impl->req~summary-breakdown-reduced-motion~1] the only transition is shortened by the
+ the only transition is shortened by the
      prefers-reduced-motion rule below. */
   pricing-renderer[data-pr-root] .pr-breakdown-toggle {
     position: absolute;
@@ -1323,7 +1346,6 @@
 
   pricing-renderer[data-pr-root] .pr-dialog-backdrop {
     position: fixed;
-    /* [impl->req~dialog-z-token~1] */
     z-index: var(--pr-z-dialog, 1000);
     inset: 0;
     display: grid;
@@ -1344,7 +1366,6 @@
 
   pricing-renderer[data-pr-root] .pr-dialog h3 {
     margin-block-start: 0;
-    /* [impl->req~font-weight-tokens~1] */
     font-weight: var(--pr-font-weight-bold, 700);
   }
 
@@ -1417,7 +1438,7 @@
   }
 
   @container pricing-renderer (min-width: 840px) {
-    /* Plan columns by plan count (table in docs/agent-work/spectra-item8-grid/spec.md). The
+    /* Plan columns by plan count (table in tests/fixtures/layout/plan-grid-spec.md). The
        generic rule sets the band maximum; the :where() rules after it keep the same specificity
        and set the counts that need fewer columns, so the later rule wins. A grid whose N-th child
        is its last child has exactly N plans. The generic rule of a wider band comes later in the
@@ -1437,7 +1458,7 @@
     }
 
     /* Tighter plan cards and less space above the plans bring the first CTA into the first
-       screen (savings per lever in docs/agent-work/spectra-item8-grid/spec.md); the space after
+       screen (savings per lever in tests/fixtures/layout/plan-grid-spec.md); the space after
        the plans stays var(--pr-space-section). */
     pricing-renderer[data-pr-root] .pr-plan-card {
       padding: var(--pr-space-4);
@@ -1485,7 +1506,6 @@
     }
 
     pricing-renderer[data-pr-root] .pr-summary {
-      /* [impl->req~sticky-top-token~1] */
       inset-block-start: calc(var(--pr-sticky-top, 0px) + var(--pr-space-4));
       inset-block-end: auto;
     }
@@ -1494,7 +1514,7 @@
       grid-template-columns: 1fr;
     }
 
-    /* [impl->req~sticky-summary-compact~1] The summary docked after the plans is one compact
+    /* The summary docked after the plans is one compact
        line (label and total side by side). It is not sticky, so it never covers the toolbar. */
     pricing-renderer[data-pr-root] .pr-flow > .pr-summary {
       position: relative;
@@ -1648,8 +1668,7 @@
     font-size: var(--pr-font-size-sm);
   }
 
-  /* [impl->req~review-ui-structure~1] <pricing-change-review>, after the approved mock in
-     docs/agent-work/phase2-subscription-change/review-mock/. The review is its own element. Its tokens
+  /* <pricing-change-review>, after the approved review mock. The review is its own element. Its tokens
      and theme switches (theme attribute, data-theme ancestor, theme="auto") live in theme.css,
      which must be loaded, as for the renderer. The host overrides a token with an unlayered rule
      on pricing-change-review. */
@@ -1659,7 +1678,7 @@
     min-inline-size: 0;
     color: var(--pr-color-text);
     font: inherit;
-    /* [impl->req~font-family-tokens~1] as on the renderer root */
+    /* as on the renderer root */
     font-family: var(--pr-font-family);
     line-height: var(--pr-line-height, 1.5);
     text-rendering: optimizeLegibility;
@@ -1970,7 +1989,7 @@
     }
   }
 
-  /* [impl->req~review-ui-forced-colors~1] The root, every section and every button keep a visible
+  /* The root, every section and every button keep a visible
      border of system colours. The changes are named in text, so no meaning is left to colour. */
   @media (forced-colors: active) {
     pricing-change-review [data-pr-part='change-review'] {

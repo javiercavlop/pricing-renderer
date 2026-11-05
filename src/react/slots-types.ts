@@ -3,7 +3,6 @@
 import type { PricingDiagnostic, SelectionRelation } from '../core/index.js';
 import type { PricingSelectionChangeDetail } from '../element/index.js';
 
-// [impl->req~react-plan-cta-context~2]
 export interface PricingPlanCtaContext {
   planId: string;
   /** Plain text that may carry text from the pricing document: render it as text, never as HTML. */
@@ -27,7 +26,6 @@ export interface PricingPlanCtaContext {
   trigger(): boolean;
 }
 
-// [impl->req~react-other-slot-contexts~1]
 export interface PricingSummaryActionsContext {
   selection: PricingSelectionChangeDetail['selection'];
   resolved: PricingSelectionChangeDetail['resolved'];
@@ -37,7 +35,6 @@ export interface PricingSummaryActionsContext {
   pending: boolean;
 }
 
-// [impl->req~react-other-slot-contexts~1]
 export interface PricingErrorContext {
   /** Messages are plain text that may carry text from the pricing document: render them as text. */
   diagnostics: readonly PricingDiagnostic[];

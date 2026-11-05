@@ -74,7 +74,6 @@ describe('safe price expression evaluator', () => {
     });
   });
 
-  // [utest->req~expression-equality-no-coercion~1]
   it.each([
     ["1 == '1'", 0],
     ['0 == false', 0],
@@ -90,7 +89,6 @@ describe('safe price expression evaluator', () => {
     });
   });
 
-  // [utest->req~expression-equality-no-coercion~1]
   it.each([
     ['#one == #oneText', 0],
     ['#oneText == #one', 0],

@@ -15,9 +15,7 @@ import {
   setProps,
 } from './helpers/change-flow.js';
 
-// The current selection of the element (add-subscription-change-flow, phase C). The scenarios are
-// those of openspec/changes/add-subscription-change-flow/specs/current-selection/spec.md; the
-// definitions (C, PV) are in its design.md. The unit tests of the types, the messages and the
+// The current selection of the element (add-subscription-change-flow, phase C). The unit tests of the types, the messages and the
 // manifest are in tests/unit/change-flow-element.test.ts.
 
 const planCard = '[data-pr-part="plan-card"]';
@@ -27,7 +25,6 @@ test.beforeEach(async ({ page }) => {
   await openDemo(page);
 });
 
-// [utest->req~current-selection-plan-mark~1]
 test.describe('current plan mark', () => {
   test('Growth contract: one card is current and has the badge', async ({ page }) => {
     await setProps(page, { currentSelection: C });
@@ -47,7 +44,6 @@ test.describe('current plan mark', () => {
   });
 });
 
-// [utest->req~current-selection-plan-cta~1]
 test('the current plan CTA is a disabled Current plan button and sends no action', async ({
   page,
 }) => {
@@ -65,7 +61,6 @@ test('the current plan CTA is a disabled Current plan button and sends no action
   expect(await eventCount(page, 'pricing-action')).toBe(0);
 });
 
-// [utest->req~current-selection-relation-labels~1]
 test.describe('other plans are labelled by relation', () => {
   test('Starter and Enterprise around Growth', async ({ page }) => {
     await setProps(page, { currentSelection: C });
@@ -86,7 +81,6 @@ test.describe('other plans are labelled by relation', () => {
   });
 });
 
-// [utest->req~current-selection-addons~1]
 test.describe('current add-ons are marked', () => {
   test('Growth contract', async ({ page }) => {
     await setProps(page, { currentSelection: C });
@@ -118,7 +112,6 @@ test.describe('current add-ons are marked', () => {
   });
 });
 
-// [utest->req~current-selection-keeps-selection~1]
 test.describe('the user selection is not changed', () => {
   test('uncontrolled element on Starter', async ({ page }) => {
     await countEvents(page, 'pricing-selection-change');
@@ -163,7 +156,6 @@ test.describe('the user selection is not changed', () => {
   });
 });
 
-// [utest->req~current-selection-detached~1]
 test('the element keeps a copy: a later change of the host object is not seen', async ({
   page,
 }) => {
@@ -190,7 +182,6 @@ test('the element keeps a copy: a later change of the host object is not seen', 
   await expect(starter).not.toHaveAttribute('data-current', /.*/);
 });
 
-// [utest->req~current-selection-unknown-plan~1]
 test('an unknown current plan marks nothing and keeps the 0.1.0 labels', async ({ page }) => {
   await setProps(page, { currentSelection: { planId: 'legacy' } });
   await expect(page.locator(`pricing-renderer ${markers}`)).toHaveCount(0);
@@ -199,7 +190,6 @@ test('an unknown current plan marks nothing and keeps the 0.1.0 labels', async (
   await expect(planCta(page, 'enterprise')).toHaveText('Contact sales');
 });
 
-// [utest->req~current-selection-diagnostics~1]
 test.describe('current selection diagnostics', () => {
   test('a legacy plan and a ghost add-on give one event, not rendered', async ({ page }) => {
     await recordDiagnostics(page);
@@ -274,7 +264,6 @@ test.describe('current selection diagnostics', () => {
   });
 });
 
-// [utest->req~current-selection-private-plan~1]
 test.describe('a private current plan', () => {
   test('hidden by public-only: the other plans are still labelled by relation', async ({
     page,
@@ -306,7 +295,6 @@ test.describe('a private current plan', () => {
   });
 });
 
-// [utest->req~current-selection-unset~1]
 test.describe('without a current selection nothing changes', () => {
   test('default demo page', async ({ page }) => {
     await expect(page.locator(`pricing-renderer ${markers}`)).toHaveCount(0);

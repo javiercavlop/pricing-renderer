@@ -24,7 +24,6 @@ export interface PricingSourceOptions {
 
 type SourceResult = PricingResult<NormalizedPricing>;
 
-// [impl->req~load-source-one-source~1]
 // The failed result of a source count other than one; undefined when exactly one source is given.
 export function pricingSourceError(input: PricingSourceInput): SourceResult | undefined {
   const count =
@@ -48,7 +47,6 @@ export function pricingSourceError(input: PricingSourceInput): SourceResult | un
   };
 }
 
-// [impl->req~load-source-result~1]
 // Inline sources give a result at once, src gives a promise. request is passed as given.
 export function loadPricingSource(
   input: PricingSourceInput,

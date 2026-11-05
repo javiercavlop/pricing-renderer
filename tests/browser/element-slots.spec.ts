@@ -1,9 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openDemo, planCta, PQ, setProps } from './helpers/change-flow.js';
 
-// Element slots (add-react-headless, P3-11). The scenarios are those of
-// openspec/changes/add-react-headless/specs/composition/spec.md that need a browser (listed in
-// tasks.md, "Browser-only requirements"); the others are in tests/unit/slots-element.test.ts. A new
+// Element slots (add-react-headless, P3-11). These are the composition
+// scenarios that need a browser; the others are in tests/unit/slots-element.test.ts. A new
 // element is a <pricing-renderer id="extra"> with the pricing of the demo page (Acme, en-US) and
 // the given properties, appended to document.body.
 
@@ -93,7 +92,6 @@ test.beforeEach(async ({ page }) => {
   await openDemo(page);
 });
 
-// [utest->req~slots-property~1]
 test.describe('slots property', () => {
   test('Attribute is not read', async ({ page }) => {
     await mount(page, {});
@@ -108,7 +106,6 @@ test.describe('slots property', () => {
   });
 });
 
-// [utest->req~slot-plan-cta-keyed~1]
 test.describe('plan slot nodes belong to one plan', () => {
   test('Pricing without the first plan', async ({ page }) => {
     await mount(page, { pricing: PQ, slots: ['plan-cta'] });
@@ -143,7 +140,6 @@ test.describe('plan slot nodes belong to one plan', () => {
   });
 });
 
-// [utest->req~slot-summary-actions~1]
 test.describe('summary actions slot node', () => {
   const cases: [string, Raw][] = [
     ['without a current plan', {}],
@@ -163,7 +159,6 @@ test.describe('summary actions slot node', () => {
   }
 });
 
-// [utest->req~slot-loading~1]
 test.describe('loading slot node', () => {
   test('Slow source', async ({ page }) => {
     const src = 'https://pricing.example.test/acme.yml';
@@ -198,7 +193,6 @@ test.describe('loading slot node', () => {
   });
 });
 
-// [utest->req~slots-change-event~3]
 test.describe('slots change event', () => {
   test('Ready, selection, removed', async ({ page }) => {
     await mount(page, { slots: ['plan-cta'] });
@@ -261,7 +255,6 @@ test.describe('slots change event', () => {
   });
 });
 
-// [utest->req~slots-change-event-own-nodes~1]
 test.describe('slots change event lists own nodes only', () => {
   test('Nested renderer and host node', async ({ page }) => {
     await mount(page, { slots: ['plan-cta'] });
@@ -307,7 +300,6 @@ test.describe('slots change event lists own nodes only', () => {
   });
 });
 
-// [utest->req~slots-change-event-summary~1]
 test.describe('summary slot event on selection changes', () => {
   test('Selection changes, then nothing changes', async ({ page }) => {
     await mount(page, { slots: ['summary-actions'] });
@@ -320,7 +312,6 @@ test.describe('summary slot event on selection changes', () => {
   });
 });
 
-// [utest->req~slot-plan-cta-context~1]
 test.describe('plan slot node context attributes', () => {
   test('Values follow the state', async ({ page }) => {
     await mount(page, { slots: ['plan-cta'] });
@@ -337,7 +328,6 @@ test.describe('plan slot node context attributes', () => {
   });
 });
 
-// [utest->req~slot-summary-actions-context~1]
 test.describe('summary slot node context attributes', () => {
   test('Relation and pending', async ({ page }) => {
     await mount(page, {
@@ -360,7 +350,6 @@ test.describe('summary slot node context attributes', () => {
   });
 });
 
-// [utest->req~trigger-plan-action~1]
 test.describe('trigger a plan action', () => {
   test('Same detail as a click', async ({ page }) => {
     const current = { planId: 'growth' };

@@ -63,7 +63,6 @@ function changeEvent(planId: string): Event {
   });
 }
 
-// [utest->req~renderer-state-events~1]
 describe('renderer state store: element events', () => {
   it('follows pricing-ready and then pricing-selection-change', () => {
     const store = createStore();
@@ -179,7 +178,6 @@ function recordingTarget() {
   return { target, fire };
 }
 
-// [utest->req~renderer-state-events~1]
 describe('renderer state store: event origin and detail shape', () => {
   it('ignores events that bubbled from another target', () => {
     const store = createStore();
@@ -239,7 +237,6 @@ describe('renderer state store: event origin and detail shape', () => {
   });
 });
 
-// [utest->req~renderer-state-cached-snapshot~1]
 describe('renderer state store: cached snapshot', () => {
   it('returns the identical snapshot from repeated reads', () => {
     const store = createStore();
@@ -261,7 +258,6 @@ describe('renderer state store: cached snapshot', () => {
   });
 });
 
-// [utest->req~renderer-state-server-snapshot~1]
 describe('renderer state store: server snapshot', () => {
   it('returns undefined from getServerSnapshot', () => {
     const store = createStore();
@@ -284,7 +280,6 @@ describe('renderer state store: server snapshot', () => {
   });
 });
 
-// [utest->req~renderer-state-ref-change~1]
 describe('renderer state store: new ref target', () => {
   it('moves the listeners from the old target to the new one', () => {
     const store = createStore();
@@ -325,7 +320,6 @@ describe('renderer state store: new ref target', () => {
   });
 });
 
-// [utest->req~renderer-state-early-listen~1]
 describe('renderer state store: early listening', () => {
   it('receives a pricing-ready queued as a microtask after attach', async () => {
     const store = createStore();
@@ -368,7 +362,6 @@ function appliedResult(planId: string): ApplyResult {
   };
 }
 
-// [utest->req~renderer-state-apply~1]
 describe('renderer state store: applySelection', () => {
   it('replaces the snapshot with the applied result and notifies once', () => {
     const store = createStore();

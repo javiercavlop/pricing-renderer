@@ -36,11 +36,6 @@ function setOwn<T>(record: Record<string, T>, key: string, value: T): void {
 
 // Maps the plan and add-on quantities of one service of a SPACE contract to the input of
 // applySelection. SPACE contracts carry no billing period, so billingPeriod is never set.
-// [impl->req~space-select-from-contract~1]
-// [impl->req~space-map-plan~1] [impl->req~space-map-addons~1] [impl->req~space-map-service-only~1]
-// [impl->req~space-map-missing-service~1] [impl->req~space-map-invalid-quantity~1]
-// [impl->req~space-map-addons-only~1] [impl->req~space-map-result-keys~1]
-// [impl->req~space-map-no-mutation~1]
 export function selectionFromContract(
   contract: SpaceContractLike,
   serviceKey: string,
@@ -64,10 +59,6 @@ export function selectionFromContract(
 }
 
 // Builds the SPACE novation body of one service from a reconciled selection.
-// [impl->req~space-subscription-body~1] [impl->req~space-subscription-version~1]
-// [impl->req~space-subscription-plan~1] [impl->req~space-subscription-addons~1]
-// [impl->req~space-roundtrip~1] [impl->req~space-no-runtime-deps~1]
-// [impl->req~space-no-mutation~1]
 export function subscriptionFromSelection(
   serviceKey: string,
   version: string,
@@ -91,7 +82,6 @@ export function subscriptionFromSelection(
 }
 
 // SPACE stores versions with "." replaced by "_" and clients read them back dotted.
-// [impl->req~space-contracted-version~1] [impl->req~space-no-mutation~1]
 export function contractedVersion(
   contract: SpaceContractLike,
   serviceKey: string,
@@ -101,7 +91,6 @@ export function contractedVersion(
 }
 
 // Maps the consumed amount of each usage limit of one service.
-// [impl->req~space-current-usage~1] [impl->req~space-no-mutation~1]
 export function currentUsageFromContract(
   contract: SpaceContractLike,
   serviceKey: string,

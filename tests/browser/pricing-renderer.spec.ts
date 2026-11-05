@@ -239,9 +239,7 @@ async function setControlledSelection(page: Page, planId: string): Promise<void>
   }, planId);
 }
 
-test('[utest->req~plan-change-immediate~1] applies a plan change without removals at once', async ({
-  page,
-}) => {
+test('applies a plan change without removals at once', async ({ page }) => {
   await collectEvents(page);
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
   await expect(page.getByRole('radio', { name: 'Choose Growth' })).toBeChecked();
@@ -256,9 +254,7 @@ test('[utest->req~plan-change-immediate~1] applies a plan change without removal
   expect(events[0]?.selection.planId).toBe('growth');
 });
 
-test('[utest->req~plan-change-confirmation~1] asks before removing add-ons on a plan change', async ({
-  page,
-}) => {
+test('asks before removing add-ons on a plan change', async ({ page }) => {
   await page.getByRole('radio', { name: 'Choose Growth' }).check();
   const priority = addOnCheckbox(page, 'Priority Success');
   await priority.check();
@@ -273,9 +269,7 @@ test('[utest->req~plan-change-confirmation~1] asks before removing add-ons on a 
   expect(await selectionEvents(page)).toHaveLength(0);
 });
 
-test('[utest->req~pending-plan-change-shape~1] holds a plan-change PendingAddOnChange', async ({
-  page,
-}) => {
+test('holds a plan-change PendingAddOnChange', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
   await expect(planDialog(page)).toBeVisible();
@@ -288,9 +282,7 @@ test('[utest->req~pending-plan-change-shape~1] holds a plan-change PendingAddOnC
   });
 });
 
-test('[utest->req~plan-change-apply~1] commits the plan and the removals in one event', async ({
-  page,
-}) => {
+test('commits the plan and the removals in one event', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
@@ -305,7 +297,7 @@ test('[utest->req~plan-change-apply~1] commits the plan and the removals in one 
   expect(events[0]?.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', async ({ page }) => {
+test('keeps the previous plan on Cancel', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
   const starter = page.getByRole('radio', { name: 'Choose Starter' });
@@ -321,7 +313,7 @@ test('[utest->req~plan-change-cancel~1] keeps the previous plan on Cancel', asyn
   await expect(starter).toBeFocused();
 });
 
-test('[utest->req~plan-change-cancel~1] keeps the previous plan on Escape', async ({ page }) => {
+test('keeps the previous plan on Escape', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
   const starter = page.getByRole('radio', { name: 'Choose Starter' });
@@ -336,9 +328,7 @@ test('[utest->req~plan-change-cancel~1] keeps the previous plan on Escape', asyn
   expect(await selectionEvents(page)).toHaveLength(0);
 });
 
-test('[utest->req~events-reconciled-selection~1] emits only reconciled selections from an invalid controlled selection', async ({
-  page,
-}) => {
+test('emits only reconciled selections from an invalid controlled selection', async ({ page }) => {
   await setControlledSelection(page, 'starter');
   await collectEvents(page);
   await page.getByRole('radio', { name: /Yearly/ }).click();
@@ -359,9 +349,7 @@ test('[utest->req~events-reconciled-selection~1] emits only reconciled selection
   expect(actions[0]?.resolved.selection).toEqual(actions[0]?.selection);
 });
 
-test('[utest->req~events-reconciled-selection~1] emits a reconciled action when selection is disabled', async ({
-  page,
-}) => {
+test('emits a reconciled action when selection is disabled', async ({ page }) => {
   await setControlledSelection(page, 'starter');
   await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as HTMLElement & {
@@ -383,9 +371,7 @@ test('[utest->req~events-reconciled-selection~1] emits a reconciled action when 
   await expect(page.locator('.pr-summary')).toContainText('€20');
 });
 
-test('[utest->req~plan-change-cancel~1] drops a pending plan change on reload', async ({
-  page,
-}) => {
+test('drops a pending plan change on reload', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
   await expect(planDialog(page)).toBeVisible();
@@ -397,18 +383,14 @@ test('[utest->req~plan-change-cancel~1] drops a pending plan change on reload', 
   await expect(page.getByRole('radio', { name: 'Choose Starter' })).toBeChecked();
 });
 
-test('[utest->req~element-subtotal-excludes-removed~1] renders the Starter price for an invalid controlled selection', async ({
-  page,
-}) => {
+test('renders the Starter price for an invalid controlled selection', async ({ page }) => {
   await setControlledSelection(page, 'starter');
   const summary = page.locator('.pr-summary');
   await expect(summary).toContainText('€20');
   await expect(summary).not.toContainText('€25');
 });
 
-test('[utest->req~default-selection-reconciled~1] reconciles defaultSelection silently on load', async ({
-  page,
-}) => {
+test('reconciles defaultSelection silently on load', async ({ page }) => {
   await collectEvents(page);
   await page.evaluate(async () => {
     const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
@@ -429,9 +411,7 @@ test('[utest->req~default-selection-reconciled~1] reconciles defaultSelection si
   expect(internal).toEqual({ selected: false, quantity: 2 });
 });
 
-test('[utest->req~controlled-selection-untouched~1] never rewrites a controlled selection', async ({
-  page,
-}) => {
+test('never rewrites a controlled selection', async ({ page }) => {
   await setControlledSelection(page, 'growth');
   await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as PlanChangeElement;
@@ -634,9 +614,7 @@ function addOnCard(page: Page, name: string) {
   return page.locator(`.pr-addon-card:has(input[type="checkbox"][aria-label$=" ${name}"])`);
 }
 
-test('[utest->req~apply-selection-replaces~1] load API: applies the Delivera contract', async ({
-  page,
-}) => {
+test('load API: applies the Delivera contract', async ({ page }) => {
   await applySelection(page, contractC);
   await nextUpdate(page);
   await expect(growthRadio(page)).toBeChecked();
@@ -645,9 +623,7 @@ test('[utest->req~apply-selection-replaces~1] load API: applies the Delivera con
   await expect(page.locator('.pr-summary')).toContainText('€80');
 });
 
-test('[utest->req~apply-selection-replaces~1] load API: replaces the selection instead of merging', async ({
-  page,
-}) => {
+test('load API: replaces the selection instead of merging', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await applySelection(page, { planId: 'enterprise' });
   await nextUpdate(page);
@@ -656,9 +632,7 @@ test('[utest->req~apply-selection-replaces~1] load API: replaces the selection i
   await expect(page.locator('.pr-summary')).toContainText('€40');
 });
 
-test('[utest->req~apply-selection-result~1] load API: returns the applied result', async ({
-  page,
-}) => {
+test('load API: returns the applied result', async ({ page }) => {
   const outcome = await page.evaluate((input) => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
     const result = renderer.applySelection(input);
@@ -672,9 +646,7 @@ test('[utest->req~apply-selection-result~1] load API: returns the applied result
   expect(outcome.result.resolved).toEqual(outcome.state?.resolved);
 });
 
-test('[utest->req~apply-selection-result~1] load API: reports the removed add-on', async ({
-  page,
-}) => {
+test('load API: reports the removed add-on', async ({ page }) => {
   const result = await applySelection(page, downgradeInput);
   expect(result.applied).toBe(true);
   expect(result.removedAddOnIds).toEqual(['extraStorage']);
@@ -687,9 +659,7 @@ test('[utest->req~apply-selection-result~1] load API: reports the removed add-on
   });
 });
 
-test('[utest->req~apply-selection-uses-selection-in-effect~1] load API: falls back to the selection in effect', async ({
-  page,
-}) => {
+test('load API: falls back to the selection in effect', async ({ page }) => {
   await growthRadio(page).check();
   await page.getByRole('radio', { name: /Yearly/ }).check();
   const result = await applySelection(page, { planId: 'legacy', billingPeriod: 'quarterly' });
@@ -701,9 +671,7 @@ test('[utest->req~apply-selection-uses-selection-in-effect~1] load API: falls ba
   ]);
 });
 
-test('[utest->req~apply-selection-silent~1] load API: emits no pricing-selection-change', async ({
-  page,
-}) => {
+test('load API: emits no pricing-selection-change', async ({ page }) => {
   await collectEvents(page);
   await applySelection(page, contractC);
   await applySelection(page, downgradeInput);
@@ -711,9 +679,7 @@ test('[utest->req~apply-selection-silent~1] load API: emits no pricing-selection
   expect(await selectionEvents(page)).toHaveLength(0);
 });
 
-test('[utest->req~apply-selection-no-dialog~1] load API: removes add-ons without a dialog', async ({
-  page,
-}) => {
+test('load API: removes add-ons without a dialog', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await applySelection(page, {
     planId: 'starter',
@@ -726,9 +692,7 @@ test('[utest->req~apply-selection-no-dialog~1] load API: removes add-ons without
   await expect(page.locator('.pr-summary')).toContainText('€20');
 });
 
-test('[utest->req~apply-selection-discards-pending~1] load API: discards a pending change and restores focus', async ({
-  page,
-}) => {
+test('load API: discards a pending change and restores focus', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await collectEvents(page);
   const starter = page.getByRole('radio', { name: 'Choose Starter' });
@@ -744,9 +708,7 @@ test('[utest->req~apply-selection-discards-pending~1] load API: discards a pendi
   await expect(starter).toBeFocused();
 });
 
-test('[utest->req~apply-selection-input-unmutated~1] load API: leaves the input untouched', async ({
-  page,
-}) => {
+test('load API: leaves the input untouched', async ({ page }) => {
   const input = {
     planId: 'growth',
     addOns: {
@@ -763,9 +725,7 @@ test('[utest->req~apply-selection-input-unmutated~1] load API: leaves the input 
   expect(after.value).toEqual(input);
 });
 
-test('[utest->req~apply-selection-input-detached~1] load API: keeps no reference to the input', async ({
-  page,
-}) => {
+test('load API: keeps no reference to the input', async ({ page }) => {
   await page.evaluate((value) => {
     const input = structuredClone(value);
     (document.querySelector('pricing-renderer') as LoadApiElement).applySelection(input);
@@ -779,9 +739,7 @@ test('[utest->req~apply-selection-input-detached~1] load API: keeps no reference
   expect(state?.resolved.subtotal).toBe(80);
 });
 
-test('[utest->req~apply-selection-not-ready~1] load API: refuses while the first load is in flight', async ({
-  page,
-}) => {
+test('load API: refuses while the first load is in flight', async ({ page }) => {
   await addPendingRenderer(page, 'late');
   const result = await applyOn(page, 'late', contractC);
   expect(result.applied).toBe(false);
@@ -799,9 +757,7 @@ test('[utest->req~apply-selection-not-ready~1] load API: refuses while the first
   expect(state?.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~apply-selection-not-ready~1] load API: refuses while a reload is in flight', async ({
-  page,
-}) => {
+test('load API: refuses while a reload is in flight', async ({ page }) => {
   await addPendingRenderer(page, 'late');
   await resolvePendingLoads(page, 'late');
   await startPendingReload(page, 'late');
@@ -820,9 +776,7 @@ test('[utest->req~apply-selection-not-ready~1] load API: refuses while a reload 
   expect(state?.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~apply-selection-not-ready~1] load API: refuses after a failed first load', async ({
-  page,
-}) => {
+test('load API: refuses after a failed first load', async ({ page }) => {
   await addFailedRenderer(page, 'failed');
   const result = await applyOn(page, 'failed', contractC);
   expect(result.applied).toBe(false);
@@ -833,9 +787,7 @@ test('[utest->req~apply-selection-not-ready~1] load API: refuses after a failed 
   });
 });
 
-test('[utest->req~apply-selection-not-ready~1] load API: applies after a failed reload that keeps the pricing', async ({
-  page,
-}) => {
+test('load API: applies after a failed reload that keeps the pricing', async ({ page }) => {
   await record(page, 'pricing-renderer', 'pricing-diagnostic', 'conflict');
   await page.evaluate(async () => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -850,9 +802,7 @@ test('[utest->req~apply-selection-not-ready~1] load API: applies after a failed 
   expect(result.resolved?.subtotal).toBe(80);
 });
 
-test('[utest->req~apply-selection-controlled~1] load API: refuses in controlled mode', async ({
-  page,
-}) => {
+test('load API: refuses in controlled mode', async ({ page }) => {
   await setControlled(page, 'growth', 1);
   const outcome = await page.evaluate((input) => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -871,9 +821,7 @@ test('[utest->req~apply-selection-controlled~1] load API: refuses in controlled 
   expect(outcome.result.resolved).toEqual(outcome.state?.resolved);
 });
 
-test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a controlled refusal stores nothing', async ({
-  page,
-}) => {
+test('load API: a controlled refusal stores nothing', async ({ page }) => {
   await setControlled(page, 'growth', 1);
   const before = await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -900,9 +848,7 @@ test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a controlled 
   expect(state?.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a not-ready refusal stores nothing', async ({
-  page,
-}) => {
+test('load API: a not-ready refusal stores nothing', async ({ page }) => {
   await addPendingRenderer(page, 'late');
   await applyOn(page, 'late', contractC);
   await resolvePendingLoads(page, 'late');
@@ -911,9 +857,7 @@ test('[utest->req~apply-selection-refusal-keeps-state~1] load API: a not-ready r
   expect(state?.selection.addOns).toEqual({});
 });
 
-test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches one pricing-diagnostic event', async ({
-  page,
-}) => {
+test('load API: dispatches one pricing-diagnostic event', async ({ page }) => {
   await record(page, 'pricing-renderer', 'pricing-diagnostic', 'main');
   const result = await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -929,9 +873,7 @@ test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches one p
   expect(await recorded(page, 'main')).toEqual([{ diagnostics: result.result.diagnostics }]);
 });
 
-test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches the refusal diagnostics', async ({
-  page,
-}) => {
+test('load API: dispatches the refusal diagnostics', async ({ page }) => {
   await setControlled(page, 'growth', 1);
   await record(page, 'pricing-renderer', 'pricing-diagnostic', 'controlled');
   const controlled = await applySelection(page, contractC);
@@ -945,9 +887,7 @@ test('[utest->req~apply-selection-diagnostic-event~1] load API: dispatches the r
   expect(await recorded(page, 'late')).toEqual([{ diagnostics: notReady.diagnostics }]);
 });
 
-test('[utest->req~apply-selection-no-empty-diagnostic~1] load API: dispatches no event for an empty list', async ({
-  page,
-}) => {
+test('load API: dispatches no event for an empty list', async ({ page }) => {
   await record(page, 'pricing-renderer', 'pricing-diagnostic', 'main');
   const result = await applySelection(page, contractC);
   expect(result.diagnostics).toEqual([]);
@@ -955,9 +895,7 @@ test('[utest->req~apply-selection-no-empty-diagnostic~1] load API: dispatches no
   expect(await recorded(page, 'main')).toHaveLength(0);
 });
 
-test('[utest->req~apply-selection-diagnostics-not-rendered~1] load API: keeps the diagnostics out of the rendered list', async ({
-  page,
-}) => {
+test('load API: keeps the diagnostics out of the rendered list', async ({ page }) => {
   const items = page.locator('[data-pr-part="diagnostics"] li');
   const before = await items.count();
   const result = await applySelection(page, {
@@ -981,9 +919,7 @@ async function reloadAndWaitForReady(page: Page): Promise<void> {
   });
 }
 
-test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts from the default selection', async ({
-  page,
-}) => {
+test('load API: a reload restarts from the default selection', async ({ page }) => {
   await applySelection(page, contractC);
   await reloadAndWaitForReady(page);
   const state = await readResolvedState(page);
@@ -993,9 +929,7 @@ test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts
   await expect(page.locator('.pr-summary')).toContainText('€20');
 });
 
-test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts from defaultSelection', async ({
-  page,
-}) => {
+test('load API: a reload restarts from defaultSelection', async ({ page }) => {
   await page.evaluate(() => {
     (document.querySelector('pricing-renderer') as LoadApiElement).defaultSelection = {
       planId: 'growth',
@@ -1009,9 +943,7 @@ test('[utest->req~apply-selection-reload-restarts~1] load API: a reload restarts
   expect(state?.resolved.subtotal).toBe(45);
 });
 
-test('[utest->req~apply-selection-in-ready-listener~1] load API: keeps a selection applied from a pricing-ready listener', async ({
-  page,
-}) => {
+test('load API: keeps a selection applied from a pricing-ready listener', async ({ page }) => {
   await collectEvents(page);
   await page.evaluate((input) => {
     const target = window as LoadApiWindow;
@@ -1034,9 +966,7 @@ test('[utest->req~apply-selection-in-ready-listener~1] load API: keeps a selecti
   expect(await selectionEvents(page)).toHaveLength(0);
 });
 
-test('[utest->req~resolved-state-not-ready~1] load API: has no resolvedState before the element is ready', async ({
-  page,
-}) => {
+test('load API: has no resolvedState before the element is ready', async ({ page }) => {
   await addPendingRenderer(page, 'first');
   expect(await readResolvedState(page, '#first')).toBeUndefined();
   await addPendingRenderer(page, 'again');
@@ -1047,9 +977,7 @@ test('[utest->req~resolved-state-not-ready~1] load API: has no resolvedState bef
   expect(await readResolvedState(page, '#failed')).toBeUndefined();
 });
 
-test('[utest->req~resolved-state-snapshot~1] load API: reads the initial state', async ({
-  page,
-}) => {
+test('load API: reads the initial state', async ({ page }) => {
   const state = await readResolvedState(page);
   expect(state?.selection).toEqual({
     planId: 'starter',
@@ -1061,9 +989,7 @@ test('[utest->req~resolved-state-snapshot~1] load API: reads the initial state',
   await expect(page.locator('.pr-summary')).toContainText('€20');
 });
 
-test('[utest->req~resolved-state-snapshot~1] load API: reads the state after user changes', async ({
-  page,
-}) => {
+test('load API: reads the state after user changes', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   const state = await readResolvedState(page);
   expect(state?.selection.planId).toBe('growth');
@@ -1072,9 +998,7 @@ test('[utest->req~resolved-state-snapshot~1] load API: reads the state after use
   await expect(page.locator('.pr-summary')).toContainText('€50');
 });
 
-test('[utest->req~resolved-state-snapshot~1] load API: ignores variables while they are disabled', async ({
-  page,
-}) => {
+test('load API: ignores variables while they are disabled', async ({ page }) => {
   const applied = await applySelection(page, { planId: 'starter', variables: { seats: 12 } });
   expect(applied.resolved?.subtotal).toBe(48);
   await page.evaluate(() => {
@@ -1085,9 +1009,7 @@ test('[utest->req~resolved-state-snapshot~1] load API: ignores variables while t
   expect(state?.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~resolved-state-detached~1] load API: returns detached snapshots', async ({
-  page,
-}) => {
+test('load API: returns detached snapshots', async ({ page }) => {
   const outcome = await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
     const a = renderer.resolvedState!;
@@ -1108,9 +1030,7 @@ test('[utest->req~resolved-state-detached~1] load API: returns detached snapshot
   await expect(page.locator('.pr-summary')).toContainText('€20');
 });
 
-test('[utest->req~resolved-state-controlled~1] load API: reconciles the controlled selection', async ({
-  page,
-}) => {
+test('load API: reconciles the controlled selection', async ({ page }) => {
   await setControlled(page, 'starter', 2);
   const outcome = await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -1121,9 +1041,7 @@ test('[utest->req~resolved-state-controlled~1] load API: reconciles the controll
   expect(outcome.host.addOns.extraStorage).toEqual({ selected: true, quantity: 2 });
 });
 
-test('[utest->req~resolved-state-read-only~1] load API: defines resolvedState as a getter only', async ({
-  page,
-}) => {
+test('load API: defines resolvedState as a getter only', async ({ page }) => {
   const descriptor = await page.evaluate(() => {
     const element = customElements.get('pricing-renderer')!;
     const found = Object.getOwnPropertyDescriptor(element.prototype, 'resolvedState');
@@ -1132,9 +1050,7 @@ test('[utest->req~resolved-state-read-only~1] load API: defines resolvedState as
   expect(descriptor).toEqual({ get: 'function', set: 'undefined' });
 });
 
-test('[utest->req~ready-detail-selection~1] load API: pricing-ready carries the selection', async ({
-  page,
-}) => {
+test('load API: pricing-ready carries the selection', async ({ page }) => {
   await page.evaluate(() => {
     const target = window as LoadApiWindow;
     const renderer = document.querySelector('pricing-renderer') as LoadApiElement;
@@ -1163,7 +1079,7 @@ test('[utest->req~ready-detail-selection~1] load API: pricing-ready carries the 
   expect(second?.detail.resolved.subtotal).toBe(20);
 });
 
-test('[utest->req~stepper-max-on-grid~1] quantity stepper: input max is the largest grid value, not the raw maximum', async ({
+test('quantity stepper: input max is the largest grid value, not the raw maximum', async ({
   page,
 }) => {
   // min 1, step 5, max 8: valid quantities are 1 and 6
@@ -1204,9 +1120,7 @@ test('[utest->req~stepper-max-on-grid~1] quantity stepper: input max is the larg
 const extraStorageQuantity = (page: Page) =>
   page.getByRole('spinbutton', { name: 'Quantity for Extra Storage' });
 
-test('[utest->req~stepper-max-on-grid~1] quantity stepper: the acme storage packs have max 10', async ({
-  page,
-}) => {
+test('quantity stepper: the acme storage packs have max 10', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await expect(extraStorageQuantity(page)).toHaveAttribute('max', '10');
 });
@@ -1242,7 +1156,7 @@ async function reloadWithDefaultQuantity25(page: Page): Promise<void> {
   await nextUpdate(page);
 }
 
-test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the normalized quantity of a controlled selection', async ({
+test('quantity stepper: shows the normalized quantity of a controlled selection', async ({
   page,
 }) => {
   await setControlledQuantity25(page);
@@ -1258,14 +1172,12 @@ test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the nor
   expect(stored).toBe(25);
 });
 
-test('[utest->req~stepper-normalized-quantity~1] quantity stepper: shows the normalized quantity of a default selection', async ({
-  page,
-}) => {
+test('quantity stepper: shows the normalized quantity of a default selection', async ({ page }) => {
   await reloadWithDefaultQuantity25(page);
   await expect(extraStorageQuantity(page)).toHaveValue('10');
 });
 
-test('[utest->req~stepper-steps-from-normalized~1] quantity stepper: buttons start from the normalized quantity of a controlled selection', async ({
+test('quantity stepper: buttons start from the normalized quantity of a controlled selection', async ({
   page,
 }) => {
   await collectEvents(page);
@@ -1283,7 +1195,7 @@ test('[utest->req~stepper-steps-from-normalized~1] quantity stepper: buttons sta
   expect(second?.selection.addOns.extraStorage?.quantity).toBe(10);
 });
 
-test('[utest->req~stepper-steps-from-normalized~1] quantity stepper: the decrease button steps down from the normalized quantity of a default selection', async ({
+test('quantity stepper: the decrease button steps down from the normalized quantity of a default selection', async ({
   page,
 }) => {
   await reloadWithDefaultQuantity25(page);
@@ -1544,9 +1456,7 @@ const setTheme = (page: Page, theme: string) =>
     await Promise.allSettled(document.getAnimations().map((animation) => animation.finished));
   }, theme);
 
-test('[utest->req~breakdown-in-element~1] price breakdown: resolvedState and applySelection carry it', async ({
-  page,
-}) => {
+test('price breakdown: resolvedState and applySelection carry it', async ({ page }) => {
   const result = (await applySelection(page, contractCY)) as unknown as BreakdownState;
   await nextUpdate(page);
   const state = await readBreakdownState(page);
@@ -1557,7 +1467,7 @@ test('[utest->req~breakdown-in-element~1] price breakdown: resolvedState and app
   await expect(summaryOf(page)).toContainText('€64');
 });
 
-test('[utest->req~breakdown-in-element~1] price breakdown: events carry it', async ({ page }) => {
+test('price breakdown: events carry it', async ({ page }) => {
   await record(page, DEMO, 'pricing-ready', 'ready');
   await record(page, DEMO, 'pricing-selection-change', 'change');
   await record(page, DEMO, 'pricing-action', 'action');
@@ -1579,9 +1489,7 @@ test('[utest->req~breakdown-in-element~1] price breakdown: events carry it', asy
   }
 });
 
-test('[utest->req~breakdown-element-stabilized~1] price breakdown: keeps the last valid price of a failing expression', async ({
-  page,
-}) => {
+test('price breakdown: keeps the last valid price of a failing expression', async ({ page }) => {
   await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer');
     renderer?.addEventListener('pricing-selection-change', (event) => {
@@ -1628,9 +1536,7 @@ test('[utest->req~breakdown-element-stabilized~1] price breakdown: keeps the las
   expect(resolved.requiresQuote).toBe(true);
 });
 
-test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle starts closed with an English name', async ({
-  page,
-}) => {
+test('price breakdown: toggle starts closed with an English name', async ({ page }) => {
   const toggle = summaryOf(page).getByRole('button', {
     name: 'How is this calculated?',
     exact: true,
@@ -1654,17 +1560,13 @@ test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle starts clo
   expect(panel).toMatchObject({ part: 'breakdown', hidden: true, nodes: 0 });
 });
 
-test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle has a Spanish name', async ({
-  page,
-}) => {
+test('price breakdown: toggle has a Spanish name', async ({ page }) => {
   await page.locator('#locale').selectOption('es-ES');
   await expect(toggleOf(page)).toHaveCount(1);
   await expect(toggleOf(page)).toHaveAccessibleName('¿Cómo se calcula?');
 });
 
-test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle stays when the flags are off', async ({
-  page,
-}) => {
+test('price breakdown: toggle stays when the flags are off', async ({ page }) => {
   await page.evaluate(() => {
     const renderer = document.querySelector('pricing-renderer') as FlagsElement;
     renderer.selectionEnabled = false;
@@ -1676,17 +1578,13 @@ test('[utest->req~summary-breakdown-toggle~1] price breakdown: toggle stays when
   await expect(toggleOf(page)).toBeVisible();
 });
 
-test('[utest->req~summary-breakdown-toggle~1] price breakdown: a pricing without add-ons has one toggle', async ({
-  page,
-}) => {
+test('price breakdown: a pricing without add-ons has one toggle', async ({ page }) => {
   await addYamlRenderer(page, 'plain', plainYaml);
   await expect(summaryOf(page, '#plain')).toContainText('€10');
   await expect(toggleOf(page, '#plain')).toHaveCount(1);
 });
 
-test('[utest->req~summary-breakdown-unique-ids~1] price breakdown: two renderers have distinct panel ids', async ({
-  page,
-}) => {
+test('price breakdown: two renderers have distinct panel ids', async ({ page }) => {
   await addYamlRenderer(page, 'plain', plainYaml);
   const demo = await panelIdentity(page, DEMO);
   const plain = await panelIdentity(page, '#plain');
@@ -1697,9 +1595,7 @@ test('[utest->req~summary-breakdown-unique-ids~1] price breakdown: two renderers
   expect(plain).toMatchObject({ count: 1, inHost: true });
 });
 
-test('[utest->req~summary-breakdown-activate~1] price breakdown: a click opens and closes the panel', async ({
-  page,
-}) => {
+test('price breakdown: a click opens and closes the panel', async ({ page }) => {
   const toggle = toggleOf(page);
   await toggle.click();
   await expectPanel(page, true);
@@ -1709,9 +1605,7 @@ test('[utest->req~summary-breakdown-activate~1] price breakdown: a click opens a
   await expectPanel(page, false);
 });
 
-test('[utest->req~summary-breakdown-activate~1] price breakdown: Enter and Space toggle the panel', async ({
-  page,
-}) => {
+test('price breakdown: Enter and Space toggle the panel', async ({ page }) => {
   const toggle = toggleOf(page);
   await toggle.focus();
   await page.keyboard.press('Enter');
@@ -1722,18 +1616,14 @@ test('[utest->req~summary-breakdown-activate~1] price breakdown: Enter and Space
   await expect(toggle).toBeFocused();
 });
 
-test('[utest->req~summary-breakdown-lines~1] price breakdown: rows of a contract billed yearly', async ({
-  page,
-}) => {
+test('price breakdown: rows of a contract billed yearly', async ({ page }) => {
   await applySelection(page, contractCY);
   await nextUpdate(page);
   await openPanel(page);
   await expectRows(page, rowsCY);
 });
 
-test('[utest->req~summary-breakdown-lines~1] price breakdown: rows of Enterprise with compliance', async ({
-  page,
-}) => {
+test('price breakdown: rows of Enterprise with compliance', async ({ page }) => {
   await applySelection(page, contractE);
   await nextUpdate(page);
   await openPanel(page);
@@ -1744,18 +1634,14 @@ test('[utest->req~summary-breakdown-lines~1] price breakdown: rows of Enterprise
   ]);
 });
 
-test('[utest->req~summary-breakdown-lines~1] price breakdown: a plan that never resolves requires a quote', async ({
-  page,
-}) => {
+test('price breakdown: a plan that never resolves requires a quote', async ({ page }) => {
   await addYamlRenderer(page, 'quote', quoteYaml);
   await openPanel(page, '#quote');
   const row: ExpectedRow = { kind: 'plan', id: 'base', texts: ['Base', 'Requires quote'] };
   await expectRows(page, [row], '#quote');
 });
 
-test('[utest->req~summary-breakdown-totals~1] price breakdown: totals of a contract billed yearly', async ({
-  page,
-}) => {
+test('price breakdown: totals of a contract billed yearly', async ({ page }) => {
   await applySelection(page, contractCY);
   await nextUpdate(page);
   await openPanel(page);
@@ -1765,9 +1651,7 @@ test('[utest->req~summary-breakdown-totals~1] price breakdown: totals of a contr
   }
 });
 
-test('[utest->req~summary-breakdown-totals~1] price breakdown: totals when a quote is required', async ({
-  page,
-}) => {
+test('price breakdown: totals when a quote is required', async ({ page }) => {
   await applySelection(page, contractE);
   await nextUpdate(page);
   await openPanel(page);
@@ -1777,9 +1661,7 @@ test('[utest->req~summary-breakdown-totals~1] price breakdown: totals when a quo
   }
 });
 
-test('[utest->req~summary-breakdown-totals~1] price breakdown: no billing period row with one period', async ({
-  page,
-}) => {
+test('price breakdown: no billing period row with one period', async ({ page }) => {
   await addYamlRenderer(page, 'plain', plainYaml);
   await openPanel(page, '#plain');
   const panel = panelOf(page, '#plain');
@@ -1789,9 +1671,7 @@ test('[utest->req~summary-breakdown-totals~1] price breakdown: no billing period
   await expect(panel).not.toContainText('Billing period');
 });
 
-test('[utest->req~summary-breakdown-escape~1] price breakdown: Escape on the toggle closes the panel', async ({
-  page,
-}) => {
+test('price breakdown: Escape on the toggle closes the panel', async ({ page }) => {
   const toggle = toggleOf(page);
   await toggle.focus();
   await page.keyboard.press('Enter');
@@ -1801,18 +1681,14 @@ test('[utest->req~summary-breakdown-escape~1] price breakdown: Escape on the tog
   await expect(toggle).toBeFocused();
 });
 
-test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape on a plan radio leaves the panel open', async ({
-  page,
-}) => {
+test('price breakdown: Escape on a plan radio leaves the panel open', async ({ page }) => {
   await openPanel(page);
   await growthRadio(page).focus();
   await page.keyboard.press('Escape');
   await expectPanel(page, true);
 });
 
-test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape cancels the dialog and leaves the panel open', async ({
-  page,
-}) => {
+test('price breakdown: Escape cancels the dialog and leaves the panel open', async ({ page }) => {
   await selectGrowthWithExtraStorage(page);
   await openPanel(page);
   await page.getByRole('radio', { name: 'Choose Starter' }).click();
@@ -1823,9 +1699,7 @@ test('[utest->req~summary-breakdown-escape-scope~1] price breakdown: Escape canc
   await expectPanel(page, true);
 });
 
-test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open when the user picks Growth', async ({
-  page,
-}) => {
+test('price breakdown: stays open when the user picks Growth', async ({ page }) => {
   await openPanel(page);
   await growthRadio(page).check();
   await expectPanel(page, true);
@@ -1834,9 +1708,7 @@ test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open wh
   await expect.poll(() => panelTotals(page)).toContain('€45');
 });
 
-test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open when the host applies a selection', async ({
-  page,
-}) => {
+test('price breakdown: stays open when the host applies a selection', async ({ page }) => {
   await openPanel(page);
   await applySelection(page, contractCY);
   await nextUpdate(page);
@@ -1844,18 +1716,14 @@ test('[utest->req~summary-breakdown-stays-open~1] price breakdown: stays open wh
   await expectRows(page, rowsCY);
 });
 
-test('[utest->req~summary-breakdown-closes-on-load~1] price breakdown: closes when the pricing reloads', async ({
-  page,
-}) => {
+test('price breakdown: closes when the pricing reloads', async ({ page }) => {
   await openPanel(page);
   await reloadAndWaitForReady(page);
   await nextUpdate(page);
   await expectPanel(page, false);
 });
 
-test('[utest->req~summary-breakdown-not-live~1] price breakdown: toggle and panel are outside live regions', async ({
-  page,
-}) => {
+test('price breakdown: toggle and panel are outside live regions', async ({ page }) => {
   await applySelection(page, contractE);
   await nextUpdate(page);
   const liveAncestors = () =>
@@ -1874,9 +1742,7 @@ test('[utest->req~summary-breakdown-not-live~1] price breakdown: toggle and pane
   expect(await liveAncestors()).toEqual({ toggle: null, panel: null });
 });
 
-test('[utest->req~summary-live-region~1] price breakdown: one live region holds label, total and quote note', async ({
-  page,
-}) => {
+test('price breakdown: one live region holds label, total and quote note', async ({ page }) => {
   await expect(liveOf(page)).toHaveCount(1);
   await expect(liveOf(page)).toContainText('Estimated total');
   await expect(liveOf(page)).toContainText('€20');
@@ -1888,9 +1754,7 @@ test('[utest->req~summary-live-region~1] price breakdown: one live region holds 
   }
 });
 
-test('[utest->req~summary-live-region~1] price breakdown: opening the panel leaves the live text unchanged', async ({
-  page,
-}) => {
+test('price breakdown: opening the panel leaves the live text unchanged', async ({ page }) => {
   await applySelection(page, contractE);
   await nextUpdate(page);
   await expect(liveOf(page)).toContainText('Requires quote');
@@ -1904,7 +1768,7 @@ for (const viewport of [
   { width: 320, height: 900 },
   { width: 1440, height: 1000 },
 ]) {
-  test(`[utest->req~summary-breakdown-closed-layout~1] price breakdown: the closed toggle keeps the layout at ${viewport.width} px`, async ({
+  test(`price breakdown: the closed toggle keeps the layout at ${viewport.width} px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -1939,7 +1803,7 @@ for (const viewport of [
   { width: 375, height: 900 },
   { width: 1440, height: 1000 },
 ]) {
-  test(`[utest->req~summary-breakdown-target-size~1] price breakdown: the toggle has a 44 px pointer target at ${viewport.width} px`, async ({
+  test(`price breakdown: the toggle has a 44 px pointer target at ${viewport.width} px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -1970,9 +1834,7 @@ for (const viewport of [
   });
 }
 
-test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violations with the panel open', async ({
-  page,
-}) => {
+test('price breakdown: no serious violations with the panel open', async ({ page }) => {
   await applySelection(page, contractE);
   await nextUpdate(page);
   await openPanel(page);
@@ -2003,9 +1865,7 @@ test('[utest->req~summary-breakdown-axe~1] price breakdown: no serious violation
 });
 
 for (const theme of ['light', 'dark']) {
-  test(`[utest->req~summary-breakdown-icon-contrast~1] price breakdown: icon contrast is at least 3:1 in the ${theme} theme`, async ({
-    page,
-  }) => {
+  test(`price breakdown: icon contrast is at least 3:1 in the ${theme} theme`, async ({ page }) => {
     await setTheme(page, theme);
     await expect(toggleOf(page)).toBeVisible();
     const measure = () =>
@@ -2055,9 +1915,7 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('[utest->req~summary-breakdown-reduced-motion~1] price breakdown: no transitions or animations with reduced motion', async ({
-  page,
-}) => {
+test('price breakdown: no transitions or animations with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openPanel(page);
   const durations = await page.evaluate((css) => {

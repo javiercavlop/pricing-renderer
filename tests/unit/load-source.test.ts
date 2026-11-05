@@ -41,7 +41,6 @@ function isPromise(value: unknown): boolean {
   );
 }
 
-// [utest->req~load-source-one-source~1]
 describe('loadPricingSource: exactly one source', () => {
   it('returns a synchronous PR_SOURCE_MISSING for an empty src, without loading', () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -118,7 +117,6 @@ describe('loadPricingSource: exactly one source', () => {
   });
 });
 
-// [utest->req~load-source-result~1]
 describe('loadPricingSource: the one source', () => {
   it('returns a synchronous result for yaml and a promise for src', async () => {
     const loadPricing = vi.fn<Loader>(async () => acmeYaml);
@@ -224,7 +222,6 @@ describe('loadPricingSource: the one source', () => {
 
 // The element's reload() passes request as given (design.md D5). Built in node with stubs, as
 // tests/unit/error-state.test.ts does.
-// [utest->req~load-source-result~1]
 describe('element reload: request passed as given', () => {
   interface Host {
     src?: string;

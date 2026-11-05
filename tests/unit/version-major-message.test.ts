@@ -9,7 +9,6 @@ function unsupportedMajor(syntaxVersion: string) {
   return found[0]!;
 }
 
-// [utest->req~version-major-upgrade-hint~1]
 describe('unsupported major version message', () => {
   it.each(['2.1', '1.0'])('names the server-side upgrade for %s', (version) => {
     const item = unsupportedMajor(version);

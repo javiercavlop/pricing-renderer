@@ -212,7 +212,6 @@ describe('spec arithmetic (independent of the implementation)', () => {
 });
 
 describe('breakdown field', () => {
-  // [utest->req~breakdown-field~1]
   it('describes the acme defaults', () => {
     expect(breakdownOf(acme)).toStrictEqual({
       currency: 'EUR',
@@ -233,12 +232,10 @@ describe('breakdown field', () => {
     });
   });
 
-  // [utest->req~breakdown-field~1]
   it('describes the contract billed yearly', () => {
     expect(breakdownOf(acme, selectionCY())).toStrictEqual(contractBreakdownYearly());
   });
 
-  // [utest->req~breakdown-field~1]
   it('is present in the result of every call', () => {
     for (const selection of [undefined, selectionC(), selectionE(), selectionX(), {}]) {
       const resolved = resolvePricing(acme, selection);
@@ -251,7 +248,6 @@ describe('breakdown field', () => {
 });
 
 describe('breakdown currency', () => {
-  // [utest->req~breakdown-currency~1]
   it('copies the currency of the pricing metadata (EUR and USD)', () => {
     expect(breakdownOf(acme, selectionCY()).currency).toBe('EUR');
     expect(breakdownOf(zoom, selectionZA()).currency).toBe('USD');
@@ -261,7 +257,6 @@ describe('breakdown currency', () => {
 });
 
 describe('breakdown billing period', () => {
-  // [utest->req~breakdown-billing-period~1]
   it('copies the billing period of the selection (yearly, annual and the synthetic base)', () => {
     expect(breakdownOf(acme, selectionCY()).billingPeriod).toStrictEqual({
       id: 'yearly',
@@ -282,7 +277,6 @@ describe('breakdown billing period', () => {
 });
 
 describe('breakdown with an unknown billing period', () => {
-  // [utest->req~breakdown-unknown-billing-period~1]
   it('has no billingPeriod key and bills every line with multiplier 1', () => {
     const breakdown = breakdownOf(acme, quarterly());
     expect('billingPeriod' in breakdown).toBe(false);
@@ -291,7 +285,6 @@ describe('breakdown with an unknown billing period', () => {
     expect(breakdown.subtotal).toBe(45);
   });
 
-  // [utest->req~breakdown-unknown-billing-period~1]
   it('gives add-on lines multiplier 1 too', () => {
     const breakdown = breakdownOf(acme, { ...selectionC(), billingPeriod: 'quarterly' });
     expect('billingPeriod' in breakdown).toBe(false);
@@ -301,7 +294,6 @@ describe('breakdown with an unknown billing period', () => {
 });
 
 describe('breakdown plan line', () => {
-  // [utest->req~breakdown-plan-line~1]
   it('describes Growth billed yearly', () => {
     const resolved = resolvePricing(acme, selectionCY());
     expect(resolved.breakdown.plan).toStrictEqual({
@@ -319,7 +311,6 @@ describe('breakdown plan line', () => {
     expect(resolved.breakdown.plan!.amount).toBe(price?.kind === 'amount' ? price.amount : -1);
   });
 
-  // [utest->req~breakdown-plan-line~1]
   it('describes Zoom PRO billed annually', () => {
     const resolved = resolvePricing(zoom, selectionZA());
     const plan = resolved.breakdown.plan!;
@@ -337,7 +328,6 @@ describe('breakdown plan line', () => {
 });
 
 describe('breakdown without a known plan', () => {
-  // [utest->req~breakdown-no-plan-line~1]
   it.each([
     ['a plan id that is not in the pricing', { planId: 'legacy' }],
     ['an undefined plan id', { planId: undefined }],
@@ -351,14 +341,12 @@ describe('breakdown without a known plan', () => {
 });
 
 describe('breakdown add-on lines', () => {
-  // [utest->req~breakdown-addon-lines~1]
   it('has one add-on line for each selected add-on of the contract', () => {
     const breakdown = breakdownOf(acme, selectionC());
     expect(lineIds(breakdown)).toEqual(['extraStorage', 'prioritySuccess']);
     expect(breakdown.addOns.every((line) => line.kind === 'addOn')).toBe(true);
   });
 
-  // [utest->req~breakdown-addon-lines~1]
   it('leaves out an add-on removed by reconciliation', () => {
     const breakdown = breakdownOf(acme, {
       planId: 'starter',
@@ -369,7 +357,6 @@ describe('breakdown add-on lines', () => {
     expect(breakdown.requiresQuote).toBe(false);
   });
 
-  // [utest->req~breakdown-addon-lines~1]
   it('leaves out the dependents of a removed add-on', () => {
     const breakdown = breakdownOf(acme, {
       planId: 'starter',
@@ -382,7 +369,6 @@ describe('breakdown add-on lines', () => {
     expect(breakdown.subtotal).toBe(20);
   });
 
-  // [utest->req~breakdown-addon-lines~1]
   it('leaves out an unselected entry', () => {
     const breakdown = breakdownOf(acme, {
       planId: 'growth',
@@ -392,7 +378,6 @@ describe('breakdown add-on lines', () => {
     expect(breakdown.subtotal).toBe(45);
   });
 
-  // [utest->req~breakdown-addon-lines~1]
   it('leaves out an id that is not in the pricing', () => {
     const breakdown = breakdownOf(acme, {
       planId: 'growth',
@@ -404,7 +389,6 @@ describe('breakdown add-on lines', () => {
 });
 
 describe('breakdown add-on line order', () => {
-  // [utest->req~breakdown-addon-order~1]
   it('follows the declaration order when a dependent is selected first (acme)', () => {
     const breakdown = breakdownOf(acme, {
       planId: 'growth',
@@ -416,7 +400,6 @@ describe('breakdown add-on line order', () => {
     expect(lineIds(breakdown)).toEqual(['extraStorage', 'prioritySuccess']);
   });
 
-  // [utest->req~breakdown-addon-order~1]
   it('follows the declaration order for keys in reverse order (Zoom)', () => {
     const breakdown = breakdownOf(zoom, selectionZM());
     expect(lineIds(breakdown)).toEqual(['zoomScheduler', 'zoomClipsPlus', 'zoomWhiteboard']);
@@ -424,7 +407,6 @@ describe('breakdown add-on line order', () => {
 });
 
 describe('breakdown add-on line quantity', () => {
-  // [utest->req~breakdown-addon-quantity~1]
   it('bills a quantity above the maximum as the maximum and zero as the minimum', () => {
     const above = breakdownOf(acme, {
       planId: 'growth',
@@ -438,14 +420,12 @@ describe('breakdown add-on line quantity', () => {
     expect(addOnLine(zero, 'extraStorage')).toMatchObject({ quantity: 1, amount: 5 });
   });
 
-  // [utest->req~breakdown-addon-quantity~1]
   it('uses 1 without constraints and the quantity itself without a maximum', () => {
     expect(addOnLine(breakdownOf(acme, selectionE()), 'compliance').quantity).toBe(1);
     const overage = addOnLine(breakdownOf(slack, selectionS1()), 'premiumWorkflowOverageCost');
     expect(overage.quantity).toBe(1000);
   });
 
-  // [utest->req~breakdown-addon-quantity~1]
   it('bills an add-on with minimum 0 selected at 0 as quantity 0 and amount 0', () => {
     const pricing = normalizePricing({
       syntaxVersion: '3.1',
@@ -473,7 +453,6 @@ describe('breakdown add-on line quantity', () => {
 });
 
 describe('breakdown priced line', () => {
-  // [utest->req~breakdown-priced-line~1]
   it('multiplies left to right on Zoom billed annually', () => {
     const resolved = resolvePricing(zoom, selectionZA());
     const storage = addOnLine(resolved.breakdown, 'extraCloudRecordingStorage');
@@ -493,7 +472,6 @@ describe('breakdown priced line', () => {
     expect(audio.amount).toBeCloseTo(83, 9);
   });
 
-  // [utest->req~breakdown-priced-line~1]
   it('describes the Slack overage line', () => {
     const overage = addOnLine(breakdownOf(slack, selectionS1()), 'premiumWorkflowOverageCost');
     expect(overage.unitAmount).toBe(0.05);
@@ -502,7 +480,6 @@ describe('breakdown priced line', () => {
     expect(overage.amount).toBe(50);
   });
 
-  // [utest->req~breakdown-priced-line~1]
   it('has the amount of the matching price of every priced line', () => {
     const resolved = resolvePricing(zoom, selectionZA());
     const plan = resolved.breakdown.plan!;
@@ -517,7 +494,6 @@ describe('breakdown priced line', () => {
 });
 
 describe('breakdown label line', () => {
-  // [utest->req~breakdown-label-line~1]
   it('describes Compliance on Enterprise', () => {
     const breakdown = breakdownOf(acme, selectionE());
     expect(lineIds(breakdown)).toEqual(['extraStorage', 'compliance']);
@@ -534,7 +510,6 @@ describe('breakdown label line', () => {
     expect(breakdown.requiresQuote).toBe(true);
   });
 
-  // [utest->req~breakdown-label-line~1]
   it('describes the Slack add-on label', () => {
     const breakdown = breakdownOf(slack, selectionS1());
     const ai = addOnLine(breakdown, 'slackAI');
@@ -547,7 +522,6 @@ describe('breakdown label line', () => {
     expect(breakdown.requiresQuote).toBe(true);
   });
 
-  // [utest->req~breakdown-label-line~1]
   it('describes the Slack plan label', () => {
     const breakdown = breakdownOf(slack, selectionS2());
     const plan = breakdown.plan!;
@@ -559,7 +533,6 @@ describe('breakdown label line', () => {
     expect(breakdown.subtotal).toBe(0.5);
   });
 
-  // [utest->req~breakdown-label-line~1]
   it('describes the Zoom support add-on', () => {
     const breakdown = breakdownOf(zoom, selectionZA());
     expect(lineIds(breakdown)).toEqual([
@@ -574,7 +547,6 @@ describe('breakdown label line', () => {
 });
 
 describe('breakdown expression error line', () => {
-  // [utest->req~breakdown-error-line~1]
   it('has no amount, unit amount or label when seats are not a number', () => {
     const resolved = resolvePricing(acme, selectionX());
     expect(resolved.breakdown.plan).toStrictEqual({
@@ -606,7 +578,6 @@ describe('breakdown expression error line', () => {
   // The spec scenario says "two PR_EXPRESSION_RESOLUTION_FAILED entries", but the Starter plan
   // ('4 * #seats') and the Enterprise plan ('... * #seats') fail with the same variable, so
   // resolvePricing reports one entry per failing price: four in total (spec defect).
-  // [utest->req~breakdown-error-line~1]
   it('reports one failed-expression diagnostic for every price that fails', () => {
     const paths = resolveCore(acme, selectionX())
       .diagnostics.filter((diagnostic) => diagnostic.code === 'PR_EXPRESSION_RESOLUTION_FAILED')
@@ -619,7 +590,6 @@ describe('breakdown expression error line', () => {
     ]);
   });
 
-  // [utest->req~breakdown-error-line~1]
   it('has no amount, unit amount or label for a quote pricing that never resolves', () => {
     const quote = normalizePricing({
       syntaxVersion: '3.1',
@@ -645,7 +615,6 @@ describe('breakdown expression error line', () => {
 });
 
 describe('breakdown summation order', () => {
-  // [utest->req~breakdown-subtotal-order~1]
   it('sums the plan and then the add-ons in declaration order (Zoom, reverse keys)', () => {
     const resolved = resolvePricing(zoom, selectionZM());
     const [l0, l1, l2] = resolved.breakdown.addOns;
@@ -654,7 +623,6 @@ describe('breakdown summation order', () => {
     expect(resolved.subtotal).toBeCloseTo(30.56, 9);
   });
 
-  // [utest->req~breakdown-subtotal-order~1]
   it('differs from the sum in another order of the same lines (Zoom)', () => {
     const resolved = resolvePricing(zoom, selectionZM());
     const [l0, l1, l2] = resolved.breakdown.addOns;
@@ -663,7 +631,6 @@ describe('breakdown summation order', () => {
     expect(resolved.subtotal).toBeCloseTo(swapped, 9);
   });
 
-  // [utest->req~breakdown-subtotal-order~1]
   it('sums in declaration order, not in the key order of the selection (Zoom)', () => {
     // in the key order scheduler, whiteboard, clips the key-order sum is 30.56
     const resolved = resolvePricing(zoom, {
@@ -678,7 +645,6 @@ describe('breakdown summation order', () => {
     expect(resolved.breakdown.subtotal).toBe(30.560000000000002);
   });
 
-  // [utest->req~breakdown-subtotal-order~1]
   it('skips quote lines in the sum (Zoom annual)', () => {
     const resolved = resolvePricing(zoom, selectionZA());
     const [l0, l1] = resolved.breakdown.addOns;
@@ -687,14 +653,12 @@ describe('breakdown summation order', () => {
     expect(resolved.subtotal).toBeCloseTo(195.8717, 9);
   });
 
-  // [utest->req~breakdown-subtotal-order~1]
   it('keeps exact sums exact', () => {
     expect(resolvePricing(acme, selectionCY()).subtotal).toBe(64);
     expect(resolvePricing(acme, selectionE()).subtotal).toBe(55);
     expect(resolvePricing(slack, selectionS1()).subtotal).toBe(58.75);
   });
 
-  // [utest->req~breakdown-subtotal-order~1]
   it('gives the same subtotal whatever the key order of the selection', () => {
     const forward = resolvePricing(zoom, selectionZM());
     const reversed = resolvePricing(zoom, {
@@ -711,7 +675,6 @@ describe('breakdown summation order', () => {
 });
 
 describe('breakdown subtotal and quote state', () => {
-  // [utest->req~breakdown-subtotal-equals~1]
   it('equals the subtotal on the acme scenarios', () => {
     for (const selection of [undefined, selectionC(), selectionCY(), selectionE(), selectionX()]) {
       const resolved = resolvePricing(acme, selection);
@@ -719,7 +682,6 @@ describe('breakdown subtotal and quote state', () => {
     }
   });
 
-  // [utest->req~breakdown-requires-quote~1]
   it('requires a quote exactly when a line needs one (acme values)', () => {
     const cases: [string, Partial<PricingSelection> | undefined, boolean][] = [
       ['defaults', undefined, false],
@@ -823,7 +785,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     expect(fixtures.size).toBeGreaterThan(10);
   });
 
-  // [utest->req~breakdown-subtotal-equals~1]
   it('has a breakdown subtotal that is Object.is equal to the subtotal', () => {
     expectBreakdowns();
     const mismatches = cases
@@ -833,7 +794,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     expect(cases.length).toBeGreaterThan(0);
   });
 
-  // [utest->req~breakdown-subtotal-equals~1] [utest->req~breakdown-subtotal-order~1]
   it('has a subtotal that is the line amount fold of the breakdown', () => {
     expectBreakdowns();
     const mismatches = cases
@@ -845,7 +805,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     }
   });
 
-  // [utest->req~breakdown-requires-quote~1]
   it('has a breakdown quote state equal to the quote state', () => {
     expectBreakdowns();
     const mismatches = cases
@@ -855,7 +814,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     expect(cases.length).toBeGreaterThan(0);
   });
 
-  // [utest->req~breakdown-requires-quote~1]
   it('requires a quote when the plan is absent or a quote, or an add-on is a quote', () => {
     expectBreakdowns();
     const mismatches = cases
@@ -869,7 +827,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     expect(mismatches).toEqual([]);
   });
 
-  // [utest->req~breakdown-addon-lines~1] [utest->req~breakdown-addon-order~1]
   it('has a line for each add-on selected after reconciliation, in declaration order', () => {
     expectBreakdowns();
     const mismatches = cases
@@ -884,7 +841,6 @@ describe('breakdown over every SPECTRA fixture', () => {
     expect(mismatches).toEqual([]);
   });
 
-  // [utest->req~breakdown-addon-quantity~1]
   it('bills each add-on line with the normalized quantity', () => {
     expectBreakdowns();
     const billed = (c: SpectraCase, line: PriceBreakdownLine): number =>
@@ -916,13 +872,11 @@ describe('JSON-safe breakdown', () => {
     ['a legacy plan on acme', () => breakdownOf(acme, { planId: 'legacy' })],
   ];
 
-  // [utest->req~breakdown-json~1]
   it.each(cases)('reproduces %s through JSON.stringify and JSON.parse', (_name, build) => {
     const breakdown = build();
     expect(JSON.parse(JSON.stringify(breakdown))).toStrictEqual(breakdown);
   });
 
-  // [utest->req~breakdown-json~1]
   it.each(cases)('has no key with the value undefined for %s', (_name, build) => {
     const breakdown = build();
     expect(breakdown).toBeDefined();
@@ -938,7 +892,6 @@ describe('detached breakdown', () => {
     return into;
   }
 
-  // [utest->req~breakdown-detached~1]
   it('does not change the inputs when a result is mutated', () => {
     const selection = selectionCY();
     const selectionCopy = structuredClone(selection);
@@ -959,7 +912,6 @@ describe('detached breakdown', () => {
     expect(resolvePricing(acme, selectionCY()).breakdown).toStrictEqual(contractBreakdownYearly());
   });
 
-  // [utest->req~breakdown-detached~1]
   it('shares no object with the pricing, the selection or another result', () => {
     const selection = selectionCY();
     const first = resolvePricing(acme, selection);
@@ -973,7 +925,6 @@ describe('detached breakdown', () => {
     expect([...own].filter((object) => shared.has(object))).toEqual([]);
   });
 
-  // [utest->req~breakdown-detached~1]
   it('does not share the billing period copy with the pricing (Zoom and Slack)', () => {
     const zoomBreakdown = breakdownOf(zoom, selectionZA());
     expect(zoomBreakdown.billingPeriod).toBeDefined();

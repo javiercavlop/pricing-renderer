@@ -161,7 +161,6 @@ const usersControl = (description?: string): VariableControl => ({
   ...(description === undefined ? {} : { description }),
 });
 
-// [utest->req~variable-field-describedby~1]
 describe('variable field aria-describedby', () => {
   it('links the control of every type to its description', () => {
     const text = render(fiveControls, { idPrefix: 'pr-7' });

@@ -405,10 +405,6 @@ function renderBody(state: ReviewRenderState): unknown {
   ];
 }
 
-// [impl->req~review-ui-structure~1] [impl->req~review-ui-plan~1] [impl->req~review-ui-price~1]
-// [impl->req~review-ui-add-ons~1] [impl->req~review-ui-features~1] [impl->req~review-ui-limits~1]
-// [impl->req~review-ui-unchanged~1] [impl->req~review-ui-status~1] [impl->req~review-ui-error~1]
-// [impl->req~review-text-only~1] [impl->req~review-base-parts~1] [impl->req~review-ui-axe~1]
 // The root with its title, the body, the notices of the host, the alert region and the actions
 // with the status region.
 export function renderChangeReview(state: ReviewRenderState): TemplateResult {

@@ -17,7 +17,6 @@ function yamlOfBytes(bytes: number): string {
   return yamlWithNote('a'.repeat(bytes - size));
 }
 
-// [utest->req~custom-loader-max-bytes~1]
 describe('maxBytes for a custom loader', () => {
   it('measures a string result in UTF-8 bytes, not characters', async () => {
     const tooLarge = await loadPricingFromUrl(URL_SOURCE, {

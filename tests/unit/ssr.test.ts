@@ -16,7 +16,6 @@ describe('SSR-safe entrypoints', () => {
     expect(react.PricingRenderer).toBeTruthy();
   });
 
-  // [utest->req~react-headless-entry~1]
   it('imports the headless React entry without defining an element', async () => {
     vi.resetModules();
     const define = vi.fn();
@@ -29,7 +28,6 @@ describe('SSR-safe entrypoints', () => {
     expect(define).not.toHaveBeenCalled();
   });
 
-  // [utest->req~react-headless-entry~1]
   it('imports the headless React entry without a customElements registry', async () => {
     vi.resetModules();
     vi.stubGlobal('customElements', undefined);

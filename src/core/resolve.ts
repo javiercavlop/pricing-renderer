@@ -104,13 +104,11 @@ export function normalizeAddOnQuantity(
   return Math.min(maximum, Math.max(minimum, stepped));
 }
 
-// [impl->req~reconcile-selection-result~1]
 export function reconcileSelection(
   pricing: NormalizedPricing,
   selection: PricingSelection,
 ): { selection: PricingSelection; removedAddOnIds: string[] } {
   const removed = new Set<string>();
-  // [impl->req~reconcile-unavailable-addons~1]
   for (const addOn of pricing.addOns) {
     if (!selection.addOns[addOn.id]?.selected) continue;
     const available =
@@ -118,7 +116,6 @@ export function reconcileSelection(
       (selection.planId !== undefined && addOn.availableFor.includes(selection.planId));
     if (!available) removed.add(addOn.id);
   }
-  // [impl->req~reconcile-dependents~1]
   let changed = true;
   while (changed) {
     changed = false;
@@ -130,10 +127,8 @@ export function reconcileSelection(
       }
     }
   }
-  // [impl->req~reconcile-unrestricted-addons~1] only the removal set is deselected
+  // only the removal set is deselected
   const removedAddOnIds = pricing.addOns.filter((addOn) => removed.has(addOn.id)).map((a) => a.id);
-  // [impl->req~reconcile-valid-unchanged~1] [impl->req~reconcile-no-mutation~1]
-  // [impl->req~reconcile-preserves-fields~1]
   const addOns = { ...selection.addOns };
   for (const id of removedAddOnIds) {
     addOns[id] = { selected: false, quantity: selection.addOns[id]!.quantity };
@@ -147,7 +142,6 @@ export function resolvePricing(
   options: ResolvePricingOptions = {},
 ): ResolvedPricing {
   const selection = mergeSelection(pricing, selectionInput);
-  // [impl->req~resolve-totals-exclude-removed~1]
   const reconciled = reconcileSelection(pricing, selection).selection;
   const billingPeriod = pricing.billing.find((period) => period.id === selection.billingPeriod);
   const billingMultiplier = billingPeriod?.multiplier ?? 1;
@@ -216,7 +210,6 @@ export function resolvePricing(
     addOnQuantity: (addOnId) => normalizeAddOnQuantity(pricing, addOnId, selection.addOns[addOnId]),
   });
 
-  // [impl->req~resolve-selection-unreconciled~1]
   return {
     selection,
     planPrices,

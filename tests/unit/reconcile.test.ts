@@ -66,7 +66,7 @@ function selectionOf(
 const on = (quantity = 1): AddOnSelection => ({ selected: true, quantity });
 
 describe('reconcileSelection', () => {
-  it('[utest->req~reconcile-selection-result~1] returns removed ids once, in pricing.addOns order', async () => {
+  it('returns removed ids once, in pricing.addOns order', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const result = reconcileSelection(
@@ -77,7 +77,7 @@ describe('reconcileSelection', () => {
     expect(Object.keys(result).sort()).toEqual(['removedAddOnIds', 'selection']);
   });
 
-  it('[utest->req~reconcile-unavailable-addons~1] deselects an add-on unavailable for the plan and keeps its quantity', async () => {
+  it('deselects an add-on unavailable for the plan and keeps its quantity', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const result = reconcileSelection(
@@ -88,7 +88,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage']);
   });
 
-  it('[utest->req~reconcile-unavailable-addons~1] removes compliance when moving from Enterprise to Growth', async () => {
+  it('removes compliance when moving from Enterprise to Growth', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const result = reconcileSelection(
@@ -99,7 +99,7 @@ describe('reconcileSelection', () => {
     expect(result.selection.addOns.compliance).toEqual({ selected: false, quantity: 1 });
   });
 
-  it('[utest->req~reconcile-unavailable-addons~1] treats an unknown plan id as unavailable for restricted add-ons', async () => {
+  it('treats an unknown plan id as unavailable for restricted add-ons', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const result = reconcileSelection(
@@ -109,7 +109,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage']);
   });
 
-  it('[utest->req~reconcile-unavailable-addons~1] treats an undefined plan id as unavailable for restricted add-ons', async () => {
+  it('treats an undefined plan id as unavailable for restricted add-ons', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const result = reconcileSelection(
@@ -119,7 +119,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage']);
   });
 
-  it('[utest->req~reconcile-dependents~1] deselects an unrestricted dependent of a removed add-on', async () => {
+  it('deselects an unrestricted dependent of a removed add-on', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [
@@ -133,7 +133,7 @@ describe('reconcileSelection', () => {
     expect(result.selection.addOns.backupPlus).toEqual({ selected: false, quantity: 2 });
   });
 
-  it('[utest->req~reconcile-dependents~1] follows dependencies transitively', async () => {
+  it('follows dependencies transitively', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [
@@ -147,7 +147,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage', 'backupPlus', 'backupPro']);
   });
 
-  it('[utest->req~reconcile-unrestricted-addons~1] keeps an add-on with empty availableFor on every plan', async () => {
+  it('keeps an add-on with empty availableFor on every plan', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [syntheticAddOn(base, 'onboarding', {})]);
@@ -161,7 +161,7 @@ describe('reconcileSelection', () => {
     }
   });
 
-  it('[utest->req~reconcile-unrestricted-addons~1] keeps an unrestricted add-on next to a removed one', async () => {
+  it('keeps an unrestricted add-on next to a removed one', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [syntheticAddOn(base, 'onboarding', {})]);
@@ -173,7 +173,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage']);
   });
 
-  it('[utest->req~reconcile-unrestricted-addons~1] keeps an unrestricted add-on whose dependency is not removed', async () => {
+  it('keeps an unrestricted add-on whose dependency is not removed', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [
@@ -189,7 +189,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual(['extraStorage']);
   });
 
-  it('[utest->req~reconcile-valid-unchanged~1] returns a valid selection deeply equal to its input', async () => {
+  it('returns a valid selection deeply equal to its input', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const input = selectionOf(pricing, 'growth', { extraStorage: on(), prioritySuccess: on() });
@@ -198,7 +198,7 @@ describe('reconcileSelection', () => {
     expect(result.removedAddOnIds).toEqual([]);
   });
 
-  it('[utest->req~reconcile-valid-unchanged~1] is idempotent for the Starter downgrade', async () => {
+  it('is idempotent for the Starter downgrade', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const first = reconcileSelection(
@@ -210,7 +210,7 @@ describe('reconcileSelection', () => {
     expect(second.removedAddOnIds).toEqual([]);
   });
 
-  it('[utest->req~reconcile-valid-unchanged~1] is idempotent and never leaves an unavailable add-on selected, for all plans and add-on subsets', async () => {
+  it('is idempotent and never leaves an unavailable add-on selected, for all plans and add-on subsets', async () => {
     const reconcileSelection = reconcile();
     const base = await loadFixture();
     const pricing = withAddOns(base, [
@@ -230,7 +230,6 @@ describe('reconcileSelection', () => {
         const twice = reconcileSelection(pricing, once.selection);
         expect(twice.selection).toEqual(once.selection);
         expect(twice.removedAddOnIds).toEqual([]);
-        // [utest->req~reconcile-unrestricted-addons~1]
         for (const id of ids) {
           if (once.removedAddOnIds.includes(id)) continue;
           expect(once.selection.addOns[id]).toEqual(input.addOns[id]);
@@ -246,7 +245,7 @@ describe('reconcileSelection', () => {
     }
   });
 
-  it('[utest->req~reconcile-no-mutation~1] does not mutate pricing or selection', async () => {
+  it('does not mutate pricing or selection', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const selection = selectionOf(pricing, 'starter', { extraStorage: on() });
@@ -257,7 +256,7 @@ describe('reconcileSelection', () => {
     expect(selection).toEqual(selectionCopy);
   });
 
-  it('[utest->req~reconcile-preserves-fields~1] keeps billing, variables and unknown add-on ids', async () => {
+  it('keeps billing, variables and unknown add-on ids', async () => {
     const reconcileSelection = reconcile();
     const pricing = await loadFixture();
     const input = selectionOf(
@@ -276,7 +275,7 @@ describe('reconcileSelection', () => {
 });
 
 describe('resolvePricing with unavailable add-ons', () => {
-  it('[utest->req~resolve-totals-exclude-removed~1] excludes an unavailable add-on from the subtotal', async () => {
+  it('excludes an unavailable add-on from the subtotal', async () => {
     const pricing = await loadFixture();
     const resolved = core.resolvePricing(pricing, {
       planId: 'starter',
@@ -285,7 +284,7 @@ describe('resolvePricing with unavailable add-ons', () => {
     expect(resolved.subtotal).toBe(20);
   });
 
-  it('[utest->req~resolve-totals-exclude-removed~1] ignores an unavailable quote add-on for requiresQuote', async () => {
+  it('ignores an unavailable quote add-on for requiresQuote', async () => {
     const pricing = await loadFixture();
     const resolved = core.resolvePricing(pricing, {
       planId: 'growth',
@@ -296,7 +295,7 @@ describe('resolvePricing with unavailable add-ons', () => {
   });
 
   // resolvePricing returns the merged input selection and never reconciles it.
-  it('[utest->req~resolve-selection-unreconciled~1] keeps the invalid add-on in resolved.selection', async () => {
+  it('keeps the invalid add-on in resolved.selection', async () => {
     const pricing = await loadFixture();
     const resolved = core.resolvePricing(pricing, {
       planId: 'starter',

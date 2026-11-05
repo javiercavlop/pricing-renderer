@@ -21,7 +21,7 @@ function blockAfter(source: string, header: RegExp): string {
 }
 
 describe('spectra follow-ups css', () => {
-  // [utest->spectra-followups:AC1] Pills may shrink below the width of a long unbroken word.
+  // Pills may shrink below the width of a long unbroken word.
   it('lets .pr-tag and .pr-badge shrink', () => {
     const rule = /pr-tag,\s*pricing-renderer\[data-pr-root\] \.pr-badge\s*\{[^}]*\}/.exec(css);
     expect(rule).not.toBeNull();
@@ -34,7 +34,7 @@ describe('spectra follow-ups css', () => {
     expect(badges?.[0]).toMatch(/max-inline-size:\s*100%\s*;/);
   });
 
-  // [utest->spectra-followups:AC2] The caps keep smaller token values in effect.
+  // The caps keep smaller token values in effect.
   it('keeps the token caps of the 840px container block', () => {
     const wide = blockAfter(css, /@container pricing-renderer \(min-width: 840px\)/);
     const block = blockAfter(wide, /\.pr-content\s*\{/);
