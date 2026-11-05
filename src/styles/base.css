@@ -198,37 +198,9 @@
     color: var(--pr-color-warning);
   }
 
-  The
-    current
-    plan
-    and
-    the
-    current
-    add-ons
-    get
-    a
-    success-toned
-    border
-    and
-    badge.
-    The
-    badge
-    also
-    names
-    the
-    state
-    in
-    text,
-  so
-    colour
-    is
-    not
-    the
-    only
-    cue.
-    */
-    pricing-renderer[data-pr-root]
-    .pr-plan-card[data-current='true'],
+  /* The current plan and the current add-ons get a success-toned border and badge. The badge also
+     names the state in text, so colour is not the only cue. */
+  pricing-renderer[data-pr-root] .pr-plan-card[data-current='true'],
   pricing-renderer[data-pr-root] .pr-addon-card[data-current='true'] {
     border-color: color-mix(in srgb, var(--pr-color-success) 55%, var(--pr-color-border));
   }
@@ -1179,9 +1151,9 @@
      pointer target to 44px without layout effect. An absolute layer is placed against the 22px
      padding box (24px minus the 1px border on each side), so inset -11px gives 22 + 2 * 11 = 44px
      centered on the toggle.
- the icon uses --pr-color-muted, 5.9:1 on the
+     the icon uses --pr-color-muted, 5.9:1 on the
      light and 7.5:1 on the dark surface.
- the only transition is shortened by the
+     the only transition is shortened by the
      prefers-reduced-motion rule below. */
   pricing-renderer[data-pr-root] .pr-breakdown-toggle {
     position: absolute;
