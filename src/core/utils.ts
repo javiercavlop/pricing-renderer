@@ -34,12 +34,30 @@ export function entries(value: unknown): [string, unknown][] {
   return Object.entries(asRecord(value));
 }
 
+// Turns an id written in any of the usual styles into a label: camelCase, PascalCase,
+// snake_case, kebab-case, dot.case and runs of digits, with acronyms kept whole (SAML_SSO ->
+// "SAML SSO", maxPomodoroTimers -> "Max Pomodoro Timers", api2Key -> "Api 2 Key"). Every word is
+// capitalized, so the style of the id does not change the look of the label. A word that is
+// already uppercase is left alone, and an id that yields nothing is returned unchanged.
 export function humanizeIdentifier(identifier: string): string {
-  const spaced = identifier
+  const words = identifier
+    // lower/digit followed by upper: maxPomodoro -> max Pomodoro
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[-_]+/g, ' ')
-    .trim();
-  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : identifier;
+    // acronym followed by a word: SAMLSso -> SAML Sso
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    // letter/digit boundaries: api2Key -> api 2 Key
+    .replace(/([A-Za-z])(\d)/g, '$1 $2')
+    .replace(/(\d)([A-Za-z])/g, '$1 $2')
+    .replace(/[-_.\s]+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean);
+  if (words.length === 0) return identifier;
+  return words
+    .map((word) =>
+      word === word.toUpperCase() ? word : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(' ');
 }
 
 export function normalizeRenderMode(value: unknown): 'auto' | 'enabled' | 'disabled' {

@@ -73,6 +73,10 @@ export const PRICING_SECTION_NAMES = [
   'comparison',
   'addOns',
   'summary',
+  // Pieces of the hero, for a page that already has its own title or lead paragraph.
+  'saasName',
+  'description',
+  'tags',
 ] as const;
 export type PricingSectionName = (typeof PRICING_SECTION_NAMES)[number];
 
@@ -306,15 +310,25 @@ export function heroTitle(viewModel: PricingViewModel): string {
 
 export function renderHeader(state: RenderState): TemplateResult {
   const { viewModel } = state;
+  const hidden = state.hiddenSections;
   const title = heroTitle(viewModel);
   const subtitle = viewModel.presentation.subtitle ?? t(viewModel, 'pricing.description');
+  // The title carries the id that labels the shell, so hiding the name keeps it for screen
+  // readers instead of dropping the element.
+  const titleHidden = hidden?.has('saasName') === true;
   return html`
     <header class="pr-hero" data-pr-part="hero">
-      <div class="pr-hero__eyebrow">${t(viewModel, 'pricing.title')}</div>
-      <h2 class="pr-hero__title" id=${instanceId(state, 'title')}>${title}</h2>
-      ${subtitle ? html`<p class="pr-hero__subtitle">${subtitle}</p>` : nothing}
+      ${titleHidden ? nothing : html`<div class="pr-hero__eyebrow">${t(viewModel, 'pricing.title')}</div>`}
+      <h2 class=${titleHidden ? 'pr-sr-only' : 'pr-hero__title'} id=${instanceId(state, 'title')}>
+        ${title}
+      </h2>
       ${
-        viewModel.pricing.metadata.tags.length
+        subtitle && hidden?.has('description') !== true
+          ? html`<p class="pr-hero__subtitle">${subtitle}</p>`
+          : nothing
+      }
+      ${
+        viewModel.pricing.metadata.tags.length && hidden?.has('tags') !== true
           ? html`<ul class="pr-tag-list" aria-label="${t(viewModel, 'pricing.tags')}">
               ${viewModel.pricing.metadata.tags.map((tag) => html`<li class="pr-tag">${tag}</li>`)}
             </ul>`
@@ -455,7 +469,7 @@ export function renderPlans(state: RenderState): TemplateResult {
       <div class="pr-section__heading">
         <div>
           <p class="pr-section__eyebrow">${t(viewModel, 'pricing.plans')}</p>
-          <h3 id=${titleId}>${t(viewModel, 'pricing.plans')}</h3>
+          <h3 id=${titleId}>${t(viewModel, 'pricing.plansTitle')}</h3>
         </div>
       </div>
       ${
@@ -574,7 +588,15 @@ export function renderPlans(state: RenderState): TemplateResult {
                                 <span class="pr-highlight-list__icon" aria-hidden="true">✓</span>
                                 <span>${row.name}</span>
                                 <span class="pr-highlight-list__value"
-                                  >${renderValue(viewModel, value, row.unit)}</span
+                                  >${
+                                    // The bullet already means "included", so a plain true adds
+                                    // no visible information; only its screen-reader text stays.
+                                    value === true
+                                      ? html`<span class="pr-sr-only"
+                                          >${t(viewModel, 'pricing.included')}</span
+                                        >`
+                                      : renderValue(viewModel, value, row.unit)
+                                  }</span
                                 >
                               </li>`;
                             })}
@@ -1398,7 +1420,7 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
       <div class="pr-section__heading">
         <div>
           <p class="pr-section__eyebrow">${t(viewModel, 'pricing.addOns')}</p>
-          <h3 id=${titleId}>${t(viewModel, 'pricing.addOns')}</h3>
+          <h3 id=${titleId}>${t(viewModel, 'pricing.addOnsTitle')}</h3>
         </div>
       </div>
       <div class="pr-addon-layout">

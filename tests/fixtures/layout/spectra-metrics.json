@@ -52,7 +52,7 @@
       "addOnsWithoutDescription": 5,
       "addOnsFillerDescription": 0,
       "longestRowName": {
-        "length": 47,
+        "length": 49,
         "id": "includedDocumentsFor3rdPartyAndCustomApps"
       },
       "longestDescription": {
@@ -168,13 +168,13 @@
         "magicText2ImageTotalTokens: 50 use"
       ],
       "rowsWithoutDescription": 0,
-      "rowsFillerDescription": 14,
+      "rowsFillerDescription": 15,
       "plansWithoutDescription": 0,
       "plansFillerDescription": 0,
       "addOnsWithoutDescription": 0,
       "addOnsFillerDescription": 0,
       "longestRowName": {
-        "length": 45,
+        "length": 46,
         "id": "availableOnlyIfMoreThan100SeatsInvoiced"
       },
       "longestDescription": {
@@ -2320,7 +2320,7 @@
         "id": "ENTERPRISE"
       },
       "longestAddOnName": {
-        "length": 23,
+        "length": 25,
         "id": "additional500GBStorage"
       },
       "plansMod3": 2,

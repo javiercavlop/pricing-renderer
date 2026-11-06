@@ -33,6 +33,7 @@ import type {
   PricingSelection,
   PricingVisibility,
   SelectionComparison,
+  PricingDiagnosticsMode,
 } from '../core/index.js';
 import {
   PricingChangeReviewElement,
@@ -120,6 +121,8 @@ export interface PricingRendererSharedProps {
   layout?: PricingLayout;
   visibility?: PricingVisibility;
   theme?: 'light' | 'dark' | 'auto';
+  // Which diagnostics reach the page; every one still reaches onDiagnostic. Default 'auto'.
+  diagnostics?: PricingDiagnosticsMode;
   density?: 'comfortable' | 'compact';
   loadingLabel?: string;
   // Absent is automatic, `false` is off, `true` is on.

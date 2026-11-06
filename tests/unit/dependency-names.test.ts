@@ -97,7 +97,7 @@ describe('add-on names in dependencies', () => {
     );
     const text = flatten(renderAddOns(stateFor(viewModel)));
     expect(text).toContain('Requires Linked Storage');
-    expect(text).toContain('Cannot be combined with Legacy pack, Storage packs');
+    expect(text).toContain('Cannot be combined with Legacy Pack, Storage packs');
     expect(text).not.toContain('Requires linkedStorage');
     expect(text).not.toContain('Cannot be combined with legacy-pack');
   });
