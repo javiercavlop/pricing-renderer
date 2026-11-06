@@ -15,3 +15,9 @@ An amount now says what it is per. `PriceBreakdown` carries the selected plan's 
 The "Unchanged" line drops its add-on count. What a reader checks there is whether the entitlements they rely on survive the change; an add-on they did not touch is not news, and "0 add-ons, 3 features and 0 usage limits" led with the least useful number.
 
 Add-on quantity limits read as a sentence instead of a specification. "Quantity 1-100000000, in steps of 1" is three facts of which one matters: a minimum of one and a step of one constrain nothing. The line now shows only the parts that do, with the numbers formatted for the locale, so that example reads "Up to 100,000,000" and an add-on with no real limits shows no line at all. A YAML `.inf` maximum already arrives as no maximum, since `normalizePricing` reads it as non-finite.
+
+A plan CTA says what it does, not what it does and to which plan. "Upgrade to Advanced" sat under a card headed "Advanced", so the visible label is now "Upgrade" and "Downgrade"; a survey of 49 live pricing pages found none that repeats the plan name in the button. The full phrase moves to `aria-label`, because three buttons reading "Upgrade" with no distinction would be worse for a screen reader than the repetition was for a sighted reader.
+
+The plan a visitor already holds no longer renders a disabled button. A button that can never be pressed invites a click and repeats the "your plan" badge in the shape of an action; the slot now holds plain text with the same height and the same `data-kind` and `data-relation` hooks a host may style.
+
+Confirming wraps instead of being cut off. The review's buttons were `white-space: nowrap`, which is right for a one-word plan CTA and wrong for a sentence: in a narrow dialog "Confirm your new subscription" lost its end.

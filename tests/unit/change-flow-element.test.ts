@@ -379,14 +379,14 @@ describe('planCtaView', () => {
     const viewModel = viewModelOf(acme);
     const context = { currentPlanId: 'growth' };
     const starter = planCtaView(viewModel, planOf(viewModel, 'starter'), context);
-    expect(starter).toMatchObject({ relation: 'downgrade', label: 'Downgrade to Starter' });
+    expect(starter).toMatchObject({ relation: 'downgrade', label: 'Downgrade' });
     const growth = planCtaView(viewModel, planOf(viewModel, 'growth'), context);
     expect(growth).toMatchObject({ relation: 'current', label: 'Current plan', disabled: true });
     expect(growth.href).toBeUndefined();
     const enterprise = planCtaView(viewModel, planOf(viewModel, 'enterprise'), context);
     expect(enterprise).toMatchObject({
       relation: 'upgrade',
-      label: 'Upgrade to Enterprise',
+      label: 'Upgrade',
       href: 'https://example.com/contact',
     });
   });
@@ -408,9 +408,7 @@ describe('planCtaView', () => {
     const invalid = viewModelOf(acme, undefined, [
       { id: 's', label: 'S', planId: 'starter', labels: { downgrade: 42 } },
     ]);
-    expect(planCtaView(invalid, planOf(invalid, 'starter'), context).label).toBe(
-      'Downgrade to Starter',
-    );
+    expect(planCtaView(invalid, planOf(invalid, 'starter'), context).label).toBe('Downgrade');
     expect(invalid.presentation.ctas?.[0]?.labels).toBeUndefined();
   });
 
@@ -427,9 +425,7 @@ describe('planCtaView', () => {
     expect(viewModel.presentation.ctas?.[0]?.labels).toBeUndefined();
     expect(viewModel.presentation.ctas?.[1]?.labels).toEqual({ current: 'Mine' });
     const context = { currentPlanId: 'growth' };
-    expect(planCtaView(viewModel, planOf(viewModel, 'starter'), context).label).toBe(
-      'Downgrade to Starter',
-    );
+    expect(planCtaView(viewModel, planOf(viewModel, 'starter'), context).label).toBe('Downgrade');
     expect(planCtaView(viewModel, planOf(viewModel, 'growth'), context).label).toBe('Mine');
   });
 
@@ -437,7 +433,7 @@ describe('planCtaView', () => {
     const viewModel = viewModelOf(PQ);
     const context = { currentPlanId: 'basic' };
     expect(planCtaView(viewModel, planOf(viewModel, 'basic'), context).label).toBe('Current plan');
-    expect(planCtaView(viewModel, planOf(viewModel, 'pro'), context).label).toBe('Upgrade to Pro');
+    expect(planCtaView(viewModel, planOf(viewModel, 'pro'), context).label).toBe('Upgrade');
     const enterprise = planCtaView(viewModel, planOf(viewModel, 'enterprise'), context);
     expect(enterprise).toMatchObject({ label: 'Contact sales', relation: 'upgrade' });
 
@@ -451,10 +447,8 @@ describe('planCtaView', () => {
     const viewModel = viewModelOf(PV);
     expect(viewModel.plans.map((plan) => plan.id)).toEqual(['basic', 'pro']);
     const context = { currentPlanId: 'legacy' };
-    expect(planCtaView(viewModel, planOf(viewModel, 'basic'), context).label).toBe(
-      'Downgrade to Basic',
-    );
-    expect(planCtaView(viewModel, planOf(viewModel, 'pro'), context).label).toBe('Upgrade to Pro');
+    expect(planCtaView(viewModel, planOf(viewModel, 'basic'), context).label).toBe('Downgrade');
+    expect(planCtaView(viewModel, planOf(viewModel, 'pro'), context).label).toBe('Upgrade');
   });
 
   it('marks the pending control busy and every control aria-disabled', () => {

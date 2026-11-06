@@ -30,7 +30,10 @@ export interface SummaryActionState {
 
 export interface PlanCtaView {
   actionId: string;
+  /** What the button shows. Short: the card already names the plan. */
   label: string;
+  /** The full phrase, naming the plan, for a reader who meets the button out of context. */
+  ariaLabel?: string;
   /** Expanded and safe; absent for a button. */
   href?: string;
   /** The expanded `href` of the configured CTA, safe or not, for the `pricing-action` detail. */
@@ -68,16 +71,10 @@ function relationLabel(
     return cta?.labels?.contactSales ?? translate(viewModel.messages, 'pricing.contactSales');
   }
   if (relation === 'upgrade') {
-    return (
-      cta?.labels?.upgrade ??
-      translate(viewModel.messages, 'pricing.upgradeTo', { plan: plan.name })
-    );
+    return cta?.labels?.upgrade ?? translate(viewModel.messages, 'pricing.upgrade');
   }
   if (relation === 'downgrade') {
-    return (
-      cta?.labels?.downgrade ??
-      translate(viewModel.messages, 'pricing.downgradeTo', { plan: plan.name })
-    );
+    return cta?.labels?.downgrade ?? translate(viewModel.messages, 'pricing.downgrade');
   }
   return undefined;
 }
@@ -120,9 +117,22 @@ export function planCtaView(
       disabled: true,
     };
   }
+  const label = relationLabel(viewModel, plan, cta, relation) ?? defaultLabel();
+  // The visible text is short because the card names the plan right above it. A button read on
+  // its own still has to say which plan it changes to, so the full phrase lives in aria-label.
+  const longKey =
+    relation === 'upgrade'
+      ? 'pricing.upgradeTo'
+      : relation === 'downgrade'
+        ? 'pricing.downgradeTo'
+        : undefined;
+  const ariaLabel = longKey
+    ? translate(viewModel.messages, longKey, { plan: plan.name })
+    : undefined;
   return {
     ...base,
-    label: relationLabel(viewModel, plan, cta, relation) ?? defaultLabel(),
+    label,
+    ...(ariaLabel && ariaLabel !== label ? { ariaLabel } : {}),
     ...(href ? { href } : {}),
     relation,
     disabled: false,

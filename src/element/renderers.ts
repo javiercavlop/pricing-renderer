@@ -396,6 +396,19 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
     ? { relation: cta.relation, source: 'plan' }
     : undefined;
   const content = renderCtaLabel(viewModel, cta.label, cta.pending);
+  // The plan the visitor is already on has nothing to press. A disabled button invites a click
+  // that will never work and repeats the "your plan" badge in the shape of an action, so the
+  // slot keeps its height with plain text instead.
+  if (cta.disabled && cta.relation === 'current') {
+    return html`<p
+      class="pr-plan-card__current"
+      data-pr-part="cta"
+      data-kind=${kind}
+      data-relation="current"
+    >
+      ${content}
+    </p>`;
+  }
   const trigger = (): boolean =>
     actions.triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   return cta.href
@@ -407,6 +420,7 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
         aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        aria-label=${cta.ariaLabel ?? nothing}
         href=${cta.href}
         target=${cta.target ?? '_self'}
         rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
@@ -423,6 +437,7 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
         aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        aria-label=${cta.ariaLabel ?? nothing}
         type="button"
         ?disabled=${cta.disabled}
         @click=${trigger}

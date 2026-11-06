@@ -105,7 +105,8 @@ const addOnCards = (state: RenderState): Card[] =>
 const classesOf = (card: Card): string[] => (attribute(card.tag, 'class') ?? '').split(/\s+/);
 
 function ctaTags(card: Card): string[] {
-  return [...card.text.matchAll(/<(?:a|button)\b[^>]*data-pr-part="cta"[^>]*>/g)].map(
+  // p is in here because the plan already held renders its slot as text, not as a dead button.
+  return [...card.text.matchAll(/<(?:a|button|p)\b[^>]*data-pr-part="cta"[^>]*>/g)].map(
     (match) => match[0],
   );
 }
@@ -194,13 +195,16 @@ describe('data-kind on plan CTAs', () => {
     }
   });
 
-  it('is still set on the disabled button of the current plan', () => {
+  // The plan already held has nothing to press: its slot keeps the place and the styling hooks
+  // of a CTA without being one.
+  it('is still set on the current plan, which is text rather than a button', () => {
     const state = stateFor({ currentPlanId: 'growth' });
     const growth = planCards(state).find((card) => card.id === 'growth');
     const tags = growth ? ctaTags(growth) : [];
     expect(tags).toHaveLength(1);
-    expect(tags[0]).toMatch(/^<button\b/);
+    expect(tags[0]).toMatch(/^<p\b/);
     expect(attribute(tags[0] ?? '', 'data-kind')).toBe('primary');
+    expect(attribute(tags[0] ?? '', 'data-relation')).toBe('current');
   });
 });
 

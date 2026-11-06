@@ -146,7 +146,8 @@ function reviewSection(
 }
 
 interface RowParts {
-  detail?: string;
+  /** Markup as well as text: a usage-limit row tones its delta. */
+  detail?: Content | string;
   badge?: TemplateResult;
   reason?: string;
   warning?: string;
@@ -330,13 +331,20 @@ function renderLimits(state: ReviewRenderState): Content {
   for (const item of state.comparison.usageLimits.changed) {
     const format = (value: ComparedValue): string =>
       formatComparedValue(value, state.messages, state.locale, item.unit);
-    let detail = arrow(state, format(item.before), format(item.after));
+    const moved = arrow(state, format(item.before), format(item.after));
+    // The delta is the part a reader scans for, and its sign is the whole message: more of a
+    // limit is a gain, less of one is what they are giving up. It carries its direction so the
+    // stylesheet can tone it without the reader parsing a minus sign.
+    let detail: Content | string = moved;
     if (item.delta !== undefined) {
       const sign = formatNumber(item.delta, state.locale, { signDisplay: 'exceptZero' });
       const unit = item.unit
         ? ` ${formatUnit(item.unit, Math.abs(item.delta), intlLocale(state.locale))}`
         : '';
-      detail += ` (${sign}${unit})`;
+      const direction = item.delta > 0 ? 'increase' : item.delta < 0 ? 'decrease' : 'same';
+      detail = tpl`${moved} <span class="pr-cr-row__delta" data-direction=${direction}
+        >(${sign}${unit})</span
+      >`;
     }
     let warning: string | undefined;
     if (item.exceedsCurrentUsage && item.currentUsage !== undefined) {
