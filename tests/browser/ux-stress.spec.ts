@@ -96,11 +96,25 @@ async function measureUx(page: Page) {
         const rect = card.getBoundingClientRect();
         return rect.height > 0 && rect.top < viewportHeight && rect.bottom > 0;
       });
+      // Distance of the element bottom from the fold (positive = below it).
+      const foldDistance = (element: Element | null) => {
+        if (!element) return { bottomPx: null, foldGapPx: null };
+        const bottom = Math.round(element.getBoundingClientRect().bottom * 10) / 10;
+        return { bottomPx: bottom, foldGapPx: round(bottom - viewportHeight) };
+      };
+      const price = renderer.querySelector('.pr-plan-card .pr-price');
+      const cta = renderer.querySelector('[data-pr-part="cta"]');
+      const priceFold = foldDistance(price);
+      const ctaFold = foldDistance(cta);
       return {
         planCardsVisible: visibleCards.length,
         plansVisible: visibleCards.length > 0,
-        priceVisible: fullyInViewport(renderer.querySelector('.pr-plan-card .pr-price')),
-        ctaVisible: fullyInViewport(renderer.querySelector('[data-pr-part="cta"]')),
+        priceVisible: fullyInViewport(price),
+        ctaVisible: fullyInViewport(cta),
+        priceBottomPx: priceFold.bottomPx,
+        priceFoldGapPx: priceFold.foldGapPx,
+        ctaBottomPx: ctaFold.bottomPx,
+        ctaFoldGapPx: ctaFold.foldGapPx,
       };
     };
 
