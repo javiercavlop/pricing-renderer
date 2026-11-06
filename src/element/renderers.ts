@@ -550,7 +550,13 @@ export function renderPlans(state: RenderState): TemplateResult {
                                       <span class="pr-selection-control__label" aria-hidden="true"
                                         >${
                                           selected
-                                            ? t(viewModel, 'pricing.selected')
+                                            ? // On the contract's own plan the "your plan" badge
+                                              // already says it, and the radio is visibly checked:
+                                              // a third "Selected" adds nothing. It comes back as
+                                              // soon as the visitor selects a different plan.
+                                              current
+                                              ? nothing
+                                              : t(viewModel, 'pricing.selected')
                                             : t(viewModel, 'pricing.select')
                                         }</span
                                       >

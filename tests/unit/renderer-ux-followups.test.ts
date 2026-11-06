@@ -143,6 +143,29 @@ describe('section headings do not repeat themselves', () => {
   });
 });
 
+describe('the contract plan is not marked three times', () => {
+  // "Your plan", a checked radio and a "Selected" label all said the same thing on the card of
+  // the plan the visitor is already on. The label goes; it returns on any other plan.
+  it('drops the Selected label on the current plan', () => {
+    const viewModel = viewModelOf();
+    const state = { ...stateFor(viewModel), currentPlanId: 'basic' } as RenderState;
+    const text = flatten(renderPlans(state));
+    expect(text).not.toContain('Selected');
+  });
+
+  it('keeps it when the selected plan is not the contract one', () => {
+    const viewModel = viewModelOf();
+    const state = { ...stateFor(viewModel), currentPlanId: 'advancedTier' } as RenderState;
+    const text = flatten(renderPlans(state));
+    expect(text).toContain('Selected');
+  });
+
+  it('keeps Select on the plans that are not selected', () => {
+    const text = flatten(renderPlans(stateFor(viewModelOf())));
+    expect(text).toContain('Select');
+  });
+});
+
 describe('hero pieces can be hidden one by one', () => {
   it('shows the name, the description and the tags by default', () => {
     const text = flatten(renderHeader(stateFor(viewModelOf())));
