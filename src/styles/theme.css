@@ -14,6 +14,14 @@
     --pr-space-5: 1.5rem;
     --pr-space-section: clamp(3rem, 8cqi, 6rem);
     --pr-shell-padding: clamp(1rem, 4cqi, 3rem);
+    /* The price is the most variable type on a real pricing page: a survey of 49 of them found
+       sizes from 16px, where a usage-based product deliberately refuses to shout, to 64px, and
+       weights from 300 to 700 with 400 the most common. The defaults below keep what this
+       component already shipped; they sit at the loud end on purpose, and a host moves them
+       without touching --pr-font-weight-bold, which every other bold thing shares. */
+    --pr-price-size: clamp(2rem, 8cqi, 3rem);
+    --pr-price-weight: var(--pr-font-weight-bold, 790);
+    --pr-price-tracking: -0.05em;
     --pr-radius-sm: 0.55rem;
     --pr-radius-md: 0.85rem;
     --pr-radius-lg: 1.25rem;

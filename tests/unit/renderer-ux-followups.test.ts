@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   createDefaultSelection,
@@ -182,6 +183,35 @@ describe('the contract plan is not marked three times', () => {
   it('keeps Select on the plans that are not selected', () => {
     const text = flatten(renderPlans(stateFor(viewModelOf())));
     expect(text).toContain('Select');
+  });
+});
+
+describe('what varies in the wild is a token', () => {
+  const css = readFileSync(new URL('../../src/styles/base.css', import.meta.url), 'utf8');
+  const theme = readFileSync(new URL('../../src/styles/theme.css', import.meta.url), 'utf8');
+
+  // A survey of 49 pricing pages found the price running from 16px to 64px and from weight 300
+  // to 700. A host has to be able to move it without redefining every bold thing in the theme.
+  it.each(['--pr-price-size', '--pr-price-weight', '--pr-price-tracking'])(
+    'declares %s in the theme',
+    (token) => {
+      expect(theme).toContain(`${token}:`);
+    },
+  );
+
+  it('reads the price typography from those tokens', () => {
+    const rule = /\.pr-price__amount,[\s\S]*?\{([\s\S]*?)\}/.exec(css);
+    expect(rule).not.toBeNull();
+    expect(rule?.[1]).toContain('var(--pr-price-size');
+    expect(rule?.[1]).toContain('var(--pr-price-weight');
+    expect(rule?.[1]).toContain('var(--pr-price-tracking');
+  });
+
+  // The difference is why the screen exists; it must outrank the two values it comes from.
+  it('gives the price difference its own size and a direction hook', () => {
+    expect(css).toContain("[data-pr-part='price-difference'] dd");
+    expect(css).toContain("[data-direction='decrease']");
+    expect(css).toContain("[data-direction='increase']");
   });
 });
 

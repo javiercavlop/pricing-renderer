@@ -497,9 +497,9 @@
 
   pricing-renderer[data-pr-root] .pr-price__amount,
   pricing-renderer[data-pr-root] .pr-price__quote {
-    font-size: clamp(2rem, 8cqi, 3rem);
-    font-weight: var(--pr-font-weight-bold, 790);
-    letter-spacing: -0.05em;
+    font-size: var(--pr-price-size, clamp(2rem, 8cqi, 3rem));
+    font-weight: var(--pr-price-weight, var(--pr-font-weight-bold, 790));
+    letter-spacing: var(--pr-price-tracking, -0.05em);
     line-height: 1;
   }
 
@@ -1856,6 +1856,22 @@
     font-size: var(--pr-font-size-sm);
     font-weight: var(--pr-font-weight-regular, 400);
     letter-spacing: 0;
+  }
+
+  /* The difference is the number the screen exists for, so it outranks the two it is derived
+     from. A decrease is the pleasant exception and gets the success tone; an increase is not an
+     error (the visitor asked for it), so it takes the accent rather than a warning colour. */
+  pricing-change-review [data-pr-part='price-difference'] dd {
+    font-size: var(--pr-font-size-2xl);
+    line-height: 1.1;
+  }
+
+  pricing-change-review [data-pr-part='price-difference'][data-direction='decrease'] dd {
+    color: var(--pr-color-success);
+  }
+
+  pricing-change-review [data-pr-part='price-difference'][data-direction='increase'] dd {
+    color: var(--pr-color-accent);
   }
 
   pricing-change-review .pr-cr-note {

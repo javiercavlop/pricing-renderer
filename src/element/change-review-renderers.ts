@@ -224,7 +224,10 @@ function renderDifference(state: ReviewRenderState): Content {
   const { price } = state.comparison;
   if (price.difference === undefined) return nothing;
   const signed = formatSignedCurrency(price.difference, price.after.currency, state.locale);
-  return tpl`<div>
+  // The reason the screen exists, so it is marked for the stylesheet and carries its direction.
+  // "same" is a real outcome: a plan swap can leave the bill untouched.
+  const direction = price.difference > 0 ? 'increase' : price.difference < 0 ? 'decrease' : 'same';
+  return tpl`<div data-pr-part="price-difference" data-direction=${direction}>
     <dt>${t(state, 'pricing.reviewPriceDifference')}</dt>
     <dd>${signed}</dd>
   </div>`;
