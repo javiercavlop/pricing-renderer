@@ -50,12 +50,18 @@ const PRICING = {
     pomodoroTimer: { valueType: 'BOOLEAN', defaultValue: true, type: 'DOMAIN' },
     max_pomodoro_timers: { valueType: 'BOOLEAN', defaultValue: true, type: 'DOMAIN' },
     emptyName: { name: '   ', valueType: 'BOOLEAN', defaultValue: true, type: 'DOMAIN' },
+    nameIsId: { name: 'nameIsId', valueType: 'BOOLEAN', defaultValue: true, type: 'DOMAIN' },
   },
   plans: {
     basic: { price: 0, unit: 'user/month', features: {} },
     advancedTier: { price: 9.99, unit: 'user/month', features: {} },
+    proTier: { name: 'proTier', price: 19.99, unit: 'user/month', features: {} },
+    keptName: { name: 'Enterprise', price: 99, unit: 'user/month', features: {} },
   },
-  addOns: { exportAsJson: { price: 1, unit: 'user/month' } },
+  addOns: {
+    exportAsJson: { price: 1, unit: 'user/month' },
+    extraSeats: { name: 'extraSeats', price: 2, unit: 'user/month' },
+  },
 };
 
 function normalizedOf() {
@@ -118,17 +124,30 @@ describe('a missing or blank name falls back to the humanized id', () => {
     expect(normalized.ok).toBe(true);
   });
 
+  // The same three cases in all four collections: missing name, blank name, and a name that
+  // is just the id again, which is what a pricing upgraded by SPACE carries for its plans.
   it.each([
     ['features', 'max_pomodoro_timers', 'Max Pomodoro Timers'],
     ['features', 'emptyName', 'Empty Name'],
+    ['features', 'nameIsId', 'Name Is Id'],
     ['plans', 'advancedTier', 'Advanced Tier'],
+    ['plans', 'proTier', 'Pro Tier'],
     ['addOns', 'exportAsJson', 'Export As Json'],
+    ['addOns', 'extraSeats', 'Extra Seats'],
   ])('%s/%s reads as %s', (collection, id, label) => {
     if (!normalized.ok) throw new Error('not normalized');
     const list = (normalized.value as unknown as Record<string, { id: string; name: string }[]>)[
       collection
     ];
     expect(list.find((item) => item.id === id)?.name).toBe(label);
+  });
+});
+
+describe('a name an author wrote is never rewritten', () => {
+  it('keeps a plan name that differs from its id', () => {
+    const r = normalizePricing(PRICING);
+    if (!r.ok) throw new Error('not normalized');
+    expect(r.value.plans.find((p) => p.id === 'keptName')?.name).toBe('Enterprise');
   });
 });
 
