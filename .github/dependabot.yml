@@ -1,6 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: npm
+    # Day-to-day work lands on develop and main only receives release merges, so an update
+    # computed against main is already stale when it opens.
+    target-branch: develop
     directories:
       - /
       - /examples/*
@@ -25,6 +28,7 @@ updates:
         applies-to: version-updates
         dependency-type: development
   - package-ecosystem: github-actions
+    target-branch: develop
     directory: /
     schedule:
       interval: weekly
