@@ -1,7 +1,7 @@
 # Item 8: balanced plan grid and the first CTA in the first screen
 
-Change: crp-spectra-phase2-improvements (default look change approved by the owner). Source:
-`docs/agent-work/visual-review-spectra/report.md` sections 3, 4.8, 6.2 and 6.3.
+Change: crp-spectra-phase2-improvements (default look change approved by the owner). Source: the
+SPECTRA visual review, sections 3, 4.8, 6.2 and 6.3.
 
 ## Problem
 
@@ -193,8 +193,8 @@ example in `@media`, `@supports`, a second `@layer` or another `@container` prel
 
 ## Before and after
 
-Before: `docs/agent-work/visual-review-spectra/report.md` sections 6.2 (cards per row, fixed 320px
-tracks) and 6.3 (first CTA with the pricing at the top of the viewport). After: rows are the column
+Before: the SPECTRA visual review, sections 6.2 (cards per row, fixed 320px tracks) and 6.3
+(first CTA with the pricing at the top of the viewport). After: rows are the column
 table values for the band of the measured container (1280 and up at 1440, 840-1039 at 1024), which
 the AC5 gate checks; the 1440 CTA is the AC6 gate of the `SPECTRA_GRID` test, and the 1024 CTA is
 printed in CI only.
