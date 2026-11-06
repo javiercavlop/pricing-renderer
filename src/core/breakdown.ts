@@ -78,12 +78,15 @@ export function buildBreakdown(input: BreakdownInput): PriceBreakdown {
 
   return {
     currency: pricing.metadata.currency,
+    ...(plan?.unit ? { unit: plan.unit } : {}),
     ...(billingPeriod
       ? {
           billingPeriod: {
             id: billingPeriod.id,
             label: billingPeriod.label,
             multiplier: billingPeriod.multiplier,
+            // carried through, so a consumer can tell an invented period from a real choice
+            ...(billingPeriod.synthesized ? { synthesized: true as const } : {}),
           },
         }
       : {}),

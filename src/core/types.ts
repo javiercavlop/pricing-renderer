@@ -213,6 +213,8 @@ export interface PriceBreakdownLine {
 export interface PriceBreakdown {
   currency: string;
   billingPeriod?: NormalizedBillingPeriod;
+  /** The selected plan's unit, so an amount can read "per user/month" away from the card. */
+  unit?: string;
   plan?: PriceBreakdownLine;
   addOns: PriceBreakdownLine[];
   subtotal: number;

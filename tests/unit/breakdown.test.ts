@@ -140,6 +140,7 @@ function lineAmountFold(breakdown: PriceBreakdown): number {
 
 const contractBreakdownYearly = () => ({
   currency: 'EUR',
+  unit: 'month',
   billingPeriod: { id: 'yearly', label: 'Yearly', multiplier: 0.8 },
   plan: {
     kind: 'plan',
@@ -215,6 +216,7 @@ describe('breakdown field', () => {
   it('describes the acme defaults', () => {
     expect(breakdownOf(acme)).toStrictEqual({
       currency: 'EUR',
+      unit: 'month',
       billingPeriod: { id: 'monthly', label: 'Monthly', multiplier: 1 },
       plan: {
         kind: 'plan',
@@ -268,10 +270,13 @@ describe('breakdown billing period', () => {
       label: 'Annual',
       multiplier: 0.83,
     });
+    // The invented period carries its mark through the breakdown, so a consumer can tell it
+    // from one the author chose and leave its name off the page.
     expect(breakdownOf(slack, selectionS1()).billingPeriod).toStrictEqual({
       id: 'base',
       label: 'Base',
       multiplier: 1,
+      synthesized: true,
     });
   });
 });

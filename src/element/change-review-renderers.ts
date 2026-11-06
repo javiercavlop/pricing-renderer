@@ -215,11 +215,13 @@ function renderMoney(state: ReviewRenderState, price: PriceBreakdown): TemplateR
   if (quote && price.subtotal !== 0) {
     partial = tpl` <small>${t(state, 'pricing.requiresQuote')}</small>`;
   }
+  // What an amount is per: the plan's own unit, the same text the plan card shows. A real
+  // billing period is named too; the one invented for a pricing that declares none is not,
+  // since "Base" tells the reader nothing the author ever chose.
   let period: Content = nothing;
-  // Only when the pricing really offers a choice. A pricing that declares no billing block gets
-  // a synthesized one labelled "Base" (normalize.ts), and printing that next to every amount
-  // tells the reader nothing. The period selector is hidden on the same condition.
-  if (price.billingPeriod && price.billingPeriod.synthesized !== true) {
+  if (price.unit) {
+    period = tpl` <small>${t(state, 'pricing.per', { unit: price.unit })}</small>`;
+  } else if (price.billingPeriod && price.billingPeriod.synthesized !== true) {
     period = tpl` <small>${price.billingPeriod.label}</small>`;
   }
   return tpl`${amount}${partial}${period}`;
@@ -351,9 +353,11 @@ function renderUnchanged(state: ReviewRenderState): Content {
   const { addOns, features, usageLimits } = state.comparison;
   const counts = [addOns.unchanged, features.unchanged, usageLimits.unchanged];
   if (counts.every((ids) => ids.length === 0)) return nothing;
-  const [addOnCount = 0, featureCount = 0, limitCount = 0] = counts.map((ids) => ids.length);
+  // Add-ons are left out of this line: what a reader checks here is whether the entitlements
+  // they rely on survive the change, and an add-on they did not touch is not news. The section
+  // still appears when only add-ons are unchanged, because something did stay the same.
+  const [, featureCount = 0, limitCount = 0] = counts.map((ids) => ids.length);
   const summary = t(state, 'pricing.reviewUnchangedSummary', {
-    addOns: formatNumber(addOnCount, state.locale),
     features: formatNumber(featureCount, state.locale),
     limits: formatNumber(limitCount, state.locale),
   });

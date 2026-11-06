@@ -68,8 +68,8 @@ const table: readonly (readonly [key: string, en: string, es: string])[] = [
   ['pricing.reviewUnchanged', 'Unchanged', 'Sin cambios'],
   [
     'pricing.reviewUnchangedSummary',
-    '{addOns} add-ons, {features} features and {limits} usage limits stay the same.',
-    '{addOns} complementos, {features} características y {limits} límites de uso no cambian.',
+    '{features} features and {limits} usage limits stay the same.',
+    '{features} características y {limits} límites de uso no cambian.',
   ],
   ['pricing.reviewNotices', 'Before you confirm', 'Antes de confirmar'],
   ['pricing.reviewConfirm', 'Confirm your new subscription', 'Confirma tu nueva suscripción'],
@@ -121,8 +121,9 @@ describe('review messages', () => {
     expect(translate(getMessages('es-ES'), 'pricing.reviewTitle')).toBe(
       'Revisa el cambio de tu suscripción',
     );
-    const params = { addOns: 2, features: 3, limits: 0 };
+    // Add-ons are deliberately absent: an add-on the reader did not touch is not news here.
+    const params = { features: 3, limits: 0 };
     const summary = translate(getMessages('es-ES'), 'pricing.reviewUnchangedSummary', params);
-    expect(summary).toBe('2 complementos, 3 características y 0 límites de uso no cambian.');
+    expect(summary).toBe('3 características y 0 límites de uso no cambian.');
   });
 });

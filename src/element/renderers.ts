@@ -1129,17 +1129,7 @@ function renderAddOnNotes(viewModel: PricingViewModel, addOn: NormalizedAddOn): 
           </p>`
         : nothing
     }
-    ${
-      constraints
-        ? html`<p>
-            ${t(viewModel, 'pricing.quantityConstraints', {
-              min: constraints.minQuantity,
-              max: constraints.maxQuantity ?? t(viewModel, 'pricing.unbounded'),
-              step: constraints.quantityStep,
-            })}
-          </p>`
-        : nothing
-    }
+    ${renderQuantityConstraints(viewModel, constraints)}
   `;
 }
 
@@ -1413,6 +1403,35 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
         : nothing
     }
   </div>`;
+}
+
+// Only the parts that actually constrain. A minimum of one and a step of one say nothing, and
+// a line reading "Quantity 1-100000000, in steps of 1" is noise around a single useful number.
+// A missing maximum is already unbounded: normalizePricing drops a YAML `.inf` as non-finite.
+function renderQuantityConstraints(
+  viewModel: PricingViewModel,
+  constraints: { minQuantity: number; maxQuantity?: number; quantityStep: number } | undefined,
+): TemplateResult | typeof nothing {
+  if (!constraints) return nothing;
+  const { minQuantity, maxQuantity, quantityStep } = constraints;
+  const plain = minQuantity <= 1 && quantityStep <= 1;
+  if (plain && maxQuantity === undefined) return nothing;
+  const num = (value: number) => new Intl.NumberFormat(viewModel.locale).format(value);
+  const parts: string[] = [];
+  if (plain) {
+    parts.push(t(viewModel, 'pricing.quantityUpTo', { max: num(maxQuantity as number) }));
+  } else {
+    parts.push(
+      t(viewModel, 'pricing.quantityConstraints', {
+        min: num(minQuantity),
+        max: maxQuantity === undefined ? t(viewModel, 'pricing.unbounded') : num(maxQuantity),
+      }),
+    );
+  }
+  if (quantityStep > 1) {
+    parts.push(t(viewModel, 'pricing.quantityInSteps', { step: num(quantityStep) }));
+  }
+  return html`<p>${parts.join(', ')}</p>`;
 }
 
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {
