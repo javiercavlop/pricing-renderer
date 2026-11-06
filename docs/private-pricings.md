@@ -263,10 +263,11 @@ against your SPHERE before relying on them:
 - The permanent link of a pricing is `{site}/p/{pricingId}`. The default public site is
   `https://sphere.score.us.es`.
 
-A browser on another origin cannot read the ETag of a SPHERE response, because the API's CORS setup
-exposes no response headers. Manual ETag revalidation therefore belongs in server code or in a
-same-origin route, as in the recipes above. The browser HTTP cache revalidates by itself and needs no
-code. A service managed by SPACE is not read this way; see [Pricing versions](./pricing-versions.md).
+SPHERE answers its public pricing routes with `Access-Control-Allow-Origin: *` and exposes `ETag`
+through `Access-Control-Expose-Headers`, so a browser on another origin can read it and revalidate.
+Because the allowed origin is `*`, cookies cannot travel: a credential goes in a header, never in
+`credentials: 'include'`. The browser HTTP cache revalidates by itself and needs no code either way.
+A service managed by SPACE is not read this way; see [Pricing versions](./pricing-versions.md).
 
 ## Checklist
 

@@ -13,8 +13,8 @@ gives the rule and the reasons for it.
 The version that SPACE assigns to new contracts depends on how the service is registered:
 
 - **SPHERE-linked SPACE service**: the service's `sphere.target`.
-- **Manual SPACE service**: the host decides which version to show, until SPACE has a default version
-  for new contracts.
+- **Manual SPACE service**: `GET /services/{serviceName}/pricings/new-contracts`, the version SPACE
+  assigns to new contracts.
 
 | Visitor and service                              | Version shown                              |
 | ------------------------------------------------ | ------------------------------------------ |
@@ -45,23 +45,58 @@ straight from SPHERE. Two reasons:
 The renderer makes no call to SPACE. Your backend resolves the version for the visitor, fetches that
 pricing from SPACE and serves it. Pass the result to `<pricing-renderer>` as `src` or as a document.
 
+## Ask SPACE for the YAML, not for the parsed pricing
+
+From SPACE 1.8.0 a version has two representations, and only one of them renders:
+
+```text
+GET /services/{serviceName}/pricings/{pricingVersion}?format=yaml   <- use this
+GET /services/{serviceName}/pricings/{pricingVersion}               <- parsed JSON
+```
+
+`format=yaml` returns the stored Pricing2Yaml file **byte for byte**, with `ETag` (the SHA-256 of the
+body) and `X-Pricing-Syntax-Version`, both exposed to browsers through CORS. Send the body to the
+renderer as `yaml`, or let the browser fetch your proxy of it through `src`.
+
+The parsed JSON of the other route does **not** render. It carries no `syntaxVersion`, so
+`normalizePricing` rejects it with `PR_VERSION_INVALID` and nothing is drawn. It also stores a `name`
+for every plan, add-on and feature equal to its own key, so even once a host supplies the missing
+version by hand the page reads `basic` and `pomodoroTimer` instead of `Basic` and `Pomodoro Timer`:
+the renderer honours an explicit `name` and never second-guesses it. The YAML has no such fields, so
+the identifiers are humanized and the labels come out as the author wrote them.
+
+Measured on the same version of the same pricing:
+
+| Source         | Plans                                  | Features                            |
+| -------------- | -------------------------------------- | ----------------------------------- |
+| `?format=yaml` | Basic, Advanced, Premium               | Pomodoro Timer, Sound Notifications |
+| parsed JSON    | does not render (`PR_VERSION_INVALID`) | —                                   |
+
+`404` with `{"error": "PRICING_YAML_UNAVAILABLE"}` means the version exists but its file cannot be
+served; fall back to your own copy or show the error. Despite its name, the `public-url` endpoint
+returns this same authorized route with `requiresAuthentication: true`: SPACE does not serve pricing
+files as static files, so a URL of that kind is not something a browser can fetch directly.
+
 ## What SPACE does (as looked up, not tested here)
 
 - A service has a source, `manual` or `sphere`. For a `sphere` service, SPACE computes `sphere.target`
   from `sphere.policy` and `selectedVersionId`, and new contracts are forced to that target.
 - Sync from SPHERE is opt-in (`SPHERE_SYNC_ENABLED`). When enabled, the default poll is every 5 minutes;
   `pollIntervalMinutes` can be 1, 5 or 15.
-- SPACE's `showPricing` returns JSON, not YAML. The host backend therefore passes the result to the
-  renderer as `pricing`, not as `yaml`. Check it with the diagnostics that `normalizePricing` returns.
-- SPACE authenticates with an `x-api-key` header. User keys (`usr_`) and organization keys (`org_`)
-  are both long-lived, and no short-lived token was found. The key stays on the host backend; see
-  [Private pricings](./private-pricings.md).
+- `GET /services/{serviceName}/pricings/new-contracts` answers with the version SPACE assigns to new
+  contracts, which is the one a signed-out visitor should see. It takes precedence over the version
+  route, so a version literally named `new-contracts` cannot be read; avoid that name.
+- SPACE authenticates with an `x-api-key` header, and organization keys are long-lived: the key stays
+  on the host backend, never in the browser. For a credential a browser may hold, SPACE now issues
+  **pricing tokens** from `POST /api/v1/features/{userId}/pricing-token`, signed with ES256 and
+  verifiable against `GET /api/v1/.well-known/jwks.json`. They are short-lived and scoped to one
+  user, which is what `request.headers` is for; see [Private pricings](./private-pricings.md).
 
-Confirm these against the SPACE version you run.
+Confirm these against the SPACE version you run; the routes above arrived in SPACE 1.8.0.
 
 ## Server-side example
 
-A Server Component, in the style of [Next.js](./nextjs.md), which has the full flow. `getSpacePricing`
+A Server Component, in the style of [Next.js](./nextjs.md), which has the full flow. `getSpacePricingYaml`
 and `getSession` stand for your backend code; the key is read there, never in the browser.
 
 ```tsx
@@ -74,9 +109,10 @@ export default async function Page() {
   const version = session
     ? contractedVersion(session.contract, 'acme') // contract's version, e.g. '2026.07'
     : undefined; // undefined: SPACE returns the version for new contracts
-  const pricing = await getSpacePricing('acme', version); // JSON from SPACE, not YAML
+  // ?format=yaml, so the document keeps its syntaxVersion and its own labels.
+  const yaml = await getSpacePricingYaml('acme', version);
 
-  return <PricingView pricing={pricing} />;
+  return <PricingView yaml={yaml} />;
 }
 ```
 
