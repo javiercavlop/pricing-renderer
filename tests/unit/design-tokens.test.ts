@@ -211,7 +211,15 @@ describe('optional design tokens (phase 1a)', () => {
     const used = new Set<string>();
     const fallbacks: Record<string, number> = {};
     for (const weight of weights) {
-      const match = /^var\(--pr-font-weight-(regular|medium|bold|heavy), (\d+)\)$/.exec(weight);
+      // The price carries its own token because a real pricing page runs it from 300 to 700,
+      // far outside the four-step scale. Its default, declared in theme.css, is still a scale
+      // token, so the rule below holds for everything the scale is meant to cover.
+      const priced =
+        /^var\(--pr-price-weight, var\(--pr-font-weight-(regular|medium|bold|heavy), (\d+)\)\)$/.exec(
+          weight,
+        );
+      const match =
+        priced ?? /^var\(--pr-font-weight-(regular|medium|bold|heavy), (\d+)\)$/.exec(weight);
       expect(match, `font-weight "${weight}" uses a weight token`).not.toBeNull();
       if (!match) continue;
       used.add(match[1]);

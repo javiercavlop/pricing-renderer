@@ -325,6 +325,11 @@ export interface PricingPresentation {
 
 export type PricingMode = 'commercial' | 'catalog';
 export type PricingLayout = 'auto' | 'compact' | 'table';
+
+// Which diagnostics the element puts on the page. auto: errors only, because a warning means the
+// pricing rendered and only its author can act on it. verbose: errors and warnings, for
+// development. off: none. Every diagnostic reaches the pricing-diagnostic event in all three.
+export type PricingDiagnosticsMode = 'auto' | 'verbose' | 'off';
 export type PricingVisibility = 'public-only' | 'all';
 
 export type MessageCatalog = Record<string, string>;

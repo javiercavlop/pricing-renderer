@@ -99,6 +99,7 @@ export type {
   PricingHighlightKind,
   PricingHighlightMode,
   PricingHighlightReference,
+  PricingDiagnosticsMode,
   PricingLayout,
   PricingMetadata,
   PricingMode,

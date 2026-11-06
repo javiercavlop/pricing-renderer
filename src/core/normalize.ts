@@ -162,12 +162,21 @@ function normalizeBilling(
   return billing.length > 0 ? billing : [{ id: 'base', label: 'Base', multiplier: 1 }];
 }
 
+// The label of a feature, usage limit, plan or add-on. A name that is missing, blank or just
+// the id again is not a label: some producers write the key into name, so Pricing2Yaml arriving
+// from them would read "basic" and "pomodoroTimer" where the author meant nothing at all. The
+// id is humanized in those three cases, and any name an author actually wrote is left alone.
+function displayName(raw: Record<string, unknown>, id: string): string {
+  const name = asString(raw.name);
+  return name === undefined || name === id ? humanizeIdentifier(id) : name;
+}
+
 function normalizeFeatures(input: unknown): NormalizedFeature[] {
   return entries(input).map(([id, value]) => {
     const raw = asRecord(value);
     return {
       id,
-      name: asString(raw.name) ?? humanizeIdentifier(id),
+      name: displayName(raw, id),
       ...(asString(raw.description) ? { description: asString(raw.description) } : {}),
       tag: asString(raw.tag) ?? 'General',
       ...(asString(raw.type) ? { type: asString(raw.type) } : {}),
@@ -194,7 +203,7 @@ function normalizeUsageLimits(input: unknown): NormalizedUsageLimit[] {
     const renewable = asString(raw.type) ?? (raw.renewable === true ? 'renewable' : undefined);
     return {
       id,
-      name: asString(raw.name) ?? humanizeIdentifier(id),
+      name: displayName(raw, id),
       ...(asString(raw.description) ? { description: asString(raw.description) } : {}),
       tag: asString(raw.tag) ?? 'Usage limits',
       ...(renewable ? { type: renewable } : {}),
@@ -219,7 +228,7 @@ function normalizePlans(input: unknown, diagnostics: PricingDiagnostic[]): Norma
     const raw = asRecord(value);
     return {
       id,
-      name: asString(raw.name) ?? humanizeIdentifier(id),
+      name: displayName(raw, id),
       ...(asString(raw.description) ? { description: asString(raw.description) } : {}),
       private: asBoolean(raw.private),
       price: normalizePrice(raw.price, `plans.${id}.price`, diagnostics),
@@ -271,7 +280,7 @@ function normalizeAddOns(input: unknown, diagnostics: PricingDiagnostic[]): Norm
     );
     return {
       id,
-      name: asString(raw.name) ?? humanizeIdentifier(id),
+      name: displayName(raw, id),
       ...(asString(raw.description) ? { description: asString(raw.description) } : {}),
       private: asBoolean(raw.private),
       availableFor: asStringArray(raw.availableFor),

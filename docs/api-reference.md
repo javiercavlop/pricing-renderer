@@ -641,6 +641,7 @@ Exports `PricingRendererElement` without registering it globally.
 | `layout`               | `layout`                  | `"auto" \| "compact" \| "table"` | `"auto"`           |
 | `visibility`           | `visibility`              | `"public-only" \| "all"`         | `"public-only"`    |
 | `theme`                | `theme`                   | `"light" \| "dark" \| "auto"`    | `"light"`          |
+| `diagnostics`          | `diagnostics`             | `"auto" \| "verbose" \| "off"`   | `"auto"`           |
 | `density`              | `density`                 | `"comfortable" \| "compact"`     | `"comfortable"`    |
 | `loadingLabel`         | `loading-label`           | `string`                         | localized          |
 | `onlyDifferences`      | `only-differences`        | `boolean`                        | automatic          |

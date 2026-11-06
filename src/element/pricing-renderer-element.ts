@@ -22,6 +22,7 @@ import {
   type NormalizedPricing,
   type NormalizePricingOptions,
   type PricingDiagnostic,
+  type PricingDiagnosticsMode,
   type PricingLayout,
   type PricingMode,
   type PricingPresentation,
@@ -210,6 +211,9 @@ export class PricingRendererElement extends LitElement {
     layout: { type: String, reflect: true },
     visibility: { type: String, reflect: true },
     theme: { type: String, reflect: true },
+    // Which diagnostics reach the page. Warnings mean the pricing rendered anyway, so they are
+    // for whoever builds the page, not for a customer: "verbose" is the one that shows them.
+    diagnostics: { type: String, reflect: true },
     // The accessor below is the class's own, so Lit reads it on the first update and would reflect
     // density="comfortable" onto every host; useDefault records that value as the default instead.
     density: { type: String, reflect: true, noAccessor: true, useDefault: true },
@@ -254,6 +258,7 @@ export class PricingRendererElement extends LitElement {
   declare layout: PricingLayout;
   declare visibility: PricingVisibility;
   declare theme: 'light' | 'dark' | 'auto';
+  declare diagnostics: PricingDiagnosticsMode;
   declare loadingLabel?: string;
   declare onlyDifferences?: boolean;
   declare toolbarThreshold: number;
@@ -312,6 +317,7 @@ export class PricingRendererElement extends LitElement {
     this.layout = 'auto';
     this.visibility = 'public-only';
     this.theme = 'light';
+    this.diagnostics = 'auto';
     this.toolbarThreshold = DEFAULT_TOOLBAR_THRESHOLD;
     this.addOnFilterThreshold = DEFAULT_ADDON_FILTER_THRESHOLD;
   }
@@ -1103,7 +1109,15 @@ export class PricingRendererElement extends LitElement {
         : {}),
       actions: this._actions,
     };
-    const warnings = this._diagnostics.filter((item) => item.severity !== 'info');
+    // auto, the default, keeps warnings out of the page: the pricing rendered, so they are a
+    // developer's concern and stay in the pricing-diagnostic event. Errors are shown because a
+    // visitor can see what they broke. verbose shows both; off shows none.
+    const shownDiagnostics =
+      this.diagnostics === 'off'
+        ? []
+        : this.diagnostics === 'verbose'
+          ? this._diagnostics.filter((item) => item.severity !== 'info')
+          : this._diagnostics.filter((item) => item.severity === 'error');
     return html`
       <section class="pr-shell" aria-labelledby=${instanceId(state, 'title')}>
         <div
@@ -1112,13 +1126,13 @@ export class PricingRendererElement extends LitElement {
           ?inert=${Boolean(this._pendingAddOnChange)}
         >
           ${
-            warnings.length
+            shownDiagnostics.length
               ? html`<details class="pr-diagnostics" data-pr-part="diagnostics">
                   <summary>
-                    ${translate(viewModel.messages, 'pricing.warning')} (${warnings.length})
+                    ${translate(viewModel.messages, 'pricing.warning')} (${shownDiagnostics.length})
                   </summary>
                   <ul>
-                    ${warnings.map(
+                    ${shownDiagnostics.map(
                       (item) =>
                         html`<li>
                           <strong>${item.code}</strong>:
