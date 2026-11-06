@@ -1879,12 +1879,22 @@
     font-size: var(--pr-font-size-sm);
   }
 
+  /* Confirm and Back stay reachable however tall the diff is. This used to apply only below a
+     600px container, so on a wider one the buttons scrolled out of a long comparison and the
+     reader had to hunt for them. The background is fully opaque: at 95% the rows behind it
+     showed through and the bar read as broken. */
   pricing-change-review [data-pr-part='change-actions'] {
+    position: sticky;
+    z-index: 4;
+    inset-block-end: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: var(--pr-space-3);
+    padding-block: var(--pr-space-3);
+    border-block-start: 1px solid var(--pr-color-border);
+    background: var(--pr-color-surface);
   }
 
   pricing-change-review .pr-cr-status {
@@ -1950,17 +1960,6 @@
 
   /* Narrow: the actions stay in view at the bottom of the container. */
   @container change-review (max-width: 599.98px) {
-    pricing-change-review [data-pr-part='change-actions'] {
-      position: sticky;
-      z-index: 4;
-      inset-block-end: 0;
-      padding: var(--pr-space-3);
-      border: 1px solid var(--pr-color-border);
-      border-radius: var(--pr-radius-md);
-      background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
-      backdrop-filter: blur(16px);
-    }
-
     pricing-change-review [data-pr-part='change-actions'] .pr-button {
       flex: 1 1 8rem;
     }

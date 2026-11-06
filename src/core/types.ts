@@ -60,6 +60,8 @@ export interface NormalizedBillingPeriod {
   id: string;
   label: string;
   multiplier: number;
+  /** True on the period invented for a pricing that declares none: it is not a real choice. */
+  synthesized?: true;
 }
 
 export interface NormalizedFeature {

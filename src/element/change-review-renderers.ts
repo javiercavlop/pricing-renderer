@@ -216,7 +216,12 @@ function renderMoney(state: ReviewRenderState, price: PriceBreakdown): TemplateR
     partial = tpl` <small>${t(state, 'pricing.requiresQuote')}</small>`;
   }
   let period: Content = nothing;
-  if (price.billingPeriod) period = tpl` <small>${price.billingPeriod.label}</small>`;
+  // Only when the pricing really offers a choice. A pricing that declares no billing block gets
+  // a synthesized one labelled "Base" (normalize.ts), and printing that next to every amount
+  // tells the reader nothing. The period selector is hidden on the same condition.
+  if (price.billingPeriod && price.billingPeriod.synthesized !== true) {
+    period = tpl` <small>${price.billingPeriod.label}</small>`;
+  }
   return tpl`${amount}${partial}${period}`;
 }
 

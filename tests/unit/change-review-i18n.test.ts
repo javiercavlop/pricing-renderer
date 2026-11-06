@@ -5,7 +5,11 @@ import { enUS, esES, getMessages, translate } from '../../src/core/index.js';
 // tests/browser/change-review-ui.spec.ts.
 
 const table: readonly (readonly [key: string, en: string, es: string])[] = [
-  ['pricing.reviewTitle', 'Review your change', 'Revisa tu cambio'],
+  [
+    'pricing.reviewTitle',
+    'Review your change of subscription',
+    'Revisa el cambio de tu suscripción',
+  ],
   ['pricing.reviewPlan', 'Plan', 'Plan'],
   ['pricing.reviewChangeArrow', '{before} → {after}', '{before} → {after}'],
   ['pricing.reviewRelationUpgrade', 'Upgrade', 'Mejora de plan'],
@@ -68,8 +72,8 @@ const table: readonly (readonly [key: string, en: string, es: string])[] = [
     '{addOns} complementos, {features} características y {limits} límites de uso no cambian.',
   ],
   ['pricing.reviewNotices', 'Before you confirm', 'Antes de confirmar'],
-  ['pricing.reviewConfirm', 'Confirm change', 'Confirmar cambio'],
-  ['pricing.reviewBack', 'Back', 'Volver'],
+  ['pricing.reviewConfirm', 'Confirm your new subscription', 'Confirma tu nueva suscripción'],
+  ['pricing.reviewBack', 'Cancel', 'Cancelar'],
   ['pricing.reviewPending', 'Applying your change…', 'Aplicando tu cambio…'],
   ['pricing.reviewErrorTitle', 'The change could not be applied.', 'No se pudo aplicar el cambio.'],
   [
@@ -111,8 +115,12 @@ describe('review messages', () => {
   });
 
   it('resolves through getMessages and translate for each locale', () => {
-    expect(translate(getMessages('en-US'), 'pricing.reviewTitle')).toBe('Review your change');
-    expect(translate(getMessages('es-ES'), 'pricing.reviewTitle')).toBe('Revisa tu cambio');
+    expect(translate(getMessages('en-US'), 'pricing.reviewTitle')).toBe(
+      'Review your change of subscription',
+    );
+    expect(translate(getMessages('es-ES'), 'pricing.reviewTitle')).toBe(
+      'Revisa el cambio de tu suscripción',
+    );
     const params = { addOns: 2, features: 3, limits: 0 };
     const summary = translate(getMessages('es-ES'), 'pricing.reviewUnchangedSummary', params);
     expect(summary).toBe('2 complementos, 3 características y 0 límites de uso no cambian.');
