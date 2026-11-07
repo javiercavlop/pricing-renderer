@@ -71,7 +71,7 @@ test.describe('properties', () => {
     });
     await expect(review.locator('[data-pr-part="review-error"]')).toContainText('Timeout');
     await expect(page.locator(confirmButton)).toHaveText('Pay now');
-    await expect(page.locator(backButton)).toHaveText('Volver');
+    await expect(page.locator(backButton)).toHaveText('Cancelar');
   });
 });
 
@@ -201,8 +201,8 @@ test.describe('base parts', () => {
     });
     const confirm = review.locator('button[data-pr-part="review-confirm"]');
     const back = review.locator('button[data-pr-part="review-back"]');
-    await expect(confirm).toHaveText('Confirm change');
-    await expect(back).toHaveText('Back');
+    await expect(confirm).toHaveText('Confirm your new subscription');
+    await expect(back).toHaveText('Cancel');
     const items = review.locator('[data-pr-part="review-notices"] li');
     await expect(items).toHaveCount(2);
     await expect(items).toHaveText(['First', 'Second']);
@@ -212,7 +212,7 @@ test.describe('base parts', () => {
   test('confirmLabel replaces the text of Confirm', async ({ page }) => {
     await addReview(page, { comparison: R_ENT, confirmLabel: 'Pay now' });
     await expect(page.locator(confirmButton)).toHaveText('Pay now');
-    await expect(page.locator(backButton)).toHaveText('Back');
+    await expect(page.locator(backButton)).toHaveText('Cancel');
   });
 
   test('nothing to show', async ({ page }) => {

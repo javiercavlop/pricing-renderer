@@ -174,14 +174,16 @@ test.describe('configured relation labels', () => {
       },
       currentSelection: C,
     });
-    await expect(planCta(page, 'starter')).toHaveText('Downgrade to Starter');
+    await expect(planCta(page, 'starter')).toHaveText('Downgrade');
+    await expect(planCta(page, 'starter')).toHaveAttribute('aria-label', 'Downgrade to Starter');
   });
 });
 
 test('a plan without a price is labelled Contact sales', async ({ page }) => {
   await addRenderer(page, { pricing: PQ, currentSelection: { planId: 'basic' } });
   await expect(planCta(page, 'basic', '#extra')).toHaveText('Current plan');
-  await expect(planCta(page, 'pro', '#extra')).toHaveText('Upgrade to Pro');
+  await expect(planCta(page, 'pro', '#extra')).toHaveText('Upgrade');
+  await expect(planCta(page, 'pro', '#extra')).toHaveAttribute('aria-label', 'Upgrade to Pro');
   const enterprise = planCta(page, 'enterprise', '#extra');
   await expect(enterprise).toHaveText('Contact sales');
   await expect(enterprise).toHaveAttribute('data-relation', 'upgrade');
