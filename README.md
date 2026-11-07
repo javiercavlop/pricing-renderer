@@ -516,7 +516,9 @@ pnpm package:check
 ```
 
 Browser coverage includes Chromium, Firefox, WebKit, Axe, keyboard paths, and
-visual breakpoints. Releases use Changesets, SemVer, npm provenance, and MIT.
+visual breakpoints. Releases use Changesets, SemVer, and MIT, and the release
+workflow publishes them with npm provenance. 0.2.0 is the exception: it was
+published by hand while GitHub Actions was unavailable, so it carries none.
 
 ## Security
 
@@ -524,3 +526,11 @@ Pricing text is escaped, links use safe schemes, and expressions cannot reach
 globals or prototypes. `private` only controls presentation—remove confidential
 data before delivering YAML to a browser. Report vulnerabilities through the
 process in [SECURITY.md](./SECURITY.md).
+
+## Funding
+
+This work has been partially supported by PID2024-155693NB-C44, funded by
+MICIU/AEI/10.13039/501100011033/FEDER, EU; SOL2024-31777 funded by the PPIT of
+the Universidad de Sevilla under the Programa Operativo FEDER Andalucía
+2021-2027; and the Horizonte 2027 doctoral training program funded by Junta de
+Andalucía (Consejería de Universidad, Investigación e Innovación).
