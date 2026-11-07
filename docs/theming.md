@@ -114,7 +114,7 @@ Stable values:
 `hero`, `billing`, `variables`, `plans`, `plan-card`, `plan-badge`,
 `plan-inheritance`, `plan-highlight`, `selection-control`, `price`, `cta`,
 `comparison`, `comparison-toolbar`, `comparison-table`, `comparison-row`,
-`comparison-empty`, `add-ons`, `add-on-card`, `add-on-quantity`,
+`comparison-empty`, `add-ons`, `add-on-card`, `add-on-status`, `add-on-quantity`,
 `addon-toolbar`, `addon-empty`, `summary`, `breakdown`, `breakdown-line`,
 `breakdown-toggle`, `metadata`, `diagnostics`, `current-badge`,
 `current-add-on-badge`, `summary-action`, `cta-pending`, `plan-cta-slot`,
@@ -129,6 +129,11 @@ to an HTML sink such as `dangerouslySetInnerHTML` or `innerHTML`.
 
 `diagnostics` is the closed `details` element that lists diagnostics: the warnings
 above the pricing and, in the error state, the codes behind the error sentence.
+
+`add-on-status` is the line on an add-on card that says why it cannot be selected.
+Its `data-reason` is `plan` when the selected plan does not offer it, and `excluded`
+when an add-on already selected cannot be combined with it; the plan wins when both
+would apply, since that is the reason the reader can act on first.
 
 `comparison-empty` is the "No matching items" line of the comparison,
 `addon-toolbar` is the add-on search toolbar, and `addon-empty` is the add-on

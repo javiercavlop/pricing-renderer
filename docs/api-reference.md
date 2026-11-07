@@ -120,6 +120,21 @@ applySelectionChange(
 ): PricingSelection
 ```
 
+```ts
+blockingAddOnIds(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  addOnId: string,
+): string[]
+```
+
+The selected add-ons that cannot be combined with `addOnId`, in the order of the
+pricing. The exclusion is symmetric, as it is when a change is applied: either
+side may declare it. `addOnId` itself is never returned, so a selected add-on can
+always be deselected. `<pricing-renderer>` uses it to show such an add-on as
+unavailable, naming what blocks it, instead of letting a click open the
+confirmation dialog.
+
 `SelectionChangeIntent` is `{ type: 'plan'; planId: string }` or
 `{ type: 'addOn'; addOnId: string; selected: boolean }`. `planSelectionChange`
 returns either `{ kind: 'apply', selection }`, when the change needs no

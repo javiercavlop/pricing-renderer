@@ -357,18 +357,28 @@ describe('dense details', () => {
     a06: { name: 'Linked', dependsOn: ['a01'], excludes: ['a07'], constraints: true },
   };
 
-  it('moves the dependency, exclusion and quantity paragraphs into the disclosure', () => {
+  it('moves the dependency and exclusion paragraphs into the disclosure', () => {
     const text = render(synthetic(9, special));
     const card = cardOf(text, 'a06');
     const disclosure = disclosureOf(card);
     expect(disclosure).toBeDefined();
     expect(disclosure).toContain('<summary>More details</summary>');
-    const paragraphs = ['Requires Module a01', 'Cannot be combined with Module a07', 'Up to'];
+    const paragraphs = ['Requires Module a01', 'Cannot be combined with Module a07'];
     for (const paragraph of paragraphs) {
       expect(disclosure, paragraph).toContain(paragraph);
       expect(card.indexOf(paragraph), paragraph).toBeGreaterThan(card.indexOf('<details'));
       expect(count(card, new RegExp(paragraph, 'g')), paragraph).toBe(1);
     }
+  });
+
+  // The quantity relation governs what the reader can pick, so it stays on the face of the card
+  // even when the grid is dense and the prose around it is folded away.
+  it('keeps the quantity relation out of the disclosure', () => {
+    const card = cardOf(render(synthetic(9, special)), 'a06');
+    expect(card).toContain('<details');
+    expect(card.indexOf('Up to')).toBeGreaterThan(-1);
+    expect(card.indexOf('Up to')).toBeLessThan(card.indexOf('<details'));
+    expect(count(card, /Up to/g)).toBe(1);
   });
 
   it('keeps those paragraphs visible below the dense threshold', () => {

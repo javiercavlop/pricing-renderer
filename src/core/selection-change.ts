@@ -43,6 +43,26 @@ function selectedDependents(
   return [...dependents];
 }
 
+// The selected add-ons that cannot be combined with `addOnId`, in the order of the pricing. The
+// relation is symmetric, as it is when a change is applied: either side may declare the exclusion.
+// `addOnId` itself is never blocking, so a selected add-on can always be deselected.
+export function blockingAddOnIds(
+  pricing: NormalizedPricing,
+  selection: PricingSelection,
+  addOnId: string,
+): string[] {
+  const addOn = pricing.addOns.find((candidate) => candidate.id === addOnId);
+  if (!addOn) return [];
+  return pricing.addOns
+    .filter(
+      (candidate) =>
+        candidate.id !== addOnId &&
+        selection.addOns[candidate.id]?.selected === true &&
+        (addOn.excludes.includes(candidate.id) || candidate.excludes.includes(addOnId)),
+    )
+    .map((candidate) => candidate.id);
+}
+
 export function planSelectionChange(
   pricing: NormalizedPricing,
   selection: PricingSelection,
