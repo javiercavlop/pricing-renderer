@@ -1281,7 +1281,8 @@ type BreakdownLine = {
 };
 type Breakdown = {
   currency: string;
-  billingPeriod?: { id: string; label: string; multiplier: number };
+  unit?: string;
+  billingPeriod?: { id: string; label: string; multiplier: number; synthesized?: true };
   plan?: BreakdownLine;
   addOns: BreakdownLine[];
   subtotal: number;
@@ -1306,6 +1307,8 @@ const contractE = {
 };
 const breakdownCY: Breakdown = {
   currency: 'EUR',
+  // the plan's unit, so an amount can read "per month" away from the card
+  unit: 'month',
   billingPeriod: { id: 'yearly', label: 'Yearly', multiplier: 0.8 },
   plan: {
     kind: 'plan',
@@ -1806,29 +1809,41 @@ for (const viewport of [
   test(`price breakdown: the toggle has a 44 px pointer target at ${viewport.width} px`, async ({
     page,
   }) => {
+    // Load at this width rather than resize into it. Crossing 840px re-creates the summary in its
+    // new place, and WebKit delivers that resize observation only on a rendering update, which a
+    // headless page that nothing moves may never schedule: a page resized under the test can keep
+    // the old node for good, or swap it in the middle of a measurement.
     await page.setViewportSize(viewport);
-    await summaryOf(page).scrollIntoViewIfNeeded();
-    const box = await toggleOf(page).boundingBox();
-    if (!box) throw new Error('The breakdown toggle has no box.');
-    expect(box.width).toBeGreaterThanOrEqual(24);
-    expect(box.height).toBeGreaterThanOrEqual(24);
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    const hits = await page.evaluate(
-      ([css, x, y]) => {
-        const toggle = document.querySelector(`${css} [data-pr-part="breakdown-toggle"]`);
-        const part = '[data-pr-part="breakdown-toggle"]';
-        const offsets = { left: [-21, 0], right: [21, 0], top: [0, -21], bottom: [0, 21] };
-        const result: Record<string, boolean> = {};
-        for (const [side, [dx = 0, dy = 0]] of Object.entries(offsets)) {
-          const hit = document.elementFromPoint(x + dx, y + dy);
-          result[side] = hit?.closest(part) === toggle;
-        }
-        return result;
-      },
-      [DEMO, cx, cy] as const,
-    );
-    expect(hits).toEqual({ left: true, right: true, top: true, bottom: true });
+    await page.reload();
+    await expect(page.locator('pricing-renderer .pr-plan-card')).toHaveCount(3);
+    // The first resize observation of a load can still re-create the summary once: the
+    // measurement is repeated until it reads a settled node, and a real defect still fails it.
+    let cx = 0;
+    let cy = 0;
+    await expect(async () => {
+      await summaryOf(page).scrollIntoViewIfNeeded();
+      const box = await toggleOf(page).boundingBox();
+      if (!box) throw new Error('The breakdown toggle has no box.');
+      expect(box.width).toBeGreaterThanOrEqual(24);
+      expect(box.height).toBeGreaterThanOrEqual(24);
+      cx = box.x + box.width / 2;
+      cy = box.y + box.height / 2;
+      const hits = await page.evaluate(
+        ([css, x, y]) => {
+          const toggle = document.querySelector(`${css} [data-pr-part="breakdown-toggle"]`);
+          const part = '[data-pr-part="breakdown-toggle"]';
+          const offsets = { left: [-21, 0], right: [21, 0], top: [0, -21], bottom: [0, 21] };
+          const result: Record<string, boolean> = {};
+          for (const [side, [dx = 0, dy = 0]] of Object.entries(offsets)) {
+            const hit = document.elementFromPoint(x + dx, y + dy);
+            result[side] = hit?.closest(part) === toggle;
+          }
+          return result;
+        },
+        [DEMO, cx, cy] as const,
+      );
+      expect(hits).toEqual({ left: true, right: true, top: true, bottom: true });
+    }).toPass({ timeout: 15_000 });
     await page.mouse.click(cx + 21, cy);
     await expectPanel(page, true);
   });

@@ -97,16 +97,24 @@ test.describe('spectra follow-ups', () => {
     });
   }
 
-  // Below 840px the caps do not apply: the demo token (>= 40px) is kept.
-  test('keeps the full section gap below 840px', async ({ page }) => {
+  // Below 840px the same caps apply since the narrow-top compaction: the rows above the plans
+  // get the capped gap, and the margin after the plans adds back what the cap removed, so the
+  // full section token still separates the plans from what follows them.
+  test('applies the same gap cap below 840px', async ({ page }) => {
     await openRenderer(page, { width: 800, height: 900 });
     expect(await applyPricing(page, acme)).toBe('ready');
     expect(await rendererWidth(page)).toBeLessThan(840);
-    const rowGap = await page.evaluate(() => {
+    const spacing = await page.evaluate(() => {
       const content = document.querySelector('pricing-renderer .pr-content');
       if (!content) throw new Error('.pr-content was not found.');
-      return Number.parseFloat(getComputedStyle(content).rowGap);
+      const next = content.querySelector(':scope > [data-pr-part="plans"]')?.nextElementSibling;
+      return {
+        rowGap: Number.parseFloat(getComputedStyle(content).rowGap),
+        marginAfterPlans: next ? Number.parseFloat(getComputedStyle(next).marginTop) : null,
+      };
     });
-    expect(rowGap).toBeGreaterThan(24);
+    expect(spacing.rowGap).toBe(24);
+    expect(spacing.marginAfterPlans).not.toBeNull();
+    expect(spacing.rowGap + (spacing.marginAfterPlans ?? 0)).toBeGreaterThanOrEqual(40);
   });
 });

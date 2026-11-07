@@ -35,6 +35,12 @@
   collapses, variable controls describe their help and errors, and
   `isSafeLink` rejects more unsafe link forms.
 
+### Publication
+
+Published by hand with npm two-factor authentication while GitHub Actions was
+unavailable, so this version carries no npm provenance attestation. The release
+workflow publishes later versions with provenance again.
+
 ### Behaviour changes to check when upgrading
 
 - An add-on excluded by a selected add-on is no longer selectable; the
