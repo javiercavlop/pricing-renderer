@@ -145,12 +145,13 @@ describe('properties', () => {
     return (loaded as { PricingChangeReviewElement: ReviewClass }).PricingChangeReviewElement;
   }
 
-  it('declares the seven properties with their attributes', async () => {
+  it('declares the eight properties with their attributes', async () => {
     const { properties } = await loadClass();
     expect(Object.keys(properties).sort()).toEqual([
       'comparison',
       'confirmLabel',
       'error',
+      'hideSections',
       'locale',
       'messages',
       'notices',
@@ -166,6 +167,7 @@ describe('properties', () => {
     expect(properties.locale).toMatchObject({ type: String });
     expect(properties.locale?.attribute).not.toBe(false);
     expect(properties.confirmLabel).toMatchObject({ type: String, attribute: 'confirm-label' });
+    expect(properties.hideSections).toMatchObject({ attribute: 'hide-sections' });
   });
 
   it('starts with no comparison, no notices, not pending and en-US', async () => {

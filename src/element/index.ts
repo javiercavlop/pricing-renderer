@@ -24,6 +24,7 @@ export type {
   PricingSlotsChangeEvent,
 } from './events.js';
 export type { PricingSectionName } from './renderers.js';
+export type { ReviewSectionName } from './change-review-renderers.js';
 export type { SelectionRelation } from '../core/index.js';
 
 declare global {
