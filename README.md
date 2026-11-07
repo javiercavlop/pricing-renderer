@@ -83,7 +83,7 @@ yarn add pricing-renderer
 Pin the initial release when an exact, reproducible version is required:
 
 ```bash
-npm install pricing-renderer@0.1.0
+npm install pricing-renderer@0.2.0
 ```
 
 Then import the renderer and its complete default stylesheet:
@@ -97,8 +97,8 @@ Release locations:
 
 - npm package and provenance:
   [`pricing-renderer`](https://www.npmjs.com/package/pricing-renderer)
-- `0.1.0` release notes and source tag:
-  [`v0.1.0`](https://github.com/javiercavlop/pricing-renderer/releases/tag/v0.1.0)
+- `0.2.0` release notes and source tag:
+  [`v0.2.0`](https://github.com/javiercavlop/pricing-renderer/releases/tag/v0.2.0)
 - all GitHub releases:
   [`javiercavlop/pricing-renderer/releases`](https://github.com/javiercavlop/pricing-renderer/releases)
 

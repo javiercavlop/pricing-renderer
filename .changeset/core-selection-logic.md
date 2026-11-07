@@ -1,5 +1,0 @@
----
-'pricing-renderer': minor
----
-
-Export the selection logic of the element from the core, free of the DOM: `planSelectionChange`, `applySelectionChange`, `selectionWithVariable`, `selectionWithAddOnQuantity`, `selectionInEffect` and `createPriceStabilizer`, with the types `SelectionChangeIntent`, `SelectionChangeResult`, `PriceStabilizer` and `PendingAddOnChange`. `applySelectionInput` and its result type `ApplySelectionInputResult` are now public. `PendingAddOnChange` stays exported from `pricing-renderer/element`. `planSelectionChange` adds the whole transitive dependency chain of an add-on (the element's own collector is direct-only until a later change). Variable paths that contain `__proto__`, or an array index that is not a plain number or is a new index above 1000, are now ignored, also by the element's variable controls. `applySelectionInput`, and so the element's `applySelection`, ignores malformed `addOns` or `variables` fields and add-on entries that are not objects instead of throwing; the defaults apply.
