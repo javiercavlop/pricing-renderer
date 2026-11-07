@@ -80,6 +80,7 @@ import {
   type RenderActions,
   type RenderState,
 } from './renderers.js';
+import { hiddenNamesOf, sectionsConverter } from './hide-sections.js';
 
 // Everything after the plans lives in one flex column, so a
 // sticky summary has the whole column as its containing block (a grid item would only have its own
@@ -135,27 +136,11 @@ export const onlyDifferencesConverter = {
 };
 
 // Whitespace separated; only tokens that exactly match a section name are kept, in order.
-export const hideSectionsConverter = {
-  fromAttribute(value: string | null): PricingSectionName[] | undefined {
-    if (value === null) return undefined;
-    return value
-      .split(/[\t\n\f\r ]+/)
-      .filter((token): token is PricingSectionName =>
-        (PRICING_SECTION_NAMES as readonly string[]).includes(token),
-      );
-  },
-};
+export const hideSectionsConverter = sectionsConverter(PRICING_SECTION_NAMES);
 
 // A value that is not an array hides nothing, and neither does an item that is not a section name.
 function hiddenSectionsOf(value: unknown): ReadonlySet<PricingSectionName> {
-  const names = new Set<PricingSectionName>();
-  if (!Array.isArray(value)) return names;
-  for (const item of value) {
-    if ((PRICING_SECTION_NAMES as readonly unknown[]).includes(item)) {
-      names.add(item as PricingSectionName);
-    }
-  }
-  return names;
+  return hiddenNamesOf(PRICING_SECTION_NAMES, value);
 }
 
 // A value that is not an array requests nothing, and neither does an item that is not a slot name.

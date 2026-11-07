@@ -6,7 +6,9 @@ import {
   formatComparedValue,
   formatSignedCurrency,
   renderChangeReview,
+  REVIEW_SECTION_NAMES,
   type ReviewRenderState,
+  type ReviewSectionName,
 } from '../../src/element/change-review-renderers.js';
 import { C, ENT, Side, acme, cmp } from './helpers/compare-fixtures.js';
 
@@ -80,7 +82,11 @@ function textOf(value: unknown): string {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
 }
 
-function reviewText(comparison: SelectionComparison, locale = 'en-US'): string {
+function reviewText(
+  comparison: SelectionComparison,
+  locale = 'en-US',
+  hide?: readonly ReviewSectionName[],
+): string {
   const state: ReviewRenderState = {
     comparison,
     locale,
@@ -91,6 +97,7 @@ function reviewText(comparison: SelectionComparison, locale = 'en-US'): string {
     idPrefix: 'test',
     onConfirm: () => undefined,
     onBack: () => undefined,
+    ...(hide ? { hiddenSections: new Set(hide) } : {}),
   };
   return textOf(renderChangeReview(state));
 }
@@ -140,6 +147,47 @@ describe('renderChangeReview', () => {
     const text = reviewText(comparison);
     expect(text).toContain('legacy');
     expect(text).not.toContain('undefined');
+  });
+});
+
+// A review that is read-only: a host comparing two configurations side by side has nothing to
+// confirm, no heading of ours to show and no ladder to read an Upgrade from.
+describe('hidden parts', () => {
+  it('hides nothing by default', () => {
+    const text = reviewText(upgrade());
+    expect(text).toContain('change-actions');
+    expect(text).toContain('review-title');
+    expect(text).toContain('Upgrade');
+  });
+
+  it('drops Confirm and Back, keeping the content', () => {
+    const text = reviewText(upgrade(), 'en-US', ['actions']);
+    expect(text).not.toContain('change-actions');
+    expect(text).not.toContain('review-confirm');
+    expect(text).not.toContain('Confirm your new subscription');
+    expect(text).toContain('review-price');
+  });
+
+  it('drops the Upgrade badge, which is only an order of declaration', () => {
+    const text = reviewText(upgrade(), 'en-US', ['relation']);
+    expect(text).not.toContain('Upgrade');
+    expect(text).toContain('review-plan');
+  });
+
+  it('drops the heading and its aria-labelledby together', () => {
+    const text = reviewText(upgrade(), 'en-US', ['title']);
+    expect(text).not.toContain('review-title');
+    expect(text).not.toContain('Review your change of subscription');
+    expect(text).not.toContain('test-title');
+    expect(text).toContain('change-review');
+  });
+
+  it('keeps the content with every part hidden at once', () => {
+    const text = reviewText(upgrade(), 'en-US', REVIEW_SECTION_NAMES);
+    expect(text).not.toContain('change-actions');
+    expect(text).not.toContain('review-title');
+    expect(text).toContain('review-price');
+    expect(text).toContain('review-plan');
   });
 });
 

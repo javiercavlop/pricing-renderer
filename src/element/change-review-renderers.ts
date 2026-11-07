@@ -22,6 +22,20 @@ type Tone = 'success' | 'warning' | 'accent';
 type Params = Record<string, string | number>;
 type Content = TemplateResult | typeof nothing;
 
+// The parts of the review a host can hide. The content sections are deliberately absent: a review
+// without its plan or its price is not a review.
+export const REVIEW_SECTION_NAMES = [
+  // For a host whose own heading already names what is being compared.
+  'title',
+  // The badge that reads a plan change as Upgrade or Downgrade. It follows the declaration order
+  // of `pricing.plans`, which is a ladder only inside a subscription: two configurations compared
+  // side by side have no such order, and the badge would assert one they do not have.
+  'relation',
+  // Confirm and Back, for a diff that is not actionable.
+  'actions',
+] as const;
+export type ReviewSectionName = (typeof REVIEW_SECTION_NAMES)[number];
+
 export interface ReviewRenderState {
   comparison: SelectionComparison;
   locale: string;
@@ -33,6 +47,8 @@ export interface ReviewRenderState {
   blocked: boolean;
   // the text of Confirm when the host replaces pricing.reviewConfirm
   confirmLabel?: string;
+  /** Parts the host hides; absent means none. */
+  hiddenSections?: ReadonlySet<ReviewSectionName>;
   // a prefix for the ids of the headings, unique per element
   idPrefix: string;
   onConfirm: () => void;
@@ -188,7 +204,9 @@ function renderPlan(state: ReviewRenderState): TemplateResult {
     });
     banner = tpl`<p class="pr-cr-banner">${text}</p>`;
   }
-  const relationBadge = badge(t(state, relationKeys[relation]), relationTones[relation]);
+  const relationBadge = state.hiddenSections?.has('relation')
+    ? nothing
+    : badge(t(state, relationKeys[relation]), relationTones[relation]);
   const body = tpl`<div data-pr-part="change-row">
       <span class="pr-cr-row__name">${name}</span>
       ${relationBadge}
@@ -387,7 +405,8 @@ function renderError(state: ReviewRenderState): Content {
   </div>`;
 }
 
-function renderActions(state: ReviewRenderState): TemplateResult {
+function renderActions(state: ReviewRenderState): Content {
+  if (state.hiddenSections?.has('actions')) return nothing;
   const status = state.pending ? t(state, 'pricing.reviewPending') : nothing;
   const confirm = state.confirmLabel || t(state, 'pricing.reviewConfirm');
   return tpl`<div data-pr-part="change-actions">
@@ -430,10 +449,19 @@ function renderBody(state: ReviewRenderState): unknown {
 export function renderChangeReview(state: ReviewRenderState): TemplateResult {
   const titleId = `${state.idPrefix}-title`;
   const title = t(state, 'pricing.reviewTitle');
-  return tpl`<section data-pr-part="change-review" aria-labelledby=${titleId}>
-    <header class="pr-cr-header">
+  // A host that hides the title labels the region with its own heading, so the reference goes with
+  // it: aria-labelledby pointing at an absent id leaves the section claiming a name it has not.
+  const untitled = state.hiddenSections?.has('title') === true;
+  const header = untitled
+    ? nothing
+    : tpl`<header class="pr-cr-header">
       <h2 id=${titleId} data-pr-part="review-title" tabindex="-1">${title}</h2>
-    </header>
+    </header>`;
+  return tpl`<section
+    data-pr-part="change-review"
+    aria-labelledby=${untitled ? nothing : titleId}
+  >
+    ${header}
     ${renderBody(state)}
     ${renderNotices(state)}
     ${renderError(state)}

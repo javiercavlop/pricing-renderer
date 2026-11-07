@@ -1,6 +1,7 @@
 import { LitElement, nothing, type PropertyValues } from 'lit';
 import {
   cloneValue,
+  deepEqual,
   getMessages,
   type MessageCatalog,
   type SelectionComparison,
@@ -9,10 +10,18 @@ import type {
   PricingChangeBackDetail,
   PricingChangeConfirmDetail,
 } from './change-review-events.js';
-import { renderChangeReview } from './change-review-renderers.js';
+import {
+  REVIEW_SECTION_NAMES,
+  renderChangeReview,
+  type ReviewSectionName,
+} from './change-review-renderers.js';
+import { hiddenNamesOf, sectionsConverter } from './hide-sections.js';
 
 // One per element, so that the ids of the headings stay unique when a page has several reviews.
 let instances = 0;
+
+// Whitespace separated; only tokens that exactly match a part name are kept, in order.
+export const reviewHideSectionsConverter = sectionsConverter(REVIEW_SECTION_NAMES);
 
 // The review of a subscription change: the properties, the events, the Confirm default action and
 // the guards, and the review UI rendered by change-review-renderers.ts.
@@ -25,6 +34,13 @@ export class PricingChangeReviewElement extends LitElement {
     locale: { type: String },
     messages: { attribute: false },
     confirmLabel: { type: String, attribute: 'confirm-label' },
+    // a host that builds the array in its render function does
+    // not re-render on every render
+    hideSections: {
+      attribute: 'hide-sections',
+      converter: reviewHideSectionsConverter,
+      hasChanged: (value: unknown, previous: unknown) => !deepEqual(value, previous),
+    },
   };
 
   declare comparison?: SelectionComparison;
@@ -34,6 +50,7 @@ export class PricingChangeReviewElement extends LitElement {
   declare locale: string;
   declare messages?: MessageCatalog;
   declare confirmLabel?: string;
+  declare hideSections?: readonly ReviewSectionName[];
 
   private readonly _idPrefix = `pr-review-${++instances}`;
 
@@ -97,6 +114,7 @@ export class PricingChangeReviewElement extends LitElement {
     if (!comparison) return nothing;
     // a removed locale attribute makes the property null
     const locale = typeof this.locale === 'string' && this.locale !== '' ? this.locale : 'en-US';
+    const hidden = hiddenNamesOf(REVIEW_SECTION_NAMES, this.hideSections);
     return renderChangeReview({
       comparison,
       locale,
@@ -109,6 +127,7 @@ export class PricingChangeReviewElement extends LitElement {
       idPrefix: this._idPrefix,
       onConfirm: this._confirm,
       onBack: this._back,
+      ...(hidden.size > 0 ? { hiddenSections: hidden } : {}),
     });
   }
 }
