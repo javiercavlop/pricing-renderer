@@ -159,7 +159,11 @@ function normalizeBilling(
     })
     .filter((period): period is NormalizedBillingPeriod => period !== undefined);
 
-  return billing.length > 0 ? billing : [{ id: 'base', label: 'Base', multiplier: 1 }];
+  // A pricing with no billing block still needs one period to compute against, but it is an
+  // invention: nothing should print its name as if the author had chosen it.
+  return billing.length > 0
+    ? billing
+    : [{ id: 'base', label: 'Base', multiplier: 1, synthesized: true as const }];
 }
 
 // The label of a feature, usage limit, plan or add-on. A name that is missing, blank or just

@@ -450,7 +450,7 @@ describe('plan slot node context attributes', () => {
     expect(starter?.get('data-label')).toBe('Current plan');
     const growth = slots['growth']?.attrs;
     expect(growth?.get('data-relation')).toBe('upgrade');
-    expect(growth?.get('data-label')).toBe('Upgrade to Growth');
+    expect(growth?.get('data-label')).toBe('Upgrade');
     expect(growth?.get('data-pending')).toBe('true');
     expect(html).not.toMatch(/\?data-(current|pending|any-pending)/);
   });
@@ -516,9 +516,10 @@ describe('triggerPlanAction', () => {
     const second = await ready({ currentSelection: { planId: 'growth' } });
     expect(first.element.triggerPlanAction).toBeTypeOf('function');
     const result = first.element.triggerPlanAction?.('enterprise');
+    // The current plan's slot is plain text now, not a button, so it contributes no handler.
     const handlers = ctaHandlers(second.element.render());
-    expect(handlers).toHaveLength(3);
-    handlers[2]?.({ preventDefault: () => undefined });
+    expect(handlers).toHaveLength(2);
+    handlers[1]?.({ preventDefault: () => undefined });
     expect(result).toBe(true);
     const actions = (built: Built): CustomEvent[] =>
       built.events.filter((event) => event.type === 'pricing-action');

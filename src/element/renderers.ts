@@ -396,6 +396,19 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
     ? { relation: cta.relation, source: 'plan' }
     : undefined;
   const content = renderCtaLabel(viewModel, cta.label, cta.pending);
+  // The plan the visitor is already on has nothing to press. A disabled button invites a click
+  // that will never work and repeats the "your plan" badge in the shape of an action, so the
+  // slot keeps its height with plain text instead.
+  if (cta.disabled && cta.relation === 'current') {
+    return html`<p
+      class="pr-plan-card__current"
+      data-pr-part="cta"
+      data-kind=${kind}
+      data-relation="current"
+    >
+      ${content}
+    </p>`;
+  }
   const trigger = (): boolean =>
     actions.triggerAction(cta.actionId, plan.id, cta.eventHref, cta.metadata, origin);
   return cta.href
@@ -407,6 +420,7 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
         aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        aria-label=${cta.ariaLabel ?? nothing}
         href=${cta.href}
         target=${cta.target ?? '_self'}
         rel=${cta.target === '_blank' ? 'noopener noreferrer' : nothing}
@@ -423,6 +437,7 @@ function renderPlanCta(state: RenderState, plan: NormalizedPlan): TemplateResult
         data-pending=${cta.pending ? 'true' : nothing}
         aria-busy=${cta.pending ? 'true' : nothing}
         aria-disabled=${cta.ariaDisabled ? 'true' : nothing}
+        aria-label=${cta.ariaLabel ?? nothing}
         type="button"
         ?disabled=${cta.disabled}
         @click=${trigger}
@@ -1129,17 +1144,7 @@ function renderAddOnNotes(viewModel: PricingViewModel, addOn: NormalizedAddOn): 
           </p>`
         : nothing
     }
-    ${
-      constraints
-        ? html`<p>
-            ${t(viewModel, 'pricing.quantityConstraints', {
-              min: constraints.minQuantity,
-              max: constraints.maxQuantity ?? t(viewModel, 'pricing.unbounded'),
-              step: constraints.quantityStep,
-            })}
-          </p>`
-        : nothing
-    }
+    ${renderQuantityConstraints(viewModel, constraints)}
   `;
 }
 
@@ -1413,6 +1418,35 @@ function renderFilteredAddOns(state: RenderState, dense: boolean): TemplateResul
         : nothing
     }
   </div>`;
+}
+
+// Only the parts that actually constrain. A minimum of one and a step of one say nothing, and
+// a line reading "Quantity 1-100000000, in steps of 1" is noise around a single useful number.
+// A missing maximum is already unbounded: normalizePricing drops a YAML `.inf` as non-finite.
+function renderQuantityConstraints(
+  viewModel: PricingViewModel,
+  constraints: { minQuantity: number; maxQuantity?: number; quantityStep: number } | undefined,
+): TemplateResult | typeof nothing {
+  if (!constraints) return nothing;
+  const { minQuantity, maxQuantity, quantityStep } = constraints;
+  const plain = minQuantity <= 1 && quantityStep <= 1;
+  if (plain && maxQuantity === undefined) return nothing;
+  const num = (value: number) => new Intl.NumberFormat(viewModel.locale).format(value);
+  const parts: string[] = [];
+  if (plain) {
+    parts.push(t(viewModel, 'pricing.quantityUpTo', { max: num(maxQuantity as number) }));
+  } else {
+    parts.push(
+      t(viewModel, 'pricing.quantityConstraints', {
+        min: num(minQuantity),
+        max: maxQuantity === undefined ? t(viewModel, 'pricing.unbounded') : num(maxQuantity),
+      }),
+    );
+  }
+  if (quantityStep > 1) {
+    parts.push(t(viewModel, 'pricing.quantityInSteps', { step: num(quantityStep) }));
+  }
+  return html`<p>${parts.join(', ')}</p>`;
 }
 
 export function renderAddOns(state: RenderState): TemplateResult | typeof nothing {

@@ -60,6 +60,8 @@ export interface NormalizedBillingPeriod {
   id: string;
   label: string;
   multiplier: number;
+  /** True on the period invented for a pricing that declares none: it is not a real choice. */
+  synthesized?: true;
 }
 
 export interface NormalizedFeature {
@@ -211,6 +213,8 @@ export interface PriceBreakdownLine {
 export interface PriceBreakdown {
   currency: string;
   billingPeriod?: NormalizedBillingPeriod;
+  /** The selected plan's unit, so an amount can read "per user/month" away from the card. */
+  unit?: string;
   plan?: PriceBreakdownLine;
   addOns: PriceBreakdownLine[];
   subtotal: number;

@@ -486,6 +486,18 @@
     color: var(--pr-color-muted);
   }
 
+  /* The action slot of the plan already held: same height and alignment as a button, without
+     pretending to be one. */
+  pricing-renderer[data-pr-root] .pr-plan-card__current {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.75rem;
+    margin: 0;
+    color: var(--pr-color-muted);
+    font-size: var(--pr-font-size-sm);
+  }
+
   pricing-renderer[data-pr-root] .pr-price {
     display: flex;
     flex-wrap: wrap;
@@ -1747,6 +1759,21 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* A limit that grows is a gain, one that shrinks is what the visitor gives up. There is no
+     red in this theme and inventing one for a downgrade would overstate it: warning is the tone
+     already used a few lines below for a limit that falls under current usage. */
+  pricing-change-review .pr-cr-row__delta {
+    font-variant-numeric: tabular-nums;
+  }
+
+  pricing-change-review .pr-cr-row__delta[data-direction='increase'] {
+    color: var(--pr-color-success);
+  }
+
+  pricing-change-review .pr-cr-row__delta[data-direction='decrease'] {
+    color: var(--pr-color-warning);
+  }
+
   pricing-change-review .pr-cr-row__reason {
     flex-basis: 100%;
     color: var(--pr-color-muted);
@@ -1879,12 +1906,22 @@
     font-size: var(--pr-font-size-sm);
   }
 
+  /* Confirm and Back stay reachable however tall the diff is. This used to apply only below a
+     600px container, so on a wider one the buttons scrolled out of a long comparison and the
+     reader had to hunt for them. The background is fully opaque: at 95% the rows behind it
+     showed through and the bar read as broken. */
   pricing-change-review [data-pr-part='change-actions'] {
+    position: sticky;
+    z-index: 4;
+    inset-block-end: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     gap: var(--pr-space-3);
+    padding-block: var(--pr-space-3);
+    border-block-start: 1px solid var(--pr-color-border);
+    background: var(--pr-color-surface);
   }
 
   pricing-change-review .pr-cr-status {
@@ -1904,7 +1941,11 @@
     font-weight: var(--pr-font-weight-bold, 750);
     line-height: 1.2;
     text-align: center;
-    white-space: nowrap;
+    /* Unlike a plan CTA, which is a word, confirming names what is being confirmed. In a narrow
+       dialog that sentence has to wrap rather than be cut off, so min-block-size sets the floor
+       and the box grows with the text. */
+    white-space: normal;
+    text-wrap: balance;
     cursor: pointer;
     transition: background-color var(--pr-motion-fast);
   }
@@ -1950,17 +1991,6 @@
 
   /* Narrow: the actions stay in view at the bottom of the container. */
   @container change-review (max-width: 599.98px) {
-    pricing-change-review [data-pr-part='change-actions'] {
-      position: sticky;
-      z-index: 4;
-      inset-block-end: 0;
-      padding: var(--pr-space-3);
-      border: 1px solid var(--pr-color-border);
-      border-radius: var(--pr-radius-md);
-      background: color-mix(in srgb, var(--pr-color-surface) 95%, transparent);
-      backdrop-filter: blur(16px);
-    }
-
     pricing-change-review [data-pr-part='change-actions'] .pr-button {
       flex: 1 1 8rem;
     }

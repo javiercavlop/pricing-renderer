@@ -363,7 +363,7 @@ describe('dense details', () => {
     const disclosure = disclosureOf(card);
     expect(disclosure).toBeDefined();
     expect(disclosure).toContain('<summary>More details</summary>');
-    const paragraphs = ['Requires Module a01', 'Cannot be combined with Module a07', 'Quantity'];
+    const paragraphs = ['Requires Module a01', 'Cannot be combined with Module a07', 'Up to'];
     for (const paragraph of paragraphs) {
       expect(disclosure, paragraph).toContain(paragraph);
       expect(card.indexOf(paragraph), paragraph).toBeGreaterThan(card.indexOf('<details'));

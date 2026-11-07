@@ -146,7 +146,8 @@ function reviewSection(
 }
 
 interface RowParts {
-  detail?: string;
+  /** Markup as well as text: a usage-limit row tones its delta. */
+  detail?: Content | string;
   badge?: TemplateResult;
   reason?: string;
   warning?: string;
@@ -215,8 +216,15 @@ function renderMoney(state: ReviewRenderState, price: PriceBreakdown): TemplateR
   if (quote && price.subtotal !== 0) {
     partial = tpl` <small>${t(state, 'pricing.requiresQuote')}</small>`;
   }
+  // What an amount is per: the plan's own unit, the same text the plan card shows. A real
+  // billing period is named too; the one invented for a pricing that declares none is not,
+  // since "Base" tells the reader nothing the author ever chose.
   let period: Content = nothing;
-  if (price.billingPeriod) period = tpl` <small>${price.billingPeriod.label}</small>`;
+  if (price.unit) {
+    period = tpl` <small>${t(state, 'pricing.per', { unit: price.unit })}</small>`;
+  } else if (price.billingPeriod && price.billingPeriod.synthesized !== true) {
+    period = tpl` <small>${price.billingPeriod.label}</small>`;
+  }
   return tpl`${amount}${partial}${period}`;
 }
 
@@ -323,13 +331,20 @@ function renderLimits(state: ReviewRenderState): Content {
   for (const item of state.comparison.usageLimits.changed) {
     const format = (value: ComparedValue): string =>
       formatComparedValue(value, state.messages, state.locale, item.unit);
-    let detail = arrow(state, format(item.before), format(item.after));
+    const moved = arrow(state, format(item.before), format(item.after));
+    // The delta is the part a reader scans for, and its sign is the whole message: more of a
+    // limit is a gain, less of one is what they are giving up. It carries its direction so the
+    // stylesheet can tone it without the reader parsing a minus sign.
+    let detail: Content | string = moved;
     if (item.delta !== undefined) {
       const sign = formatNumber(item.delta, state.locale, { signDisplay: 'exceptZero' });
       const unit = item.unit
         ? ` ${formatUnit(item.unit, Math.abs(item.delta), intlLocale(state.locale))}`
         : '';
-      detail += ` (${sign}${unit})`;
+      const direction = item.delta > 0 ? 'increase' : item.delta < 0 ? 'decrease' : 'same';
+      detail = tpl`${moved} <span class="pr-cr-row__delta" data-direction=${direction}
+        >(${sign}${unit})</span
+      >`;
     }
     let warning: string | undefined;
     if (item.exceedsCurrentUsage && item.currentUsage !== undefined) {
@@ -346,9 +361,11 @@ function renderUnchanged(state: ReviewRenderState): Content {
   const { addOns, features, usageLimits } = state.comparison;
   const counts = [addOns.unchanged, features.unchanged, usageLimits.unchanged];
   if (counts.every((ids) => ids.length === 0)) return nothing;
-  const [addOnCount = 0, featureCount = 0, limitCount = 0] = counts.map((ids) => ids.length);
+  // Add-ons are left out of this line: what a reader checks here is whether the entitlements
+  // they rely on survive the change, and an add-on they did not touch is not news. The section
+  // still appears when only add-ons are unchanged, because something did stay the same.
+  const [, featureCount = 0, limitCount = 0] = counts.map((ids) => ids.length);
   const summary = t(state, 'pricing.reviewUnchangedSummary', {
-    addOns: formatNumber(addOnCount, state.locale),
     features: formatNumber(featureCount, state.locale),
     limits: formatNumber(limitCount, state.locale),
   });

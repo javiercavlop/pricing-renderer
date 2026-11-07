@@ -406,9 +406,9 @@ describe('package manifest', () => {
 
 describe('messages', () => {
   it('defines the Confirm and Back texts in English and Spanish', () => {
-    expect(enUS['pricing.reviewConfirm']).toBe('Confirm change');
-    expect(enUS['pricing.reviewBack']).toBe('Back');
-    expect(esES['pricing.reviewConfirm']).toBe('Confirmar cambio');
-    expect(esES['pricing.reviewBack']).toBe('Volver');
+    expect(enUS['pricing.reviewConfirm']).toBe('Confirm your new subscription');
+    expect(enUS['pricing.reviewBack']).toBe('Cancel');
+    expect(esES['pricing.reviewConfirm']).toBe('Confirma tu nueva suscripción');
+    expect(esES['pricing.reviewBack']).toBe('Cancelar');
   });
 });
