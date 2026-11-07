@@ -44,7 +44,9 @@ test.describe('current plan mark', () => {
   });
 });
 
-test('the current plan CTA is a disabled Current plan button and sends no action', async ({
+// Not a disabled button: a control that does nothing invites a click and is announced as
+// unavailable rather than as what it is, the plan the customer already has.
+test('the current plan CTA is a Current plan status, not a control, and sends no action', async ({
   page,
 }) => {
   const growth = planCta(page, 'growth');
@@ -52,9 +54,8 @@ test('the current plan CTA is a disabled Current plan button and sends no action
   await expect(growth).toHaveJSProperty('tagName', 'A');
   await countEvents(page, 'pricing-action');
   await setProps(page, { currentSelection: C });
+  await expect(growth).toHaveJSProperty('tagName', 'P');
   await growth.click({ force: true });
-  await expect(growth).toHaveJSProperty('tagName', 'BUTTON');
-  await expect(growth).toBeDisabled();
   await expect(growth).not.toHaveAttribute('href', /.*/);
   await expect(growth).toHaveAttribute('data-relation', 'current');
   await expect(growth).toHaveText('Current plan');
@@ -66,18 +67,22 @@ test.describe('other plans are labelled by relation', () => {
     await setProps(page, { currentSelection: C });
     const starter = planCta(page, 'starter');
     await expect(starter).toHaveAttribute('data-relation', 'downgrade');
-    await expect(starter).toHaveText('Downgrade to Starter');
+    await expect(starter).toHaveText('Downgrade');
+    await expect(starter).toHaveAttribute('aria-label', 'Downgrade to Starter');
     const enterprise = planCta(page, 'enterprise');
     await expect(enterprise).toHaveAttribute('data-relation', 'upgrade');
-    await expect(enterprise).toHaveText('Upgrade to Enterprise');
+    await expect(enterprise).toHaveText('Upgrade');
+    await expect(enterprise).toHaveAttribute('aria-label', 'Upgrade to Enterprise');
     await expect(enterprise).toHaveAttribute('href', 'https://example.com/contact');
   });
 
   test('Spanish', async ({ page }) => {
     await setProps(page, { currentSelection: C });
     await page.selectOption('#locale', 'es-ES');
-    await expect(planCta(page, 'starter')).toHaveText('Bajar a Starter');
-    await expect(planCta(page, 'enterprise')).toHaveText('Mejorar a Enterprise');
+    await expect(planCta(page, 'starter')).toHaveText('Bajar');
+    await expect(planCta(page, 'starter')).toHaveAttribute('aria-label', 'Bajar a Starter');
+    await expect(planCta(page, 'enterprise')).toHaveText('Mejorar');
+    await expect(planCta(page, 'enterprise')).toHaveAttribute('aria-label', 'Mejorar a Enterprise');
   });
 });
 
@@ -274,8 +279,13 @@ test.describe('a private current plan', () => {
       { diagnostics: true },
     );
     await expect(page.locator(`#extra ${planCard}[data-current]`)).toHaveCount(0);
-    await expect(planCta(page, 'basic', '#extra')).toHaveText('Downgrade to Basic');
-    await expect(planCta(page, 'pro', '#extra')).toHaveText('Upgrade to Pro');
+    await expect(planCta(page, 'basic', '#extra')).toHaveText('Downgrade');
+    await expect(planCta(page, 'basic', '#extra')).toHaveAttribute(
+      'aria-label',
+      'Downgrade to Basic',
+    );
+    await expect(planCta(page, 'pro', '#extra')).toHaveText('Upgrade');
+    await expect(planCta(page, 'pro', '#extra')).toHaveAttribute('aria-label', 'Upgrade to Pro');
     const codes = (await recordedDiagnostics(page)).flatMap((event) =>
       event.diagnostics.map((item) => item.code),
     );

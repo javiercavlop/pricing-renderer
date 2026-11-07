@@ -50,7 +50,7 @@ test.describe('structure', () => {
     const root = review.locator('section[data-pr-part="change-review"]');
     await expect(root).toHaveCount(1);
     const title = root.locator('h2');
-    await expect(title).toHaveText('Review your change');
+    await expect(title).toHaveText('Review your change of subscription');
     await expect(title).toHaveAttribute('tabindex', '-1');
     const titleId = await title.getAttribute('id');
     expect(titleId).toBeTruthy();
@@ -115,7 +115,7 @@ test.describe('structure', () => {
 
   test('nothing changes: no sections, a note, Confirm blocked', async ({ page }) => {
     const review = await addReview(page, { comparison: R_CUR });
-    await expect(review.locator('h2')).toHaveText('Review your change');
+    await expect(review.locator('h2')).toHaveText('Review your change of subscription');
     expect(await sectionParts(page)).toEqual([]);
     await expect(review).toContainText('Your selection is the same as your current subscription.');
     await expect(page.locator(confirmButton)).toHaveAttribute('aria-disabled', 'true');
@@ -367,11 +367,13 @@ test.describe('limits section', () => {
   });
 });
 
-test('the unchanged summary counts add-ons, features and limits', async ({ page }) => {
+test('the unchanged summary counts features and limits, not add-ons', async ({ page }) => {
   await addReview(page, { comparison: R_ENT });
   const unchanged = section(page, 'review-unchanged');
   await expect(unchanged.locator('h3')).toHaveText('Unchanged');
-  await expect(unchanged).toContainText('2 add-ons, 3 features and 0 usage limits stay the same.');
+  // An add-on the reader did not touch is not news in a review of what changes.
+  await expect(unchanged).toContainText('3 features and 0 usage limits stay the same.');
+  await expect(unchanged).not.toContainText('add-on');
 });
 
 test.describe('pending status', () => {
@@ -493,7 +495,7 @@ test.describe('forced colors', () => {
     await page.emulateMedia({ forcedColors: 'active' });
     await addReview(page, { comparison: R_CUR });
     await expect(page.locator(confirmButton)).toHaveAttribute('aria-disabled', 'true');
-    await expect(page.locator(confirmButton)).toHaveText('Confirm change');
+    await expect(page.locator(confirmButton)).toHaveText('Confirm your new subscription');
   });
 });
 
@@ -569,7 +571,8 @@ test.describe('layout of the approved mock', () => {
     });
   }
 
-  test('the actions are sticky below 600px and in the flow from 600px', async ({ page }) => {
+  // They used to scroll away above 600px, out of reach at the end of a long comparison.
+  test('the actions stay sticky at every width', async ({ page }) => {
     const review = await addReview(page, { comparison: R_START });
     const position = () =>
       review
@@ -578,7 +581,7 @@ test.describe('layout of the approved mock', () => {
     await review.evaluate((element) => (element.style.width = '375px'));
     expect(await position()).toBe('sticky');
     await review.evaluate((element) => (element.style.width = '800px'));
-    expect(await position()).not.toBe('sticky');
+    expect(await position()).toBe('sticky');
   });
 
   test('nothing overflows a 320px container', async ({ page }) => {
@@ -652,9 +655,9 @@ test('plan and add-on names are text, never markup', async ({ page }) => {
 test.describe('Spanish review', () => {
   test('headings and buttons', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT, locale: 'es-ES' });
-    await expect(review.locator('h2')).toHaveText('Revisa tu cambio');
-    await expect(page.locator(confirmButton)).toHaveText('Confirmar cambio');
-    await expect(page.locator(backButton)).toHaveText('Volver');
+    await expect(review.locator('h2')).toHaveText('Revisa el cambio de tu suscripción');
+    await expect(page.locator(confirmButton)).toHaveText('Confirma tu nueva suscripción');
+    await expect(page.locator(backButton)).toHaveText('Cancelar');
   });
 
   test('sections, values and the summary', async ({ page }) => {
@@ -668,7 +671,7 @@ test.describe('Spanish review', () => {
     await expect(price).toContainText('€');
     await expect(section(page, 'review-limits')).toContainText('Ilimitado');
     await expect(section(page, 'review-unchanged')).toContainText(
-      '2 complementos, 3 características y 0 límites de uso no cambian.',
+      '3 características y 0 límites de uso no cambian.',
     );
   });
 
@@ -700,7 +703,7 @@ test.describe('Spanish review', () => {
   test('the locale attribute switches the language', async ({ page }) => {
     const review = await addReview(page, { comparison: R_ENT });
     await review.evaluate((element) => element.setAttribute('locale', 'es-ES'));
-    await expect(review.locator('h2')).toHaveText('Revisa tu cambio');
+    await expect(review.locator('h2')).toHaveText('Revisa el cambio de tu suscripción');
   });
 
   test('messages override a text', async ({ page }) => {

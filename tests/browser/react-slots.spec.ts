@@ -328,7 +328,7 @@ test.describe('plan CTA render context', () => {
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-relation', 'current');
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-label', 'Current plan');
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-relation', 'upgrade');
-    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade to Growth');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade');
   });
 
   test('Current plan set at mount', async ({ page }) => {
@@ -337,7 +337,7 @@ test.describe('plan CTA render context', () => {
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-relation', 'current');
     await expect(ctaOf(page, 'starter')).toHaveAttribute('data-label', 'Current plan');
     await expect(ctaOf(page, 'growth')).toHaveAttribute('data-relation', 'upgrade');
-    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade to Growth');
+    await expect(ctaOf(page, 'growth')).toHaveAttribute('data-label', 'Upgrade');
   });
 
   test('Pending action: pending, any-pending and a refused trigger', async ({ page }) => {
