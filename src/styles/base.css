@@ -1509,6 +1509,11 @@
       align-items: start;
     }
 
+    /* The summary is not in here any more, so its column would be 288px of nothing. */
+    pricing-renderer[data-pr-root] .pr-addon-layout[data-pr-summary='outside'] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     pricing-renderer[data-pr-root] .pr-summary {
       inset-block-start: calc(var(--pr-sticky-top, 0px) + var(--pr-space-4));
       inset-block-end: auto;
@@ -1563,6 +1568,10 @@
 
     pricing-renderer[data-pr-root] .pr-addon-layout {
       grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+    }
+
+    pricing-renderer[data-pr-root] .pr-addon-layout[data-pr-summary='outside'] {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     pricing-renderer[data-pr-root] .pr-dialog {

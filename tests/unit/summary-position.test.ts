@@ -36,6 +36,7 @@ function stateFor(
   viewModel: PricingViewModel,
   planId: string | undefined,
   compact = false,
+  hiddenSections?: ReadonlySet<'summary' | 'addOns'>,
 ): RenderState {
   const selection = { ...viewModel.resolved.selection };
   if (planId === undefined) delete selection.planId;
@@ -54,6 +55,7 @@ function stateFor(
     breakdownOpen: false,
     breakdownId: 'breakdown',
     actions,
+    ...(hiddenSections ? { hiddenSections: hiddenSections as RenderState['hiddenSections'] } : {}),
   };
 }
 
@@ -94,14 +96,15 @@ describe('summary position after the plans', () => {
     expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf(comparisonMarker));
   });
 
-  it('keeps the summary last when the container is narrower than 840px (layout table)', async () => {
-    const base = await loadViewModel();
-    const viewModel = { ...base, addOns: [] };
-    const state = stateFor(viewModel, viewModel.plans[0]!.id, false);
-    const text = flatten(renderAfterPlans(state, false));
-    expect(text.split(summaryMarker)).toHaveLength(2);
-    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf(comparisonMarker));
-    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('</div>'));
+  // The width used to cancel the dock, which left a narrow container with the total at the very end
+  // of the page. The narrow band keeps it as a bottom bar through CSS, and docking it here is what
+  // pins that bar to the viewport for the whole scroll instead of only near the end.
+  it('hides the summary everywhere when the host hides that section', async () => {
+    const viewModel = await loadViewModel();
+    expect(viewModel.addOns.length).toBeGreaterThan(0);
+    const hidden = new Set<'summary' | 'addOns'>(['summary']);
+    const text = flatten(renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id, false, hidden)));
+    expect(text).not.toContain(summaryMarker);
   });
 
   it('keeps the summary last when no plan is selected', async () => {
@@ -113,13 +116,46 @@ describe('summary position after the plans', () => {
     expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf(comparisonMarker));
   });
 
-  it('renders the summary once, inside the add-ons, when the pricing has add-ons', async () => {
+  it('docks the summary above the comparison when the pricing has add-ons', async () => {
     const viewModel = await loadViewModel();
     expect(viewModel.addOns.length).toBeGreaterThan(0);
     const text = flatten(renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id)));
+    // once, and before both the comparison and the add-on grid that used to hold it
     expect(text.split(summaryMarker)).toHaveLength(2);
-    expect(text.indexOf(comparisonMarker)).toBeGreaterThan(-1);
-    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('data-pr-part="add-ons"'));
+    expect(text.indexOf(summaryMarker)).toBeLessThan(text.indexOf(comparisonMarker));
+    expect(text.indexOf(summaryMarker)).toBeLessThan(text.indexOf('data-pr-part="add-ons"'));
     expect(text.indexOf('data-pr-part="add-ons"')).toBeGreaterThan(text.indexOf(comparisonMarker));
+    // the add-on layout drops its sidebar column, which would otherwise be empty
+    expect(text).toContain('data-pr-summary=outside');
+  });
+
+  // The reason the summary left the add-on layout: a sticky element is pinned only while its own
+  // containing block is on screen, so a bottom bar inside that one section is a bottom bar that
+  // exists only at the end of the page. These three keep it outside, wherever it ends up.
+  it('keeps the summary out of the add-ons when no plan is selected', async () => {
+    const viewModel = await loadViewModel();
+    expect(viewModel.addOns.length).toBeGreaterThan(0);
+    const text = flatten(renderAfterPlans(stateFor(viewModel, undefined)));
+    expect(text.split(summaryMarker)).toHaveLength(2);
+    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('data-pr-part="add-ons"'));
+    expect(text).toContain('data-pr-summary=outside');
+  });
+
+  it('keeps the summary out of the add-ons in the compact layout', async () => {
+    const viewModel = await loadViewModel();
+    expect(viewModel.addOns.length).toBeGreaterThan(0);
+    const text = flatten(renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id, true)));
+    expect(text.split(summaryMarker)).toHaveLength(2);
+    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('</div>'));
+    expect(text).toContain('data-pr-summary=outside');
+  });
+
+  it('keeps the summary out of the add-ons below 840px', async () => {
+    const viewModel = await loadViewModel();
+    expect(viewModel.addOns.length).toBeGreaterThan(0);
+    const text = flatten(renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id), false));
+    expect(text.split(summaryMarker)).toHaveLength(2);
+    expect(text.indexOf(summaryMarker)).toBeGreaterThan(text.indexOf('</div>'));
+    expect(text).toContain('data-pr-summary=outside');
   });
 });

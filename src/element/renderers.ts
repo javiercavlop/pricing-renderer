@@ -87,6 +87,8 @@ export interface RenderState {
   viewModel: PricingViewModel;
   /** Sections the host hides; absent means none. */
   hiddenSections?: ReadonlySet<PricingSectionName>;
+  /** The summary is rendered outside the add-on layout, which then drops its sidebar column. */
+  summaryOutsideAddOns?: boolean;
   /** Slots the host requests; absent means none. */
   slots?: ReadonlySet<PricingSlotName>;
   selection: PricingSelection;
@@ -1463,13 +1465,17 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
           <h3 id=${titleId}>${t(viewModel, 'pricing.addOnsTitle')}</h3>
         </div>
       </div>
-      <div class="pr-addon-layout">
+      <div class="pr-addon-layout" data-pr-summary=${state.summaryOutsideAddOns ? 'outside' : nothing}>
         ${
           filtered
             ? renderFilteredAddOns(state, dense)
             : renderAddOnGrid(state, viewModel.addOns, dense)
         }
-        ${state.hiddenSections?.has('summary') ? nothing : renderSummary(state)}
+        ${
+          state.summaryOutsideAddOns || state.hiddenSections?.has('summary')
+            ? nothing
+            : renderSummary(state)
+        }
       </div>
     </section>
   `;

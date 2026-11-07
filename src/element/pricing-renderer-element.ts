@@ -82,26 +82,30 @@ import {
 } from './renderers.js';
 import { hiddenNamesOf, sectionsConverter } from './hide-sections.js';
 
-// Everything after the plans lives in one flex column, so a
-// sticky summary has the whole column as its containing block (a grid item would only have its own
-// row). Without add-ons, in the table layout and with a plan selected, the summary is the first
-// child and sticks near the plans while the comparison scrolls. In every other case it keeps its
-// place: with add-ons inside the add-on layout (renderAddOns), otherwise last in the content, where
-// the mobile bottom bar sticks to the viewport. The top dock also needs a container at least 840px
-// wide (`wide`), because layout="table" can render the table in a narrower container, where the
-// bottom bar is still the summary position (RenderState lives in renderers.ts and has no such field).
+// Everything after the plans lives in one flex column, so a sticky summary has the whole column as
+// its containing block (a grid item would only have its own row).
+//
+// The summary never sits inside the add-on layout, which is where a pricing with add-ons used to
+// put it. A sticky element is only pinned while its own containing block is on screen, and that
+// layout is one section near the end of the page: the bottom bar it is meant to be existed only
+// after the reader had already scrolled past the comparison and the add-on grid -- furthest away
+// exactly when add-ons are what move the total.
+//
+// At 840px or more, outside the compact layout and with a plan selected, it is the first child of
+// the column and sticks to its top. Otherwise it closes the content, outside the column, where its
+// containing block is everything after the plans and the bottom bar is pinned for that whole scroll.
 export function renderAfterPlans(state: RenderState, wide = true): TemplateResult {
-  const { viewModel, selection, compact } = state;
+  const { selection, compact } = state;
   const hidden = state.hiddenSections;
-  // hidden add-ons count as no add-ons, so the summary
-  // keeps a place outside the add-on layout
-  const withoutAddOns = viewModel.addOns.length === 0 || Boolean(hidden?.has('addOns'));
-  const docked = withoutAddOns && !compact && wide && selection.planId !== undefined;
-  const summary = withoutAddOns && !hidden?.has('summary') ? renderSummary(state) : nothing;
+  const summaryHidden = Boolean(hidden?.has('summary'));
+  const docked = !compact && wide && !summaryHidden && selection.planId !== undefined;
+  const summary = summaryHidden ? nothing : renderSummary(state);
+  // The add-on layout never holds the summary now, whatever the width.
+  const inner: RenderState = { ...state, summaryOutsideAddOns: true };
   const parts = [
     docked ? summary : nothing,
-    hidden?.has('comparison') ? nothing : renderComparison(state),
-    renderAddOns(state),
+    hidden?.has('comparison') ? nothing : renderComparison(inner),
+    renderAddOns(inner),
   ];
   return html`<div class="pr-flow">${parts}</div>
     ${docked ? nothing : summary}`;
