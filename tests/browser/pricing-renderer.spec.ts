@@ -1281,7 +1281,8 @@ type BreakdownLine = {
 };
 type Breakdown = {
   currency: string;
-  billingPeriod?: { id: string; label: string; multiplier: number };
+  unit?: string;
+  billingPeriod?: { id: string; label: string; multiplier: number; synthesized?: true };
   plan?: BreakdownLine;
   addOns: BreakdownLine[];
   subtotal: number;
@@ -1306,6 +1307,8 @@ const contractE = {
 };
 const breakdownCY: Breakdown = {
   currency: 'EUR',
+  // the plan's unit, so an amount can read "per month" away from the card
+  unit: 'month',
   billingPeriod: { id: 'yearly', label: 'Yearly', multiplier: 0.8 },
   plan: {
     kind: 'plan',

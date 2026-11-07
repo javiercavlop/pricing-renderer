@@ -86,9 +86,13 @@ test.describe('spectra text', () => {
         expect(overflow.examples).toEqual([]);
         // Every pricing with plans must offer both targets. A pricing
         // without plans (okta) may have none outside the table; a target it has must still wrap.
-        const required = planCount(fixture.saas) > 0;
-        for (const probe of probes) {
-          if (required) expect(probe.found).toBe(true);
+        // The value target is only certain at 375px, where the compact comparison renders every
+        // value as text: from 840px the values sit in the table, and plan cards whose highlights
+        // are all booleans show none, since the bullet already says "included".
+        const hasPlans = planCount(fixture.saas) > 0;
+        for (const [index, probe] of probes.entries()) {
+          const isValue = index === 0;
+          if (hasPlans && (!isValue || narrow)) expect(probe.found).toBe(true);
           if (!probe.found) continue;
           expect(probe.lines).toBeGreaterThan(1);
           expect(probe.insideCard).toBe(true);
