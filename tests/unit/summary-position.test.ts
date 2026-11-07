@@ -103,7 +103,9 @@ describe('summary position after the plans', () => {
     const viewModel = await loadViewModel();
     expect(viewModel.addOns.length).toBeGreaterThan(0);
     const hidden = new Set<'summary' | 'addOns'>(['summary']);
-    const text = flatten(renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id, false, hidden)));
+    const text = flatten(
+      renderAfterPlans(stateFor(viewModel, viewModel.plans[0]!.id, false, hidden)),
+    );
     expect(text).not.toContain(summaryMarker);
   });
 
