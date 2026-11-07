@@ -90,12 +90,12 @@ describe('blockingAddOnIds', () => {
   it('names a selected add-on that the pricing excludes, in either direction', async () => {
     const { pricing, resolved } = await loadViewModel();
     // prioritySuccess declares excludes: [compliance]; the relation holds both ways
-    expect(blockingAddOnIds(pricing, withAddOns(resolved.selection, ['compliance']), 'prioritySuccess')).toEqual([
-      'compliance',
-    ]);
-    expect(blockingAddOnIds(pricing, withAddOns(resolved.selection, ['prioritySuccess']), 'compliance')).toEqual([
-      'prioritySuccess',
-    ]);
+    expect(
+      blockingAddOnIds(pricing, withAddOns(resolved.selection, ['compliance']), 'prioritySuccess'),
+    ).toEqual(['compliance']);
+    expect(
+      blockingAddOnIds(pricing, withAddOns(resolved.selection, ['prioritySuccess']), 'compliance'),
+    ).toEqual(['prioritySuccess']);
   });
 
   it('ignores an excluded add-on that is not selected', async () => {
@@ -124,7 +124,10 @@ describe('the card of a blocked add-on', () => {
 
   it('turns unavailable and names what blocks it', async () => {
     const viewModel = await loadViewModel();
-    const card = cardOf(flatten(renderAddOns(stateFor(viewModel, ['compliance']))), 'prioritySuccess');
+    const card = cardOf(
+      flatten(renderAddOns(stateFor(viewModel, ['compliance']))),
+      'prioritySuccess',
+    );
     expect(card).toContain('data-available=false');
     expect(card).toContain('data-reason="excluded"');
     // the blocker by name, not the whole list of what this add-on excludes
@@ -133,7 +136,10 @@ describe('the card of a blocked add-on', () => {
   });
 
   it('keeps the blocker itself operable', async () => {
-    const card = cardOf(flatten(renderAddOns(stateFor(await loadViewModel(), ['compliance']))), 'compliance');
+    const card = cardOf(
+      flatten(renderAddOns(stateFor(await loadViewModel(), ['compliance']))),
+      'compliance',
+    );
     expect(card).toContain('data-available=true');
     expect(card).not.toContain('data-reason="excluded"');
   });

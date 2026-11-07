@@ -1476,7 +1476,10 @@ export function renderAddOns(state: RenderState): TemplateResult | typeof nothin
           <h3 id=${titleId}>${t(viewModel, 'pricing.addOnsTitle')}</h3>
         </div>
       </div>
-      <div class="pr-addon-layout" data-pr-summary=${state.summaryOutsideAddOns ? 'outside' : nothing}>
+      <div
+        class="pr-addon-layout"
+        data-pr-summary=${state.summaryOutsideAddOns ? 'outside' : nothing}
+      >
         ${
           filtered
             ? renderFilteredAddOns(state, dense)
