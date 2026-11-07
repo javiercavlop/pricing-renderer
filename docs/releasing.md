@@ -12,12 +12,21 @@ The canonical release locations are:
 - npm: <https://www.npmjs.com/package/pricing-renderer>
 - GitHub releases:
   <https://github.com/javiercavlop/pricing-renderer/releases>
-- `0.1.0` source tag:
-  <https://github.com/javiercavlop/pricing-renderer/releases/tag/v0.1.0>
+- `0.2.0` source tag:
+  <https://github.com/javiercavlop/pricing-renderer/releases/tag/v0.2.0>
 
-`pricing-renderer@0.1.0` is published under npm dist-tag `latest`. Do not
+`pricing-renderer@0.2.0` is published under npm dist-tag `latest`. Do not
 document a later version as available until registry and GitHub verification has
 succeeded.
+
+0.2.0 is the one release not published by this workflow. GitHub Actions was
+billing-locked, so the maintainer published the tarball built from `v0.2.0` by
+hand, with npm two-factor authentication and `--provenance=false`, since
+`publishConfig` asks for provenance that only the OIDC workflow can generate.
+It carries no provenance attestation. Its registry integrity matches the tarball
+that passed the gates. The `Publish npm package` run that the GitHub Release
+triggered failed to start; if it is ever re-run, `release:registry-check` stops
+it before publishing, because the version already exists.
 
 ## CD behavior
 
