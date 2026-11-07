@@ -26,6 +26,7 @@ import {
   type VariableControl,
 } from '../core/index.js';
 import { maxQuantityOnGrid } from '../core/resolve.js';
+import { blockingAddOnIds } from '../core/selection-change.js';
 import { addOnProvidesForPlan, isAddOnOnlyRow } from '../core/view-model.js';
 import { formatUnit } from '../core/units.js';
 import { isPendingActionId, planCtaView, type SummaryActionState } from './cta.js';
@@ -1105,17 +1106,13 @@ function addOnAvailability(addOn: NormalizedAddOn, planId: string | undefined): 
 }
 
 function hasAddOnNotes(addOn: NormalizedAddOn): boolean {
-  return (
-    addOn.availableFor.length > 0 ||
-    addOn.dependsOn.length > 0 ||
-    addOn.excludes.length > 0 ||
-    addOn.subscriptionConstraints !== undefined
-  );
+  return addOn.availableFor.length > 0 || addOn.dependsOn.length > 0 || addOn.excludes.length > 0;
 }
 
-// The availability, dependency, exclusion and quantity paragraphs of an add-on card.
+// The availability, dependency and exclusion paragraphs of an add-on card. The quantity relation
+// is not here: it governs what the reader can pick, so it belongs on the face of the card, which
+// renderAddOnCard draws, not behind the disclosure this prose sits in when the grid is dense.
 function renderAddOnNotes(viewModel: PricingViewModel, addOn: NormalizedAddOn): TemplateResult {
-  const constraints = addOn.subscriptionConstraints;
   return html`
     ${
       addOn.availableFor.length
@@ -1146,7 +1143,6 @@ function renderAddOnNotes(viewModel: PricingViewModel, addOn: NormalizedAddOn): 
           </p>`
         : nothing
     }
-    ${renderQuantityConstraints(viewModel, constraints)}
   `;
 }
 
@@ -1230,7 +1226,11 @@ function renderAddOnCard(
         selected: true,
       })
     : (addOn.subscriptionConstraints?.minQuantity ?? 1);
-  const available = addOnAvailability(addOn, selection.planId);
+  const availableForPlan = addOnAvailability(addOn, selection.planId);
+  // A selected add-on is never blocked: it has to stay operable, or there would be no way to
+  // remove the very thing that is blocking the others.
+  const blockedBy = selected ? [] : blockingAddOnIds(viewModel.pricing, selection, addOn.id);
+  const available = availableForPlan && blockedBy.length === 0;
   const constraints = addOn.subscriptionConstraints;
   const current = state.currentAddOnIds?.has(addOn.id) ?? false;
   // data-available is the negation of is-unavailable
@@ -1295,10 +1295,21 @@ function renderAddOnCard(
       </div>
       <div id="${helpId}" class="pr-addon-card__details">
         ${
-          !available
-            ? html`<p class="pr-status">${t(viewModel, 'pricing.notAvailable')}</p>`
-            : nothing
+          !availableForPlan
+            ? html`<p class="pr-status" data-pr-part="add-on-status" data-reason="plan">
+                ${t(viewModel, 'pricing.notAvailable')}
+              </p>`
+            : blockedBy.length > 0
+              ? // the add-ons that block it by name: the reader needs to know what to drop, not
+                // the whole list of what this one excludes
+                html`<p class="pr-status" data-pr-part="add-on-status" data-reason="excluded">
+                  ${t(viewModel, 'pricing.notAvailableWith', {
+                    items: addOnNames(viewModel, blockedBy),
+                  })}
+                </p>`
+              : nothing
         }
+        ${renderQuantityConstraints(viewModel, constraints)}
         ${dense ? nothing : renderAddOnNotes(viewModel, addOn)}
       </div>
       ${renderAddOnEffects(viewModel, addOn, dense)}

@@ -9,6 +9,7 @@ export { applySelectionInput } from './apply-selection.js';
 export type { ApplySelectionInputResult } from './apply-selection.js';
 export {
   applySelectionChange,
+  blockingAddOnIds,
   planSelectionChange,
   selectionInEffect,
   selectionWithAddOnQuantity,
